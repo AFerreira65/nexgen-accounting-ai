@@ -65,6 +65,9 @@ type WorkContextValue = WorkContextData & {
   createDocumentType: (input: NewDocumentTypeInput) => Promise<void>
   updateDocumentType: (code: string, input: DocumentTypeEditInput) => Promise<void>
   createMovement: (input: MovementInput) => Promise<void>
+  reviseMovement: (reference: string, input: MovementInput) => Promise<void>
+  reviewMovement: (reference: string) => Promise<void>
+  voidMovement: (reference: string) => Promise<void>
   applyTaxonomySuggestions: () => Promise<number>
   inspectSaft: (file: File) => Promise<SaftInspection>
   createSaftCompany: (input: SaftCompanyCreationInput) => Promise<SaftCompanyCreation>
@@ -437,6 +440,50 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         amount: totalDebit,
         lines: input.lines.map((line) => ({ account: line.accountCode, accountName: accountName(line.accountCode), description: line.description, debit: line.debit, credit: line.credit })),
       }, ...current])
+    },
+    reviseMovement: async (reference, input) => {
+      const totalDebit = input.lines.reduce((sum, line) => sum + line.debit, 0)
+      const totalCredit = input.lines.reduce((sum, line) => sum + line.credit, 0)
+      if (input.lines.length < 2 || Math.round((totalDebit - totalCredit) * 100) !== 0) throw new Error('O lançamento tem de ter pelo menos duas linhas equilibradas.')
+      if (accountingSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/movements/${encodeURIComponent(reference)}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+        })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+      const accountName = (code: string) => accountingSetup.accounts.find((item) => item.code === code)?.name ?? code
+      const journalName = accountingSetup.journals.find((item) => item.code === input.journalCode)?.name ?? input.journalCode
+      setAccountingMovements((current) => current.map((movement) => movement.id === reference ? {
+        ...movement,
+        date: input.entryDate,
+        journalId: input.journalCode,
+        journalName,
+        document: input.documentReference,
+        description: input.description,
+        status: input.reviewed ? 'Conferido' : 'Por conferir',
+        amount: totalDebit,
+        lines: input.lines.map((line) => ({ account: line.accountCode, accountName: accountName(line.accountCode), description: line.description, debit: line.debit, credit: line.credit })),
+      } : movement))
+    },
+    reviewMovement: async (reference) => {
+      if (accountingSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/movements/${encodeURIComponent(reference)}/review`, { method: 'POST' })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+      setAccountingMovements((current) => current.map((movement) => movement.id === reference ? { ...movement, status: 'Conferido' } : movement))
+    },
+    voidMovement: async (reference) => {
+      if (accountingSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/movements/${encodeURIComponent(reference)}/void`, { method: 'POST' })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+      setAccountingMovements((current) => current.map((movement) => movement.id === reference ? { ...movement, status: 'Anulado' } : movement))
     },
     applyTaxonomySuggestions: async () => {
       if (setupSource === 'database') {

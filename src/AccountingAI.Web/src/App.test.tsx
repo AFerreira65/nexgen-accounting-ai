@@ -43,12 +43,12 @@ describe('App', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)
 
-    expect(screen.getByRole('link', { name: /Abrir COMP-2026-00842/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Almeida & Costa/i }))
     fireEvent.click(screen.getByRole('menuitem', { name: /Ilha Azul Serviços/i }))
 
-    expect(screen.getByRole('link', { name: /Abrir VEND-AZO-2026-00014/i })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Abrir COMP-2026-00842/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'VEND AZO 2026 00014' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
   })
 
   it('opens the accounting master-data screens with the active company data', () => {
@@ -87,7 +87,11 @@ describe('App', () => {
     expect(screen.getByText('Equilibrado')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Registar lançamento' }))
 
-    expect(screen.getByRole('link', { name: 'GERAL 2026 00001' })).toBeInTheDocument()
+    const row = screen.getByRole('link', { name: 'GERAL 2026 00001' }).closest('tr') as HTMLElement
+    expect(within(row).getByText('Por conferir')).toBeInTheDocument()
+
+    fireEvent.click(within(row).getByRole('button', { name: 'Anular' }))
+    expect(within(screen.getByRole('link', { name: 'GERAL 2026 00001' }).closest('tr') as HTMLElement).getByText('Anulado')).toBeInTheDocument()
   })
 
   it('shows the organisation screen with companies and users sections', () => {

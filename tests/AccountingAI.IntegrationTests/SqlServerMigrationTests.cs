@@ -514,6 +514,49 @@ public sealed class SqlServerMigrationTests
                     .ConfigureAwait(false);
                 Assert.AreEqual(2, stored.Lines.Count);
                 Assert.AreEqual(stored.Lines.Sum(line => line.Debit), stored.Lines.Sum(line => line.Credit));
+
+                var reviewedMovement = await posting
+                    .MarkReviewedAsync(DevelopmentDataSeeder.DemoCompanyId, "GERAL-2026-00001")
+                    .ConfigureAwait(false);
+                Assert.AreEqual("Conferido", reviewedMovement.Status);
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await posting.ReviseAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "GERAL-2026-00001", "GERAL",
+                        new DateOnly(2026, 3, 15), "OD", "x", false,
+                        [
+                            new JournalEntryLineInput("6221", "D", 10m, 0m),
+                            new JournalEntryLineInput("2211001", "C", 0m, 10m)
+                        ]).ConfigureAwait(false));
+
+                var voidedMovement = await posting
+                    .VoidAsync(DevelopmentDataSeeder.DemoCompanyId, "GERAL-2026-00001")
+                    .ConfigureAwait(false);
+                Assert.AreEqual("Anulado", voidedMovement.Status);
+
+                var second = await posting
+                    .PostAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "GERAL", new DateOnly(2026, 3, 20),
+                        "OD 2026/2", "Segundo lançamento", reviewed: false,
+                        [
+                            new JournalEntryLineInput("6221", "D", 30m, 0m),
+                            new JournalEntryLineInput("2211001", "C", 0m, 30m)
+                        ])
+                    .ConfigureAwait(false);
+                Assert.AreEqual("GERAL-2026-00002", second.Reference);
+
+                var revisedSecond = await posting
+                    .ReviseAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, second.Reference, "CAIXA",
+                        new DateOnly(2026, 3, 21), "OD 2026/2 corrigido", "Segundo corrigido", reviewed: true,
+                        [
+                            new JournalEntryLineInput("6221", "D", 45m, 0m),
+                            new JournalEntryLineInput("11", "C", 0m, 45m)
+                        ])
+                    .ConfigureAwait(false);
+                Assert.AreEqual("CAIXA", revisedSecond.JournalCode);
+                Assert.AreEqual("Conferido", revisedSecond.Status);
+                Assert.AreEqual(45m, revisedSecond.Amount);
             }
 
             context.ChangeTracker.Clear();

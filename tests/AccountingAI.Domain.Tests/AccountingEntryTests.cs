@@ -41,6 +41,32 @@ public sealed class AccountingEntryTests
     }
 
     [TestMethod]
+    public void PendingEntryCanBeReviewedAndVoided()
+    {
+        var entry = CreateEntry();
+        entry.AddLine(Guid.NewGuid(), Guid.NewGuid(), "Débito", 40m, 0m);
+        entry.AddLine(Guid.NewGuid(), Guid.NewGuid(), "Crédito", 0m, 40m);
+        entry.Complete(JournalEntryStatus.PendingReview);
+
+        entry.MarkReviewed();
+        Assert.AreEqual(JournalEntryStatus.Reviewed, entry.Status);
+        Assert.ThrowsExactly<InvalidOperationException>(() => entry.MarkReviewed());
+
+        entry.Void();
+        Assert.AreEqual(JournalEntryStatus.Voided, entry.Status);
+    }
+
+    [TestMethod]
+    public void CompleteRejectsTheVoidedStatus()
+    {
+        var entry = CreateEntry();
+        entry.AddLine(Guid.NewGuid(), Guid.NewGuid(), "D", 10m, 0m);
+        entry.AddLine(Guid.NewGuid(), Guid.NewGuid(), "C", 0m, 10m);
+
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => entry.Complete(JournalEntryStatus.Voided));
+    }
+
+    [TestMethod]
     public void CompletedEntryRejectsAdditionalLines()
     {
         var entry = CreateEntry();

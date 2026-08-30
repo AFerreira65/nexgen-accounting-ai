@@ -1,22 +1,25 @@
 import { Database, Plus, Search, Trash2, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { euro, formatMovementDate } from '../app/demo-data'
+import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { useWorkContext, type MovementLineInput } from '../app/WorkContext'
 
 const today = () => new Date().toISOString().slice(0, 10)
 const emptyLine = (): MovementLineInput => ({ accountCode: '', description: '', debit: 0, credit: 0 })
 
-function MovementEditor({ onClose }: { onClose: () => void }) {
-  const { accountingSetup, createMovement } = useWorkContext()
-  const journals = accountingSetup.journals.filter((item) => item.isActive)
+function MovementEditor({ movement, onClose }: { movement: Movement | null; onClose: () => void }) {
+  const { accountingSetup, createMovement, reviseMovement } = useWorkContext()
+  const isEdit = movement !== null
+  const journals = accountingSetup.journals.filter((item) => item.isActive || item.code === movement?.journalId)
   const postingAccounts = accountingSetup.accounts.filter((item) => item.allowsPosting && item.isActive)
-  const [journalCode, setJournalCode] = useState(journals[0]?.code ?? '')
-  const [entryDate, setEntryDate] = useState(today())
-  const [documentReference, setDocumentReference] = useState('')
-  const [description, setDescription] = useState('')
-  const [reviewed, setReviewed] = useState(false)
-  const [lines, setLines] = useState<MovementLineInput[]>([emptyLine(), emptyLine()])
+  const [journalCode, setJournalCode] = useState(movement?.journalId ?? journals[0]?.code ?? '')
+  const [entryDate, setEntryDate] = useState(movement?.date ?? today())
+  const [documentReference, setDocumentReference] = useState(movement?.document ?? '')
+  const [description, setDescription] = useState(movement?.description ?? '')
+  const [reviewed, setReviewed] = useState(movement?.status === 'Conferido')
+  const [lines, setLines] = useState<MovementLineInput[]>(
+    movement ? movement.lines.map((line) => ({ accountCode: line.account, description: line.description, debit: line.debit, credit: line.credit })) : [emptyLine(), emptyLine()],
+  )
   const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
   const [error, setError] = useState('')
 
@@ -33,7 +36,7 @@ function MovementEditor({ onClose }: { onClose: () => void }) {
     setStatus('saving')
     setError('')
     try {
-      await createMovement({
+      const payload = {
         journalCode,
         entryDate,
         documentReference,
@@ -42,16 +45,18 @@ function MovementEditor({ onClose }: { onClose: () => void }) {
         lines: lines
           .filter((line) => line.accountCode.trim())
           .map((line) => ({ ...line, accountCode: line.accountCode.trim().toUpperCase(), debit: Number(line.debit) || 0, credit: Number(line.credit) || 0 })),
-      })
+      }
+      if (isEdit) await reviseMovement(movement.id, payload)
+      else await createMovement(payload)
       onClose()
     } catch (submitError) {
       setStatus('error')
-      setError(submitError instanceof Error ? submitError.message : 'Não foi possível registar o lançamento.')
+      setError(submitError instanceof Error ? submitError.message : 'Não foi possível guardar o lançamento.')
     }
   }
 
   return <section className="panel settings-panel">
-    <div className="panel-heading"><div><h2>Novo lançamento</h2><p>Débito igual a crédito, pelo menos duas linhas. A referência é gerada pelo diário e exercício.</p></div><button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button></div>
+    <div className="panel-heading"><div><h2>{isEdit ? `Corrigir ${movement.id.replaceAll('-', ' ')}` : 'Novo lançamento'}</h2><p>Débito igual a crédito, pelo menos duas linhas. {isEdit ? 'Só um lançamento por conferir pode ser corrigido.' : 'A referência é gerada pelo diário e exercício.'}</p></div><button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button></div>
     <form onSubmit={submit}>
       <datalist id="posting-accounts">{postingAccounts.map((account) => <option key={account.code} value={account.code}>{account.name}</option>)}</datalist>
       <div className="settings-grid">
@@ -76,19 +81,37 @@ function MovementEditor({ onClose }: { onClose: () => void }) {
         <span className={`save-status ${difference === 0 ? 'success' : 'error'}`}>{difference === 0 ? 'Equilibrado' : `Diferença de ${euro.format(difference)}`}</span>
         {status === 'error' && <span className="save-status error">{error}</span>}
         <button className="button button-secondary" type="button" onClick={onClose}>Cancelar</button>
-        <button className="button button-primary" type="submit" disabled={status === 'saving' || difference !== 0}>{status === 'saving' ? 'A registar…' : 'Registar lançamento'}</button>
+        <button className="button button-primary" type="submit" disabled={status === 'saving' || difference !== 0}>{status === 'saving' ? 'A guardar…' : (isEdit ? 'Guardar correção' : 'Registar lançamento')}</button>
       </footer>
     </form>
   </section>
 }
 
 export function MovementsPage() {
-  const { accountingLoading, accountingSource, movements } = useWorkContext()
-  const [creating, setCreating] = useState(false)
+  const { accountingLoading, accountingSource, movements, reviewMovement, voidMovement } = useWorkContext()
+  const [editing, setEditing] = useState<Movement | null | undefined>(undefined)
+  const [busy, setBusy] = useState('')
+
+  async function act(reference: string, action: () => Promise<void>) {
+    setBusy(reference)
+    try { await action() } catch { /* a página volta a carregar o estado */ } finally { setBusy('') }
+  }
+
   return <div className="page-stack">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Movimentos contabilísticos</h1><p>Consulte, percorra e registe lançamentos sem perder o contexto.</p></div><span className={`connection-badge ${accountingSource}`}><Database size={15} />{accountingSource === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
-    <div className="filterbar"><label><Search size={17} /><input aria-label="Pesquisar movimentos" placeholder="Pesquisar movimento ou descrição…" /></label><button className="button button-primary" type="button" onClick={() => setCreating(true)}><Plus size={16} /> Novo lançamento</button></div>
-    {creating && <MovementEditor onClose={() => setCreating(false)} />}
-    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Movimento</th><th>Descrição</th><th>Diário</th><th>Estado</th><th className="numeric">Valor</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{movements.map((movement) => <tr key={movement.id}><td><Link className="primary-cell" to={`/movimentos/${movement.id}`}>{movement.id.replaceAll('-', ' ')}</Link><small>{formatMovementDate(movement.date)}</small></td><td>{movement.description}<small>{movement.document}</small></td><td><Link className="inline-link" to={`/diarios/${movement.journalId}`}>{movement.journalId}</Link></td><td><span className={`badge ${movement.status === 'Conferido' ? 'success' : 'warning'}`}>{movement.status}</span></td><td className="numeric strong">{euro.format(movement.amount)}</td><td><Link className="row-action" to={`/movimentos/${movement.id}`} aria-label={`Abrir ${movement.id}`}>Abrir</Link></td></tr>)}</tbody></table></div>{accountingLoading && <p className="empty-state">A carregar movimentos da base de dados…</p>}{!accountingLoading && movements.length === 0 && <p className="empty-state">Esta empresa ainda não tem movimentos.</p>}</section>
+    <div className="filterbar"><label><Search size={17} /><input aria-label="Pesquisar movimentos" placeholder="Pesquisar movimento ou descrição…" /></label><button className="button button-primary" type="button" onClick={() => setEditing(null)}><Plus size={16} /> Novo lançamento</button></div>
+    {editing !== undefined && <MovementEditor movement={editing} onClose={() => setEditing(undefined)} />}
+    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Movimento</th><th>Descrição</th><th>Diário</th><th>Estado</th><th className="numeric">Valor</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{movements.map((movement) => <tr key={movement.id}>
+      <td><Link className="primary-cell" to={`/movimentos/${movement.id}`}>{movement.id.replaceAll('-', ' ')}</Link><small>{formatMovementDate(movement.date)}</small></td>
+      <td>{movement.description}<small>{movement.document}</small></td>
+      <td><Link className="inline-link" to={`/diarios/${movement.journalId}`}>{movement.journalId}</Link></td>
+      <td><span className={`badge ${movement.status === 'Conferido' ? 'success' : movement.status === 'Anulado' ? 'neutral' : 'warning'}`}>{movement.status}</span></td>
+      <td className="numeric strong">{euro.format(movement.amount)}</td>
+      <td><div className="row-actions">
+        {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => setEditing(movement)}>Corrigir</button>}
+        {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => reviewMovement(movement.id))}>Conferir</button>}
+        {movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => voidMovement(movement.id))}>Anular</button>}
+      </div></td>
+    </tr>)}</tbody></table></div>{accountingLoading && <p className="empty-state">A carregar movimentos da base de dados…</p>}{!accountingLoading && movements.length === 0 && <p className="empty-state">Esta empresa ainda não tem movimentos.</p>}</section>
   </div>
 }

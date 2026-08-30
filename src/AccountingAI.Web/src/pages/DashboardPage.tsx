@@ -5,9 +5,10 @@ import { useWorkContext } from '../app/WorkContext'
 
 export function DashboardPage() {
   const { accountingSource, movements, user } = useWorkContext()
+  const active = movements.filter((movement) => movement.status !== 'Anulado')
   const pending = movements.filter((movement) => movement.status === 'Por conferir')
-  const accounts = new Set(movements.flatMap((movement) => movement.lines.map((line) => line.account)))
-  const total = movements.reduce((sum, movement) => sum + movement.amount, 0)
+  const accounts = new Set(active.flatMap((movement) => movement.lines.map((line) => line.account)))
+  const total = active.reduce((sum, movement) => sum + movement.amount, 0)
   const firstName = user.displayName.replace(' (Demonstração)', '').split(' ')[0]
 
   return (

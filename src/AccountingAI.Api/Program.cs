@@ -61,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-07",
+    phase = "F1-08",
     status = "ready"
 }));
 
@@ -262,7 +262,12 @@ if (app.Environment.IsDevelopment())
             JournalName = item.Journal.Name,
             Document = item.DocumentReference,
             item.Description,
-            Status = item.Status == JournalEntryStatus.Reviewed ? "Conferido" : "Por conferir",
+            Status = item.Status switch
+            {
+                JournalEntryStatus.Reviewed => "Conferido",
+                JournalEntryStatus.Voided => "Anulado",
+                _ => "Por conferir"
+            },
             Amount = item.TotalAmount,
             Lines = item.Lines
                 .OrderBy(line => line.Sequence)
@@ -314,25 +319,7 @@ if (app.Environment.IsDevelopment())
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            return Results.Ok(new
-            {
-                Id = movement.Reference,
-                Date = movement.EntryDate,
-                JournalId = movement.JournalCode,
-                movement.JournalName,
-                Document = movement.DocumentReference,
-                movement.Description,
-                movement.Status,
-                movement.Amount,
-                Lines = movement.Lines.Select(line => new
-                {
-                    Account = line.AccountCode,
-                    line.AccountName,
-                    line.Description,
-                    line.Debit,
-                    line.Credit
-                })
-            });
+            return Results.Ok(ToMovementResponse(movement));
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {
@@ -340,6 +327,85 @@ if (app.Environment.IsDevelopment())
             {
                 ["movement"] = [exception.Message]
             });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/{reference}", async (
+        Guid userId,
+        Guid companyId,
+        string reference,
+        CreateMovementRequest request,
+        AccountingDbContext context,
+        JournalPostingService posting,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var lines = (request.Lines ?? [])
+                .Select(line => new JournalEntryLineInput(line.AccountCode, line.Description, line.Debit, line.Credit))
+                .ToList();
+            var movement = await posting
+                .ReviseAsync(companyId, reference, request.JournalCode, request.EntryDate,
+                    request.DocumentReference, request.Description, request.Reviewed, lines, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(ToMovementResponse(movement));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["movement"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/{reference}/review", async (
+        Guid userId,
+        Guid companyId,
+        string reference,
+        AccountingDbContext context,
+        JournalPostingService posting,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var movement = await posting.MarkReviewedAsync(companyId, reference, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(ToMovementResponse(movement));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["movement"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/{reference}/void", async (
+        Guid userId,
+        Guid companyId,
+        string reference,
+        AccountingDbContext context,
+        JournalPostingService posting,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var movement = await posting.VoidAsync(companyId, reference, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(ToMovementResponse(movement));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["movement"] = [exception.Message] });
         }
     });
 
@@ -946,6 +1012,26 @@ await app.RunAsync().ConfigureAwait(false);
 
 public partial class Program
 {
+    private static object ToMovementResponse(PostedMovement movement) => new
+    {
+        Id = movement.Reference,
+        Date = movement.EntryDate,
+        JournalId = movement.JournalCode,
+        movement.JournalName,
+        Document = movement.DocumentReference,
+        movement.Description,
+        movement.Status,
+        movement.Amount,
+        Lines = movement.Lines.Select(line => new
+        {
+            Account = line.AccountCode,
+            line.AccountName,
+            line.Description,
+            line.Debit,
+            line.Credit
+        })
+    };
+
     private static Task<bool> HasCompanyAccessAsync(
         AccountingDbContext context,
         Guid userId,

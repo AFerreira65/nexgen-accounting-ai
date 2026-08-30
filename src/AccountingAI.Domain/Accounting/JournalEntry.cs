@@ -117,7 +117,7 @@ public sealed class JournalEntry
 
     public void Complete(JournalEntryStatus status)
     {
-        if (!Enum.IsDefined(status))
+        if (status is not (JournalEntryStatus.PendingReview or JournalEntryStatus.Reviewed))
         {
             throw new ArgumentOutOfRangeException(nameof(status));
         }
@@ -136,5 +136,20 @@ public sealed class JournalEntry
 
         TotalAmount = totalDebit;
         Status = status;
+    }
+
+    public void MarkReviewed()
+    {
+        if (Status != JournalEntryStatus.PendingReview)
+        {
+            throw new InvalidOperationException("Só um lançamento por conferir pode ser conferido.");
+        }
+
+        Status = JournalEntryStatus.Reviewed;
+    }
+
+    public void Void()
+    {
+        Status = JournalEntryStatus.Voided;
     }
 }

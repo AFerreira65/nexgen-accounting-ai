@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-07");
+        StringAssert.Contains(payload, "F1-08");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -185,11 +185,27 @@ public sealed class FoundationApiTests
             """{"journalCode":"GERAL","entryDate":"2026-03-20","documentReference":"OD","description":"X","reviewed":false,"lines":[]}"""))
             .ConfigureAwait(false);
 
+        using var reviewAlreadyReviewed = await client
+            .PostAsync($"{movements}/COMP-2026-00842/review", content: null)
+            .ConfigureAwait(false);
+
+        using var voidUnknown = await client
+            .PostAsync($"{movements}/NAO-EXISTE/void", content: null)
+            .ConfigureAwait(false);
+
+        using var reviseUnknown = await client
+            .PutAsync($"{movements}/NAO-EXISTE", Json(
+                """{"journalCode":"GERAL","entryDate":"2026-03-20","documentReference":"OD","description":"X","reviewed":false,"lines":[{"accountCode":"6221","description":"D","debit":10,"credit":0},{"accountCode":"2211001","description":"C","debit":0,"credit":10}]}"""))
+            .ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.BadRequest, unbalanced.StatusCode);
         StringAssert.Contains(unbalancedPayload, "movement");
         Assert.AreEqual(HttpStatusCode.BadRequest, unknownJournal.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, unknownAccount.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, noMembership.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, reviewAlreadyReviewed.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, voidUnknown.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, reviseUnknown.StatusCode);
     }
 
     [TestMethod]

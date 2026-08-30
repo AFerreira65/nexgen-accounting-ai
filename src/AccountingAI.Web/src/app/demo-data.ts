@@ -13,7 +13,7 @@ export type Movement = {
   journalName: string
   document: string
   description: string
-  status: 'Conferido' | 'Por conferir'
+  status: 'Conferido' | 'Por conferir' | 'Anulado'
   amount: number
   lines: MovementLine[]
 }
