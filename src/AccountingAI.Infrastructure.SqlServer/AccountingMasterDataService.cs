@@ -14,10 +14,24 @@ public sealed record AccountMasterData(
     bool IsActive,
     string? SourceTemplateVersion);
 
+public sealed record JournalMasterData(
+    string Code,
+    string Name,
+    bool IsActive,
+    string? SourceTemplateVersion);
+
+public sealed record DocumentTypeMasterData(
+    string Code,
+    string Name,
+    string DefaultJournalCode,
+    bool IsActive,
+    string? SourceTemplateVersion);
+
 /// <summary>
-/// Manutenção dos cadastros de contas próprias da empresa: criação, renomeação,
-/// ativação/desativação e classificação de taxonomia. Todas as operações são
-/// filtradas por <see cref="LedgerAccount.CompanyId"/> e transacionais.
+/// Manutenção dos cadastros contabilísticos próprios da empresa — contas, diários e
+/// tipos de documento: criação, renomeação e ativação/desativação, além da
+/// classificação de taxonomia nas contas. Todas as operações são filtradas por
+/// <c>CompanyId</c> e transacionais.
 /// </summary>
 public sealed class AccountingMasterDataService(AccountingDbContext context)
 {
@@ -214,6 +228,229 @@ public sealed class AccountingMasterDataService(AccountingDbContext context)
         return applied;
     }
 
+    public async Task<JournalMasterData> CreateJournalAsync(
+        Guid companyId,
+        string code,
+        string name,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedCode = NormalizeCode(code);
+        JournalMasterData? result = null;
+
+        await ExecuteInTransactionAsync(async () =>
+        {
+            var companyExists = await context.Companies
+                .AnyAsync(item => item.Id == companyId, cancellationToken)
+                .ConfigureAwait(false);
+            if (!companyExists)
+            {
+                throw new InvalidOperationException("A empresa não existe.");
+            }
+
+            var codeInUse = await context.Journals
+                .AnyAsync(item => item.CompanyId == companyId && item.Code == normalizedCode, cancellationToken)
+                .ConfigureAwait(false);
+            if (codeInUse)
+            {
+                throw new InvalidOperationException("Já existe um diário com esse código na empresa.");
+            }
+
+            var journal = new AccountingJournal(Guid.NewGuid(), companyId, normalizedCode, name);
+            context.Journals.Add(journal);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            result = Project(journal);
+        }, cancellationToken).ConfigureAwait(false);
+
+        return result!;
+    }
+
+    public async Task<JournalMasterData> UpdateJournalAsync(
+        Guid companyId,
+        string code,
+        string name,
+        bool isActive,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedCode = NormalizeCode(code);
+        JournalMasterData? result = null;
+
+        await ExecuteInTransactionAsync(async () =>
+        {
+            var journal = await context.Journals
+                .SingleOrDefaultAsync(
+                    item => item.CompanyId == companyId && item.Code == normalizedCode,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            if (journal is null)
+            {
+                throw new InvalidOperationException("O diário não existe.");
+            }
+
+            journal.Rename(name);
+
+            if (!isActive && journal.IsActive)
+            {
+                var hasEntries = await context.JournalEntries
+                    .AnyAsync(
+                        item => item.CompanyId == companyId && item.JournalId == journal.Id,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                if (hasEntries)
+                {
+                    throw new InvalidOperationException("O diário tem movimentos e não pode ser desativado.");
+                }
+
+                var usedByDocumentType = await context.AccountingDocumentTypes
+                    .AnyAsync(
+                        item => item.CompanyId == companyId &&
+                            item.DefaultJournalId == journal.Id &&
+                            item.IsActive,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                if (usedByDocumentType)
+                {
+                    throw new InvalidOperationException("O diário está definido como predefinido num tipo de documento ativo.");
+                }
+
+                journal.Deactivate();
+            }
+            else if (isActive && !journal.IsActive)
+            {
+                journal.Reactivate();
+            }
+
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            result = Project(journal);
+        }, cancellationToken).ConfigureAwait(false);
+
+        return result!;
+    }
+
+    public async Task<DocumentTypeMasterData> CreateDocumentTypeAsync(
+        Guid companyId,
+        string code,
+        string name,
+        string defaultJournalCode,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedCode = NormalizeCode(code);
+        var normalizedJournalCode = NormalizeCode(defaultJournalCode);
+        DocumentTypeMasterData? result = null;
+
+        await ExecuteInTransactionAsync(async () =>
+        {
+            var companyExists = await context.Companies
+                .AnyAsync(item => item.Id == companyId, cancellationToken)
+                .ConfigureAwait(false);
+            if (!companyExists)
+            {
+                throw new InvalidOperationException("A empresa não existe.");
+            }
+
+            var codeInUse = await context.AccountingDocumentTypes
+                .AnyAsync(item => item.CompanyId == companyId && item.Code == normalizedCode, cancellationToken)
+                .ConfigureAwait(false);
+            if (codeInUse)
+            {
+                throw new InvalidOperationException("Já existe um tipo de documento com esse código na empresa.");
+            }
+
+            var journal = await ResolveActiveJournalAsync(companyId, normalizedJournalCode, cancellationToken)
+                .ConfigureAwait(false);
+
+            var documentType = new AccountingDocumentType(
+                Guid.NewGuid(),
+                companyId,
+                journal.Id,
+                normalizedCode,
+                name);
+            context.AccountingDocumentTypes.Add(documentType);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            result = new DocumentTypeMasterData(
+                documentType.Code,
+                documentType.Name,
+                journal.Code,
+                documentType.IsActive,
+                documentType.SourceTemplateVersion);
+        }, cancellationToken).ConfigureAwait(false);
+
+        return result!;
+    }
+
+    public async Task<DocumentTypeMasterData> UpdateDocumentTypeAsync(
+        Guid companyId,
+        string code,
+        string name,
+        string defaultJournalCode,
+        bool isActive,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedCode = NormalizeCode(code);
+        var normalizedJournalCode = NormalizeCode(defaultJournalCode);
+        DocumentTypeMasterData? result = null;
+
+        await ExecuteInTransactionAsync(async () =>
+        {
+            var documentType = await context.AccountingDocumentTypes
+                .SingleOrDefaultAsync(
+                    item => item.CompanyId == companyId && item.Code == normalizedCode,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            if (documentType is null)
+            {
+                throw new InvalidOperationException("O tipo de documento não existe.");
+            }
+
+            var journal = await ResolveActiveJournalAsync(companyId, normalizedJournalCode, cancellationToken)
+                .ConfigureAwait(false);
+
+            documentType.Rename(name);
+            documentType.ChangeDefaultJournal(journal.Id);
+
+            if (!isActive && documentType.IsActive)
+            {
+                documentType.Deactivate();
+            }
+            else if (isActive && !documentType.IsActive)
+            {
+                documentType.Reactivate();
+            }
+
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            result = new DocumentTypeMasterData(
+                documentType.Code,
+                documentType.Name,
+                journal.Code,
+                documentType.IsActive,
+                documentType.SourceTemplateVersion);
+        }, cancellationToken).ConfigureAwait(false);
+
+        return result!;
+    }
+
+    private async Task<AccountingJournal> ResolveActiveJournalAsync(
+        Guid companyId,
+        string journalCode,
+        CancellationToken cancellationToken)
+    {
+        var journal = await context.Journals
+            .SingleOrDefaultAsync(
+                item => item.CompanyId == companyId && item.Code == journalCode,
+                cancellationToken)
+            .ConfigureAwait(false);
+        if (journal is null)
+        {
+            throw new ArgumentException("O diário predefinido indicado não existe na empresa.", nameof(journalCode));
+        }
+
+        if (!journal.IsActive)
+        {
+            throw new ArgumentException("O diário predefinido indicado está inativo.", nameof(journalCode));
+        }
+
+        return journal;
+    }
+
     private async Task ExecuteInTransactionAsync(Func<Task> body, CancellationToken cancellationToken)
     {
         if (context.Database.CurrentTransaction is not null)
@@ -248,4 +485,10 @@ public sealed class AccountingMasterDataService(AccountingDbContext context)
         account.TaxonomyCode,
         account.IsActive,
         account.SourceTemplateVersion);
+
+    private static JournalMasterData Project(AccountingJournal journal) => new(
+        journal.Code,
+        journal.Name,
+        journal.IsActive,
+        journal.SourceTemplateVersion);
 }

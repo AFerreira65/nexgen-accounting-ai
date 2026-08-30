@@ -61,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-05B",
+    phase = "F1-06A",
     status = "ready"
 }));
 
@@ -483,6 +483,124 @@ if (app.Environment.IsDevelopment())
         return Results.Ok(new { applied });
     });
 
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/journals", async (
+        Guid userId,
+        Guid companyId,
+        CreateJournalRequest request,
+        AccountingDbContext context,
+        AccountingMasterDataService masterData,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var journal = await masterData
+                .CreateJournalAsync(companyId, request.Code, request.Name, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(journal);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["journal"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/journals/{code}", async (
+        Guid userId,
+        Guid companyId,
+        string code,
+        UpdateJournalRequest request,
+        AccountingDbContext context,
+        AccountingMasterDataService masterData,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var journal = await masterData
+                .UpdateJournalAsync(companyId, code, request.Name, request.IsActive, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(journal);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["journal"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/documents", async (
+        Guid userId,
+        Guid companyId,
+        CreateDocumentTypeRequest request,
+        AccountingDbContext context,
+        AccountingMasterDataService masterData,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var documentType = await masterData
+                .CreateDocumentTypeAsync(companyId, request.Code, request.Name, request.DefaultJournalCode, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(documentType);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["documentType"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/documents/{code}", async (
+        Guid userId,
+        Guid companyId,
+        string code,
+        UpdateDocumentTypeRequest request,
+        AccountingDbContext context,
+        AccountingMasterDataService masterData,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var documentType = await masterData
+                .UpdateDocumentTypeAsync(companyId, code, request.Name, request.DefaultJournalCode, request.IsActive, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(documentType);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["documentType"] = [exception.Message]
+            });
+        }
+    });
+
     app.MapPost("/api/v1/development/users/{userId:guid}/saft/inspect", async (
         Guid userId,
         HttpRequest request,
@@ -670,6 +788,14 @@ public sealed record UpdateAccountRequest(
     bool IsActive,
     string? TaxonomyReference,
     int? TaxonomyCode);
+
+public sealed record CreateJournalRequest(string Code, string Name);
+
+public sealed record UpdateJournalRequest(string Name, bool IsActive);
+
+public sealed record CreateDocumentTypeRequest(string Code, string Name, string DefaultJournalCode);
+
+public sealed record UpdateDocumentTypeRequest(string Name, string DefaultJournalCode, bool IsActive);
 
 public sealed record CreateSaftCompanyRequest(
     string TaxRegistrationNumber,

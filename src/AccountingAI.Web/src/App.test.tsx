@@ -71,6 +71,24 @@ describe('App', () => {
     expect(screen.getByText('Taxonomia S — SNC base')).toBeInTheDocument()
   })
 
+  it('creates a journal and a document type in demo mode', () => {
+    window.history.pushState({}, '', '/diarios')
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Novo diário/i }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Código' }), { target: { value: 'AUX' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descrição' }), { target: { value: 'Diário auxiliar' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar diário' }))
+    expect(screen.getByRole('link', { name: /AUX/ })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Documentos' }))
+    fireEvent.click(screen.getByRole('button', { name: /Novo documento/i }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Código' }), { target: { value: 'FTX' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descrição' }), { target: { value: 'Documento auxiliar X' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar documento' }))
+    expect(screen.getByText('Documento auxiliar X')).toBeInTheDocument()
+  })
+
   it('creates a company account from the chart of accounts screen', () => {
     window.history.pushState({}, '', '/contas')
     render(<App />)

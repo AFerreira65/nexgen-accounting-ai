@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-05B");
+        StringAssert.Contains(payload, "F1-06A");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -145,6 +145,57 @@ public sealed class FoundationApiTests
         Assert.IsFalse(islandPayload.Contains("\"code\":\"6221\"", StringComparison.Ordinal) &&
             islandPayload.Contains("Material de escritório", StringComparison.Ordinal));
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedResponse.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task JournalAndDocumentTypeMaintenanceRejectsInvalidChanges()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string accounting = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/accounting";
+
+        static StringContent Json(string body) => new(body, Encoding.UTF8, "application/json");
+
+        using var duplicateJournal = await client
+            .PostAsync($"{accounting}/journals", Json("""{"code":"GERAL","name":"Duplicado"}"""))
+            .ConfigureAwait(false);
+
+        using var deactivatePostedJournal = await client
+            .PutAsync($"{accounting}/journals/COMPRAS", Json("""{"name":"Diário de compras","isActive":false}"""))
+            .ConfigureAwait(false);
+        var deactivatePayload = await deactivatePostedJournal.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var duplicateDocument = await client
+            .PostAsync($"{accounting}/documents", Json("""{"code":"FTF","name":"x","defaultJournalCode":"COMPRAS"}"""))
+            .ConfigureAwait(false);
+
+        using var unknownJournalForDocument = await client
+            .PostAsync($"{accounting}/documents", Json("""{"code":"NOVOX","name":"x","defaultJournalCode":"NAOEXISTE"}"""))
+            .ConfigureAwait(false);
+
+        using var unknownCompany = await client
+            .PostAsync(
+                "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+                "companies/99999999-9999-9999-9999-999999999999/accounting/journals",
+                Json("""{"code":"X","name":"x"}"""))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, duplicateJournal.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, deactivatePostedJournal.StatusCode);
+        StringAssert.Contains(deactivatePayload, "tem movimentos");
+        Assert.AreEqual(HttpStatusCode.BadRequest, duplicateDocument.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, unknownJournalForDocument.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unknownCompany.StatusCode);
     }
 
     [TestMethod]

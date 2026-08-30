@@ -119,6 +119,42 @@ public sealed class AccountingEntryTests
         Assert.IsNull(account.TaxonomyCode);
     }
 
+    [TestMethod]
+    public void JournalRenameAndActivationToggles()
+    {
+        var journal = new AccountingJournal(Guid.NewGuid(), Guid.NewGuid(), "vendas", "Diário de vendas");
+        Assert.AreEqual("VENDAS", journal.Code);
+
+        journal.Rename("  Diário de vendas e serviços ");
+        Assert.AreEqual("Diário de vendas e serviços", journal.Name);
+        Assert.ThrowsExactly<ArgumentException>(() => journal.Rename(" "));
+
+        journal.Deactivate();
+        Assert.IsFalse(journal.IsActive);
+        journal.Reactivate();
+        Assert.IsTrue(journal.IsActive);
+    }
+
+    [TestMethod]
+    public void DocumentTypeRenameAndChangeDefaultJournal()
+    {
+        var journalId = Guid.NewGuid();
+        var documentType = new AccountingDocumentType(
+            Guid.NewGuid(), Guid.NewGuid(), journalId, "ftv", "Fatura a cliente");
+        Assert.AreEqual("FTV", documentType.Code);
+        Assert.AreEqual(journalId, documentType.DefaultJournalId);
+
+        var newJournalId = Guid.NewGuid();
+        documentType.ChangeDefaultJournal(newJournalId);
+        Assert.AreEqual(newJournalId, documentType.DefaultJournalId);
+        Assert.ThrowsExactly<ArgumentException>(() => documentType.ChangeDefaultJournal(Guid.Empty));
+
+        documentType.Deactivate();
+        Assert.IsFalse(documentType.IsActive);
+        documentType.Reactivate();
+        Assert.IsTrue(documentType.IsActive);
+    }
+
     private static JournalEntry CreateEntry() => new(
         Guid.NewGuid(),
         Guid.NewGuid(),

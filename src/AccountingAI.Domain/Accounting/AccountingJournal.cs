@@ -51,4 +51,20 @@ public sealed class AccountingJournal
     public byte[] RowVersion { get; private set; } = [];
 
     public ICollection<JournalEntry> Entries { get; } = [];
+
+    public void Rename(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        Name = name.Trim();
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
+    public void Reactivate()
+    {
+        IsActive = true;
+    }
 }

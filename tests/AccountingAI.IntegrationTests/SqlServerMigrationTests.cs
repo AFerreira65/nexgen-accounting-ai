@@ -337,6 +337,45 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual("S", review!.Reference);
                 Assert.IsTrue(review.Accounts.Any(item => item.Code == "6221" && item.TaxonomyCode is null));
                 Assert.IsTrue(review.ClassifiedCount >= 2);
+
+                var auxJournal = await masterData
+                    .CreateJournalAsync(DevelopmentDataSeeder.DemoCompanyId, "AUX", "Diário auxiliar")
+                    .ConfigureAwait(false);
+                Assert.AreEqual("AUX", auxJournal.Code);
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await masterData.CreateJournalAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "AUX", "Duplicado").ConfigureAwait(false));
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await masterData.UpdateJournalAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "COMPRAS",
+                        "Diário de compras",
+                        isActive: false).ConfigureAwait(false));
+
+                var auxDocument = await masterData
+                    .CreateDocumentTypeAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "FTX", "Documento auxiliar", "AUX")
+                    .ConfigureAwait(false);
+                Assert.AreEqual("AUX", auxDocument.DefaultJournalCode);
+
+                await Assert.ThrowsAsync<ArgumentException>(async () =>
+                    await masterData.CreateDocumentTypeAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "FTY", "Documento", "NAOEXISTE").ConfigureAwait(false));
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await masterData.UpdateJournalAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "AUX",
+                        "Diário auxiliar",
+                        isActive: false).ConfigureAwait(false));
+
+                var reroutedDocument = await masterData
+                    .UpdateDocumentTypeAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "FTX", "Documento auxiliar", "GERAL", isActive: true)
+                    .ConfigureAwait(false);
+                Assert.AreEqual("GERAL", reroutedDocument.DefaultJournalCode);
             }
 
             context.ChangeTracker.Clear();

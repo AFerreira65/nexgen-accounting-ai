@@ -60,4 +60,30 @@ public sealed class AccountingDocumentType
     public byte[] RowVersion { get; private set; } = [];
 
     public AccountingJournal DefaultJournal { get; private set; } = null!;
+
+    public void Rename(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        Name = name.Trim();
+    }
+
+    public void ChangeDefaultJournal(Guid defaultJournalId)
+    {
+        if (defaultJournalId == Guid.Empty)
+        {
+            throw new ArgumentException("The default journal identifier is required.", nameof(defaultJournalId));
+        }
+
+        DefaultJournalId = defaultJournalId;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
+    public void Reactivate()
+    {
+        IsActive = true;
+    }
 }

@@ -3,6 +3,10 @@ import { buildTaxonomyReview, fallbackAccountingSetupsByCompany, fallbackMovemen
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
 export type AccountEditInput = { name: string; isActive: boolean; taxonomyReference: string | null; taxonomyCode: number | null }
+export type NewJournalInput = { code: string; name: string }
+export type JournalEditInput = { name: string; isActive: boolean }
+export type NewDocumentTypeInput = { code: string; name: string; defaultJournalCode: string }
+export type DocumentTypeEditInput = { name: string; defaultJournalCode: string; isActive: boolean }
 
 async function problemMessage(response: Response) {
   try {
@@ -53,6 +57,10 @@ type WorkContextValue = WorkContextData & {
   saveSettings: (settings: CompanySettings) => Promise<void>
   createAccount: (input: NewAccountInput) => Promise<void>
   updateAccount: (code: string, input: AccountEditInput) => Promise<void>
+  createJournal: (input: NewJournalInput) => Promise<void>
+  updateJournal: (code: string, input: JournalEditInput) => Promise<void>
+  createDocumentType: (input: NewDocumentTypeInput) => Promise<void>
+  updateDocumentType: (code: string, input: DocumentTypeEditInput) => Promise<void>
   applyTaxonomySuggestions: () => Promise<number>
   inspectSaft: (file: File) => Promise<SaftInspection>
   createSaftCompany: (input: SaftCompanyCreationInput) => Promise<SaftCompanyCreation>
@@ -289,6 +297,82 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         accounts: current.accounts.map((account) => account.code === code
           ? { ...account, name: input.name.trim(), isActive: input.isActive, taxonomyReference: input.taxonomyReference, taxonomyCode: input.taxonomyCode }
           : account),
+      }))
+    },
+    createJournal: async (input) => {
+      const code = input.code.trim().toUpperCase()
+      const name = input.name.trim()
+      if (!code || !name) throw new Error('Indique o código e a descrição do diário.')
+      if (setupSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/journals`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, name }),
+        })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+
+      if (accountingSetup.journals.some((journal) => journal.code === code)) throw new Error('Já existe um diário com esse código na empresa.')
+      setAccountingSetup((current) => ({ ...current, journals: [...current.journals, { code, name, isActive: true, sourceTemplateVersion: null }] }))
+    },
+    updateJournal: async (code, input) => {
+      if (setupSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/journals/${encodeURIComponent(code)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+
+      setAccountingSetup((current) => ({
+        ...current,
+        journals: current.journals.map((journal) => journal.code === code ? { ...journal, name: input.name.trim(), isActive: input.isActive } : journal),
+      }))
+    },
+    createDocumentType: async (input) => {
+      const code = input.code.trim().toUpperCase()
+      const name = input.name.trim()
+      const defaultJournalCode = input.defaultJournalCode.trim().toUpperCase()
+      if (!code || !name) throw new Error('Indique o código e a descrição do documento.')
+      if (setupSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/documents`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, name, defaultJournalCode }),
+        })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+
+      if (accountingSetup.documentTypes.some((document) => document.code === code)) throw new Error('Já existe um tipo de documento com esse código na empresa.')
+      const journal = accountingSetup.journals.find((item) => item.code === defaultJournalCode)
+      if (!journal || !journal.isActive) throw new Error('O diário predefinido indicado não existe na empresa ou está inativo.')
+      setAccountingSetup((current) => ({ ...current, documentTypes: [...current.documentTypes, { code, name, defaultJournalCode, isActive: true, sourceTemplateVersion: null }] }))
+    },
+    updateDocumentType: async (code, input) => {
+      const defaultJournalCode = input.defaultJournalCode.trim().toUpperCase()
+      if (setupSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/documents/${encodeURIComponent(code)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...input, defaultJournalCode }),
+        })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+
+      setAccountingSetup((current) => ({
+        ...current,
+        documentTypes: current.documentTypes.map((document) => document.code === code
+          ? { ...document, name: input.name.trim(), defaultJournalCode, isActive: input.isActive }
+          : document),
       }))
     },
     applyTaxonomySuggestions: async () => {

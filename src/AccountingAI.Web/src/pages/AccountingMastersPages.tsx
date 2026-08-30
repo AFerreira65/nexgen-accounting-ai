@@ -1,7 +1,7 @@
 import { BookOpen, CircleAlert, CircleCheck, FileText, Landmark, Plus, Search, Tags, X } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import type { AccountingAccount } from '../app/demo-data'
+import type { AccountingAccount, AccountingDocumentType, AccountingJournal } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
 function useFiltered<T>(items: T[], text: string, value: (item: T) => string) {
@@ -109,27 +109,112 @@ export function AccountsPage() {
   </div>
 }
 
+function JournalEditor({ journal, onClose }: { journal: AccountingJournal | null; onClose: () => void }) {
+  const { createJournal, updateJournal } = useWorkContext()
+  const isCreate = journal === null
+  const [code, setCode] = useState('')
+  const [name, setName] = useState(journal?.name ?? '')
+  const [isActive, setIsActive] = useState(journal?.isActive ?? true)
+  const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
+  const [error, setError] = useState('')
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    setStatus('saving')
+    setError('')
+    try {
+      if (isCreate) await createJournal({ code, name })
+      else await updateJournal(journal.code, { name, isActive })
+      onClose()
+    } catch (submitError) {
+      setStatus('error')
+      setError(submitError instanceof Error ? submitError.message : 'Não foi possível guardar o diário.')
+    }
+  }
+
+  return <section className="panel settings-panel">
+    <div className="panel-heading"><div><h2>{isCreate ? 'Novo diário' : `Editar diário ${journal.code}`}</h2><p>{isCreate ? 'O código é único dentro da empresa.' : 'Um diário com movimentos ou usado como predefinido não pode ser desativado.'}</p></div><button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button></div>
+    <form className="settings-grid" onSubmit={submit}>
+      {isCreate && <label><span>Código</span><input value={code} onChange={(event) => setCode(event.target.value)} placeholder="ex.: AUX" autoFocus /></label>}
+      <label><span>Descrição</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Descrição do diário" /></label>
+      {!isCreate && <label className="toggle-field"><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /><span><strong>Diário ativo</strong><small>Desative para o retirar das novas seleções.</small></span></label>}
+      <footer className="settings-actions">
+        {status === 'error' && <span className="save-status error">{error}</span>}
+        <button className="button button-secondary" type="button" onClick={onClose}>Cancelar</button>
+        <button className="button button-primary" type="submit" disabled={status === 'saving'}>{status === 'saving' ? 'A guardar…' : 'Guardar diário'}</button>
+      </footer>
+    </form>
+  </section>
+}
+
 export function JournalsPage() {
   const { accountingSetup, movements, setupSource } = useWorkContext()
   const [search, setSearch] = useState('')
+  const [editor, setEditor] = useState<{ mode: 'create' } | { mode: 'edit'; journal: AccountingJournal } | null>(null)
   const journals = useFiltered(accountingSetup.journals, search, (item) => `${item.code} ${item.name}`)
 
   return <div className="page-stack">
     <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Diários</h1><p>Diários operacionais da empresa e respetiva utilização nos movimentos.</p></div><SourceBadge database={setupSource === 'database'} /></header>
-    <div className="filterbar"><label><Search size={17} /><span className="sr-only">Pesquisar diários</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar código ou descrição…" /></label><span className="catalog-count">{journals.length} diários</span></div>
-    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Diário</th><th>Descrição</th><th className="numeric">Movimentos</th><th>Origem</th><th>Estado</th></tr></thead><tbody>{journals.map((journal) => <tr key={journal.code}><td><Link className="inline-link" to={`/diarios/${journal.code}`}><Landmark size={14} /> {journal.code}</Link></td><td>{journal.name}</td><td className="numeric strong">{movements.filter((item) => item.journalId === journal.code).length}</td><td>{journal.sourceTemplateVersion ? 'Tabela predefinida' : 'Empresa'}</td><td><span className={`badge ${journal.isActive ? 'success' : 'warning'}`}>{journal.isActive ? 'Ativo' : 'Inativo'}</span></td></tr>)}</tbody></table></div></section>
+    <div className="filterbar"><label><Search size={17} /><span className="sr-only">Pesquisar diários</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar código ou descrição…" /></label><span className="catalog-count">{journals.length} diários</span><button className="button button-primary" type="button" onClick={() => setEditor({ mode: 'create' })}><Plus size={16} /> Novo diário</button></div>
+    {editor?.mode === 'create' && <JournalEditor journal={null} onClose={() => setEditor(null)} />}
+    {editor?.mode === 'edit' && <JournalEditor journal={editor.journal} onClose={() => setEditor(null)} />}
+    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Diário</th><th>Descrição</th><th className="numeric">Movimentos</th><th>Origem</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{journals.map((journal) => <tr key={journal.code}><td><Link className="inline-link" to={`/diarios/${journal.code}`}><Landmark size={14} /> {journal.code}</Link></td><td>{journal.name}</td><td className="numeric strong">{movements.filter((item) => item.journalId === journal.code).length}</td><td>{journal.sourceTemplateVersion ? 'Tabela predefinida' : 'Empresa'}</td><td><span className={`badge ${journal.isActive ? 'success' : 'warning'}`}>{journal.isActive ? 'Ativo' : 'Inativo'}</span></td><td><button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', journal })}>Editar</button></td></tr>)}</tbody></table></div></section>
   </div>
+}
+
+function DocumentTypeEditor({ documentType, journals, onClose }: { documentType: AccountingDocumentType | null; journals: AccountingJournal[]; onClose: () => void }) {
+  const { createDocumentType, updateDocumentType } = useWorkContext()
+  const isCreate = documentType === null
+  const activeJournals = journals.filter((item) => item.isActive || item.code === documentType?.defaultJournalCode)
+  const [code, setCode] = useState('')
+  const [name, setName] = useState(documentType?.name ?? '')
+  const [defaultJournalCode, setDefaultJournalCode] = useState(documentType?.defaultJournalCode ?? activeJournals[0]?.code ?? '')
+  const [isActive, setIsActive] = useState(documentType?.isActive ?? true)
+  const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
+  const [error, setError] = useState('')
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    setStatus('saving')
+    setError('')
+    try {
+      if (isCreate) await createDocumentType({ code, name, defaultJournalCode })
+      else await updateDocumentType(documentType.code, { name, defaultJournalCode, isActive })
+      onClose()
+    } catch (submitError) {
+      setStatus('error')
+      setError(submitError instanceof Error ? submitError.message : 'Não foi possível guardar o documento.')
+    }
+  }
+
+  return <section className="panel settings-panel">
+    <div className="panel-heading"><div><h2>{isCreate ? 'Novo tipo de documento' : `Editar documento ${documentType.code}`}</h2><p>O diário predefinido tem de existir e estar ativo na empresa.</p></div><button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button></div>
+    <form className="settings-grid" onSubmit={submit}>
+      {isCreate && <label><span>Código</span><input value={code} onChange={(event) => setCode(event.target.value)} placeholder="ex.: FT" autoFocus /></label>}
+      <label><span>Descrição</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Descrição do documento" /></label>
+      <label><span>Diário predefinido</span><select value={defaultJournalCode} onChange={(event) => setDefaultJournalCode(event.target.value)}>{activeJournals.map((item) => <option key={item.code} value={item.code}>{item.code} · {item.name}</option>)}</select></label>
+      {!isCreate && <label className="toggle-field"><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /><span><strong>Documento ativo</strong><small>Desative para o retirar das novas seleções.</small></span></label>}
+      <footer className="settings-actions">
+        {status === 'error' && <span className="save-status error">{error}</span>}
+        <button className="button button-secondary" type="button" onClick={onClose}>Cancelar</button>
+        <button className="button button-primary" type="submit" disabled={status === 'saving'}>{status === 'saving' ? 'A guardar…' : 'Guardar documento'}</button>
+      </footer>
+    </form>
+  </section>
 }
 
 export function DocumentTypesPage() {
   const { accountingSetup, setupSource } = useWorkContext()
   const [search, setSearch] = useState('')
+  const [editor, setEditor] = useState<{ mode: 'create' } | { mode: 'edit'; documentType: AccountingDocumentType } | null>(null)
   const documents = useFiltered(accountingSetup.documentTypes, search, (item) => `${item.code} ${item.name} ${item.defaultJournalCode}`)
 
   return <div className="page-stack">
     <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Documentos contabilísticos</h1><p>Tipos de documento e diário sugerido para o lançamento.</p></div><SourceBadge database={setupSource === 'database'} /></header>
-    <div className="filterbar"><label><Search size={17} /><span className="sr-only">Pesquisar documentos</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar documento ou diário…" /></label><span className="catalog-count">{documents.length} documentos</span></div>
-    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Documento</th><th>Descrição</th><th>Diário predefinido</th><th>Origem</th><th>Estado</th></tr></thead><tbody>{documents.map((document) => <tr key={document.code}><td><span className="inline-link"><FileText size={14} /> {document.code}</span></td><td>{document.name}</td><td><Link className="inline-link" to={`/diarios/${document.defaultJournalCode}`}>{document.defaultJournalCode}</Link></td><td>{document.sourceTemplateVersion ? 'Tabela predefinida' : 'Empresa'}</td><td><span className={`badge ${document.isActive ? 'success' : 'warning'}`}>{document.isActive ? 'Ativo' : 'Inativo'}</span></td></tr>)}</tbody></table></div></section>
+    <div className="filterbar"><label><Search size={17} /><span className="sr-only">Pesquisar documentos</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar documento ou diário…" /></label><span className="catalog-count">{documents.length} documentos</span><button className="button button-primary" type="button" onClick={() => setEditor({ mode: 'create' })}><Plus size={16} /> Novo documento</button></div>
+    {editor?.mode === 'create' && <DocumentTypeEditor documentType={null} journals={accountingSetup.journals} onClose={() => setEditor(null)} />}
+    {editor?.mode === 'edit' && <DocumentTypeEditor documentType={editor.documentType} journals={accountingSetup.journals} onClose={() => setEditor(null)} />}
+    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Documento</th><th>Descrição</th><th>Diário predefinido</th><th>Origem</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{documents.map((document) => <tr key={document.code}><td><span className="inline-link"><FileText size={14} /> {document.code}</span></td><td>{document.name}</td><td><Link className="inline-link" to={`/diarios/${document.defaultJournalCode}`}>{document.defaultJournalCode}</Link></td><td>{document.sourceTemplateVersion ? 'Tabela predefinida' : 'Empresa'}</td><td><span className={`badge ${document.isActive ? 'success' : 'warning'}`}>{document.isActive ? 'Ativo' : 'Inativo'}</span></td><td><button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', documentType: document })}>Editar</button></td></tr>)}</tbody></table></div></section>
   </div>
 }
 
