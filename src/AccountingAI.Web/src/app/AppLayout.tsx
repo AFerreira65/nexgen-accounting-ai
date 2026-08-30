@@ -1,6 +1,7 @@
 import {
   Bell,
   BookOpen,
+  Building2,
   ChevronDown,
   CircleGauge,
   ClipboardCheck,
@@ -24,6 +25,7 @@ const links = [
   { to: '/documentos', label: 'Documentos', icon: FileText },
   { to: '/taxonomias', label: 'Taxonomias', icon: Tags },
   { to: '/importar', label: 'Importar SAF-T', icon: FileUp },
+  { to: '/organizacao', label: 'Organização', icon: Building2 },
   { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
 ]
 

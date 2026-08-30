@@ -6,6 +6,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { JournalPage } from './pages/JournalPage'
 import { MovementPage } from './pages/MovementPage'
 import { MovementsPage } from './pages/MovementsPage'
+import { OrganizationPage } from './pages/OrganizationPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -27,6 +28,7 @@ export function App() {
             <Route path="/documentos" element={<DocumentTypesPage />} />
             <Route path="/taxonomias" element={<TaxonomiesPage />} />
             <Route path="/importar" element={<SaftImportPage />} />
+            <Route path="/organizacao" element={<OrganizationPage />} />
             <Route path="/tarefas" element={<PlaceholderPage title="Tarefas" />} />
             <Route path="/definicoes" element={<SettingsPage />} />
           </Route>

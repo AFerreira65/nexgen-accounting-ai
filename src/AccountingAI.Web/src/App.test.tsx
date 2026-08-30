@@ -72,6 +72,16 @@ describe('App', () => {
     expect(screen.getByText(/Catálogo S \(Portaria 302\/2016\)/)).toBeInTheDocument()
   })
 
+  it('shows the organisation screen with companies and users sections', () => {
+    window.history.pushState({}, '', '/organizacao')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Empresas e utilizadores' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Empresas' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Utilizadores' })).toBeInTheDocument()
+    expect(screen.getByText(/requer a liga/i)).toBeInTheDocument()
+  })
+
   it('creates a journal and a document type in demo mode', () => {
     window.history.pushState({}, '', '/diarios')
     render(<App />)

@@ -116,6 +116,7 @@ public sealed class SqlServerMigrationTests
                 .AddScoped<AccountingMasterDataService>()
                 .AddScoped<TaxonomyReviewService>()
                 .AddScoped<SaftCompanyCreationService>()
+                .AddScoped<OrganizationAdminService>()
                 .BuildServiceProvider();
             await services.SeedDevelopmentOrganizationAsync().ConfigureAwait(false);
             await services.SeedDevelopmentAccountingAsync().ConfigureAwait(false);
@@ -415,6 +416,46 @@ public sealed class SqlServerMigrationTests
                         TaxRegion.Azores,
                         AccountingStandard.SncSmallEntities,
                         "EUR").ConfigureAwait(false));
+            }
+
+            await using (var adminScope = services.CreateAsyncScope())
+            {
+                var admin = adminScope.ServiceProvider.GetRequiredService<OrganizationAdminService>();
+
+                var adminCompany = await admin
+                    .CreateCompanyAsync(firmId, "Empresa de Gabinete, Lda.", "515222000", TaxRegion.Mainland,
+                        AccountingStandard.SncGeneral, "EUR")
+                    .ConfigureAwait(false);
+                Assert.AreEqual("515222000", adminCompany.TaxRegistrationNumber);
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await admin.CreateCompanyAsync(firmId, "Duplicada", "515222000", TaxRegion.Mainland,
+                        AccountingStandard.SncGeneral, "EUR").ConfigureAwait(false));
+
+                var newUser = await admin.CreateUserAsync("Utilizador de Gabinete", "gabinete@teste.invalid").ConfigureAwait(false);
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await admin.CreateUserAsync("Outro", "GABINETE@teste.invalid").ConfigureAwait(false));
+
+                var adminMembership = await admin
+                    .SetMembershipAsync(adminCompany.Id, newUser.Id, CompanyUserRole.Accountant, isActive: true)
+                    .ConfigureAwait(false);
+                Assert.AreEqual("Accountant", adminMembership.Role);
+                var rerole = await admin
+                    .SetMembershipAsync(adminCompany.Id, newUser.Id, CompanyUserRole.Viewer, isActive: true)
+                    .ConfigureAwait(false);
+                Assert.AreEqual("Viewer", rerole.Role);
+
+                var updated = await admin
+                    .UpdateCompanyAsync(adminCompany.Id, "Empresa de Gabinete II, Lda.", TaxRegion.Azores, "USD", isActive: false)
+                    .ConfigureAwait(false);
+                Assert.AreEqual("Empresa de Gabinete II, Lda.", updated.LegalName);
+                Assert.IsFalse(updated.IsActive);
+
+                var provisionedAccounts = await context.Accounts.AsNoTracking()
+                    .CountAsync(a => a.CompanyId == adminCompany.Id).ConfigureAwait(false);
+                Assert.AreEqual(
+                    AccountingTemplateCatalog.For(AccountingStandard.SncGeneral).Accounts.Count,
+                    provisionedAccounts);
             }
 
             context.ChangeTracker.Clear();

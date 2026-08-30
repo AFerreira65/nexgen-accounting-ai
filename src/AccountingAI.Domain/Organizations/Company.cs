@@ -105,4 +105,36 @@ public sealed class Company
         AccountingSetupVersion = version.Trim();
         AccountingSetupCompletedAtUtc = DateTimeOffset.UtcNow;
     }
+
+    public void Rename(string legalName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(legalName);
+        LegalName = legalName.Trim();
+    }
+
+    public void ChangeTaxRegion(TaxRegion taxRegion)
+    {
+        if (!Enum.IsDefined(taxRegion))
+        {
+            throw new ArgumentOutOfRangeException(nameof(taxRegion));
+        }
+
+        TaxRegion = taxRegion;
+    }
+
+    public void ChangeBaseCurrency(string baseCurrency)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(baseCurrency);
+        var normalized = baseCurrency.Trim().ToUpperInvariant();
+        if (normalized.Length != 3)
+        {
+            throw new ArgumentException("The base currency must use a three-letter code.", nameof(baseCurrency));
+        }
+
+        BaseCurrency = normalized;
+    }
+
+    public void Deactivate() => IsActive = false;
+
+    public void Reactivate() => IsActive = true;
 }

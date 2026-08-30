@@ -61,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-06B",
+    phase = "F1-06C",
     status = "ready"
 }));
 
@@ -758,6 +758,124 @@ if (app.Environment.IsDevelopment())
             });
         }
     });
+
+    app.MapPost("/api/v1/development/organization/companies", async (
+        CreateOrganizationCompanyRequest request,
+        OrganizationAdminService admin,
+        CancellationToken cancellationToken) =>
+    {
+        if (!Enum.TryParse<TaxRegion>(request.TaxRegion, true, out var region) || !Enum.IsDefined(region) ||
+            !Enum.TryParse<AccountingStandard>(request.AccountingStandard, true, out var standard) || !Enum.IsDefined(standard))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["request"] = ["Região fiscal ou norma contabilística desconhecida."]
+            });
+        }
+
+        try
+        {
+            var company = await admin
+                .CreateCompanyAsync(
+                    request.AccountingFirmId,
+                    request.LegalName,
+                    request.TaxRegistrationNumber,
+                    region,
+                    standard,
+                    string.IsNullOrWhiteSpace(request.BaseCurrency) ? "EUR" : request.BaseCurrency!,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(company);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["company"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/organization/companies/{companyId:guid}", async (
+        Guid companyId,
+        UpdateOrganizationCompanyRequest request,
+        OrganizationAdminService admin,
+        CancellationToken cancellationToken) =>
+    {
+        if (!Enum.TryParse<TaxRegion>(request.TaxRegion, true, out var region) || !Enum.IsDefined(region))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["taxRegion"] = ["Região fiscal desconhecida."] });
+        }
+
+        try
+        {
+            var company = await admin
+                .UpdateCompanyAsync(companyId, request.LegalName, region, request.BaseCurrency, request.IsActive, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(company);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["company"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/organization/users", async (
+        CreateOrganizationUserRequest request,
+        OrganizationAdminService admin,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var user = await admin.CreateUserAsync(request.DisplayName, request.Email, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(user);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["user"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/organization/users/{userId:guid}", async (
+        Guid userId,
+        UpdateOrganizationUserRequest request,
+        OrganizationAdminService admin,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var user = await admin
+                .UpdateUserAsync(userId, request.DisplayName, request.Email, request.IsActive, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(user);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["user"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/organization/companies/{companyId:guid}/members/{userId:guid}", async (
+        Guid companyId,
+        Guid userId,
+        SetMembershipRequest request,
+        OrganizationAdminService admin,
+        CancellationToken cancellationToken) =>
+    {
+        if (!Enum.TryParse<CompanyUserRole>(request.Role, true, out var role) || !Enum.IsDefined(role))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["role"] = ["Função desconhecida."] });
+        }
+
+        try
+        {
+            var membership = await admin
+                .SetMembershipAsync(companyId, userId, role, request.IsActive, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(membership);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["membership"] = [exception.Message] });
+        }
+    });
 }
 
 await app.RunAsync().ConfigureAwait(false);
@@ -826,3 +944,23 @@ public sealed record CreateSaftCompanyRequest(
     string TaxRegion,
     string AccountingStandard,
     string? BaseCurrency);
+
+public sealed record CreateOrganizationCompanyRequest(
+    Guid AccountingFirmId,
+    string LegalName,
+    string TaxRegistrationNumber,
+    string TaxRegion,
+    string AccountingStandard,
+    string? BaseCurrency);
+
+public sealed record UpdateOrganizationCompanyRequest(
+    string LegalName,
+    string TaxRegion,
+    string BaseCurrency,
+    bool IsActive);
+
+public sealed record CreateOrganizationUserRequest(string DisplayName, string Email);
+
+public sealed record UpdateOrganizationUserRequest(string DisplayName, string Email, bool IsActive);
+
+public sealed record SetMembershipRequest(string Role, bool IsActive);

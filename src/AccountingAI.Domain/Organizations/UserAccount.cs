@@ -44,4 +44,27 @@ public sealed class UserAccount
     public byte[] RowVersion { get; private set; } = [];
 
     public ICollection<CompanyUser> CompanyMemberships { get; } = [];
+
+    public void Rename(string displayName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+        DisplayName = displayName.Trim();
+    }
+
+    public void ChangeEmail(string email)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+        var normalized = email.Trim().ToUpperInvariant();
+        if (!normalized.Contains('@', StringComparison.Ordinal))
+        {
+            throw new ArgumentException("A valid email address is required.", nameof(email));
+        }
+
+        Email = email.Trim();
+        NormalizedEmail = normalized;
+    }
+
+    public void Deactivate() => IsActive = false;
+
+    public void Reactivate() => IsActive = true;
 }

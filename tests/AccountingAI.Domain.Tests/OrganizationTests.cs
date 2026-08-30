@@ -72,6 +72,52 @@ public sealed class OrganizationTests
     }
 
     [TestMethod]
+    public void CompanyMutationsTrimAndValidate()
+    {
+        var company = new Company(Guid.NewGuid(), Guid.NewGuid(), "Empresa", "DEMO-PT-0003", TaxRegion.Mainland);
+
+        company.Rename("  Empresa Renomeada, Lda. ");
+        company.ChangeTaxRegion(TaxRegion.Madeira);
+        company.ChangeBaseCurrency("usd");
+        company.Deactivate();
+
+        Assert.AreEqual("Empresa Renomeada, Lda.", company.LegalName);
+        Assert.AreEqual(TaxRegion.Madeira, company.TaxRegion);
+        Assert.AreEqual("USD", company.BaseCurrency);
+        Assert.IsFalse(company.IsActive);
+        Assert.ThrowsExactly<ArgumentException>(() => company.ChangeBaseCurrency("EURO"));
+        Assert.ThrowsExactly<ArgumentException>(() => company.Rename("  "));
+    }
+
+    [TestMethod]
+    public void UserAccountRenameAndEmailChange()
+    {
+        var user = new UserAccount(Guid.NewGuid(), "Ana", "ana@example.pt");
+
+        user.Rename(" Ana Maria ");
+        user.ChangeEmail(" Ana.Maria@Example.PT ");
+        user.Deactivate();
+
+        Assert.AreEqual("Ana Maria", user.DisplayName);
+        Assert.AreEqual("Ana.Maria@Example.PT", user.Email);
+        Assert.AreEqual("ANA.MARIA@EXAMPLE.PT", user.NormalizedEmail);
+        Assert.IsFalse(user.IsActive);
+        Assert.ThrowsExactly<ArgumentException>(() => user.ChangeEmail("sem-arroba"));
+    }
+
+    [TestMethod]
+    public void CompanyUserRoleChange()
+    {
+        var membership = new CompanyUser(Guid.NewGuid(), Guid.NewGuid(), CompanyUserRole.Viewer);
+
+        membership.ChangeRole(CompanyUserRole.Accountant);
+        membership.Deactivate();
+
+        Assert.AreEqual(CompanyUserRole.Accountant, membership.Role);
+        Assert.IsFalse(membership.IsActive);
+    }
+
+    [TestMethod]
     public void UserCompanySettingsAreScopedByCompanyAndUser()
     {
         var companyId = Guid.NewGuid();

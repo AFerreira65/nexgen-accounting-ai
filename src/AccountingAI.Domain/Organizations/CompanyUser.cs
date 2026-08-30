@@ -46,4 +46,18 @@ public sealed class CompanyUser
     public UserAccount User { get; private set; } = null!;
 
     public UserCompanySettings? Settings { get; private set; }
+
+    public void ChangeRole(CompanyUserRole role)
+    {
+        if (!Enum.IsDefined(role))
+        {
+            throw new ArgumentOutOfRangeException(nameof(role));
+        }
+
+        Role = role;
+    }
+
+    public void Deactivate() => IsActive = false;
+
+    public void Reactivate() => IsActive = true;
 }

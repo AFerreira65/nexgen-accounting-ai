@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-06B");
+        StringAssert.Contains(payload, "F1-06C");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -145,6 +145,53 @@ public sealed class FoundationApiTests
         Assert.IsFalse(islandPayload.Contains("\"code\":\"6221\"", StringComparison.Ordinal) &&
             islandPayload.Contains("Material de escritório", StringComparison.Ordinal));
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedResponse.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task OrganizationAdminRejectsInvalidCompanyAndUserChanges()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        static StringContent Json(string body) => new(body, Encoding.UTF8, "application/json");
+
+        using var duplicateCompany = await client.PostAsync("/api/v1/development/organization/companies", Json(
+            """{"accountingFirmId":"11111111-1111-1111-1111-111111111111","legalName":"Duplicada","taxRegistrationNumber":"DEMO-PT-0001","taxRegion":"Mainland","accountingStandard":"SncGeneral"}"""))
+            .ConfigureAwait(false);
+        var duplicateCompanyPayload = await duplicateCompany.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var badRegion = await client.PostAsync("/api/v1/development/organization/companies", Json(
+            """{"accountingFirmId":"11111111-1111-1111-1111-111111111111","legalName":"X","taxRegistrationNumber":"599111222","taxRegion":"Nowhere","accountingStandard":"SncGeneral"}"""))
+            .ConfigureAwait(false);
+
+        using var duplicateUser = await client.PostAsync("/api/v1/development/organization/users", Json(
+            """{"displayName":"Outro","email":"antonio.demo@accountingai.local"}"""))
+            .ConfigureAwait(false);
+
+        using var unknownCompany = await client.PutAsync(
+            "/api/v1/development/organization/companies/99999999-9999-9999-9999-999999999999", Json(
+            """{"legalName":"X","taxRegion":"Mainland","baseCurrency":"EUR","isActive":true}"""))
+            .ConfigureAwait(false);
+
+        using var badRole = await client.PutAsync(
+            "/api/v1/development/organization/companies/22222222-2222-2222-2222-222222222222/members/33333333-3333-3333-3333-333333333333",
+            Json("""{"role":"Supreme","isActive":true}"""))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, duplicateCompany.StatusCode);
+        StringAssert.Contains(duplicateCompanyPayload, "NIF DEMO-PT-0001");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badRegion.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, duplicateUser.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, unknownCompany.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, badRole.StatusCode);
     }
 
     [TestMethod]
