@@ -11,6 +11,7 @@ internal sealed class AccountingDocumentTypeConfiguration
     {
         builder.ToTable("AccountingDocumentTypes", "accounting");
         builder.HasKey(item => item.Id);
+        builder.HasAlternateKey(item => new { item.CompanyId, item.Id });
         builder.Property(item => item.Code).HasMaxLength(24).IsRequired();
         builder.Property(item => item.Name).HasMaxLength(160).IsRequired();
         builder.Property(item => item.SourceTemplateVersion).HasMaxLength(64);

@@ -18,6 +18,8 @@ public sealed record PostedMovement(
     DateOnly EntryDate,
     string JournalCode,
     string JournalName,
+    string? DocumentTypeCode,
+    string? DocumentTypeName,
     string DocumentReference,
     string Description,
     string Status,
@@ -50,12 +52,12 @@ public sealed class JournalPostingService(AccountingDbContext context)
         await InTransactionAsync(async () =>
         {
             context.ChangeTracker.Clear();
-            var (journal, prefix) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
+            var (journal, prefix, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
             var reference = await NextReferenceAsync(companyId, prefix, entryDate.Year, cancellationToken).ConfigureAwait(false);
 
             var entry = new JournalEntry(
-                Guid.NewGuid(), companyId, journal.Id, reference, entryDate, documentReference, description);
+                Guid.NewGuid(), companyId, journal.Id, reference, entryDate, documentReference, description, documentType?.Id);
             foreach (var line in lines)
             {
                 entry.AddLine(Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit);
@@ -64,7 +66,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             entry.Complete(reviewed ? JournalEntryStatus.Reviewed : JournalEntryStatus.PendingReview);
             context.JournalEntries.Add(entry);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            result = Project(entry, journal, accounts);
+            result = Project(entry, journal, accounts, documentType);
         }, cancellationToken).ConfigureAwait(false);
 
         return result!;
@@ -101,7 +103,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
                 throw new InvalidOperationException("Só um lançamento por conferir pode ser corrigido.");
             }
 
-            var (journal, _) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
+            var (journal, _, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
 
             // Corrigir é substituir: remove o lançamento e recria-o com a mesma referência.
@@ -109,7 +111,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             var entry = new JournalEntry(
-                Guid.NewGuid(), companyId, journal.Id, normalizedReference, entryDate, documentReference, description);
+                Guid.NewGuid(), companyId, journal.Id, normalizedReference, entryDate, documentReference, description, documentType?.Id);
             foreach (var line in lines)
             {
                 entry.AddLine(Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit);
@@ -118,7 +120,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             entry.Complete(reviewed ? JournalEntryStatus.Reviewed : JournalEntryStatus.PendingReview);
             context.JournalEntries.Add(entry);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            result = Project(entry, journal, accounts);
+            result = Project(entry, journal, accounts, documentType);
         }, cancellationToken).ConfigureAwait(false);
 
         return result!;
@@ -144,6 +146,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             context.ChangeTracker.Clear();
             var entry = await context.JournalEntries
                 .Include(item => item.Journal)
+                .Include(item => item.DocumentType)
                 .Include(item => item.Lines)
                     .ThenInclude(item => item.Account)
                 .SingleOrDefaultAsync(
@@ -196,7 +199,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
     /// é por tipo de documento e o diário é o predefinido do tipo (salvo se for
     /// indicado outro explicitamente).
     /// </summary>
-    private async Task<(AccountingJournal Journal, string Prefix)> ResolveJournalAndPrefixAsync(
+    private async Task<(AccountingJournal Journal, string Prefix, AccountingDocumentType? DocumentType)> ResolveJournalAndPrefixAsync(
         Guid companyId,
         string? journalCode,
         string? documentTypeCode,
@@ -207,7 +210,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
 
         if (normalizedDocumentType.Length == 0)
         {
-            return (await ResolveJournalAsync(companyId, normalizedJournal, cancellationToken).ConfigureAwait(false), normalizedJournal);
+            return (await ResolveJournalAsync(companyId, normalizedJournal, cancellationToken).ConfigureAwait(false), normalizedJournal, null);
         }
 
         var documentType = await context.AccountingDocumentTypes
@@ -230,7 +233,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             throw new InvalidOperationException("O diário do tipo de documento está inativo.");
         }
 
-        return (journal, documentType.Code);
+        return (journal, documentType.Code, documentType);
     }
 
     private async Task<Dictionary<string, LedgerAccount>> ResolveAccountsAsync(
@@ -288,14 +291,18 @@ public sealed class JournalPostingService(AccountingDbContext context)
     private static PostedMovement Project(
         JournalEntry entry,
         AccountingJournal journal,
-        IReadOnlyDictionary<string, LedgerAccount> accountsByCode)
+        IReadOnlyDictionary<string, LedgerAccount> accountsByCode,
+        AccountingDocumentType? documentType = null)
     {
         var byId = accountsByCode.Values.ToDictionary(account => account.Id);
+        var type = documentType ?? entry.DocumentType;
         return new PostedMovement(
             entry.Reference,
             entry.EntryDate,
             journal.Code,
             journal.Name,
+            type?.Code,
+            type?.Name,
             entry.DocumentReference,
             entry.Description,
             entry.Status switch

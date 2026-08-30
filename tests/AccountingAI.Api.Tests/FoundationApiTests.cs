@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-10");
+        StringAssert.Contains(payload, "F1-11");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -85,8 +85,17 @@ public sealed class FoundationApiTests
             .ReadAsStringAsync()
             .ConfigureAwait(false);
 
+        using var filteredResponse = await client.GetAsync(
+            "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/accounting/movements?documentType=FTV")
+            .ConfigureAwait(false);
+        var filteredPayload = await filteredResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.OK, mainlandResponse.StatusCode);
         StringAssert.Contains(mainlandPayload, "COMP-2026-00842");
+        StringAssert.Contains(mainlandPayload, "\"documentType\":null");
+        Assert.AreEqual(HttpStatusCode.OK, filteredResponse.StatusCode);
+        Assert.IsFalse(filteredPayload.Contains("COMP-2026-00842", StringComparison.Ordinal));
         Assert.IsFalse(mainlandPayload.Contains("VEND-AZO-2026-00014", StringComparison.Ordinal));
         Assert.AreEqual(HttpStatusCode.OK, islandResponse.StatusCode);
         StringAssert.Contains(islandPayload, "VEND-AZO-2026-00014");

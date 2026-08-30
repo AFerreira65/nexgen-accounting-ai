@@ -57,6 +57,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260830182151_AccountingTaxonomies");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260830234235_JournalEntryDocumentType");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -571,6 +574,16 @@ public sealed class SqlServerMigrationTests
                     .ConfigureAwait(false);
                 Assert.AreEqual("FTV-2026-00001", invoice.Reference);
                 Assert.AreEqual("VENDAS", invoice.JournalCode);
+                Assert.AreEqual("FTV", invoice.DocumentTypeCode);
+
+                var storedInvoice = await context.JournalEntries
+                    .AsNoTracking()
+                    .Include(entry => entry.DocumentType)
+                    .SingleAsync(entry => entry.CompanyId == DevelopmentDataSeeder.DemoCompanyId &&
+                        entry.Reference == "FTV-2026-00001")
+                    .ConfigureAwait(false);
+                Assert.IsNotNull(storedInvoice.DocumentTypeId);
+                Assert.AreEqual("FTV", storedInvoice.DocumentType!.Code);
 
                 var invoice2 = await posting
                     .PostAsync(

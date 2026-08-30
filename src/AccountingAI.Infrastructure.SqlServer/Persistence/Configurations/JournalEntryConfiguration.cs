@@ -20,10 +20,17 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.HasIndex(item => new { item.CompanyId, item.Reference }).IsUnique();
         builder.HasIndex(item => new { item.CompanyId, item.EntryDate });
+        builder.HasIndex(item => new { item.CompanyId, item.DocumentTypeId });
         builder.HasOne(item => item.Journal)
             .WithMany(item => item.Entries)
             .HasForeignKey(item => new { item.CompanyId, item.JournalId })
             .HasPrincipalKey(item => new { item.CompanyId, item.Id })
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(item => item.DocumentType)
+            .WithMany()
+            .HasForeignKey(item => new { item.CompanyId, item.DocumentTypeId })
+            .HasPrincipalKey(item => new { item.CompanyId, item.Id })
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -13,7 +13,8 @@ public sealed class JournalEntry
         string reference,
         DateOnly entryDate,
         string documentReference,
-        string description)
+        string description,
+        Guid? documentTypeId = null)
     {
         if (id == Guid.Empty)
         {
@@ -30,6 +31,11 @@ public sealed class JournalEntry
             throw new ArgumentException("The journal identifier is required.", nameof(journalId));
         }
 
+        if (documentTypeId == Guid.Empty)
+        {
+            throw new ArgumentException("The document type identifier cannot be empty.", nameof(documentTypeId));
+        }
+
         ArgumentException.ThrowIfNullOrWhiteSpace(reference);
         ArgumentException.ThrowIfNullOrWhiteSpace(documentReference);
         ArgumentException.ThrowIfNullOrWhiteSpace(description);
@@ -37,6 +43,7 @@ public sealed class JournalEntry
         Id = id;
         CompanyId = companyId;
         JournalId = journalId;
+        DocumentTypeId = documentTypeId;
         Reference = reference.Trim().ToUpperInvariant();
         EntryDate = entryDate;
         DocumentReference = documentReference.Trim();
@@ -49,6 +56,8 @@ public sealed class JournalEntry
     public Guid CompanyId { get; private set; }
 
     public Guid JournalId { get; private set; }
+
+    public Guid? DocumentTypeId { get; private set; }
 
     public string Reference { get; private set; } = string.Empty;
 
@@ -65,6 +74,8 @@ public sealed class JournalEntry
     public byte[] RowVersion { get; private set; } = [];
 
     public AccountingJournal Journal { get; private set; } = null!;
+
+    public AccountingDocumentType? DocumentType { get; private set; }
 
     public ICollection<JournalEntryLine> Lines { get; } = [];
 

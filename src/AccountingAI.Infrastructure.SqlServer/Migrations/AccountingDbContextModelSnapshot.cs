@@ -126,6 +126,9 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(240)
                         .HasColumnType("nvarchar(240)");
 
+                    b.Property<Guid?>("DocumentTypeId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateOnly>("EntryDate")
                         .HasColumnType("date");
 
@@ -151,6 +154,8 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "DocumentTypeId");
 
                     b.HasIndex("CompanyId", "EntryDate");
 
@@ -522,12 +527,20 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
 
             modelBuilder.Entity("AccountingAI.Domain.Accounting.JournalEntry", b =>
                 {
+                    b.HasOne("AccountingAI.Domain.Accounting.AccountingDocumentType", "DocumentType")
+                        .WithMany()
+                        .HasForeignKey("CompanyId", "DocumentTypeId")
+                        .HasPrincipalKey("CompanyId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AccountingAI.Domain.Accounting.AccountingJournal", "Journal")
                         .WithMany("Entries")
                         .HasForeignKey("CompanyId", "JournalId")
                         .HasPrincipalKey("CompanyId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("DocumentType");
 
                     b.Navigation("Journal");
                 });

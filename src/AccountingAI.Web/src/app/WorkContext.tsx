@@ -437,6 +437,8 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         date: input.entryDate,
         journalId: journalCode,
         journalName: journal?.name ?? journalCode,
+        documentType: documentType?.code ?? null,
+        documentTypeName: documentType?.name ?? null,
         document: input.documentReference,
         description: input.description,
         status: input.reviewed ? 'Conferido' : 'Por conferir',

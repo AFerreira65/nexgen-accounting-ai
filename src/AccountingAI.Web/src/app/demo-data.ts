@@ -11,6 +11,8 @@ export type Movement = {
   date: string
   journalId: string
   journalName: string
+  documentType?: string | null
+  documentTypeName?: string | null
   document: string
   description: string
   status: 'Conferido' | 'Por conferir' | 'Anulado'

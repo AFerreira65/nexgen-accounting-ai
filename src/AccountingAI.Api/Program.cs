@@ -61,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-10",
+    phase = "F1-11",
     status = "ready"
 }));
 
@@ -226,7 +226,8 @@ if (app.Environment.IsDevelopment())
         Guid userId,
         Guid companyId,
         AccountingDbContext context,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken,
+        string? documentType) =>
     {
         var hasActiveAccess = await context.CompanyUsers
             .AsNoTracking()
@@ -243,12 +244,22 @@ if (app.Environment.IsDevelopment())
             return Results.NotFound();
         }
 
-        var entryEntities = await context.JournalEntries
+        var query = context.JournalEntries
             .AsNoTracking()
             .Where(item => item.CompanyId == companyId)
             .Include(item => item.Journal)
+            .Include(item => item.DocumentType)
             .Include(item => item.Lines)
                 .ThenInclude(item => item.Account)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(documentType))
+        {
+            var normalizedDocumentType = documentType.Trim().ToUpperInvariant();
+            query = query.Where(item => item.DocumentType != null && item.DocumentType.Code == normalizedDocumentType);
+        }
+
+        var entryEntities = await query
             .OrderByDescending(item => item.EntryDate)
             .ThenByDescending(item => item.Reference)
             .ToListAsync(cancellationToken)
@@ -260,6 +271,8 @@ if (app.Environment.IsDevelopment())
             Date = item.EntryDate,
             JournalId = item.Journal.Code,
             JournalName = item.Journal.Name,
+            DocumentType = item.DocumentType == null ? null : item.DocumentType.Code,
+            DocumentTypeName = item.DocumentType == null ? null : item.DocumentType.Name,
             Document = item.DocumentReference,
             item.Description,
             Status = item.Status switch
@@ -1085,6 +1098,8 @@ public partial class Program
         Date = movement.EntryDate,
         JournalId = movement.JournalCode,
         movement.JournalName,
+        DocumentType = movement.DocumentTypeCode,
+        DocumentTypeName = movement.DocumentTypeName,
         Document = movement.DocumentReference,
         movement.Description,
         movement.Status,
