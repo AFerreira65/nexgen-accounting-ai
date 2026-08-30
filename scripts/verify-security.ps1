@@ -11,25 +11,36 @@ $toolDirectory = Join-Path $projectRoot ".tools\gitleaks\$toolVersion"
 $toolPath = Join-Path $toolDirectory 'gitleaks.exe'
 
 Write-Host 'A verificar vulnerabilidades NuGet...' -ForegroundColor Cyan
+$inventoryOutput = dotnet list $solution package --include-transitive --format json --no-restore
+if ($LASTEXITCODE -ne 0) { throw 'Não foi possível obter o inventário NuGet.' }
+$inventoryReport = $inventoryOutput | ConvertFrom-Json
+$inventoryPackageCount = 0
+foreach ($project in @($inventoryReport.projects)) {
+    foreach ($framework in @($project.frameworks)) {
+        $inventoryPackageCount += @($framework.topLevelPackages).Count
+        $inventoryPackageCount += @($framework.transitivePackages).Count
+    }
+}
+if ($inventoryPackageCount -eq 0) {
+    throw 'O inventário NuGet não devolveu pacotes; confirme que o restore terminou sem erros.'
+}
+
 $packageOutput = dotnet list $solution package --vulnerable --include-transitive --format json --no-restore
 if ($LASTEXITCODE -ne 0) { throw 'A auditoria NuGet falhou.' }
 $packageReport = $packageOutput | ConvertFrom-Json
 $vulnerabilityCount = 0
-$packageCount = 0
+$projectCount = @($packageReport.projects).Count
 foreach ($project in @($packageReport.projects)) {
     foreach ($framework in @($project.frameworks)) {
         foreach ($package in @($framework.topLevelPackages) + @($framework.transitivePackages)) {
-            if ($null -ne $package) {
-                $packageCount++
-            }
             if ($null -ne $package -and $null -ne $package.vulnerabilities) {
                 $vulnerabilityCount += @($package.vulnerabilities).Count
             }
         }
     }
 }
-if ($packageCount -eq 0) {
-    throw 'A auditoria NuGet não devolveu pacotes; confirme que o restore terminou sem erros.'
+if ($projectCount -eq 0) {
+    throw 'A auditoria NuGet não devolveu projetos; confirme a solução e o restore.'
 }
 if ($vulnerabilityCount -gt 0) {
     throw "Foram encontradas $vulnerabilityCount vulnerabilidades NuGet conhecidas."

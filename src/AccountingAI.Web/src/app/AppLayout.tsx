@@ -8,6 +8,7 @@ import {
   Landmark,
   Search,
   Settings,
+  Tags,
   WalletCards,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -20,6 +21,7 @@ const links = [
   { to: '/contas', label: 'Plano de contas', icon: BookOpen },
   { to: '/diarios', label: 'Diários', icon: Landmark },
   { to: '/documentos', label: 'Documentos', icon: FileText },
+  { to: '/taxonomias', label: 'Taxonomias', icon: Tags },
   { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
 ]
 

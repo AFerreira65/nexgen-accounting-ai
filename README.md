@@ -2,7 +2,7 @@
 
 Monitor Windows em C#/.NET para leitura e análise de ficheiros SAF-T (PT).
 
-## Nova plataforma contabilística — F1-03A contexto de trabalho
+## Nova plataforma contabilística — F1-04A cadastros contabilísticos
 
 Sobre a fundação F1-01 foi criada a primeira experiência contabilística local:
 
@@ -10,15 +10,22 @@ Sobre a fundação F1-01 foi criada a primeira experiência contabilística loca
 - PWA React/TypeScript;
 - SQL Server com migrações versionadas;
 - health checks, correlação e logs estruturados;
-- cadastro base de gabinete e empresa em SQL Server LocalDB;
+- cadastro base de gabinete e empresa em SQL Server local;
 - base `accountingAI` em SQL Server Express, criada e atualizada por migrações no arranque;
 - utilizadores associados a uma ou mais empresas, com função e preferências próprias em cada empresa;
 - seletor de empresa ligado à API e ecrã para editar preferências próprias do utilizador na empresa ativa;
+- plano de contas, diários, movimentos e linhas contabilísticas persistidos no schema `accounting`;
+- norma contabilística escolhida por empresa, com plano de contas base versionado;
+- provisionamento transacional e idempotente de contas, diários e tipos de documento ao criar a empresa;
+- ecrãs pesquisáveis de plano e abertura de contas, diários, documentos contabilísticos e taxonomias;
+- controlo de cobertura `TaxonomyReference`/`TaxonomyCode` por norma e por conta de movimento;
+- dados sintéticos idempotentes e distintos para as empresas do Continente e dos Açores;
+- dashboard, movimentos, razão de conta e diário alimentados pela API e filtrados pela empresa ativa;
 - painel de trabalho apelativo e responsivo;
 - navegação contextual entre movimento, conta e diário;
 - testes de arquitetura, domínio, API, migrações e frontend.
 
-Esta evolução não altera o comportamento do monitor WinForms descrito abaixo. Os movimentos visíveis são dados demonstrativos de interface e ainda não constituem um núcleo de lançamentos. Consulte [F1-02A](docs/phase-1/F1-02A-LOCAL-EXPERIENCE.md), [F1-02B](docs/phase-1/F1-02B-ENGINEERING-GATES.md), [F1-02C](docs/phase-1/F1-02C-MULTI-COMPANY-DATABASE.md) e [F1-03A](docs/phase-1/F1-03A-WORK-CONTEXT.md).
+Esta evolução não altera o comportamento do monitor WinForms descrito abaixo. Os movimentos são exclusivamente dados sintéticos de desenvolvimento: já exercitam o núcleo contabilístico de leitura, mas ainda não existe criação/edição de lançamentos pela aplicação. Consulte [F1-02A](docs/phase-1/F1-02A-LOCAL-EXPERIENCE.md), [F1-02B](docs/phase-1/F1-02B-ENGINEERING-GATES.md), [F1-02C](docs/phase-1/F1-02C-MULTI-COMPANY-DATABASE.md), [F1-03A](docs/phase-1/F1-03A-WORK-CONTEXT.md), [F1-03B](docs/phase-1/F1-03B-ACCOUNTING-TEST-DATA.md), [F1-03C](docs/phase-1/F1-03C-ACCOUNTING-TEMPLATES.md) e [F1-04A](docs/phase-1/F1-04A-ACCOUNTING-MASTER-DATA.md).
 
 ### Abrir a aplicação web local
 
@@ -32,7 +39,7 @@ A aplicação abre em `http://127.0.0.1:5173/`. O ficheiro `src/AccountingAI.Web
 
 ### SQL Server Express local
 
-No perfil de desenvolvimento, a aplicação aplica automaticamente as migrações em falta e cria as tabelas na base `accountingAI`. A configuração versionada usa autenticação integrada. Quando for necessário login SQL, guarde a ligação apenas no secret store local:
+No perfil de desenvolvimento, a aplicação aplica automaticamente as migrações em falta, cria as tabelas na base `accountingAI` e repõe de forma idempotente os dados sintéticos em falta. A configuração versionada usa autenticação integrada. Quando for necessário login SQL, guarde a ligação apenas no secret store local:
 
 ```powershell
 dotnet user-secrets set "ConnectionStrings:Accounting" "<connection-string-local>" --project .\src\AccountingAI.Api\AccountingAI.Api.csproj
@@ -164,7 +171,7 @@ Nesta instalação os DSN PHC estão registados no ODBC de 32 bits, pelo que a p
 ## Evolução prevista
 
 1. Validação integral pelo XSD oficial e regras analíticas/SVAT.
-2. Persistência local para ficheiros de grande dimensão e análise multiperíodo.
+2. Persistência de importações SAF-T de grande dimensão e análise multiperíodo sobre o núcleo contabilístico já iniciado.
 3. Validação real da consulta direta no ambiente de testes e depois em produção da AT.
 4. Cruzamento vendas SAF-T vs. compras e-Fatura vs. contabilidade.
 5. Alargar o adaptador PHC aos outros dois modos, conta corrente, stocks, contabilidade e recebimentos, com regras explícitas por empresa.

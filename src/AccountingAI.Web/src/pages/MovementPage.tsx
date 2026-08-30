@@ -1,10 +1,12 @@
 import { ArrowLeft, BookOpen, FileText, Landmark, Link2, MoreHorizontal } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
-import { euro, findMovement } from '../app/demo-data'
+import { euro, formatMovementDate } from '../app/demo-data'
+import { useWorkContext } from '../app/WorkContext'
 
 export function MovementPage() {
   const { movementId } = useParams()
-  const movement = findMovement(movementId)
+  const { movements } = useWorkContext()
+  const movement = movements.find((item) => item.id === movementId)
   if (!movement) return <div className="empty-state"><h1>Movimento não encontrado</h1><Link to="/movimentos">Voltar aos movimentos</Link></div>
 
   const mainAccount = movement.lines[0]
@@ -28,6 +30,6 @@ export function MovementPage() {
       </tbody><tfoot><tr><td colSpan={2}>Totais</td><td className="numeric">{euro.format(movement.amount)}</td><td className="numeric">{euro.format(movement.amount)}</td></tr></tfoot></table></div>
     </section>
 
-    <section className="metadata-strip"><span><small>Data</small><strong>{movement.date}</strong></span><span><small>Período</small><strong>2026 / 08</strong></span><span><small>Criado por</small><strong>Accounting AI</strong></span><span><small>Referência</small><strong>{movement.document.split(' · ')[0]}</strong></span></section>
+    <section className="metadata-strip"><span><small>Data</small><strong>{formatMovementDate(movement.date)}</strong></span><span><small>Período</small><strong>{movement.date.slice(0, 7).replace('-', ' / ')}</strong></span><span><small>Origem</small><strong>Dados de teste locais</strong></span><span><small>Referência</small><strong>{movement.document.split(' · ')[0]}</strong></span></section>
   </div>
 }

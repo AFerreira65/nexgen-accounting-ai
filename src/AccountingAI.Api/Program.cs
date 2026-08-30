@@ -1,4 +1,5 @@
 using AccountingAI.Api;
+using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
@@ -26,9 +27,15 @@ if (applyMigrations)
     await app.Services.MigrateAccountingDatabaseAsync().ConfigureAwait(false);
 }
 
-if (builder.Configuration.GetValue<bool>("Database:SeedDemoData"))
+if (app.Environment.IsDevelopment() &&
+    builder.Configuration.GetValue<bool>("Database:SeedDemoData"))
 {
     await app.Services.SeedDevelopmentOrganizationAsync().ConfigureAwait(false);
+    await app.Services.SeedDevelopmentAccountingAsync().ConfigureAwait(false);
+    await using var accountingScope = app.Services.CreateAsyncScope();
+    var provisioner = accountingScope.ServiceProvider.GetRequiredService<CompanyAccountingProvisioner>();
+    await provisioner.ProvisionAsync(DevelopmentDataSeeder.DemoCompanyId).ConfigureAwait(false);
+    await provisioner.ProvisionAsync(DevelopmentDataSeeder.DemoIslandCompanyId).ConfigureAwait(false);
 }
 
 if (migrateOnly)
@@ -50,7 +57,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-03A",
+    phase = "F1-04A",
     status = "ready"
 }));
 
@@ -73,11 +80,11 @@ if (app.Environment.IsDevelopment())
             .ConfigureAwait(false);
 
         var firms = firmEntities.Select(item => new
-            {
-                item.Id,
-                item.Name,
-                item.Slug,
-                Companies = item.Companies
+        {
+            item.Id,
+            item.Name,
+            item.Slug,
+            Companies = item.Companies
                     .OrderBy(company => company.LegalName)
                     .Select(company => new
                     {
@@ -109,7 +116,7 @@ if (app.Environment.IsDevelopment())
                                     }
                             })
                     })
-            })
+        })
             .ToList();
 
         return Results.Ok(firms);
@@ -147,6 +154,8 @@ if (app.Environment.IsDevelopment())
                     item.Company.TaxRegistrationNumber,
                     Region = item.Company.TaxRegion.ToString(),
                     item.Company.BaseCurrency,
+                    AccountingStandard = item.Company.AccountingStandard.ToString(),
+                    item.Company.AccountingSetupVersion,
                     Role = item.Role.ToString(),
                     Settings = ToSettingsResponse(item.Settings)
                 })
@@ -207,6 +216,140 @@ if (app.Environment.IsDevelopment())
                 ["settings"] = [exception.Message]
             });
         }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        CancellationToken cancellationToken) =>
+    {
+        var hasActiveAccess = await context.CompanyUsers
+            .AsNoTracking()
+            .AnyAsync(
+                item => item.UserId == userId &&
+                    item.CompanyId == companyId &&
+                    item.IsActive &&
+                    item.Company.IsActive,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!hasActiveAccess)
+        {
+            return Results.NotFound();
+        }
+
+        var entryEntities = await context.JournalEntries
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId)
+            .Include(item => item.Journal)
+            .Include(item => item.Lines)
+                .ThenInclude(item => item.Account)
+            .OrderByDescending(item => item.EntryDate)
+            .ThenByDescending(item => item.Reference)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var movements = entryEntities.Select(item => new
+        {
+            Id = item.Reference,
+            Date = item.EntryDate,
+            JournalId = item.Journal.Code,
+            JournalName = item.Journal.Name,
+            Document = item.DocumentReference,
+            item.Description,
+            Status = item.Status == JournalEntryStatus.Reviewed ? "Conferido" : "Por conferir",
+            Amount = item.TotalAmount,
+            Lines = item.Lines
+                .OrderBy(line => line.Sequence)
+                .Select(line => new
+                {
+                    Account = line.Account.Code,
+                    AccountName = line.Account.Name,
+                    line.Description,
+                    line.Debit,
+                    line.Credit
+                })
+        });
+
+        return Results.Ok(movements);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/setup", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        CancellationToken cancellationToken) =>
+    {
+        var company = await context.Companies
+            .AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == companyId &&
+                item.IsActive &&
+                item.UserMemberships.Any(membership =>
+                    membership.UserId == userId && membership.IsActive), cancellationToken)
+            .ConfigureAwait(false);
+        if (company is null)
+        {
+            return Results.NotFound();
+        }
+
+        var accounts = await context.Accounts
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId)
+            .OrderBy(item => item.Code)
+            .Select(item => new
+            {
+                item.Code,
+                item.Name,
+                item.ParentCode,
+                item.AllowsPosting,
+                item.TaxonomyReference,
+                item.TaxonomyCode,
+                item.IsActive,
+                item.SourceTemplateVersion
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var journals = await context.Journals
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId)
+            .OrderBy(item => item.Code)
+            .Select(item => new { item.Code, item.Name, item.IsActive, item.SourceTemplateVersion })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var documentTypes = await context.AccountingDocumentTypes
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId)
+            .OrderBy(item => item.Code)
+            .Select(item => new
+            {
+                item.Code,
+                item.Name,
+                DefaultJournalCode = item.DefaultJournal.Code,
+                item.IsActive,
+                item.SourceTemplateVersion
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var template = AccountingTemplateCatalog.For(company.AccountingStandard);
+        return Results.Ok(new
+        {
+            Standard = company.AccountingStandard.ToString(),
+            Template = new
+            {
+                template.Code,
+                template.Name,
+                company.AccountingSetupVersion,
+                template.LegalSource,
+                template.TaxonomyReference,
+                template.TaxonomyName,
+                template.TaxonomyLegalSource
+            },
+            Accounts = accounts,
+            Journals = journals,
+            DocumentTypes = documentTypes
+        });
     });
 }
 

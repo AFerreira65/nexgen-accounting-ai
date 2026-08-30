@@ -155,6 +155,20 @@ tfoot td { border-top: 1px solid #cfdadd; color: #20343c; background: #f8fafb; f
 .filterbar { display: flex; justify-content: space-between; gap: 12px; }
 .filterbar label { display: flex; align-items: center; gap: 8px; width: min(440px, 100%); min-height: 40px; padding: 0 12px; border: 1px solid #d8e2e4; border-radius: 9px; color: #869399; background: white; }
 .filterbar input { width: 100%; border: 0; outline: 0; color: #293b43; font-size: 11px; }
+.catalog-count { align-self: center; color: #75858c; font-size: 10px; font-weight: 750; white-space: nowrap; }
+.taxonomy-pill { display: inline-flex; padding: 4px 8px; border-radius: 7px; color: #176a61; background: #e2f3ef; font-size: 9px; font-weight: 800; }
+.muted-value { color: #9a7a55; font-size: 9px; }
+.taxonomy-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 20px; }
+.taxonomy-reference, .taxonomy-health { display: flex; align-items: center; gap: 14px; }
+.taxonomy-reference { padding-right: 20px; border-right: 1px solid #e3eaec; }
+.taxonomy-health { padding-left: 20px; }
+.taxonomy-reference > div, .taxonomy-health > div { display: grid; gap: 3px; }
+.taxonomy-reference small, .taxonomy-health small { color: #87949a; font-size: 8px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.taxonomy-reference strong, .taxonomy-health strong { color: #25383f; font-size: 18px; }
+.taxonomy-reference span, .taxonomy-health span { color: #7b8b91; font-size: 9px; }
+.taxonomy-health > span { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; }
+.taxonomy-health > span.warning { color: #a86318; background: #fff0dc; }
+.taxonomy-health > span.success { color: #1d745c; background: #e2f4e9; }
 .empty-state { display: grid; place-items: center; min-height: 330px; padding: 40px; text-align: center; }
 .empty-state h2 { margin-bottom: 8px; font-size: 20px; }
 .empty-state p { max-width: 540px; color: #74848b; font-size: 12px; line-height: 1.65; }
@@ -218,4 +232,7 @@ html[data-compact='true'] td { padding-top: 8px; padding-bottom: 8px; }
   .filterbar { align-items: stretch; flex-direction: column; }
   .filterbar label { width: 100%; }
   .settings-grid { grid-template-columns: 1fr; }
+  .taxonomy-summary { grid-template-columns: 1fr; gap: 18px; }
+  .taxonomy-reference { padding: 0 0 18px; border-right: 0; border-bottom: 1px solid #e3eaec; }
+  .taxonomy-health { padding: 0; }
 }

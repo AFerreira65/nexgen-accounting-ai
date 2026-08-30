@@ -13,6 +13,8 @@ internal sealed class CompanyConfiguration : IEntityTypeConfiguration<Company>
         builder.Property(item => item.LegalName).HasMaxLength(200).IsRequired();
         builder.Property(item => item.TaxRegistrationNumber).HasMaxLength(32).IsRequired();
         builder.Property(item => item.TaxRegion).HasConversion<int>();
+        builder.Property(item => item.AccountingStandard).HasConversion<int>();
+        builder.Property(item => item.AccountingSetupVersion).HasMaxLength(64);
         builder.Property(item => item.BaseCurrency).HasMaxLength(3).IsFixedLength().IsRequired();
         builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
         builder.Property(item => item.RowVersion).IsRowVersion();

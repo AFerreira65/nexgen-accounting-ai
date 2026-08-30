@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, type AccountingSetup, type Movement } from './demo-data'
 
 export type CompanySettings = {
   culture: string
@@ -28,6 +29,12 @@ type WorkContextData = {
 type WorkContextValue = WorkContextData & {
   activeCompany: WorkCompany
   source: 'database' | 'demonstration'
+  accountingSource: 'database' | 'demonstration'
+  setupSource: 'database' | 'demonstration'
+  accountingLoading: boolean
+  setupLoading: boolean
+  accountingSetup: AccountingSetup
+  movements: Movement[]
   selectCompany: (companyId: string) => void
   saveSettings: (settings: CompanySettings) => Promise<void>
 }
@@ -68,6 +75,12 @@ function storedCompanyId() {
 export function WorkContextProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState(fallbackContext)
   const [source, setSource] = useState<'database' | 'demonstration'>('demonstration')
+  const [accountingSource, setAccountingSource] = useState<'database' | 'demonstration'>('demonstration')
+  const [setupSource, setSetupSource] = useState<'database' | 'demonstration'>('demonstration')
+  const [accountingLoading, setAccountingLoading] = useState(false)
+  const [setupLoading, setSetupLoading] = useState(false)
+  const [accountingMovements, setAccountingMovements] = useState<Movement[]>(fallbackMovements)
+  const [accountingSetup, setAccountingSetup] = useState<AccountingSetup>(fallbackAccountingSetupsByCompany[fallbackContext.companies[0].companyId])
   const [activeCompanyId, setActiveCompanyId] = useState(storedCompanyId() ?? fallbackContext.companies[0].companyId)
 
   useEffect(() => {
@@ -96,6 +109,68 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
   const activeCompany = data.companies.find((company) => company.companyId === activeCompanyId) ?? data.companies[0]
 
   useEffect(() => {
+    const fallback = fallbackMovementsByCompany[activeCompany.companyId] ?? []
+    if (import.meta.env.MODE === 'test' || source !== 'database') {
+      setAccountingMovements(fallback)
+      setAccountingSource('demonstration')
+      return
+    }
+
+    const controller = new AbortController()
+    setAccountingLoading(true)
+    void fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/movements`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return await response.json() as Movement[]
+      })
+      .then((items) => {
+        setAccountingMovements(items)
+        setAccountingSource('database')
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setAccountingMovements(fallback)
+        setAccountingSource('demonstration')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setAccountingLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [activeCompany.companyId, data.user.id, source])
+
+  useEffect(() => {
+    const fallback = fallbackAccountingSetupsByCompany[activeCompany.companyId] ?? fallbackAccountingSetupsByCompany[fallbackContext.companies[0].companyId]
+    if (import.meta.env.MODE === 'test' || source !== 'database') {
+      setAccountingSetup(fallback)
+      setSetupSource('demonstration')
+      return
+    }
+
+    const controller = new AbortController()
+    setSetupLoading(true)
+    void fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/setup`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return await response.json() as AccountingSetup
+      })
+      .then((setup) => {
+        setAccountingSetup(setup)
+        setSetupSource('database')
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setAccountingSetup(fallback)
+        setSetupSource('demonstration')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setSetupLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [activeCompany.companyId, data.user.id, source])
+
+  useEffect(() => {
     document.documentElement.dataset.theme = activeCompany.settings.theme.toLowerCase()
     document.documentElement.dataset.compact = String(activeCompany.settings.compactMode)
   }, [activeCompany.settings.compactMode, activeCompany.settings.theme])
@@ -104,6 +179,12 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
     ...data,
     activeCompany,
     source,
+    accountingSource,
+    setupSource,
+    accountingLoading,
+    setupLoading,
+    accountingSetup,
+    movements: accountingMovements,
     selectCompany: (companyId) => {
       if (!data.companies.some((company) => company.companyId === companyId)) return
       setActiveCompanyId(companyId)
@@ -125,7 +206,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         companies: current.companies.map((company) => company.companyId === activeCompany.companyId ? { ...company, settings } : company),
       }))
     },
-  }), [activeCompany, data, source])
+  }), [accountingLoading, accountingMovements, accountingSetup, accountingSource, activeCompany, data, setupLoading, setupSource, source])
 
   return <Context.Provider value={value}>{children}</Context.Provider>
 }

@@ -1,3 +1,4 @@
+using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Infrastructure.SqlServer.Persistence.Configurations;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,16 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<UserCompanySettings> UserCompanySettings => Set<UserCompanySettings>();
 
+    public DbSet<LedgerAccount> Accounts => Set<LedgerAccount>();
+
+    public DbSet<AccountingJournal> Journals => Set<AccountingJournal>();
+
+    public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+
+    public DbSet<JournalEntryLine> JournalEntryLines => Set<JournalEntryLine>();
+
+    public DbSet<AccountingDocumentType> AccountingDocumentTypes => Set<AccountingDocumentType>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -28,6 +39,11 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new UserAccountConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyUserConfiguration());
         modelBuilder.ApplyConfiguration(new UserCompanySettingsConfiguration());
+        modelBuilder.ApplyConfiguration(new LedgerAccountConfiguration());
+        modelBuilder.ApplyConfiguration(new AccountingJournalConfiguration());
+        modelBuilder.ApplyConfiguration(new JournalEntryConfiguration());
+        modelBuilder.ApplyConfiguration(new JournalEntryLineConfiguration());
+        modelBuilder.ApplyConfiguration(new AccountingDocumentTypeConfiguration());
 
         modelBuilder.Entity<FoundationState>(entity =>
         {

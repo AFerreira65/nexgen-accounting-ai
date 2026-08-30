@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './app/AppLayout'
 import { AccountPage } from './pages/AccountPage'
+import { AccountsPage, DocumentTypesPage, JournalsPage, TaxonomiesPage } from './pages/AccountingMastersPages'
 import { DashboardPage } from './pages/DashboardPage'
 import { JournalPage } from './pages/JournalPage'
 import { MovementPage } from './pages/MovementPage'
@@ -20,9 +21,10 @@ export function App() {
             <Route path="/movimentos/:movementId" element={<MovementPage />} />
             <Route path="/contas/:accountCode" element={<AccountPage />} />
             <Route path="/diarios/:journalId" element={<JournalPage />} />
-            <Route path="/contas" element={<PlaceholderPage title="Plano de contas" />} />
-            <Route path="/diarios" element={<PlaceholderPage title="Diários" />} />
-            <Route path="/documentos" element={<PlaceholderPage title="Documentos" />} />
+            <Route path="/contas" element={<AccountsPage />} />
+            <Route path="/diarios" element={<JournalsPage />} />
+            <Route path="/documentos" element={<DocumentTypesPage />} />
+            <Route path="/taxonomias" element={<TaxonomiesPage />} />
             <Route path="/tarefas" element={<PlaceholderPage title="Tarefas" />} />
             <Route path="/definicoes" element={<SettingsPage />} />
           </Route>

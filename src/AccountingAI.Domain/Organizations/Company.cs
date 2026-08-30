@@ -12,7 +12,8 @@ public sealed class Company
         string legalName,
         string taxRegistrationNumber,
         TaxRegion taxRegion,
-        string baseCurrency = "EUR")
+        string baseCurrency = "EUR",
+        AccountingStandard accountingStandard = AccountingStandard.SncGeneral)
     {
         if (id == Guid.Empty)
         {
@@ -33,6 +34,11 @@ public sealed class Company
             throw new ArgumentOutOfRangeException(nameof(taxRegion));
         }
 
+        if (!Enum.IsDefined(accountingStandard))
+        {
+            throw new ArgumentOutOfRangeException(nameof(accountingStandard));
+        }
+
         var normalizedCurrency = baseCurrency.Trim().ToUpperInvariant();
         if (normalizedCurrency.Length != 3)
         {
@@ -44,6 +50,7 @@ public sealed class Company
         LegalName = legalName.Trim();
         TaxRegistrationNumber = taxRegistrationNumber.Trim().ToUpperInvariant();
         TaxRegion = taxRegion;
+        AccountingStandard = accountingStandard;
         BaseCurrency = normalizedCurrency;
         IsActive = true;
     }
@@ -58,6 +65,12 @@ public sealed class Company
 
     public TaxRegion TaxRegion { get; private set; }
 
+    public AccountingStandard AccountingStandard { get; private set; }
+
+    public string? AccountingSetupVersion { get; private set; }
+
+    public DateTimeOffset? AccountingSetupCompletedAtUtc { get; private set; }
+
     public string BaseCurrency { get; private set; } = string.Empty;
 
     public bool IsActive { get; private set; }
@@ -69,4 +82,27 @@ public sealed class Company
     public AccountingFirm AccountingFirm { get; private set; } = null!;
 
     public ICollection<CompanyUser> UserMemberships { get; } = [];
+
+    public void ChangeAccountingStandard(AccountingStandard accountingStandard)
+    {
+        if (!Enum.IsDefined(accountingStandard))
+        {
+            throw new ArgumentOutOfRangeException(nameof(accountingStandard));
+        }
+
+        if (AccountingSetupVersion is not null && AccountingStandard != accountingStandard)
+        {
+            throw new InvalidOperationException(
+                "The accounting standard cannot be changed after accounting setup.");
+        }
+
+        AccountingStandard = accountingStandard;
+    }
+
+    public void MarkAccountingSetup(string version)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(version);
+        AccountingSetupVersion = version.Trim();
+        AccountingSetupCompletedAtUtc = DateTimeOffset.UtcNow;
+    }
 }

@@ -28,17 +28,21 @@ public static class DevelopmentDataSeeder
             context.Add(new AccountingFirm(DemoFirmId, "Gabinete Horizonte", "gabinete-horizonte"));
         }
 
-        if (!await context.Companies
-                .AnyAsync(item => item.Id == DemoCompanyId, cancellationToken)
-                .ConfigureAwait(false))
+        var demoCompany = await context.Companies
+            .SingleOrDefaultAsync(item => item.Id == DemoCompanyId, cancellationToken)
+            .ConfigureAwait(false);
+        if (demoCompany is null)
         {
-            context.Add(new Company(
+            demoCompany = new Company(
                 DemoCompanyId,
                 DemoFirmId,
                 "Almeida & Costa, Lda. (Demonstração)",
                 "DEMO-PT-0001",
-                TaxRegion.Mainland));
+                TaxRegion.Mainland,
+                accountingStandard: AccountingStandard.SncGeneral);
+            context.Add(demoCompany);
         }
+        demoCompany.ChangeAccountingStandard(AccountingStandard.SncGeneral);
 
         if (!await context.UserAccounts
                 .AnyAsync(item => item.Id == DemoUserId, cancellationToken)
@@ -70,17 +74,21 @@ public static class DevelopmentDataSeeder
             context.Add(settings);
         }
 
-        if (!await context.Companies
-                .AnyAsync(item => item.Id == DemoIslandCompanyId, cancellationToken)
-                .ConfigureAwait(false))
+        var demoIslandCompany = await context.Companies
+            .SingleOrDefaultAsync(item => item.Id == DemoIslandCompanyId, cancellationToken)
+            .ConfigureAwait(false);
+        if (demoIslandCompany is null)
         {
-            context.Add(new Company(
+            demoIslandCompany = new Company(
                 DemoIslandCompanyId,
                 DemoFirmId,
                 "Ilha Azul Serviços, Lda. (Demonstração)",
                 "DEMO-PT-0002",
-                TaxRegion.Azores));
+                TaxRegion.Azores,
+                accountingStandard: AccountingStandard.SncMicroEntities);
+            context.Add(demoIslandCompany);
         }
+        demoIslandCompany.ChangeAccountingStandard(AccountingStandard.SncMicroEntities);
 
         if (!await context.CompanyUsers
                 .AnyAsync(

@@ -30,6 +30,36 @@ public sealed class OrganizationTests
     }
 
     [TestMethod]
+    public void CompanyKeepsTheSelectedAccountingStandard()
+    {
+        var company = new Company(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Microempresa Sintética",
+            "DEMO-PT-ME-0001",
+            TaxRegion.Mainland,
+            accountingStandard: AccountingStandard.SncMicroEntities);
+
+        Assert.AreEqual(AccountingStandard.SncMicroEntities, company.AccountingStandard);
+        Assert.IsNull(company.AccountingSetupVersion);
+    }
+
+    [TestMethod]
+    public void CompanyRejectsAStandardChangeAfterAccountingSetup()
+    {
+        var company = new Company(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Empresa Sintética",
+            "DEMO-PT-0002",
+            TaxRegion.Mainland);
+        company.MarkAccountingSetup("PT-CC-218-2015-NCRF-v1");
+
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
+            company.ChangeAccountingStandard(AccountingStandard.SncSmallEntities));
+    }
+
+    [TestMethod]
     public void CompanyRejectsInvalidCurrencyCode()
     {
         Assert.ThrowsExactly<ArgumentException>(() => new Company(

@@ -1,0 +1,140 @@
+namespace AccountingAI.Domain.Accounting;
+
+public sealed class JournalEntry
+{
+    private JournalEntry()
+    {
+    }
+
+    public JournalEntry(
+        Guid id,
+        Guid companyId,
+        Guid journalId,
+        string reference,
+        DateOnly entryDate,
+        string documentReference,
+        string description)
+    {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException("The journal entry identifier is required.", nameof(id));
+        }
+
+        if (companyId == Guid.Empty)
+        {
+            throw new ArgumentException("The company identifier is required.", nameof(companyId));
+        }
+
+        if (journalId == Guid.Empty)
+        {
+            throw new ArgumentException("The journal identifier is required.", nameof(journalId));
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(reference);
+        ArgumentException.ThrowIfNullOrWhiteSpace(documentReference);
+        ArgumentException.ThrowIfNullOrWhiteSpace(description);
+
+        Id = id;
+        CompanyId = companyId;
+        JournalId = journalId;
+        Reference = reference.Trim().ToUpperInvariant();
+        EntryDate = entryDate;
+        DocumentReference = documentReference.Trim();
+        Description = description.Trim();
+        Status = JournalEntryStatus.PendingReview;
+    }
+
+    public Guid Id { get; private set; }
+
+    public Guid CompanyId { get; private set; }
+
+    public Guid JournalId { get; private set; }
+
+    public string Reference { get; private set; } = string.Empty;
+
+    public DateOnly EntryDate { get; private set; }
+
+    public string DocumentReference { get; private set; } = string.Empty;
+
+    public string Description { get; private set; } = string.Empty;
+
+    public JournalEntryStatus Status { get; private set; }
+
+    public decimal TotalAmount { get; private set; }
+
+    public byte[] RowVersion { get; private set; } = [];
+
+    public AccountingJournal Journal { get; private set; } = null!;
+
+    public ICollection<JournalEntryLine> Lines { get; } = [];
+
+    public void AddLine(
+        Guid lineId,
+        Guid accountId,
+        string description,
+        decimal debit,
+        decimal credit)
+    {
+        if (lineId == Guid.Empty)
+        {
+            throw new ArgumentException("The line identifier is required.", nameof(lineId));
+        }
+
+        if (accountId == Guid.Empty)
+        {
+            throw new ArgumentException("The account identifier is required.", nameof(accountId));
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(description);
+
+        if (TotalAmount != 0)
+        {
+            throw new InvalidOperationException("A completed journal entry cannot receive more lines.");
+        }
+
+        debit = decimal.Round(debit, 2, MidpointRounding.AwayFromZero);
+        credit = decimal.Round(credit, 2, MidpointRounding.AwayFromZero);
+        if (debit < 0 || credit < 0 || (debit == 0) == (credit == 0))
+        {
+            throw new ArgumentException("A line must contain one positive debit or credit amount.");
+        }
+
+        if (Lines.Any(item => item.Id == lineId))
+        {
+            throw new ArgumentException("The line identifier is already present.", nameof(lineId));
+        }
+
+        Lines.Add(new JournalEntryLine(
+            lineId,
+            CompanyId,
+            Id,
+            accountId,
+            Lines.Count + 1,
+            description.Trim(),
+            debit,
+            credit));
+    }
+
+    public void Complete(JournalEntryStatus status)
+    {
+        if (!Enum.IsDefined(status))
+        {
+            throw new ArgumentOutOfRangeException(nameof(status));
+        }
+
+        if (Lines.Count < 2)
+        {
+            throw new InvalidOperationException("A journal entry requires at least two lines.");
+        }
+
+        var totalDebit = Lines.Sum(item => item.Debit);
+        var totalCredit = Lines.Sum(item => item.Credit);
+        if (totalDebit != totalCredit)
+        {
+            throw new InvalidOperationException("Journal entry debit and credit totals must be equal.");
+        }
+
+        TotalAmount = totalDebit;
+        Status = status;
+    }
+}

@@ -30,6 +30,8 @@ public static class DependencyInjection
                     sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "infrastructure");
                 }));
 
+        services.AddScoped<CompanyAccountingProvisioner>();
+
         services
             .AddHealthChecks()
             .AddDbContextCheck<AccountingDbContext>(

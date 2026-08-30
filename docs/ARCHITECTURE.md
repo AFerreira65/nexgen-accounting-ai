@@ -13,6 +13,12 @@ A nova plataforma segue um monólito modular e não referencia os projetos legad
 
 O schema `identity` contém utilizadores, associações a empresas e configurações por par utilizador–empresa. A configuração depende por chave estrangeira composta de `CompanyUsers(CompanyId, UserId)`, pelo que a base rejeita preferências para uma empresa à qual o utilizador não esteja associado. Todas as entidades contabilísticas futuras que pertençam a uma empresa deverão conter `CompanyId` e ser consultadas apenas através de um contexto de empresa explícito.
 
+O schema `accounting` inicia o núcleo contabilístico com contas, diários, tipos de documento, movimentos e linhas. As chaves estrangeiras compostas por `CompanyId` impedem que um movimento use um diário, tipo de documento ou conta de outra empresa. O domínio só conclui movimentos com pelo menos duas linhas e débitos iguais aos créditos. Cada empresa declara a norma contabilística e recebe uma cópia editável de um catálogo base versionado; o provisionamento cria contas, diários e tipos de documento numa só transação e pode ser repetido sem duplicar códigos. Em `Development`, o seed idempotente cria dados exclusivamente sintéticos para duas empresas; a API confirma a associação ativa do utilizador e filtra sempre por `CompanyId` antes de devolver esses movimentos à PWA.
+
+As contas de movimento podem guardar `TaxonomyReference` e `TaxonomyCode`. O domínio impede taxonomias em contas agregadoras, exige referência e código em conjunto e aplica a regra especial do referencial `O`. O catálogo da empresa determina `S`, `M` ou `N` a partir da norma; a interface apresenta a cobertura sem inventar classificações para contas ainda não validadas.
+
+Na nova plataforma, as entradas previstas são ficheiros SAF-T, e-Fatura e extratos bancários por ficheiro. O monitor WinForms conserva integrações históricas, incluindo PHC, mas essas dependências não passam para os novos módulos. Uma futura integração com ERP deverá ser um adaptador independente e substituível.
+
 ## Componentes
 
 - `AccountingAI.Core`: leitura XML, modelos tabulares, validações e contratos de integração.

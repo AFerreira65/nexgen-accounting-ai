@@ -38,4 +38,36 @@ describe('App', () => {
     expect(screen.getByText(/configuração exclusiva de Ilha Azul Serviços/i)).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Fuso horário' })).toHaveValue('Atlantic/Azores')
   })
+
+  it('switches the accounting fallback together with the active company', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    expect(screen.getByRole('link', { name: /Abrir COMP-2026-00842/i })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Almeida & Costa/i }))
+    fireEvent.click(screen.getByRole('menuitem', { name: /Ilha Azul Serviços/i }))
+
+    expect(screen.getByRole('link', { name: /Abrir VEND-AZO-2026-00014/i })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Abrir COMP-2026-00842/i })).not.toBeInTheDocument()
+  })
+
+  it('opens the accounting master-data screens with the active company data', () => {
+    window.history.pushState({}, '', '/contas')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Plano e abertura de contas' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '11' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Diários' }))
+    expect(screen.getByRole('heading', { name: 'Diários' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /COMPRAS/i })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Documentos' }))
+    expect(screen.getByRole('heading', { name: 'Documentos contabilísticos' })).toBeInTheDocument()
+    expect(screen.getByText('Fatura de fornecedor')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Taxonomias' }))
+    expect(screen.getByRole('heading', { name: 'Taxonomias' })).toBeInTheDocument()
+    expect(screen.getByText('Taxonomia S — SNC base')).toBeInTheDocument()
+  })
 })
