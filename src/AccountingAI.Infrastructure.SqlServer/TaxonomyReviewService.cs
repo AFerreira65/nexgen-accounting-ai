@@ -54,9 +54,6 @@ public sealed class TaxonomyReviewService(AccountingDbContext context)
         }
 
         var template = AccountingTemplateCatalog.For(company.AccountingStandard);
-        var suggestions = template.Accounts
-            .Where(item => item.TaxonomyCode is not null)
-            .ToDictionary(item => item.Code, item => item.TaxonomyCode!.Value, StringComparer.OrdinalIgnoreCase);
 
         var accounts = await context.Accounts
             .AsNoTracking()
@@ -74,8 +71,7 @@ public sealed class TaxonomyReviewService(AccountingDbContext context)
 
         var lines = accounts.Select(item =>
         {
-            suggestions.TryGetValue(item.Code, out var suggestedCode);
-            var suggestion = suggestions.ContainsKey(item.Code) ? suggestedCode : (int?)null;
+            var suggestion = TaxonomyCatalog.SuggestFor(template.TaxonomyReference, item.Code);
 
             var status = item.TaxonomyCode is not null
                 ? (string.Equals(item.TaxonomyReference, template.TaxonomyReference, StringComparison.Ordinal)

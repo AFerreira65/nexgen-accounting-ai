@@ -23,7 +23,7 @@ function AccountEditor({ account, defaultReference, aggregators, onClose }: {
   aggregators: AccountingAccount[]
   onClose: () => void
 }) {
-  const { createAccount, updateAccount } = useWorkContext()
+  const { createAccount, updateAccount, taxonomyCatalog } = useWorkContext()
   const isCreate = account === null
   const [code, setCode] = useState('')
   const [name, setName] = useState(account?.name ?? '')
@@ -78,7 +78,12 @@ function AccountEditor({ account, defaultReference, aggregators, onClose }: {
             <label className="toggle-field"><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /><span><strong>Conta ativa</strong><small>Desative para retirar a conta das novas seleções.</small></span></label>
             {account.allowsPosting && <>
               <label><span>Referencial</span><select value={reference} onChange={(event) => setReference(event.target.value)} disabled={!taxonomyCode.trim()}>{TAXONOMY_REFERENCES.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-              <label><span>Código de taxonomia</span><input type="number" min="1" value={taxonomyCode} onChange={(event) => setTaxonomyCode(event.target.value)} placeholder="Vazio = por atribuir" /></label>
+              <label><span>Código de taxonomia</span><input type="number" min="1" list="taxonomy-codes" value={taxonomyCode} onChange={(event) => setTaxonomyCode(event.target.value)} placeholder="Vazio = por atribuir" />
+                <small>{taxonomyCode.trim()
+                  ? (taxonomyCatalog.codes.find((item) => item.code === Number(taxonomyCode))?.description ?? 'Código não encontrado no referencial ' + taxonomyCatalog.reference)
+                  : `Catálogo ${taxonomyCatalog.reference}: ${taxonomyCatalog.codes.length} códigos`}</small>
+              </label>
+              <datalist id="taxonomy-codes">{taxonomyCatalog.codes.slice(0, 800).map((item) => <option key={item.code} value={item.code}>{item.description}</option>)}</datalist>
             </>}
           </>}
       <footer className="settings-actions">
@@ -226,7 +231,7 @@ const STATUS_LABELS: Record<string, { label: string; badge: string }> = {
 }
 
 export function TaxonomiesPage() {
-  const { taxonomyReview, setupSource, updateAccount, applyTaxonomySuggestions } = useWorkContext()
+  const { taxonomyReview, taxonomyCatalog, setupSource, updateAccount, applyTaxonomySuggestions } = useWorkContext()
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
@@ -249,6 +254,7 @@ export function TaxonomiesPage() {
   return <div className="page-stack">
     <header className="page-heading"><div><p className="eyebrow">Conformidade SAF-T</p><h1>Taxonomias</h1><p>{taxonomyReview.taxonomyName}, determinada pela norma da empresa.</p></div><SourceBadge database={setupSource === 'database'} /></header>
     <section className="taxonomy-summary panel"><div className="taxonomy-reference"><span className="heading-symbol"><Tags /></span><div><small>TaxonomyReference</small><strong>{taxonomyReview.reference}</strong><span>{taxonomyReview.taxonomyName}</span></div></div><div className="taxonomy-health"><span className={missing ? 'warning' : 'success'}>{missing ? <CircleAlert /> : <CircleCheck />}</span><div><small>Cobertura atual</small><strong>{taxonomyReview.classifiedCount} de {taxonomyReview.postingAccountCount}</strong><span>{missing ? `${missing} contas de movimento por classificar` : 'Todas as contas de movimento classificadas'}</span></div></div></section>
+    <p className="metadata-strip"><small>Catálogo {taxonomyCatalog.reference} (Portaria 302/2016)</small> <strong>{taxonomyCatalog.codes.length} códigos</strong> — {taxonomyCatalog.disclaimer}</p>
     <div className="filterbar"><label><Search size={17} /><span className="sr-only">Pesquisar taxonomias</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar conta ou código de taxonomia…" /></label><button className="button button-primary" type="button" disabled={!suggestions || busy === 'apply-all'} onClick={() => run('apply-all', applyTaxonomySuggestions)}>Aplicar sugestões do referencial{suggestions ? ` (${suggestions})` : ''}</button><a className="button button-secondary" href={taxonomyReview.taxonomyLegalSource || undefined} target="_blank" rel="noreferrer">Fonte oficial</a></div>
     {error && <p className="save-status error">{error}</p>}
     <section className="panel"><div className="panel-heading"><div><h2>Classificação das contas de movimento</h2><p>O código é obrigatório no SAF-T apenas para contas classificadas como movimento.</p></div></div><div className="table-wrap"><table><thead><tr><th>Conta</th><th>Descrição</th><th>Referencial</th><th>Código</th><th>Sugestão</th><th>Validação</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{accounts.map((account) => {

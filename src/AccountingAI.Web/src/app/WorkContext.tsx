@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftInspection, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftInspection, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
 export type AccountEditInput = { name: string; isActive: boolean; taxonomyReference: string | null; taxonomyCode: number | null }
@@ -52,6 +52,7 @@ type WorkContextValue = WorkContextData & {
   setupLoading: boolean
   accountingSetup: AccountingSetup
   taxonomyReview: TaxonomyReview
+  taxonomyCatalog: TaxonomyCatalog
   movements: Movement[]
   selectCompany: (companyId: string) => void
   saveSettings: (settings: CompanySettings) => Promise<void>
@@ -109,6 +110,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
   const [accountingMovements, setAccountingMovements] = useState<Movement[]>(fallbackMovements)
   const [accountingSetup, setAccountingSetup] = useState<AccountingSetup>(fallbackAccountingSetupsByCompany[fallbackContext.companies[0].companyId])
   const [taxonomyReview, setTaxonomyReview] = useState<TaxonomyReview>(() => buildTaxonomyReview(fallbackAccountingSetupsByCompany[fallbackContext.companies[0].companyId]))
+  const [taxonomyCatalog, setTaxonomyCatalog] = useState<TaxonomyCatalog>(demoTaxonomyCatalog)
   const [accountingRevision, setAccountingRevision] = useState(0)
   const [activeCompanyId, setActiveCompanyId] = useState(storedCompanyId() ?? fallbackContext.companies[0].companyId)
 
@@ -220,6 +222,28 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
     return () => controller.abort()
   }, [accountingSetup, activeCompany.companyId, data.user.id, source])
 
+  const taxonomyReference = accountingSetup.template.taxonomyReference
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test' || source !== 'database') {
+      setTaxonomyCatalog(demoTaxonomyCatalog)
+      return
+    }
+
+    const controller = new AbortController()
+    void fetch(`/api/v1/development/accounting/taxonomies/${encodeURIComponent(taxonomyReference)}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return await response.json() as TaxonomyCatalog
+      })
+      .then((catalog) => setTaxonomyCatalog(catalog))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setTaxonomyCatalog(demoTaxonomyCatalog)
+      })
+
+    return () => controller.abort()
+  }, [taxonomyReference, source])
+
   useEffect(() => {
     document.documentElement.dataset.theme = activeCompany.settings.theme.toLowerCase()
     document.documentElement.dataset.compact = String(activeCompany.settings.compactMode)
@@ -235,6 +259,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
     setupLoading,
     accountingSetup,
     taxonomyReview,
+    taxonomyCatalog,
     movements: accountingMovements,
     selectCompany: (companyId) => {
       if (!data.companies.some((company) => company.companyId === companyId)) return
@@ -428,7 +453,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as SaftCompanyCreation
     },
-  }), [accountingLoading, accountingMovements, accountingSetup, accountingSource, activeCompany, data, setupLoading, setupSource, source, taxonomyReview])
+  }), [accountingLoading, accountingMovements, accountingSetup, accountingSource, activeCompany, data, setupLoading, setupSource, source, taxonomyCatalog, taxonomyReview])
 
   return <Context.Provider value={value}>{children}</Context.Provider>
 }

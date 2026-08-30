@@ -69,6 +69,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Taxonomias' }))
     expect(screen.getByRole('heading', { name: 'Taxonomias' })).toBeInTheDocument()
     expect(screen.getByText('Taxonomia S — SNC base')).toBeInTheDocument()
+    expect(screen.getByText(/Catálogo S \(Portaria 302\/2016\)/)).toBeInTheDocument()
   })
 
   it('creates a journal and a document type in demo mode', () => {

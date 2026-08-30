@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-06A");
+        StringAssert.Contains(payload, "F1-06B");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -145,6 +145,33 @@ public sealed class FoundationApiTests
         Assert.IsFalse(islandPayload.Contains("\"code\":\"6221\"", StringComparison.Ordinal) &&
             islandPayload.Contains("Material de escritório", StringComparison.Ordinal));
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedResponse.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task TaxonomyCatalogEndpointServesTheFullPortariaLists()
+    {
+        await using var factory = new FoundationApiFactory();
+        using var client = factory.CreateClient();
+
+        using var sResponse = await client.GetAsync("/api/v1/development/accounting/taxonomies/S").ConfigureAwait(false);
+        var sPayload = await sResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var mResponse = await client.GetAsync("/api/v1/development/accounting/taxonomies/M").ConfigureAwait(false);
+
+        using var oResponse = await client.GetAsync("/api/v1/development/accounting/taxonomies/O").ConfigureAwait(false);
+        var oPayload = await oResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var badResponse = await client.GetAsync("/api/v1/development/accounting/taxonomies/X").ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, sResponse.StatusCode);
+        StringAssert.Contains(sPayload, "\"reference\":\"S\"");
+        StringAssert.Contains(sPayload, "302/2016");
+        StringAssert.Contains(sPayload, "\"code\":1");
+        StringAssert.Contains(sPayload, "Caixa");
+        Assert.AreEqual(HttpStatusCode.OK, mResponse.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, oResponse.StatusCode);
+        StringAssert.Contains(oPayload, "\"code\":1");
+        Assert.AreEqual(HttpStatusCode.NotFound, badResponse.StatusCode);
     }
 
     [TestMethod]

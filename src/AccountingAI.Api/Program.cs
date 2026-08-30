@@ -61,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-06A",
+    phase = "F1-06B",
     status = "ready"
 }));
 
@@ -481,6 +481,29 @@ if (app.Environment.IsDevelopment())
             .ApplyTemplateTaxonomySuggestionsAsync(companyId, cancellationToken)
             .ConfigureAwait(false);
         return Results.Ok(new { applied });
+    });
+
+    app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
+    {
+        var normalized = reference.Trim().ToUpperInvariant();
+        if (normalized is not ("S" or "M" or "N" or "O"))
+        {
+            return Results.NotFound();
+        }
+
+        var codes = TaxonomyCatalog.For(normalized);
+        return Results.Ok(new
+        {
+            Reference = normalized,
+            TaxonomyCatalog.Source,
+            TaxonomyCatalog.Disclaimer,
+            Codes = codes.Select(item => new
+            {
+                item.Code,
+                item.Description,
+                item.SncAccounts
+            })
+        });
     });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/journals", async (

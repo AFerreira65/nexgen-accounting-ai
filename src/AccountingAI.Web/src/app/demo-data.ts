@@ -85,6 +85,30 @@ export type TaxonomyReview = {
 // AccountingTemplateCatalog no servidor; as restantes contas ficam por classificar.
 export const templateTaxonomySuggestions: Record<string, number> = { '11': 1, '12': 2 }
 
+export type TaxonomyCatalogEntry = { code: number; description: string; sncAccounts: string[] }
+
+export type TaxonomyCatalog = {
+  reference: string
+  source: string
+  disclaimer: string
+  codes: TaxonomyCatalogEntry[]
+}
+
+// Amostra usada apenas no modo de demonstração; o catálogo completo (Portaria
+// 302/2016) chega pela API.
+export const demoTaxonomyCatalog: TaxonomyCatalog = {
+  reference: 'S',
+  source: 'Amostra de demonstração — o catálogo completo chega pela API local.',
+  disclaimer: 'Transcrição a confirmar contra o texto oficial.',
+  codes: [
+    { code: 1, description: 'Caixa', sncAccounts: ['11'] },
+    { code: 2, description: 'Depósitos à ordem', sncAccounts: ['12'] },
+    { code: 3, description: 'Outros depósitos bancários', sncAccounts: ['13'] },
+    { code: 22, description: 'Clientes - Outros Clientes', sncAccounts: ['213', '214', '215', '216', '217'] },
+    { code: 357, description: 'Fornecimentos e serviços externos - Serviços especializados - Trabalhos especializados', sncAccounts: ['6221'] },
+  ],
+}
+
 export function buildTaxonomyReview(setup: AccountingSetup): TaxonomyReview {
   const reference = setup.template.taxonomyReference
   const posting = setup.accounts.filter((account) => account.allowsPosting && account.isActive)

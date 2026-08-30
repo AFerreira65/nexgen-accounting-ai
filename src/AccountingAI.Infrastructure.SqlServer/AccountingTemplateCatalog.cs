@@ -6,8 +6,7 @@ public sealed record AccountTemplate(
     string Code,
     string Name,
     string? ParentCode = null,
-    bool AllowsPosting = true,
-    int? TaxonomyCode = null);
+    bool AllowsPosting = true);
 
 public sealed record JournalTemplate(string Code, string Name);
 
@@ -99,8 +98,8 @@ public static class AccountingTemplateCatalog
         return
         [
             Root("1", "Meios financeiros líquidos"),
-            Leaf("11", "Caixa", "1", 1),
-            Leaf("12", "Depósitos à ordem", "1", 2),
+            Leaf("11", "Caixa", "1"),
+            Leaf("12", "Depósitos à ordem", "1"),
             Leaf("14", isMicro ? "Outros" : "Outros instrumentos financeiros", "1"),
             Root("2", "Contas a receber e a pagar"),
             Leaf("21", isNonProfit ? "Clientes e utentes" : "Clientes", "2"),
@@ -157,12 +156,8 @@ public static class AccountingTemplateCatalog
     private static AccountTemplate Root(string code, string name) =>
         new(code, name, null, false);
 
-    private static AccountTemplate Leaf(
-        string code,
-        string name,
-        string parentCode,
-        int? taxonomyCode = null) =>
-        new(code, name, parentCode, true, taxonomyCode);
+    private static AccountTemplate Leaf(string code, string name, string parentCode) =>
+        new(code, name, parentCode, true);
 
     private static string TaxonomyReferenceFor(AccountingStandard standard) => standard switch
     {

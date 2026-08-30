@@ -192,6 +192,8 @@ public sealed class AccountingMasterDataService(AccountingDbContext context)
 
         await ExecuteInTransactionAsync(async () =>
         {
+            applied = 0; // reset for a clean count if the execution strategy retries
+
             var company = await context.Companies
                 .SingleOrDefaultAsync(item => item.Id == companyId, cancellationToken)
                 .ConfigureAwait(false);
@@ -200,10 +202,7 @@ public sealed class AccountingMasterDataService(AccountingDbContext context)
                 throw new InvalidOperationException("A empresa não existe.");
             }
 
-            var template = AccountingTemplateCatalog.For(company.AccountingStandard);
-            var suggestions = template.Accounts
-                .Where(item => item.TaxonomyCode is not null)
-                .ToDictionary(item => item.Code, item => item.TaxonomyCode!.Value, StringComparer.OrdinalIgnoreCase);
+            var reference = AccountingTemplateCatalog.For(company.AccountingStandard).TaxonomyReference;
 
             var accounts = await context.Accounts
                 .Where(item => item.CompanyId == companyId && item.AllowsPosting && item.IsActive)
@@ -212,9 +211,15 @@ public sealed class AccountingMasterDataService(AccountingDbContext context)
 
             foreach (var account in accounts)
             {
-                if (account.TaxonomyCode is null && suggestions.TryGetValue(account.Code, out var suggestion))
+                if (account.TaxonomyCode is not null)
                 {
-                    account.AssignTaxonomy(template.TaxonomyReference, suggestion);
+                    continue;
+                }
+
+                var suggestion = TaxonomyCatalog.SuggestFor(reference, account.Code);
+                if (suggestion is not null)
+                {
+                    account.AssignTaxonomy(reference, suggestion);
                     applied++;
                 }
             }

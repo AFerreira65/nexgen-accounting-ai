@@ -87,6 +87,9 @@ public sealed class CompanyAccountingProvisioner(AccountingDbContext context)
             .ConfigureAwait(false);
         foreach (var item in template.Accounts.Where(item => !accounts.ContainsKey(item.Code)))
         {
+            var suggestion = item.AllowsPosting
+                ? TaxonomyCatalog.SuggestFor(template.TaxonomyReference, item.Code)
+                : null;
             var account = new LedgerAccount(
                 Guid.NewGuid(),
                 company.Id,
@@ -95,18 +98,22 @@ public sealed class CompanyAccountingProvisioner(AccountingDbContext context)
                 item.ParentCode,
                 item.AllowsPosting,
                 template.Version,
-                item.TaxonomyCode is null ? null : template.TaxonomyReference,
-                item.TaxonomyCode);
+                suggestion is null ? null : template.TaxonomyReference,
+                suggestion);
             context.Accounts.Add(account);
             accounts.Add(account.Code, account);
         }
 
-        foreach (var item in template.Accounts.Where(item => item.TaxonomyCode is not null))
+        foreach (var item in template.Accounts.Where(item => item.AllowsPosting))
         {
             var account = accounts[item.Code];
             if (account.TaxonomyCode is null)
             {
-                account.AssignTaxonomy(template.TaxonomyReference, item.TaxonomyCode);
+                var suggestion = TaxonomyCatalog.SuggestFor(template.TaxonomyReference, account.Code);
+                if (suggestion is not null)
+                {
+                    account.AssignTaxonomy(template.TaxonomyReference, suggestion);
+                }
             }
         }
 

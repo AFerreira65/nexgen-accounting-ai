@@ -292,9 +292,13 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual("Material de escritório e economato", classified.Name);
                 Assert.AreEqual(61, classified.TaxonomyCode);
 
+                var firstApply = await masterData
+                    .ApplyTemplateTaxonomySuggestionsAsync(DevelopmentDataSeeder.DemoCompanyId)
+                    .ConfigureAwait(false);
                 var secondApply = await masterData
                     .ApplyTemplateTaxonomySuggestionsAsync(DevelopmentDataSeeder.DemoCompanyId)
                     .ConfigureAwait(false);
+                Assert.IsTrue(firstApply >= 1, "A primeira aplicação deve classificar contas pelo catálogo completo.");
                 Assert.AreEqual(0, secondApply);
 
                 var deactivated = await masterData
