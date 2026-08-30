@@ -241,6 +241,25 @@ export type SaftInspectionHeader = {
 
 export type SaftCompanyMatchOutcome = 'ExistingCompany' | 'NewCompanyProposed'
 
+export type SaftCompanyCreationInput = {
+  taxRegistrationNumber: string
+  legalName: string
+  taxRegion: 'Mainland' | 'Azores' | 'Madeira'
+  accountingStandard: string
+  baseCurrency: string
+}
+
+export type SaftCompanyCreation = {
+  companyId: string
+  legalName: string
+  taxRegistrationNumber: string
+  accountingStandard: string
+  accountingSetupVersion: string | null
+  accountCount: number
+  journalCount: number
+  documentTypeCount: number
+}
+
 export type SaftInspection = {
   header: SaftInspectionHeader
   match: {

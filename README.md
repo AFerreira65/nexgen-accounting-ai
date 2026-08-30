@@ -2,7 +2,7 @@
 
 Monitor Windows em C#/.NET para leitura e análise de ficheiros SAF-T (PT).
 
-## Nova plataforma contabilística — F1-05A inspeção do cabeçalho SAF-T
+## Nova plataforma contabilística — F1-05B criação de empresa a partir do SAF-T
 
 Sobre a fundação F1-01 foi criada a primeira experiência contabilística local:
 
@@ -22,13 +22,14 @@ Sobre a fundação F1-01 foi criada a primeira experiência contabilística loca
 - atribuição, limpeza e aplicação em bloco do código de taxonomia nas contas de movimento, com mapa de revisão de cobertura;
 - controlo de cobertura `TaxonomyReference`/`TaxonomyCode` por norma e por conta de movimento;
 - dados sintéticos idempotentes e distintos para as empresas do Continente e dos Açores;
-- leitura do cabeçalho de um ficheiro SAF-T (PT) na nova plataforma e correspondência da empresa pelo NIF, sem criar nem importar nada;
+- leitura do cabeçalho de um ficheiro SAF-T (PT) na nova plataforma e correspondência da empresa pelo NIF;
+- criação da empresa a partir do SAF-T quando o NIF não corresponde a nenhuma, com provisionamento dos cadastros na mesma transação e recusa de duplicados;
 - dashboard, movimentos, razão de conta e diário alimentados pela API e filtrados pela empresa ativa;
 - painel de trabalho apelativo e responsivo;
 - navegação contextual entre movimento, conta e diário;
 - testes de arquitetura, domínio, API, migrações e frontend.
 
-Esta evolução não altera o comportamento do monitor WinForms descrito abaixo. Os movimentos são exclusivamente dados sintéticos de desenvolvimento: já exercitam o núcleo contabilístico de leitura, mas ainda não existe criação/edição de lançamentos pela aplicação. O plano de contas e as taxonomias já são editáveis; os diários e os tipos de documento continuam apenas de consulta. A importação de SAF-T lê e valida o cabeçalho e faz a correspondência da empresa; ainda não cria empresas nem grava dados do ficheiro. Consulte [F1-02A](docs/phase-1/F1-02A-LOCAL-EXPERIENCE.md), [F1-02B](docs/phase-1/F1-02B-ENGINEERING-GATES.md), [F1-02C](docs/phase-1/F1-02C-MULTI-COMPANY-DATABASE.md), [F1-03A](docs/phase-1/F1-03A-WORK-CONTEXT.md), [F1-03B](docs/phase-1/F1-03B-ACCOUNTING-TEST-DATA.md), [F1-03C](docs/phase-1/F1-03C-ACCOUNTING-TEMPLATES.md), [F1-04A](docs/phase-1/F1-04A-ACCOUNTING-MASTER-DATA.md), [F1-04B](docs/phase-1/F1-04B-ACCOUNTING-MASTER-DATA-MAINTENANCE.md) e [F1-05A](docs/phase-1/F1-05A-SAFT-HEADER-INSPECTION.md).
+Esta evolução não altera o comportamento do monitor WinForms descrito abaixo. Os movimentos são exclusivamente dados sintéticos de desenvolvimento: já exercitam o núcleo contabilístico de leitura, mas ainda não existe criação/edição de lançamentos pela aplicação. O plano de contas e as taxonomias já são editáveis; os diários e os tipos de documento continuam apenas de consulta. A importação de SAF-T lê e valida o cabeçalho, faz a correspondência da empresa e, quando o NIF não corresponde a nenhuma, cria a empresa e provisiona os cadastros; ainda não lê contas nem movimentos do ficheiro. Consulte [F1-02A](docs/phase-1/F1-02A-LOCAL-EXPERIENCE.md), [F1-02B](docs/phase-1/F1-02B-ENGINEERING-GATES.md), [F1-02C](docs/phase-1/F1-02C-MULTI-COMPANY-DATABASE.md), [F1-03A](docs/phase-1/F1-03A-WORK-CONTEXT.md), [F1-03B](docs/phase-1/F1-03B-ACCOUNTING-TEST-DATA.md), [F1-03C](docs/phase-1/F1-03C-ACCOUNTING-TEMPLATES.md), [F1-04A](docs/phase-1/F1-04A-ACCOUNTING-MASTER-DATA.md), [F1-04B](docs/phase-1/F1-04B-ACCOUNTING-MASTER-DATA-MAINTENANCE.md), [F1-05A](docs/phase-1/F1-05A-SAFT-HEADER-INSPECTION.md) e [F1-05B](docs/phase-1/F1-05B-SAFT-COMPANY-CREATION.md).
 
 ### Abrir a aplicação web local
 

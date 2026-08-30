@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftInspection, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftInspection, type TaxonomyReview } from './demo-data'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
 export type AccountEditInput = { name: string; isActive: boolean; taxonomyReference: string | null; taxonomyCode: number | null }
@@ -55,6 +55,7 @@ type WorkContextValue = WorkContextData & {
   updateAccount: (code: string, input: AccountEditInput) => Promise<void>
   applyTaxonomySuggestions: () => Promise<number>
   inspectSaft: (file: File) => Promise<SaftInspection>
+  createSaftCompany: (input: SaftCompanyCreationInput) => Promise<SaftCompanyCreation>
 }
 
 export const demoUserId = '33333333-3333-3333-3333-333333333333'
@@ -330,6 +331,18 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
           ? { outcome: 'ExistingCompany', companyId: matched.companyId, legalName: matched.legalName, accountingStandard: null, accountingSetupVersion: null }
           : { outcome: 'NewCompanyProposed', companyId: null, legalName: null, accountingStandard: null, accountingSetupVersion: null },
       }
+    },
+    createSaftCompany: async (input) => {
+      if (source !== 'database') {
+        throw new Error('A criação de empresa a partir do SAF-T requer a ligação à API local.')
+      }
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/saft/companies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SaftCompanyCreation
     },
   }), [accountingLoading, accountingMovements, accountingSetup, accountingSource, activeCompany, data, setupLoading, setupSource, source, taxonomyReview])
 

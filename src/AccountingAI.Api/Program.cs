@@ -61,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-05A",
+    phase = "F1-05B",
     status = "ready"
 }));
 
@@ -550,6 +550,73 @@ if (app.Environment.IsDevelopment())
             });
         }
     });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/saft/companies", async (
+        Guid userId,
+        CreateSaftCompanyRequest request,
+        AccountingDbContext context,
+        SaftCompanyCreationService creation,
+        CancellationToken cancellationToken) =>
+    {
+        var userExists = await context.UserAccounts
+            .AsNoTracking()
+            .AnyAsync(item => item.Id == userId && item.IsActive, cancellationToken)
+            .ConfigureAwait(false);
+        if (!userExists)
+        {
+            return Results.NotFound();
+        }
+
+        if (!Enum.TryParse<TaxRegion>(request.TaxRegion, true, out var region) || !Enum.IsDefined(region))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.TaxRegion)] = ["A região fiscal deve ser Mainland, Azores ou Madeira."]
+            });
+        }
+
+        if (!Enum.TryParse<AccountingStandard>(request.AccountingStandard, true, out var standard) ||
+            !Enum.IsDefined(standard))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.AccountingStandard)] = ["Norma contabilística desconhecida."]
+            });
+        }
+
+        try
+        {
+            var created = await creation
+                .CreateCompanyAsync(
+                    userId,
+                    request.TaxRegistrationNumber,
+                    request.LegalName,
+                    region,
+                    standard,
+                    string.IsNullOrWhiteSpace(request.BaseCurrency) ? "EUR" : request.BaseCurrency!,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            return Results.Ok(new
+            {
+                created.CompanyId,
+                created.LegalName,
+                created.TaxRegistrationNumber,
+                created.AccountingStandard,
+                created.AccountingSetupVersion,
+                created.AccountCount,
+                created.JournalCount,
+                created.DocumentTypeCount
+            });
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["company"] = [exception.Message]
+            });
+        }
+    });
 }
 
 await app.RunAsync().ConfigureAwait(false);
@@ -603,3 +670,10 @@ public sealed record UpdateAccountRequest(
     bool IsActive,
     string? TaxonomyReference,
     int? TaxonomyCode);
+
+public sealed record CreateSaftCompanyRequest(
+    string TaxRegistrationNumber,
+    string LegalName,
+    string TaxRegion,
+    string AccountingStandard,
+    string? BaseCurrency);

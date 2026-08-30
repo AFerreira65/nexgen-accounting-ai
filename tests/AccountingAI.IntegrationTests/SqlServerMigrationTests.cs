@@ -115,6 +115,7 @@ public sealed class SqlServerMigrationTests
                 .AddScoped<CompanyAccountingProvisioner>()
                 .AddScoped<AccountingMasterDataService>()
                 .AddScoped<TaxonomyReviewService>()
+                .AddScoped<SaftCompanyCreationService>()
                 .BuildServiceProvider();
             await services.SeedDevelopmentOrganizationAsync().ConfigureAwait(false);
             await services.SeedDevelopmentAccountingAsync().ConfigureAwait(false);
@@ -339,6 +340,53 @@ public sealed class SqlServerMigrationTests
             }
 
             context.ChangeTracker.Clear();
+
+            await using (var creationScope = services.CreateAsyncScope())
+            {
+                var creation = creationScope.ServiceProvider
+                    .GetRequiredService<SaftCompanyCreationService>();
+
+                var created = await creation
+                    .CreateCompanyAsync(
+                        DevelopmentDataSeeder.DemoUserId,
+                        "515000000",
+                        "Cliente do SAF-T, Lda.",
+                        TaxRegion.Azores,
+                        AccountingStandard.SncSmallEntities,
+                        "EUR")
+                    .ConfigureAwait(false);
+
+                var template = AccountingTemplateCatalog.For(AccountingStandard.SncSmallEntities);
+                Assert.AreEqual("515000000", created.TaxRegistrationNumber);
+                Assert.AreEqual("SncSmallEntities", created.AccountingStandard);
+                Assert.AreEqual(template.Accounts.Count, created.AccountCount);
+                Assert.AreEqual(template.Journals.Count, created.JournalCount);
+                Assert.AreEqual(template.DocumentTypes.Count, created.DocumentTypeCount);
+                StringAssert.Contains(created.AccountingSetupVersion!, "NCRF-PE-v1");
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await creation.CreateCompanyAsync(
+                        DevelopmentDataSeeder.DemoUserId,
+                        "515000000",
+                        "Duplicada",
+                        TaxRegion.Azores,
+                        AccountingStandard.SncSmallEntities,
+                        "EUR").ConfigureAwait(false));
+            }
+
+            context.ChangeTracker.Clear();
+            var saftCompany = await context.Companies
+                .AsNoTracking()
+                .SingleAsync(item => item.TaxRegistrationNumber == "515000000")
+                .ConfigureAwait(false);
+            var saftMembership = await context.CompanyUsers
+                .AsNoTracking()
+                .SingleAsync(item =>
+                    item.CompanyId == saftCompany.Id &&
+                    item.UserId == DevelopmentDataSeeder.DemoUserId)
+                .ConfigureAwait(false);
+            Assert.AreEqual(CompanyUserRole.Accountant, saftMembership.Role);
+            Assert.AreEqual(TaxRegion.Azores, saftCompany.TaxRegion);
 
             await context.Database.OpenConnectionAsync().ConfigureAwait(false);
             await using var command = context.Database.GetDbConnection().CreateCommand();

@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-05A");
+        StringAssert.Contains(payload, "F1-05B");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -192,6 +192,49 @@ public sealed class FoundationApiTests
         StringAssert.Contains(proposePayload, "\"outcome\":\"NewCompanyProposed\"");
         StringAssert.Contains(proposePayload, "\"includesAccounting\":false");
         Assert.AreEqual(HttpStatusCode.BadRequest, malformedResponse.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unknownUserResponse.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task SaftCompanyCreationRejectsDuplicatesAndUnknownUsers()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        static StringContent Body(string taxNumber, string region = "Mainland", string standard = "SncGeneral") =>
+            new(
+                $$"""
+                {"taxRegistrationNumber":"{{taxNumber}}","legalName":"Empresa do Ficheiro, Lda.","taxRegion":"{{region}}","accountingStandard":"{{standard}}"}
+                """,
+                Encoding.UTF8,
+                "application/json");
+
+        using var duplicateResponse = await client
+            .PostAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/saft/companies", Body("DEMO-PT-0001"))
+            .ConfigureAwait(false);
+        var duplicatePayload = await duplicateResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var badRegionResponse = await client
+            .PostAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/saft/companies", Body("599999901", region: "Nowhere"))
+            .ConfigureAwait(false);
+        var badRegionPayload = await badRegionResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unknownUserResponse = await client
+            .PostAsync("/api/v1/development/users/00000000-0000-0000-0000-000000000000/saft/companies", Body("599999902"))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, duplicateResponse.StatusCode);
+        StringAssert.Contains(duplicatePayload, "NIF DEMO-PT-0001");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badRegionResponse.StatusCode);
+        StringAssert.Contains(badRegionPayload, "Mainland, Azores");
         Assert.AreEqual(HttpStatusCode.NotFound, unknownUserResponse.StatusCode);
     }
 

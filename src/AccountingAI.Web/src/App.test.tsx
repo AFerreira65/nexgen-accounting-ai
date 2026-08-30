@@ -108,6 +108,31 @@ describe('App', () => {
     expect(screen.getByText(/com contabilidade/i)).toBeInTheDocument()
   })
 
+  it('proposes creating a company when the SAF-T tax number is unknown', async () => {
+    window.history.pushState({}, '', '/importar')
+    render(<App />)
+
+    const xml = [
+      '<?xml version="1.0" encoding="utf-8"?>',
+      '<AuditFile xmlns="urn:OECD:StandardAuditFile-Tax:PT_1.04_01"><Header>',
+      '<AuditFileVersion>1.04_01</AuditFileVersion>',
+      '<TaxRegistrationNumber>599999999</TaxRegistrationNumber>',
+      '<TaxAccountingBasis>C</TaxAccountingBasis>',
+      '<CompanyName>Nova Empresa do Ficheiro, Lda.</CompanyName>',
+      '<FiscalYear>2026</FiscalYear><StartDate>2026-01-01</StartDate><EndDate>2026-12-31</EndDate>',
+      '<CurrencyCode>EUR</CurrencyCode></Header></AuditFile>',
+    ].join('\n')
+
+    fireEvent.change(screen.getByLabelText(/Escolher ficheiro SAF-T/i), {
+      target: { files: [new File([xml], 'saft.xml', { type: 'text/xml' })] },
+    })
+
+    expect(await screen.findByRole('heading', { name: 'Propor a criação da empresa' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Designação' })).toHaveValue('Nova Empresa do Ficheiro, Lda.')
+    expect(screen.getByText(/A criação requer ligação ao SQL Server/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Criar empresa e provisionar cadastros/i })).toBeDisabled()
+  })
+
   it('clears and re-applies a template taxonomy code from the taxonomy screen', async () => {
     window.history.pushState({}, '', '/taxonomias')
     render(<App />)
