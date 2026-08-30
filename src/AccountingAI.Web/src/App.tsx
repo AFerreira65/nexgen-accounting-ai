@@ -7,6 +7,7 @@ import { JournalPage } from './pages/JournalPage'
 import { MovementPage } from './pages/MovementPage'
 import { MovementsPage } from './pages/MovementsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
+import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { WorkContextProvider } from './app/WorkContext'
 
@@ -25,6 +26,7 @@ export function App() {
             <Route path="/diarios" element={<JournalsPage />} />
             <Route path="/documentos" element={<DocumentTypesPage />} />
             <Route path="/taxonomias" element={<TaxonomiesPage />} />
+            <Route path="/importar" element={<SaftImportPage />} />
             <Route path="/tarefas" element={<PlaceholderPage title="Tarefas" />} />
             <Route path="/definicoes" element={<SettingsPage />} />
           </Route>

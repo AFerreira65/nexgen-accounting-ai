@@ -83,6 +83,31 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: '6811' })).toBeInTheDocument()
   })
 
+  it('reads a SAF-T header and matches the company by tax number', async () => {
+    window.history.pushState({}, '', '/importar')
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'Importar SAF-T' })).toBeInTheDocument()
+
+    const xml = [
+      '<?xml version="1.0" encoding="utf-8"?>',
+      '<AuditFile xmlns="urn:OECD:StandardAuditFile-Tax:PT_1.04_01"><Header>',
+      '<AuditFileVersion>1.04_01</AuditFileVersion>',
+      '<TaxRegistrationNumber>DEMO-PT-0001</TaxRegistrationNumber>',
+      '<TaxAccountingBasis>I</TaxAccountingBasis>',
+      '<CompanyName>Empresa do Ficheiro, Lda.</CompanyName>',
+      '<FiscalYear>2026</FiscalYear><StartDate>2026-01-01</StartDate><EndDate>2026-12-31</EndDate>',
+      '<CurrencyCode>EUR</CurrencyCode></Header></AuditFile>',
+    ].join('\n')
+
+    fireEvent.change(screen.getByLabelText(/Escolher ficheiro SAF-T/i), {
+      target: { files: [new File([xml], 'saft.xml', { type: 'text/xml' })] },
+    })
+
+    const matchLine = await screen.findByText(/Empresa encontrada/i)
+    expect(matchLine).toHaveTextContent(/Almeida & Costa/)
+    expect(screen.getByText(/com contabilidade/i)).toBeInTheDocument()
+  })
+
   it('clears and re-applies a template taxonomy code from the taxonomy screen', async () => {
     window.history.pushState({}, '', '/taxonomias')
     render(<App />)

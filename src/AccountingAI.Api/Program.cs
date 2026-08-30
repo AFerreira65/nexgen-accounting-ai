@@ -1,9 +1,12 @@
 using AccountingAI.Api;
+using AccountingAI.Application.Saft;
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
+using AccountingAI.Infrastructure.Files;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +16,7 @@ builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddAccountingSqlServer(builder.Configuration);
+builder.Services.AddSaftFileReading();
 
 var app = builder.Build();
 
@@ -57,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-04B",
+    phase = "F1-05A",
     status = "ready"
 }));
 
@@ -477,6 +481,74 @@ if (app.Environment.IsDevelopment())
             .ApplyTemplateTaxonomySuggestionsAsync(companyId, cancellationToken)
             .ConfigureAwait(false);
         return Results.Ok(new { applied });
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/saft/inspect", async (
+        Guid userId,
+        HttpRequest request,
+        AccountingDbContext context,
+        SaftInspectionService inspection,
+        CancellationToken cancellationToken) =>
+    {
+        var userExists = await context.UserAccounts
+            .AsNoTracking()
+            .AnyAsync(item => item.Id == userId && item.IsActive, cancellationToken)
+            .ConfigureAwait(false);
+        if (!userExists)
+        {
+            return Results.NotFound();
+        }
+
+        // O leitor consome apenas o elemento Header; ainda assim, um SAF-T real de
+        // contabilidade pode ter dezenas de MB, pelo que o limite de corpo é levantado
+        // para este pedido de desenvolvimento.
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = null;
+        }
+
+        try
+        {
+            var result = await inspection
+                .InspectAsync(userId, request.Body, cancellationToken)
+                .ConfigureAwait(false);
+
+            return Results.Ok(new
+            {
+                Header = new
+                {
+                    result.Header.AuditFileVersion,
+                    result.Header.TaxRegistrationNumber,
+                    result.Header.TaxAccountingBasis,
+                    result.Header.CompanyName,
+                    result.Header.BusinessName,
+                    result.Header.FiscalYear,
+                    result.Header.StartDate,
+                    result.Header.EndDate,
+                    result.Header.CurrencyCode,
+                    result.Header.DateCreated,
+                    result.Header.TaxEntity,
+                    result.Header.ProductId,
+                    result.Header.IncludesAccounting
+                },
+                Match = new
+                {
+                    Outcome = result.Match.Outcome.ToString(),
+                    result.Match.CompanyId,
+                    result.Match.LegalName,
+                    result.Match.AccountingStandard,
+                    result.Match.AccountingSetupVersion
+                }
+            });
+        }
+        catch (SaftFileFormatException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["saft"] = [exception.Message]
+            });
+        }
     });
 }
 

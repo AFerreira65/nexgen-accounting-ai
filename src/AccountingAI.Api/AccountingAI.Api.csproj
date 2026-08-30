@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../AccountingAI.Application/AccountingAI.Application.csproj" />
+    <ProjectReference Include="../AccountingAI.Infrastructure.Files/AccountingAI.Infrastructure.Files.csproj" />
     <ProjectReference Include="../AccountingAI.Infrastructure.SqlServer/AccountingAI.Infrastructure.SqlServer.csproj" />
   </ItemGroup>
   <ItemGroup>

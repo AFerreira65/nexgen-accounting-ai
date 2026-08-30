@@ -4,7 +4,7 @@
 
 A solução contém agora duas fronteiras independentes:
 
-1. a nova plataforma web, constituída por `AccountingAI.Domain`, `AccountingAI.Application`, `AccountingAI.Infrastructure.SqlServer`, `AccountingAI.Api`, `AccountingAI.Worker` e `AccountingAI.Web`;
+1. a nova plataforma web, constituída por `AccountingAI.Domain`, `AccountingAI.Application`, `AccountingAI.Infrastructure.SqlServer`, `AccountingAI.Infrastructure.Files`, `AccountingAI.Api`, `AccountingAI.Worker` e `AccountingAI.Web`;
 2. o monitor existente, constituído por `AccountingAI.Core` e `AccountingAI.WinForms`.
 
 A nova plataforma segue um monólito modular e não referencia os projetos legados nesta fase. Esta separação impede que dependências específicas de Windows, WebView2, ODBC ou PHC condicionem o futuro núcleo contabilístico multiplataforma. As decisões estão registadas em `docs/architecture-decisions` e as dependências são verificadas por `AccountingAI.ArchitectureTests`.
@@ -19,7 +19,7 @@ As contas de movimento podem guardar `TaxonomyReference` e `TaxonomyCode`. O dom
 
 `AccountingMasterDataService` mantém o plano de contas de cada empresa: cria contas próprias com conta-mãe agregadora validada, renomeia, ativa/desativa (recusando desativar contas com linhas de movimento ou subcontas ativas) e atribui, limpa ou reaplica em bloco o código de taxonomia. `TaxonomyReviewService` constrói a cobertura das contas de movimento a partir da norma e do plano base versionado, classificando cada conta como atribuída, com sugestão, por atribuir ou com referencial diferente, sem reproduzir um catálogo legal completo. Ambos operam sempre por `CompanyId` e em transação. Os diários e os tipos de documento continuam só de consulta.
 
-Na nova plataforma, as entradas previstas são ficheiros SAF-T, e-Fatura e extratos bancários por ficheiro. O monitor WinForms conserva integrações históricas, incluindo PHC, mas essas dependências não passam para os novos módulos. Uma futura integração com ERP deverá ser um adaptador independente e substituível.
+Na nova plataforma, as entradas previstas são ficheiros SAF-T, e-Fatura e extratos bancários por ficheiro. `AccountingAI.Infrastructure.Files` é o adaptador de ficheiros e depende apenas de `Application` e `Domain`. `SaftHeaderReader` lê o cabeçalho de um SAF-T (PT) com `XmlReader` (DTD proibido, `XmlResolver` desativado, entidades limitadas), materializando só o subárvore `Header`, agnóstico ao namespace e com suporte de Windows-1252. `AccountingAI.Domain.Saft.SaftHeader` é o valor de leitura validado e `ISaftHeaderReader` a fronteira em `Application`. `SaftInspectionService`, em `Infrastructure.SqlServer`, compõe o leitor com a base para encontrar uma empresa acessível com o mesmo NIF ou propor a criação, sem escrever. O monitor WinForms conserva integrações históricas, incluindo PHC, mas essas dependências não passam para os novos módulos. Uma futura integração com ERP deverá ser um adaptador independente e substituível.
 
 ## Componentes
 

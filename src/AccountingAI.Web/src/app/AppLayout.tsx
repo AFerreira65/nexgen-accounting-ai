@@ -5,6 +5,7 @@ import {
   CircleGauge,
   ClipboardCheck,
   FileText,
+  FileUp,
   Landmark,
   Search,
   Settings,
@@ -22,6 +23,7 @@ const links = [
   { to: '/diarios', label: 'Diários', icon: Landmark },
   { to: '/documentos', label: 'Documentos', icon: FileText },
   { to: '/taxonomias', label: 'Taxonomias', icon: Tags },
+  { to: '/importar', label: 'Importar SAF-T', icon: FileUp },
   { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
 ]
 

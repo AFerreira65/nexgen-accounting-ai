@@ -223,6 +223,78 @@ export const fallbackAccountingSetupsByCompany: Record<string, AccountingSetup> 
   },
 }
 
+export type SaftInspectionHeader = {
+  auditFileVersion: string
+  taxRegistrationNumber: string
+  taxAccountingBasis: string
+  companyName: string
+  businessName: string | null
+  fiscalYear: number
+  startDate: string
+  endDate: string
+  currencyCode: string
+  dateCreated: string | null
+  taxEntity: string | null
+  productId: string | null
+  includesAccounting: boolean
+}
+
+export type SaftCompanyMatchOutcome = 'ExistingCompany' | 'NewCompanyProposed'
+
+export type SaftInspection = {
+  header: SaftInspectionHeader
+  match: {
+    outcome: SaftCompanyMatchOutcome
+    companyId: string | null
+    legalName: string | null
+    accountingStandard: string | null
+    accountingSetupVersion: string | null
+  }
+}
+
+// Extração do cabeçalho no cliente, usada apenas no modo de demonstração quando a
+// API local não está ligada. Namespace-agnóstica, como o leitor do servidor.
+export function parseSaftHeaderFromXml(text: string): SaftInspectionHeader {
+  const doc = new DOMParser().parseFromString(text, 'application/xml')
+  if (doc.getElementsByTagName('parsererror').length > 0) {
+    throw new Error('O ficheiro não é um XML SAF-T legível.')
+  }
+
+  const field = (name: string): string | null => {
+    const byNs = doc.getElementsByTagNameNS('*', name)[0]
+    const el = byNs ?? Array.from(doc.getElementsByTagName('*')).find((node) => node.localName === name)
+    const value = el?.textContent?.trim()
+    return value ? value : null
+  }
+
+  const required = (name: string): string => {
+    const value = field(name)
+    if (!value) throw new Error(`O cabeçalho do SAF-T não tem ${name}.`)
+    return value
+  }
+
+  const startDate = required('StartDate')
+  const endDate = required('EndDate')
+  if (endDate < startDate) throw new Error('A data final do período é anterior à data inicial.')
+  const basis = required('TaxAccountingBasis').toUpperCase()
+
+  return {
+    auditFileVersion: required('AuditFileVersion'),
+    taxRegistrationNumber: required('TaxRegistrationNumber').toUpperCase(),
+    taxAccountingBasis: basis,
+    companyName: required('CompanyName'),
+    businessName: field('BusinessName'),
+    fiscalYear: Number(required('FiscalYear')),
+    startDate,
+    endDate,
+    currencyCode: (field('CurrencyCode') ?? 'EUR').toUpperCase(),
+    dateCreated: field('DateCreated'),
+    taxEntity: field('TaxEntity'),
+    productId: field('ProductID'),
+    includesAccounting: basis === 'C' || basis === 'I',
+  }
+}
+
 export const euro = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' })
 
 export function formatMovementDate(value: string) {

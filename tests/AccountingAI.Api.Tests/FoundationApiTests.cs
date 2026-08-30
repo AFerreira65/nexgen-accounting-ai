@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -33,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-04B");
+        StringAssert.Contains(payload, "F1-05A");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -145,6 +146,71 @@ public sealed class FoundationApiTests
             islandPayload.Contains("Material de escritório", StringComparison.Ordinal));
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedResponse.StatusCode);
     }
+
+    [TestMethod]
+    public async Task SaftHeaderInspectionMatchesAnExistingCompanyByTaxNumber()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string userPath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/saft/inspect";
+
+        using var matchResponse = await client
+            .PostAsync(userPath, new StringContent(SaftDocument("DEMO-PT-0001", "I"), Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+        var matchPayload = await matchResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var proposeResponse = await client
+            .PostAsync(userPath, new StringContent(SaftDocument("599999999", "F"), Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+        var proposePayload = await proposeResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var malformedResponse = await client
+            .PostAsync(userPath, new StringContent("<nope/>", Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+
+        using var unknownUserResponse = await client
+            .PostAsync(
+                "/api/v1/development/users/00000000-0000-0000-0000-000000000000/saft/inspect",
+                new StringContent(SaftDocument("DEMO-PT-0001", "I"), Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, matchResponse.StatusCode);
+        StringAssert.Contains(matchPayload, "\"outcome\":\"ExistingCompany\"");
+        StringAssert.Contains(matchPayload, "Almeida");
+        StringAssert.Contains(matchPayload, "\"accountingStandard\":\"SncGeneral\"");
+        StringAssert.Contains(matchPayload, "\"includesAccounting\":true");
+        Assert.AreEqual(HttpStatusCode.OK, proposeResponse.StatusCode);
+        StringAssert.Contains(proposePayload, "\"outcome\":\"NewCompanyProposed\"");
+        StringAssert.Contains(proposePayload, "\"includesAccounting\":false");
+        Assert.AreEqual(HttpStatusCode.BadRequest, malformedResponse.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unknownUserResponse.StatusCode);
+    }
+
+    private static string SaftDocument(string taxNumber, string basis) =>
+        $"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <AuditFile xmlns="urn:OECD:StandardAuditFile-Tax:PT_1.04_01">
+          <Header>
+            <AuditFileVersion>1.04_01</AuditFileVersion>
+            <TaxRegistrationNumber>{taxNumber}</TaxRegistrationNumber>
+            <TaxAccountingBasis>{basis}</TaxAccountingBasis>
+            <CompanyName>Empresa do Ficheiro, Lda.</CompanyName>
+            <FiscalYear>2026</FiscalYear>
+            <StartDate>2026-01-01</StartDate>
+            <EndDate>2026-12-31</EndDate>
+            <CurrencyCode>EUR</CurrencyCode>
+          </Header>
+        </AuditFile>
+        """;
 
     private sealed class FoundationApiFactory(
         string? connectionString = null,
