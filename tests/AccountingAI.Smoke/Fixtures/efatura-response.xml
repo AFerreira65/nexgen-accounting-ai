@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/" xmlns:fat="http://factemi.at.min_financas.pt/fatshareInvoices">
+  <S:Body>
+    <fat:InvoicesResponse>
+      <fat:InvoicesList>
+        <fat:Invoice>
+          <fat:InvoiceNo>FT A/1</fat:InvoiceNo>
+          <fat:ATCUD>ABC-1</fat:ATCUD>
+          <fat:InvoiceDate>2026-07-01</fat:InvoiceDate>
+          <fat:InvoiceType>FT</fat:InvoiceType>
+          <fat:SelfBillingIndicator>0</fat:SelfBillingIndicator>
+          <fat:TaxRegistrationNumber>500000001</fat:TaxRegistrationNumber>
+          <fat:CashVATSchemeIndicator>0</fat:CashVATSchemeIndicator>
+          <fat:LineSummary><fat:TaxPointDate>2026-07-01</fat:TaxPointDate><fat:DebitCreditIndicator>D</fat:DebitCreditIndicator><fat:TaxAmount>6</fat:TaxAmount><fat:NetAmount>100</fat:NetAmount><fat:GrossAmount>106</fat:GrossAmount><fat:TotalTaxBase>0</fat:TotalTaxBase><fat:Tax><fat:TaxType>IVA</fat:TaxType><fat:TaxCountryRegion>PT</fat:TaxCountryRegion><fat:TaxCode>RED</fat:TaxCode><fat:TaxPercentage>6</fat:TaxPercentage></fat:Tax><fat:TaxExemptionCode></fat:TaxExemptionCode></fat:LineSummary>
+          <fat:LineSummary><fat:TaxPointDate>2026-07-01</fat:TaxPointDate><fat:DebitCreditIndicator>D</fat:DebitCreditIndicator><fat:TaxAmount>23</fat:TaxAmount><fat:NetAmount>100</fat:NetAmount><fat:GrossAmount>123</fat:GrossAmount><fat:TotalTaxBase>0</fat:TotalTaxBase><fat:Tax><fat:TaxType>IVA</fat:TaxType><fat:TaxCountryRegion>PT</fat:TaxCountryRegion><fat:TaxCode>NOR</fat:TaxCode><fat:TaxPercentage>23</fat:TaxPercentage></fat:Tax><fat:TaxExemptionCode></fat:TaxExemptionCode></fat:LineSummary>
+          <fat:TaxPayable>29</fat:TaxPayable><fat:NetTotal>200</fat:NetTotal><fat:GrossTotal>229</fat:GrossTotal>
+        </fat:Invoice>
+        <fat:PaginationTotal><fat:totalDocs>301</fat:totalDocs><fat:totalDocsSent>300</fat:totalDocsSent><fat:totalPages>2</fat:totalPages><fat:nPage>1</fat:nPage></fat:PaginationTotal>
+      </fat:InvoicesList>
+      <fat:estadoExecucao><fat:EstadoOperacao>200</fat:EstadoOperacao><fat:Desc>Operação efetuada com sucesso.</fat:Desc></fat:estadoExecucao>
+    </fat:InvoicesResponse>
+  </S:Body>
+</S:Envelope>

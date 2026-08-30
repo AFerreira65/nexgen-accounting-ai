@@ -1,0 +1,26 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+TestResults/
+artifacts/
+.tools/
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+*.pfx
+*.p12
+*.cer
+*.key
+appsettings.local.json
+efatura.credentials.json
+
+# Dados e documentação locais que não devem ser publicados automaticamente.
+SAFTs Exemplo/
+tabelas PHC/
+*.mdf
+*.ldf
+*.bak

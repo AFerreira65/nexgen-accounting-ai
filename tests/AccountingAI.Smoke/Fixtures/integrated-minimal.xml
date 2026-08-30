@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<AuditFile xmlns="urn:OECD:StandardAuditFile-Tax:PT_1.04_01">
+  <Header>
+    <AuditFileVersion>1.04_01</AuditFileVersion>
+    <CompanyID>TESTE</CompanyID>
+    <TaxRegistrationNumber>500000000</TaxRegistrationNumber>
+    <TaxAccountingBasis>I</TaxAccountingBasis>
+    <CompanyName>Empresa de Teste</CompanyName>
+    <BusinessName>Empresa de Teste</BusinessName>
+    <CompanyAddress><AddressDetail>Morada de teste</AddressDetail><City>Lisboa</City><PostalCode>1000-001</PostalCode><Country>PT</Country></CompanyAddress>
+    <FiscalYear>2026</FiscalYear><StartDate>2026-01-01</StartDate><EndDate>2026-01-31</EndDate>
+    <CurrencyCode>EUR</CurrencyCode><DateCreated>2026-02-01</DateCreated><TaxEntity>Global</TaxEntity>
+    <ProductCompanyTaxID>500000000</ProductCompanyTaxID><SoftwareCertificateNumber>0</SoftwareCertificateNumber>
+    <ProductID>Accounting AI/Teste</ProductID><ProductVersion>1.0</ProductVersion>
+  </Header>
+  <MasterFiles>
+    <GeneralLedgerAccounts>
+      <TaxonomyReference>S</TaxonomyReference>
+      <Account><AccountID>12</AccountID><AccountDescription>Depósitos à ordem</AccountDescription><OpeningDebitBalance>0</OpeningDebitBalance><OpeningCreditBalance>0</OpeningCreditBalance><ClosingDebitBalance>123</ClosingDebitBalance><ClosingCreditBalance>0</ClosingCreditBalance><GroupingCategory>GM</GroupingCategory><TaxonomyCode>1</TaxonomyCode></Account>
+      <Account><AccountID>71</AccountID><AccountDescription>Vendas</AccountDescription><OpeningDebitBalance>0</OpeningDebitBalance><OpeningCreditBalance>0</OpeningCreditBalance><ClosingDebitBalance>0</ClosingDebitBalance><ClosingCreditBalance>100</ClosingCreditBalance><GroupingCategory>GM</GroupingCategory><TaxonomyCode>1</TaxonomyCode></Account>
+    </GeneralLedgerAccounts>
+    <Customer><CustomerID>C1</CustomerID><AccountID>211</AccountID><CustomerTaxID>999999990</CustomerTaxID><CompanyName>Cliente Teste</CompanyName><BillingAddress><AddressDetail>Desconhecida</AddressDetail><City>Lisboa</City><PostalCode>1000-001</PostalCode><Country>PT</Country></BillingAddress><SelfBillingIndicator>0</SelfBillingIndicator></Customer>
+    <Product><ProductType>S</ProductType><ProductCode>SERV</ProductCode><ProductDescription>Serviço</ProductDescription><ProductNumberCode>SERV</ProductNumberCode></Product>
+    <TaxTable><TaxTableEntry><TaxType>IVA</TaxType><TaxCountryRegion>PT</TaxCountryRegion><TaxCode>NOR</TaxCode><Description>Taxa normal</Description><TaxPercentage>23</TaxPercentage></TaxTableEntry></TaxTable>
+  </MasterFiles>
+  <GeneralLedgerEntries>
+    <NumberOfEntries>1</NumberOfEntries><TotalDebit>123</TotalDebit><TotalCredit>123</TotalCredit>
+    <Journal><JournalID>VEN</JournalID><Description>Vendas</Description>
+      <Transaction><TransactionID>2026-01-FT1</TransactionID><Period>1</Period><TransactionDate>2026-01-15</TransactionDate><SourceID>TESTE</SourceID><Description>Fatura teste</Description><DocArchivalNumber>1</DocArchivalNumber><TransactionType>N</TransactionType><GLPostingDate>2026-01-15</GLPostingDate>
+        <Lines>
+          <DebitLine><RecordID>1</RecordID><AccountID>12</AccountID><SystemEntryDate>2026-01-15T10:00:00</SystemEntryDate><Description>Recebimento</Description><DebitAmount>123</DebitAmount></DebitLine>
+          <CreditLine><RecordID>2</RecordID><AccountID>71</AccountID><SystemEntryDate>2026-01-15T10:00:00</SystemEntryDate><Description>Venda</Description><CreditAmount>123</CreditAmount></CreditLine>
+        </Lines>
+      </Transaction>
+    </Journal>
+  </GeneralLedgerEntries>
+  <SourceDocuments><SalesInvoices><NumberOfEntries>1</NumberOfEntries><TotalDebit>123</TotalDebit><TotalCredit>0</TotalCredit>
+    <Invoice><InvoiceNo>FT T/1</InvoiceNo><ATCUD>0</ATCUD><DocumentStatus><InvoiceStatus>N</InvoiceStatus><InvoiceStatusDate>2026-01-15T10:00:00</InvoiceStatusDate><SourceID>TESTE</SourceID><SourceBilling>P</SourceBilling></DocumentStatus><Hash>TESTE</Hash><HashControl>1</HashControl><Period>1</Period><InvoiceDate>2026-01-15</InvoiceDate><InvoiceType>FT</InvoiceType><SpecialRegimes><SelfBillingIndicator>0</SelfBillingIndicator><CashVATSchemeIndicator>0</CashVATSchemeIndicator><ThirdPartiesBillingIndicator>0</ThirdPartiesBillingIndicator></SpecialRegimes><SourceID>TESTE</SourceID><SystemEntryDate>2026-01-15T10:00:00</SystemEntryDate><CustomerID>C1</CustomerID>
+      <Line><LineNumber>1</LineNumber><ProductCode>SERV</ProductCode><ProductDescription>Serviço</ProductDescription><Quantity>1</Quantity><UnitOfMeasure>UN</UnitOfMeasure><UnitPrice>100</UnitPrice><TaxPointDate>2026-01-15</TaxPointDate><Description>Serviço</Description><CreditAmount>100</CreditAmount><Tax><TaxType>IVA</TaxType><TaxCountryRegion>PT</TaxCountryRegion><TaxCode>NOR</TaxCode><TaxPercentage>23</TaxPercentage></Tax></Line>
+      <DocumentTotals><TaxPayable>23</TaxPayable><NetTotal>100</NetTotal><GrossTotal>123</GrossTotal></DocumentTotals>
+    </Invoice>
+  </SalesInvoices></SourceDocuments>
+</AuditFile>

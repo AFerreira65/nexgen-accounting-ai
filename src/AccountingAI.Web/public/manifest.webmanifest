@@ -1,0 +1,17 @@
+{
+  "name": "Accounting AI",
+  "short_name": "Accounting AI",
+  "description": "Plataforma contabilística multiplataforma para Portugal.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f6f8",
+  "theme_color": "#006c67",
+  "icons": [
+    {
+      "src": "/accounting-ai.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>AccountingAI.Api</RootNamespace>
+    <AssemblyName>AccountingAI.Api</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <UserSecretsId>AccountingAI.Api-LocalDevelopment</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../AccountingAI.Application/AccountingAI.Application.csproj" />
+    <ProjectReference Include="../AccountingAI.Infrastructure.SqlServer/AccountingAI.Infrastructure.SqlServer.csproj" />
+  </ItemGroup>
+</Project>

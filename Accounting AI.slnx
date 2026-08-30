@@ -1,0 +1,15 @@
+<Solution>
+  <Project Path="src/AccountingAI.Api/AccountingAI.Api.csproj" />
+  <Project Path="src/AccountingAI.Application/AccountingAI.Application.csproj" />
+  <Project Path="src/AccountingAI.Core/AccountingAI.Core.csproj" />
+  <Project Path="src/AccountingAI.Domain/AccountingAI.Domain.csproj" />
+  <Project Path="src/AccountingAI.Infrastructure.SqlServer/AccountingAI.Infrastructure.SqlServer.csproj" />
+  <Project Path="src/AccountingAI.WinForms/AccountingAI.WinForms.csproj" />
+  <Project Path="src/AccountingAI.Worker/AccountingAI.Worker.csproj" />
+  <Project Path="tests/AccountingAI.Api.Tests/AccountingAI.Api.Tests.csproj" />
+  <Project Path="tests/AccountingAI.ArchitectureTests/AccountingAI.ArchitectureTests.csproj" />
+  <Project Path="tests/AccountingAI.Domain.Tests/AccountingAI.Domain.Tests.csproj" />
+  <Project Path="tests/AccountingAI.IntegrationTests/AccountingAI.IntegrationTests.csproj" />
+  <Project Path="tests/AccountingAI.Smoke/AccountingAI.Smoke.csproj" />
+  <Project Path="tests/AccountingAI.WinForms.Smoke/AccountingAI.WinForms.Smoke.csproj" />
+</Solution>

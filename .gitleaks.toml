@@ -1,0 +1,12 @@
+title = "Accounting AI secret scanning"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Local customer data, generated outputs and tool caches are outside source control"
+paths = [
+  '''(?i)(^|[\\/])SAFTs Exemplo([\\/]|$)''',
+  '''(?i)(^|[\\/])tabelas PHC([\\/]|$)''',
+  '''(?i)(^|[\\/])(bin|obj|node_modules|dist|artifacts|\.tools)([\\/]|$)'''
+]
