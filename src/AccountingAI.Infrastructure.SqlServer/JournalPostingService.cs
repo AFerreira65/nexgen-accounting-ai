@@ -41,18 +41,18 @@ public sealed class JournalPostingService(AccountingDbContext context)
         string description,
         bool reviewed,
         IReadOnlyList<JournalEntryLineInput> lines,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? documentTypeCode = null)
     {
         RequireLines(lines);
-        var normalizedJournal = Normalize(journalCode);
         PostedMovement? result = null;
 
         await InTransactionAsync(async () =>
         {
             context.ChangeTracker.Clear();
-            var journal = await ResolveJournalAsync(companyId, normalizedJournal, cancellationToken).ConfigureAwait(false);
+            var (journal, prefix) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
-            var reference = await NextReferenceAsync(companyId, journal, entryDate.Year, cancellationToken).ConfigureAwait(false);
+            var reference = await NextReferenceAsync(companyId, prefix, entryDate.Year, cancellationToken).ConfigureAwait(false);
 
             var entry = new JournalEntry(
                 Guid.NewGuid(), companyId, journal.Id, reference, entryDate, documentReference, description);
@@ -79,11 +79,11 @@ public sealed class JournalPostingService(AccountingDbContext context)
         string description,
         bool reviewed,
         IReadOnlyList<JournalEntryLineInput> lines,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? documentTypeCode = null)
     {
         RequireLines(lines);
         var normalizedReference = Normalize(reference);
-        var normalizedJournal = Normalize(journalCode);
         PostedMovement? result = null;
 
         await InTransactionAsync(async () =>
@@ -101,7 +101,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
                 throw new InvalidOperationException("Só um lançamento por conferir pode ser corrigido.");
             }
 
-            var journal = await ResolveJournalAsync(companyId, normalizedJournal, cancellationToken).ConfigureAwait(false);
+            var (journal, _) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
 
             // Corrigir é substituir: remove o lançamento e recria-o com a mesma referência.
@@ -191,6 +191,48 @@ public sealed class JournalPostingService(AccountingDbContext context)
         return journal;
     }
 
+    /// <summary>
+    /// Resolve o diário e o prefixo da referência. Com tipo de documento, a numeração
+    /// é por tipo de documento e o diário é o predefinido do tipo (salvo se for
+    /// indicado outro explicitamente).
+    /// </summary>
+    private async Task<(AccountingJournal Journal, string Prefix)> ResolveJournalAndPrefixAsync(
+        Guid companyId,
+        string? journalCode,
+        string? documentTypeCode,
+        CancellationToken cancellationToken)
+    {
+        var normalizedJournal = Normalize(journalCode);
+        var normalizedDocumentType = Normalize(documentTypeCode);
+
+        if (normalizedDocumentType.Length == 0)
+        {
+            return (await ResolveJournalAsync(companyId, normalizedJournal, cancellationToken).ConfigureAwait(false), normalizedJournal);
+        }
+
+        var documentType = await context.AccountingDocumentTypes
+            .Include(item => item.DefaultJournal)
+            .SingleOrDefaultAsync(
+                item => item.CompanyId == companyId && item.Code == normalizedDocumentType,
+                cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new InvalidOperationException("O tipo de documento indicado não existe na empresa.");
+        if (!documentType.IsActive)
+        {
+            throw new InvalidOperationException("O tipo de documento indicado está inativo.");
+        }
+
+        var journal = normalizedJournal.Length == 0
+            ? documentType.DefaultJournal
+            : await ResolveJournalAsync(companyId, normalizedJournal, cancellationToken).ConfigureAwait(false);
+        if (!journal.IsActive)
+        {
+            throw new InvalidOperationException("O diário do tipo de documento está inativo.");
+        }
+
+        return (journal, documentType.Code);
+    }
+
     private async Task<Dictionary<string, LedgerAccount>> ResolveAccountsAsync(
         Guid companyId,
         IReadOnlyList<JournalEntryLineInput> lines,
@@ -223,20 +265,21 @@ public sealed class JournalPostingService(AccountingDbContext context)
         return accounts;
     }
 
-    private async Task<string> NextReferenceAsync(Guid companyId, AccountingJournal journal, int year, CancellationToken cancellationToken)
+    private async Task<string> NextReferenceAsync(Guid companyId, string prefix, int year, CancellationToken cancellationToken)
     {
+        var referenceBase = $"{prefix}-{year}-";
         var sequence = await context.JournalEntries
             .CountAsync(
-                item => item.CompanyId == companyId && item.JournalId == journal.Id && item.EntryDate.Year == year,
+                item => item.CompanyId == companyId && item.Reference.StartsWith(referenceBase),
                 cancellationToken)
             .ConfigureAwait(false) + 1;
-        var reference = $"{journal.Code}-{year}-{sequence:D5}";
+        var reference = $"{referenceBase}{sequence:D5}";
         while (await context.JournalEntries
             .AnyAsync(item => item.CompanyId == companyId && item.Reference == reference, cancellationToken)
             .ConfigureAwait(false))
         {
             sequence++;
-            reference = $"{journal.Code}-{year}-{sequence:D5}";
+            reference = $"{referenceBase}{sequence:D5}";
         }
 
         return reference;

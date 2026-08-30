@@ -558,6 +558,41 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual("CAIXA", revisedSecond.JournalCode);
                 Assert.AreEqual("Conferido", revisedSecond.Status);
                 Assert.AreEqual(45m, revisedSecond.Amount);
+
+                var invoice = await posting
+                    .PostAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, journalCode: string.Empty, new DateOnly(2026, 4, 1),
+                        "FT 2026/1", "Venda a cliente", reviewed: false,
+                        [
+                            new JournalEntryLineInput("2111001", "Cliente", 120m, 0m),
+                            new JournalEntryLineInput("7211", "Serviço", 0m, 120m)
+                        ],
+                        documentTypeCode: "FTV")
+                    .ConfigureAwait(false);
+                Assert.AreEqual("FTV-2026-00001", invoice.Reference);
+                Assert.AreEqual("VENDAS", invoice.JournalCode);
+
+                var invoice2 = await posting
+                    .PostAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, string.Empty, new DateOnly(2026, 4, 2),
+                        "FT 2026/2", "Venda a cliente 2", reviewed: false,
+                        [
+                            new JournalEntryLineInput("2111001", "Cliente", 50m, 0m),
+                            new JournalEntryLineInput("7211", "Serviço", 0m, 50m)
+                        ],
+                        documentTypeCode: "FTV")
+                    .ConfigureAwait(false);
+                Assert.AreEqual("FTV-2026-00002", invoice2.Reference);
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await posting.PostAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, string.Empty, new DateOnly(2026, 4, 3),
+                        "X", "Y", false,
+                        [
+                            new JournalEntryLineInput("2111001", "D", 10m, 0m),
+                            new JournalEntryLineInput("7211", "C", 0m, 10m)
+                        ],
+                        documentTypeCode: "NAO-EXISTE").ConfigureAwait(false));
             }
 
             await using (var ledgerScope = services.CreateAsyncScope())

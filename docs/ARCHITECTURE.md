@@ -25,7 +25,9 @@ Na nova plataforma, as entradas previstas são ficheiros SAF-T, e-Fatura e extra
 
 `JournalPostingService` mantém o ciclo de vida dos lançamentos contabilísticos: cria (valida o diário e as contas de movimento, gera uma referência sequencial por empresa/diário/ano, conclui o `JournalEntry` pelo domínio — um débito ou crédito por linha, pelo menos duas linhas, totais iguais), marca como conferido, anula (`JournalEntryStatus.Voided`, preservando o lançamento) e corrige um lançamento por conferir substituindo-o pela mesma referência. Tudo em transação.
 
-`AccountLedgerService` produz as leituras agregadas — balancete e razão de conta —, calculadas sobre `JournalEntryLines` com `CompanyId` fixo e sempre a excluir os lançamentos anulados. A razão acumula o saldo por ordem de data, referência e sequência. O monitor WinForms conserva integrações históricas, incluindo PHC, mas essas dependências não passam para os novos módulos. Uma futura integração com ERP deverá ser um adaptador independente e substituível.
+`AccountLedgerService` produz as leituras agregadas — balancete e razão de conta —, calculadas sobre `JournalEntryLines` com `CompanyId` fixo e sempre a excluir os lançamentos anulados. A razão acumula o saldo por ordem de data, referência e sequência.
+
+A numeração dos lançamentos é `{PREFIXO}-{ANO}-{NNNNN}`: o prefixo é o código do diário ou, quando é indicado um tipo de documento, o código desse tipo (e o diário passa a ser o predefinido do tipo). O tipo de documento fica no prefixo da referência, sem chave estrangeira no lançamento nesta fase. O monitor WinForms conserva integrações históricas, incluindo PHC, mas essas dependências não passam para os novos módulos. Uma futura integração com ERP deverá ser um adaptador independente e substituível.
 
 ## Componentes
 

@@ -94,6 +94,23 @@ describe('App', () => {
     expect(within(screen.getByRole('link', { name: 'GERAL 2026 00001' }).closest('tr') as HTMLElement).getByText('Anulado')).toBeInTheDocument()
   })
 
+  it('numbers a movement by document type in demo mode', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Novo lançamento/i }))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Tipo de documento' }), { target: { value: 'FTV' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Documento' }), { target: { value: 'FT A/1' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descrição' }), { target: { value: 'Fatura a cliente' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Conta da linha 1' }), { target: { value: '2111001' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Débito da linha 1' }), { target: { value: '120' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Conta da linha 2' }), { target: { value: '6221' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Crédito da linha 2' }), { target: { value: '120' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Registar lançamento' }))
+
+    expect(screen.getByRole('link', { name: 'FTV 2026 00001' })).toBeInTheDocument()
+  })
+
   it('shows the trial balance with debit and credit totals', () => {
     window.history.pushState({}, '', '/balancete')
     render(<App />)

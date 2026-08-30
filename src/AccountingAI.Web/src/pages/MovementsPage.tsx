@@ -12,6 +12,8 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
   const isEdit = movement !== null
   const journals = accountingSetup.journals.filter((item) => item.isActive || item.code === movement?.journalId)
   const postingAccounts = accountingSetup.accounts.filter((item) => item.allowsPosting && item.isActive)
+  const documentTypes = accountingSetup.documentTypes.filter((item) => item.isActive)
+  const [documentTypeCode, setDocumentTypeCode] = useState('')
   const [journalCode, setJournalCode] = useState(movement?.journalId ?? journals[0]?.code ?? '')
   const [entryDate, setEntryDate] = useState(movement?.date ?? today())
   const [documentReference, setDocumentReference] = useState(movement?.document ?? '')
@@ -38,6 +40,7 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
     try {
       const payload = {
         journalCode,
+        documentTypeCode: documentTypeCode || null,
         entryDate,
         documentReference,
         description,
@@ -60,6 +63,7 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
     <form onSubmit={submit}>
       <datalist id="posting-accounts">{postingAccounts.map((account) => <option key={account.code} value={account.code}>{account.name}</option>)}</datalist>
       <div className="settings-grid">
+        {!isEdit && <label><span>Tipo de documento</span><select value={documentTypeCode} onChange={(event) => { const code = event.target.value; setDocumentTypeCode(code); const chosen = documentTypes.find((item) => item.code === code); if (chosen) setJournalCode(chosen.defaultJournalCode) }}><option value="">Sem tipo · numerar pelo diário</option>{documentTypes.map((document) => <option key={document.code} value={document.code}>{document.code} · {document.name}</option>)}</select></label>}
         <label><span>Diário</span><select value={journalCode} onChange={(event) => setJournalCode(event.target.value)}>{journals.map((journal) => <option key={journal.code} value={journal.code}>{journal.code} · {journal.name}</option>)}</select></label>
         <label><span>Data</span><input type="date" value={entryDate} onChange={(event) => setEntryDate(event.target.value)} /></label>
         <label><span>Documento</span><input value={documentReference} onChange={(event) => setDocumentReference(event.target.value)} placeholder="ex.: FT 2026/1" /></label>

@@ -61,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-09",
+    phase = "F1-10",
     status = "ready"
 }));
 
@@ -316,7 +316,8 @@ if (app.Environment.IsDevelopment())
                     request.Description,
                     request.Reviewed,
                     lines,
-                    cancellationToken)
+                    cancellationToken,
+                    request.DocumentTypeCode)
                 .ConfigureAwait(false);
 
             return Results.Ok(ToMovementResponse(movement));
@@ -351,7 +352,8 @@ if (app.Environment.IsDevelopment())
                 .ToList();
             var movement = await posting
                 .ReviseAsync(companyId, reference, request.JournalCode, request.EntryDate,
-                    request.DocumentReference, request.Description, request.Reviewed, lines, cancellationToken)
+                    request.DocumentReference, request.Description, request.Reviewed, lines, cancellationToken,
+                    request.DocumentTypeCode)
                 .ConfigureAwait(false);
             return Results.Ok(ToMovementResponse(movement));
         }
@@ -1188,4 +1190,5 @@ public sealed record CreateMovementRequest(
     string DocumentReference,
     string Description,
     bool Reviewed,
-    List<MovementLineRequest> Lines);
+    List<MovementLineRequest> Lines,
+    string? DocumentTypeCode = null);

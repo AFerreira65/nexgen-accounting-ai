@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-09");
+        StringAssert.Contains(payload, "F1-10");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -219,6 +219,10 @@ public sealed class FoundationApiTests
             """{"journalCode":"GERAL","entryDate":"2026-03-20","documentReference":"OD","description":"X","reviewed":false,"lines":[{"accountCode":"9999999","description":"D","debit":100,"credit":0},{"accountCode":"2211001","description":"C","debit":0,"credit":100}]}"""))
             .ConfigureAwait(false);
 
+        using var unknownDocumentType = await client.PostAsync(movements, Json(
+            """{"documentTypeCode":"NAO-EXISTE","entryDate":"2026-03-20","documentReference":"FT","description":"X","reviewed":false,"lines":[{"accountCode":"6221","description":"D","debit":10,"credit":0},{"accountCode":"2211001","description":"C","debit":0,"credit":10}]}"""))
+            .ConfigureAwait(false);
+
         using var noMembership = await client.PostAsync(
             "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
             "companies/99999999-9999-9999-9999-999999999999/accounting/movements", Json(
@@ -242,6 +246,7 @@ public sealed class FoundationApiTests
         StringAssert.Contains(unbalancedPayload, "movement");
         Assert.AreEqual(HttpStatusCode.BadRequest, unknownJournal.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, unknownAccount.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, unknownDocumentType.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, noMembership.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, reviewAlreadyReviewed.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, voidUnknown.StatusCode);

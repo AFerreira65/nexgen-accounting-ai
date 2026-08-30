@@ -8,7 +8,7 @@ export type JournalEditInput = { name: string; isActive: boolean }
 export type NewDocumentTypeInput = { code: string; name: string; defaultJournalCode: string }
 export type DocumentTypeEditInput = { name: string; defaultJournalCode: string; isActive: boolean }
 export type MovementLineInput = { accountCode: string; description: string; debit: number; credit: number }
-export type MovementInput = { journalCode: string; entryDate: string; documentReference: string; description: string; reviewed: boolean; lines: MovementLineInput[] }
+export type MovementInput = { journalCode: string; entryDate: string; documentReference: string; description: string; reviewed: boolean; lines: MovementLineInput[]; documentTypeCode?: string | null }
 
 async function problemMessage(response: Response) {
   try {
@@ -425,15 +425,18 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      const journal = accountingSetup.journals.find((item) => item.code === input.journalCode)
+      const documentType = input.documentTypeCode ? accountingSetup.documentTypes.find((item) => item.code === input.documentTypeCode) : undefined
+      const journalCode = documentType?.defaultJournalCode ?? input.journalCode
+      const journal = accountingSetup.journals.find((item) => item.code === journalCode)
       const year = input.entryDate.slice(0, 4)
-      const sequence = String(accountingMovements.filter((item) => item.journalId === input.journalCode).length + 1).padStart(5, '0')
+      const prefix = input.documentTypeCode || journalCode
+      const sequence = String(accountingMovements.filter((item) => item.id.startsWith(`${prefix}-${year}-`)).length + 1).padStart(5, '0')
       const accountName = (code: string) => accountingSetup.accounts.find((item) => item.code === code)?.name ?? code
       setAccountingMovements((current) => [{
-        id: `${input.journalCode}-${year}-${sequence}`,
+        id: `${prefix}-${year}-${sequence}`,
         date: input.entryDate,
-        journalId: input.journalCode,
-        journalName: journal?.name ?? input.journalCode,
+        journalId: journalCode,
+        journalName: journal?.name ?? journalCode,
         document: input.documentReference,
         description: input.description,
         status: input.reviewed ? 'Conferido' : 'Por conferir',
