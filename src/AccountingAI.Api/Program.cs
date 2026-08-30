@@ -61,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-08",
+    phase = "F1-09",
     status = "ready"
 }));
 
@@ -483,6 +483,71 @@ if (app.Environment.IsDevelopment())
             Accounts = accounts,
             Journals = journals,
             DocumentTypes = documentTypes
+        });
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/trial-balance", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        AccountLedgerService ledger,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        var balance = await ledger.TrialBalanceAsync(companyId, cancellationToken).ConfigureAwait(false);
+        return Results.Ok(new
+        {
+            balance.TotalDebit,
+            balance.TotalCredit,
+            Rows = balance.Rows.Select(row => new
+            {
+                row.AccountCode,
+                row.AccountName,
+                row.Debit,
+                row.Credit,
+                row.Balance
+            })
+        });
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/accounts/{code}/ledger", async (
+        Guid userId,
+        Guid companyId,
+        string code,
+        AccountingDbContext context,
+        AccountLedgerService ledger,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        var result = await ledger.AccountLedgerAsync(companyId, code, cancellationToken).ConfigureAwait(false);
+        if (result is null)
+        {
+            return Results.NotFound();
+        }
+
+        return Results.Ok(new
+        {
+            result.AccountCode,
+            result.AccountName,
+            result.Balance,
+            Entries = result.Entries.Select(entry => new
+            {
+                entry.Reference,
+                entry.EntryDate,
+                entry.JournalCode,
+                entry.Description,
+                entry.Debit,
+                entry.Credit,
+                entry.RunningBalance
+            })
         });
     });
 

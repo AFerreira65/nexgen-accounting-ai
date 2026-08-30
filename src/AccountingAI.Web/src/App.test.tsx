@@ -94,6 +94,16 @@ describe('App', () => {
     expect(within(screen.getByRole('link', { name: 'GERAL 2026 00001' }).closest('tr') as HTMLElement).getByText('Anulado')).toBeInTheDocument()
   })
 
+  it('shows the trial balance with debit and credit totals', () => {
+    window.history.pushState({}, '', '/balancete')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Balancete' })).toBeInTheDocument()
+    expect(screen.getByText('Total de débito')).toBeInTheDocument()
+    expect(screen.getByText('Total de crédito')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '6221' })).toBeInTheDocument()
+  })
+
   it('shows the organisation screen with companies and users sections', () => {
     window.history.pushState({}, '', '/organizacao')
     render(<App />)

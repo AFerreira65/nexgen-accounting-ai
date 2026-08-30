@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-08");
+        StringAssert.Contains(payload, "F1-09");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -145,6 +145,46 @@ public sealed class FoundationApiTests
         Assert.IsFalse(islandPayload.Contains("\"code\":\"6221\"", StringComparison.Ordinal) &&
             islandPayload.Contains("Material de escritório", StringComparison.Ordinal));
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedResponse.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task TrialBalanceAndAccountLedgerAreScopedAndExcludeVoided()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string mainland = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/accounting";
+
+        using var trialBalance = await client.GetAsync($"{mainland}/trial-balance").ConfigureAwait(false);
+        var trialBalancePayload = await trialBalance.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var ledger = await client.GetAsync($"{mainland}/accounts/6221/ledger").ConfigureAwait(false);
+        var ledgerPayload = await ledger.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unknownAccount = await client.GetAsync($"{mainland}/accounts/NAO-EXISTE/ledger").ConfigureAwait(false);
+
+        using var unknownCompany = await client.GetAsync(
+            "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/99999999-9999-9999-9999-999999999999/accounting/trial-balance")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, trialBalance.StatusCode);
+        StringAssert.Contains(trialBalancePayload, "\"totalDebit\"");
+        StringAssert.Contains(trialBalancePayload, "\"accountCode\":\"6221\"");
+        Assert.AreEqual(HttpStatusCode.OK, ledger.StatusCode);
+        StringAssert.Contains(ledgerPayload, "\"accountCode\":\"6221\"");
+        StringAssert.Contains(ledgerPayload, "\"runningBalance\"");
+        Assert.AreEqual(HttpStatusCode.NotFound, unknownAccount.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unknownCompany.StatusCode);
     }
 
     [TestMethod]

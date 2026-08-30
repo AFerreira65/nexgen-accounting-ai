@@ -118,6 +118,7 @@ public sealed class SqlServerMigrationTests
                 .AddScoped<SaftCompanyCreationService>()
                 .AddScoped<OrganizationAdminService>()
                 .AddScoped<JournalPostingService>()
+                .AddScoped<AccountLedgerService>()
                 .BuildServiceProvider();
             await services.SeedDevelopmentOrganizationAsync().ConfigureAwait(false);
             await services.SeedDevelopmentAccountingAsync().ConfigureAwait(false);
@@ -557,6 +558,29 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual("CAIXA", revisedSecond.JournalCode);
                 Assert.AreEqual("Conferido", revisedSecond.Status);
                 Assert.AreEqual(45m, revisedSecond.Amount);
+            }
+
+            await using (var ledgerScope = services.CreateAsyncScope())
+            {
+                var ledger = ledgerScope.ServiceProvider.GetRequiredService<AccountLedgerService>();
+
+                var trial = await ledger
+                    .TrialBalanceAsync(DevelopmentDataSeeder.DemoCompanyId)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(trial.TotalDebit, trial.TotalCredit);
+                var row6221 = trial.Rows.Single(row => row.AccountCode == "6221");
+                Assert.AreEqual(1245m, row6221.Debit); // 1200 do seed + 45 da correção; os 100 anulados ficam de fora
+
+                var accountLedger = await ledger
+                    .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "6221")
+                    .ConfigureAwait(false);
+                Assert.IsNotNull(accountLedger);
+                Assert.AreEqual(2, accountLedger!.Entries.Count);
+                Assert.AreEqual(1245m, accountLedger.Balance);
+                Assert.IsFalse(accountLedger.Entries.Any(entry => entry.Reference == "GERAL-2026-00001"));
+                Assert.IsNull(await ledger
+                    .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "NAO-EXISTE")
+                    .ConfigureAwait(false));
             }
 
             context.ChangeTracker.Clear();

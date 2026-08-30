@@ -8,6 +8,7 @@ import {
   FileText,
   FileUp,
   Landmark,
+  Scale,
   Search,
   Settings,
   Tags,
@@ -20,6 +21,7 @@ import { useWorkContext } from './WorkContext'
 const links = [
   { to: '/', label: 'Visão geral', icon: CircleGauge, end: true },
   { to: '/movimentos', label: 'Movimentos', icon: WalletCards },
+  { to: '/balancete', label: 'Balancete', icon: Scale },
   { to: '/contas', label: 'Plano de contas', icon: BookOpen },
   { to: '/diarios', label: 'Diários', icon: Landmark },
   { to: '/documentos', label: 'Documentos', icon: FileText },
