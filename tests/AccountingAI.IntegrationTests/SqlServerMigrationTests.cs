@@ -113,6 +113,8 @@ public sealed class SqlServerMigrationTests
                         sqlOptions.EnableRetryOnFailure();
                     }))
                 .AddScoped<CompanyAccountingProvisioner>()
+                .AddScoped<AccountingMasterDataService>()
+                .AddScoped<TaxonomyReviewService>()
                 .BuildServiceProvider();
             await services.SeedDevelopmentOrganizationAsync().ConfigureAwait(false);
             await services.SeedDevelopmentAccountingAsync().ConfigureAwait(false);
@@ -233,6 +235,110 @@ public sealed class SqlServerMigrationTests
                 "M",
                 taxonomyAccounts[DevelopmentDataSeeder.DemoIslandCompanyId].TaxonomyReference);
             Assert.AreEqual(2, taxonomyAccounts[DevelopmentDataSeeder.DemoCompanyId].TaxonomyCode);
+
+            await using (var maintenanceScope = services.CreateAsyncScope())
+            {
+                var masterData = maintenanceScope.ServiceProvider
+                    .GetRequiredService<AccountingMasterDataService>();
+                var taxonomyReview = maintenanceScope.ServiceProvider
+                    .GetRequiredService<TaxonomyReviewService>();
+
+                var createdAccount = await masterData
+                    .CreateAccountAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "6811",
+                        "Donativos e liberalidades",
+                        "6",
+                        allowsPosting: true)
+                    .ConfigureAwait(false);
+                Assert.AreEqual("6811", createdAccount.Code);
+                Assert.IsNull(createdAccount.SourceTemplateVersion);
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await masterData.CreateAccountAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "6811",
+                        "Duplicado",
+                        "6",
+                        allowsPosting: true).ConfigureAwait(false));
+
+                await Assert.ThrowsAsync<ArgumentException>(async () =>
+                    await masterData.CreateAccountAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "9002",
+                        "Filha de uma conta de movimento",
+                        "11",
+                        allowsPosting: true).ConfigureAwait(false));
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await masterData.UpdateAccountAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "6221",
+                        "Material de escritório",
+                        isActive: false,
+                        taxonomyReference: null,
+                        taxonomyCode: null).ConfigureAwait(false));
+
+                var classified = await masterData
+                    .UpdateAccountAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "6221",
+                        "Material de escritório e economato",
+                        isActive: true,
+                        taxonomyReference: "S",
+                        taxonomyCode: 61)
+                    .ConfigureAwait(false);
+                Assert.AreEqual("Material de escritório e economato", classified.Name);
+                Assert.AreEqual(61, classified.TaxonomyCode);
+
+                var secondApply = await masterData
+                    .ApplyTemplateTaxonomySuggestionsAsync(DevelopmentDataSeeder.DemoCompanyId)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(0, secondApply);
+
+                var deactivated = await masterData
+                    .UpdateAccountAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "6811",
+                        "Donativos e liberalidades",
+                        isActive: false,
+                        taxonomyReference: null,
+                        taxonomyCode: null)
+                    .ConfigureAwait(false);
+                Assert.IsFalse(deactivated.IsActive);
+
+                var reactivated = await masterData
+                    .UpdateAccountAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "6811",
+                        "Donativos e liberalidades",
+                        isActive: true,
+                        taxonomyReference: null,
+                        taxonomyCode: null)
+                    .ConfigureAwait(false);
+                Assert.IsTrue(reactivated.IsActive);
+
+                var cleared = await masterData
+                    .UpdateAccountAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "6221",
+                        "Material de escritório e economato",
+                        isActive: true,
+                        taxonomyReference: null,
+                        taxonomyCode: null)
+                    .ConfigureAwait(false);
+                Assert.IsNull(cleared.TaxonomyCode);
+
+                var review = await taxonomyReview
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId)
+                    .ConfigureAwait(false);
+                Assert.IsNotNull(review);
+                Assert.AreEqual("S", review!.Reference);
+                Assert.IsTrue(review.Accounts.Any(item => item.Code == "6221" && item.TaxonomyCode is null));
+                Assert.IsTrue(review.ClassifiedCount >= 2);
+            }
+
+            context.ChangeTracker.Clear();
 
             await context.Database.OpenConnectionAsync().ConfigureAwait(false);
             await using var command = context.Database.GetDbConnection().CreateCommand();

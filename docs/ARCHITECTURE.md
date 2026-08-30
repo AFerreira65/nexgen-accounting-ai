@@ -17,6 +17,8 @@ O schema `accounting` inicia o núcleo contabilístico com contas, diários, tip
 
 As contas de movimento podem guardar `TaxonomyReference` e `TaxonomyCode`. O domínio impede taxonomias em contas agregadoras, exige referência e código em conjunto e aplica a regra especial do referencial `O`. O catálogo da empresa determina `S`, `M` ou `N` a partir da norma; a interface apresenta a cobertura sem inventar classificações para contas ainda não validadas.
 
+`AccountingMasterDataService` mantém o plano de contas de cada empresa: cria contas próprias com conta-mãe agregadora validada, renomeia, ativa/desativa (recusando desativar contas com linhas de movimento ou subcontas ativas) e atribui, limpa ou reaplica em bloco o código de taxonomia. `TaxonomyReviewService` constrói a cobertura das contas de movimento a partir da norma e do plano base versionado, classificando cada conta como atribuída, com sugestão, por atribuir ou com referencial diferente, sem reproduzir um catálogo legal completo. Ambos operam sempre por `CompanyId` e em transação. Os diários e os tipos de documento continuam só de consulta.
+
 Na nova plataforma, as entradas previstas são ficheiros SAF-T, e-Fatura e extratos bancários por ficheiro. O monitor WinForms conserva integrações históricas, incluindo PHC, mas essas dependências não passam para os novos módulos. Uma futura integração com ERP deverá ser um adaptador independente e substituível.
 
 ## Componentes

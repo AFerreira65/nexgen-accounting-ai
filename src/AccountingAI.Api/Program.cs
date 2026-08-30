@@ -57,7 +57,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-04A",
+    phase = "F1-04B",
     status = "ready"
 }));
 
@@ -351,12 +351,153 @@ if (app.Environment.IsDevelopment())
             DocumentTypes = documentTypes
         });
     });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/taxonomy-review", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        TaxonomyReviewService reviewService,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        var review = await reviewService.BuildAsync(companyId, cancellationToken).ConfigureAwait(false);
+        if (review is null)
+        {
+            return Results.NotFound();
+        }
+
+        return Results.Ok(new
+        {
+            review.Reference,
+            review.TaxonomyName,
+            review.TaxonomyLegalSource,
+            review.PostingAccountCount,
+            review.ClassifiedCount,
+            Accounts = review.Accounts.Select(item => new
+            {
+                item.Code,
+                item.Name,
+                item.TaxonomyReference,
+                item.TaxonomyCode,
+                item.SuggestedCode,
+                Status = item.Status.ToString()
+            })
+        });
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/accounts", async (
+        Guid userId,
+        Guid companyId,
+        CreateAccountRequest request,
+        AccountingDbContext context,
+        AccountingMasterDataService masterData,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var account = await masterData
+                .CreateAccountAsync(
+                    companyId,
+                    request.Code,
+                    request.Name,
+                    request.ParentCode,
+                    request.AllowsPosting,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(account);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["account"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/accounts/{code}", async (
+        Guid userId,
+        Guid companyId,
+        string code,
+        UpdateAccountRequest request,
+        AccountingDbContext context,
+        AccountingMasterDataService masterData,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var account = await masterData
+                .UpdateAccountAsync(
+                    companyId,
+                    code,
+                    request.Name,
+                    request.IsActive,
+                    request.TaxonomyReference,
+                    request.TaxonomyCode,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(account);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["account"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/accounts/apply-taxonomy-suggestions", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        AccountingMasterDataService masterData,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        var applied = await masterData
+            .ApplyTemplateTaxonomySuggestionsAsync(companyId, cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(new { applied });
+    });
 }
 
 await app.RunAsync().ConfigureAwait(false);
 
 public partial class Program
 {
+    private static Task<bool> HasCompanyAccessAsync(
+        AccountingDbContext context,
+        Guid userId,
+        Guid companyId,
+        CancellationToken cancellationToken) =>
+        context.Companies
+            .AsNoTracking()
+            .AnyAsync(
+                company => company.Id == companyId &&
+                    company.IsActive &&
+                    company.UserMemberships.Any(
+                        membership => membership.UserId == userId && membership.IsActive),
+                cancellationToken);
+
     private static object? ToSettingsResponse(UserCompanySettings? settings) => settings is null
         ? null
         : new
@@ -378,3 +519,15 @@ public sealed record UpdateUserCompanySettingsRequest(
     string Theme,
     bool CompactMode,
     int PageSize);
+
+public sealed record CreateAccountRequest(
+    string Code,
+    string Name,
+    string? ParentCode,
+    bool AllowsPosting);
+
+public sealed record UpdateAccountRequest(
+    string Name,
+    bool IsActive,
+    string? TaxonomyReference,
+    int? TaxonomyCode);

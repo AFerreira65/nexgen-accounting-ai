@@ -67,6 +67,22 @@ public sealed class LedgerAccount
 
     public ICollection<JournalEntryLine> EntryLines { get; } = [];
 
+    public void Rename(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        Name = name.Trim();
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
+    public void Reactivate()
+    {
+        IsActive = true;
+    }
+
     public void AssignTaxonomy(string? taxonomyReference, int? taxonomyCode)
     {
         if (string.IsNullOrWhiteSpace(taxonomyReference) && taxonomyCode is null)

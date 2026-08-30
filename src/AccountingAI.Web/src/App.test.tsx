@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import indexHtml from '../index.html?raw'
 import { App } from './App'
 
@@ -69,5 +69,31 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Taxonomias' }))
     expect(screen.getByRole('heading', { name: 'Taxonomias' })).toBeInTheDocument()
     expect(screen.getByText('Taxonomia S — SNC base')).toBeInTheDocument()
+  })
+
+  it('creates a company account from the chart of accounts screen', () => {
+    window.history.pushState({}, '', '/contas')
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Nova conta/i }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Código' }), { target: { value: '6811' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descrição' }), { target: { value: 'Donativos e liberalidades' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar conta' }))
+
+    expect(screen.getByRole('link', { name: '6811' })).toBeInTheDocument()
+  })
+
+  it('clears and re-applies a template taxonomy code from the taxonomy screen', async () => {
+    window.history.pushState({}, '', '/taxonomias')
+    render(<App />)
+
+    expect(screen.getByText(/2 de 5/)).toBeInTheDocument()
+
+    const row = screen.getByRole('link', { name: '12' }).closest('tr') as HTMLElement
+    fireEvent.click(within(row).getByRole('button', { name: 'Limpar' }))
+    expect(await screen.findByText(/1 de 5/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Aplicar sugestões do referencial/i }))
+    expect(await screen.findByText(/2 de 5/)).toBeInTheDocument()
   })
 })

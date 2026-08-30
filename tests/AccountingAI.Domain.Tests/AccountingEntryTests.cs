@@ -82,6 +82,43 @@ public sealed class AccountingEntryTests
             account.AssignTaxonomy("S", 1));
     }
 
+    [TestMethod]
+    public void RenameTrimsTheNameAndKeepsTheCode()
+    {
+        var account = new LedgerAccount(Guid.NewGuid(), Guid.NewGuid(), "6221", "Material de escritório");
+
+        account.Rename("  Material de escritório e economato  ");
+
+        Assert.AreEqual("Material de escritório e economato", account.Name);
+        Assert.AreEqual("6221", account.Code);
+        Assert.ThrowsExactly<ArgumentException>(() => account.Rename("   "));
+    }
+
+    [TestMethod]
+    public void DeactivateAndReactivateToggleTheState()
+    {
+        var account = new LedgerAccount(Guid.NewGuid(), Guid.NewGuid(), "6221", "Material de escritório");
+        Assert.IsTrue(account.IsActive);
+
+        account.Deactivate();
+        Assert.IsFalse(account.IsActive);
+
+        account.Reactivate();
+        Assert.IsTrue(account.IsActive);
+    }
+
+    [TestMethod]
+    public void ClearingTheTaxonomyRemovesReferenceAndCode()
+    {
+        var account = new LedgerAccount(Guid.NewGuid(), Guid.NewGuid(), "12", "Depósitos à ordem");
+        account.AssignTaxonomy("S", 2);
+
+        account.AssignTaxonomy(null, null);
+
+        Assert.IsNull(account.TaxonomyReference);
+        Assert.IsNull(account.TaxonomyCode);
+    }
+
     private static JournalEntry CreateEntry() => new(
         Guid.NewGuid(),
         Guid.NewGuid(),

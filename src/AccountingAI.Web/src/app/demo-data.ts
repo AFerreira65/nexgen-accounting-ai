@@ -60,6 +60,60 @@ export type AccountingSetup = {
   documentTypes: AccountingDocumentType[]
 }
 
+export type TaxonomyReviewStatus = 'Assigned' | 'SuggestionAvailable' | 'Unclassified' | 'ReferenceMismatch'
+
+export type TaxonomyReviewAccount = {
+  code: string
+  name: string
+  taxonomyReference: string | null
+  taxonomyCode: number | null
+  suggestedCode: number | null
+  status: TaxonomyReviewStatus
+}
+
+export type TaxonomyReview = {
+  reference: string
+  taxonomyName: string
+  taxonomyLegalSource: string
+  postingAccountCount: number
+  classifiedCount: number
+  accounts: TaxonomyReviewAccount[]
+}
+
+// Correspondências de taxonomia inequívocas incluídas no plano de contas base
+// versionado (conta 11 = Caixa, conta 12 = Depósitos à ordem). Espelha
+// AccountingTemplateCatalog no servidor; as restantes contas ficam por classificar.
+export const templateTaxonomySuggestions: Record<string, number> = { '11': 1, '12': 2 }
+
+export function buildTaxonomyReview(setup: AccountingSetup): TaxonomyReview {
+  const reference = setup.template.taxonomyReference
+  const posting = setup.accounts.filter((account) => account.allowsPosting && account.isActive)
+  const accounts: TaxonomyReviewAccount[] = posting
+    .map((account) => {
+      const suggestedCode = account.code in templateTaxonomySuggestions ? templateTaxonomySuggestions[account.code] : null
+      const status: TaxonomyReviewStatus = account.taxonomyCode !== null
+        ? (account.taxonomyReference === reference ? 'Assigned' : 'ReferenceMismatch')
+        : suggestedCode !== null ? 'SuggestionAvailable' : 'Unclassified'
+      return {
+        code: account.code,
+        name: account.name,
+        taxonomyReference: account.taxonomyReference,
+        taxonomyCode: account.taxonomyCode,
+        suggestedCode,
+        status,
+      }
+    })
+    .sort((a, b) => a.code.localeCompare(b.code, 'pt-PT'))
+  return {
+    reference,
+    taxonomyName: setup.template.taxonomyName,
+    taxonomyLegalSource: setup.template.taxonomyLegalSource,
+    postingAccountCount: posting.length,
+    classifiedCount: posting.filter((account) => account.taxonomyCode !== null).length,
+    accounts,
+  }
+}
+
 export const movements: Movement[] = [
   {
     id: 'COMP-2026-00842',

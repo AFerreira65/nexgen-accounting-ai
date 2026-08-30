@@ -33,7 +33,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-04A");
+        StringAssert.Contains(payload, "F1-04B");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -102,6 +102,48 @@ public sealed class FoundationApiTests
         StringAssert.Contains(islandSetupPayload, "\"code\":\"FTF\"");
         StringAssert.Contains(islandSetupPayload, "\"name\":\"Outros\"");
         StringAssert.Contains(islandSetupPayload, "\"taxonomyReference\":\"M\"");
+    }
+
+    [TestMethod]
+    public async Task TaxonomyReviewIsScopedToTheActiveCompanyAndClassifiesAccounts()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/";
+
+        using var mainlandResponse = await client
+            .GetAsync($"{basePath}22222222-2222-2222-2222-222222222222/accounting/taxonomy-review")
+            .ConfigureAwait(false);
+        var mainlandPayload = await mainlandResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var islandResponse = await client
+            .GetAsync($"{basePath}44444444-4444-4444-4444-444444444444/accounting/taxonomy-review")
+            .ConfigureAwait(false);
+        var islandPayload = await islandResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unauthorizedResponse = await client
+            .GetAsync($"{basePath}99999999-9999-9999-9999-999999999999/accounting/taxonomy-review")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, mainlandResponse.StatusCode);
+        StringAssert.Contains(mainlandPayload, "\"reference\":\"S\"");
+        StringAssert.Contains(mainlandPayload, "\"status\":\"Assigned\"");
+        StringAssert.Contains(mainlandPayload, "\"status\":\"Unclassified\"");
+        StringAssert.Contains(mainlandPayload, "\"code\":\"6221\"");
+        Assert.AreEqual(HttpStatusCode.OK, islandResponse.StatusCode);
+        StringAssert.Contains(islandPayload, "\"reference\":\"M\"");
+        Assert.IsFalse(islandPayload.Contains("\"code\":\"6221\"", StringComparison.Ordinal) &&
+            islandPayload.Contains("Material de escritório", StringComparison.Ordinal));
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedResponse.StatusCode);
     }
 
     private sealed class FoundationApiFactory(

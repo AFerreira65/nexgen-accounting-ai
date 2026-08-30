@@ -31,6 +31,8 @@ public static class DependencyInjection
                 }));
 
         services.AddScoped<CompanyAccountingProvisioner>();
+        services.AddScoped<AccountingMasterDataService>();
+        services.AddScoped<TaxonomyReviewService>();
 
         services
             .AddHealthChecks()

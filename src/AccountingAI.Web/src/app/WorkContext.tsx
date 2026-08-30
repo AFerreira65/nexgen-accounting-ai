@@ -1,5 +1,18 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, type AccountingSetup, type Movement } from './demo-data'
+import { buildTaxonomyReview, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, templateTaxonomySuggestions, type AccountingSetup, type Movement, type TaxonomyReview } from './demo-data'
+
+export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
+export type AccountEditInput = { name: string; isActive: boolean; taxonomyReference: string | null; taxonomyCode: number | null }
+
+async function problemMessage(response: Response) {
+  try {
+    const body = await response.json() as { errors?: Record<string, string[]>; detail?: string; title?: string }
+    const first = body.errors ? Object.values(body.errors).flat()[0] : undefined
+    return first ?? body.detail ?? body.title ?? `HTTP ${response.status}`
+  } catch {
+    return `HTTP ${response.status}`
+  }
+}
 
 export type CompanySettings = {
   culture: string
@@ -34,9 +47,13 @@ type WorkContextValue = WorkContextData & {
   accountingLoading: boolean
   setupLoading: boolean
   accountingSetup: AccountingSetup
+  taxonomyReview: TaxonomyReview
   movements: Movement[]
   selectCompany: (companyId: string) => void
   saveSettings: (settings: CompanySettings) => Promise<void>
+  createAccount: (input: NewAccountInput) => Promise<void>
+  updateAccount: (code: string, input: AccountEditInput) => Promise<void>
+  applyTaxonomySuggestions: () => Promise<number>
 }
 
 export const demoUserId = '33333333-3333-3333-3333-333333333333'
@@ -81,6 +98,8 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
   const [setupLoading, setSetupLoading] = useState(false)
   const [accountingMovements, setAccountingMovements] = useState<Movement[]>(fallbackMovements)
   const [accountingSetup, setAccountingSetup] = useState<AccountingSetup>(fallbackAccountingSetupsByCompany[fallbackContext.companies[0].companyId])
+  const [taxonomyReview, setTaxonomyReview] = useState<TaxonomyReview>(() => buildTaxonomyReview(fallbackAccountingSetupsByCompany[fallbackContext.companies[0].companyId]))
+  const [accountingRevision, setAccountingRevision] = useState(0)
   const [activeCompanyId, setActiveCompanyId] = useState(storedCompanyId() ?? fallbackContext.companies[0].companyId)
 
   useEffect(() => {
@@ -168,7 +187,28 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       })
 
     return () => controller.abort()
-  }, [activeCompany.companyId, data.user.id, source])
+  }, [activeCompany.companyId, data.user.id, source, accountingRevision])
+
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test' || source !== 'database') {
+      setTaxonomyReview(buildTaxonomyReview(accountingSetup))
+      return
+    }
+
+    const controller = new AbortController()
+    void fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/taxonomy-review`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return await response.json() as TaxonomyReview
+      })
+      .then((review) => setTaxonomyReview(review))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setTaxonomyReview(buildTaxonomyReview(accountingSetup))
+      })
+
+    return () => controller.abort()
+  }, [accountingSetup, activeCompany.companyId, data.user.id, source])
 
   useEffect(() => {
     document.documentElement.dataset.theme = activeCompany.settings.theme.toLowerCase()
@@ -184,6 +224,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
     accountingLoading,
     setupLoading,
     accountingSetup,
+    taxonomyReview,
     movements: accountingMovements,
     selectCompany: (companyId) => {
       if (!data.companies.some((company) => company.companyId === companyId)) return
@@ -206,7 +247,70 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         companies: current.companies.map((company) => company.companyId === activeCompany.companyId ? { ...company, settings } : company),
       }))
     },
-  }), [accountingLoading, accountingMovements, accountingSetup, accountingSource, activeCompany, data, setupLoading, setupSource, source])
+    createAccount: async (input) => {
+      const code = input.code.trim().toUpperCase()
+      const name = input.name.trim()
+      if (!code || !name) throw new Error('Indique o código e a descrição da conta.')
+      if (setupSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/accounts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...input, code, name }),
+        })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+
+      if (accountingSetup.accounts.some((account) => account.code === code)) throw new Error('Já existe uma conta com esse código na empresa.')
+      const parent = input.parentCode ? accountingSetup.accounts.find((account) => account.code === input.parentCode) : null
+      if (input.parentCode && (!parent || parent.allowsPosting)) throw new Error('A conta-mãe tem de ser uma conta agregadora existente.')
+      setAccountingSetup((current) => ({
+        ...current,
+        accounts: [...current.accounts, { code, name, parentCode: input.parentCode, allowsPosting: input.allowsPosting, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: null }],
+      }))
+    },
+    updateAccount: async (code, input) => {
+      if (setupSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/accounts/${encodeURIComponent(code)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+
+      setAccountingSetup((current) => ({
+        ...current,
+        accounts: current.accounts.map((account) => account.code === code
+          ? { ...account, name: input.name.trim(), isActive: input.isActive, taxonomyReference: input.taxonomyReference, taxonomyCode: input.taxonomyCode }
+          : account),
+      }))
+    },
+    applyTaxonomySuggestions: async () => {
+      if (setupSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/accounts/apply-taxonomy-suggestions`, { method: 'POST' })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return (await response.json() as { applied: number }).applied
+      }
+
+      let applied = 0
+      setAccountingSetup((current) => ({
+        ...current,
+        accounts: current.accounts.map((account) => {
+          if (account.allowsPosting && account.isActive && account.taxonomyCode === null && account.code in templateTaxonomySuggestions) {
+            applied += 1
+            return { ...account, taxonomyReference: current.template.taxonomyReference, taxonomyCode: templateTaxonomySuggestions[account.code] }
+          }
+          return account
+        }),
+      }))
+      return applied
+    },
+  }), [accountingLoading, accountingMovements, accountingSetup, accountingSource, activeCompany, data, setupLoading, setupSource, source, taxonomyReview])
 
   return <Context.Provider value={value}>{children}</Context.Provider>
 }
