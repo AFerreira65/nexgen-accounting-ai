@@ -7,6 +7,8 @@ export type NewJournalInput = { code: string; name: string }
 export type JournalEditInput = { name: string; isActive: boolean }
 export type NewDocumentTypeInput = { code: string; name: string; defaultJournalCode: string }
 export type DocumentTypeEditInput = { name: string; defaultJournalCode: string; isActive: boolean }
+export type MovementLineInput = { accountCode: string; description: string; debit: number; credit: number }
+export type MovementInput = { journalCode: string; entryDate: string; documentReference: string; description: string; reviewed: boolean; lines: MovementLineInput[] }
 
 async function problemMessage(response: Response) {
   try {
@@ -62,6 +64,7 @@ type WorkContextValue = WorkContextData & {
   updateJournal: (code: string, input: JournalEditInput) => Promise<void>
   createDocumentType: (input: NewDocumentTypeInput) => Promise<void>
   updateDocumentType: (code: string, input: DocumentTypeEditInput) => Promise<void>
+  createMovement: (input: MovementInput) => Promise<void>
   applyTaxonomySuggestions: () => Promise<number>
   inspectSaft: (file: File) => Promise<SaftInspection>
   createSaftCompany: (input: SaftCompanyCreationInput) => Promise<SaftCompanyCreation>
@@ -168,7 +171,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       })
 
     return () => controller.abort()
-  }, [activeCompany.companyId, data.user.id, source])
+  }, [activeCompany.companyId, data.user.id, source, accountingRevision])
 
   useEffect(() => {
     const fallback = fallbackAccountingSetupsByCompany[activeCompany.companyId] ?? fallbackAccountingSetupsByCompany[fallbackContext.companies[0].companyId]
@@ -399,6 +402,41 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
           ? { ...document, name: input.name.trim(), defaultJournalCode, isActive: input.isActive }
           : document),
       }))
+    },
+    createMovement: async (input) => {
+      const totalDebit = input.lines.reduce((sum, line) => sum + line.debit, 0)
+      const totalCredit = input.lines.reduce((sum, line) => sum + line.credit, 0)
+      if (input.lines.length < 2) throw new Error('Um lançamento precisa de pelo menos duas linhas.')
+      if (input.lines.some((line) => (line.debit > 0) === (line.credit > 0))) throw new Error('Cada linha tem de ter um débito ou um crédito.')
+      if (Math.round((totalDebit - totalCredit) * 100) !== 0) throw new Error('O total de débito tem de ser igual ao total de crédito.')
+      if (!input.journalCode) throw new Error('Escolha um diário.')
+
+      if (accountingSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/movements`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(input),
+        })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+
+      const journal = accountingSetup.journals.find((item) => item.code === input.journalCode)
+      const year = input.entryDate.slice(0, 4)
+      const sequence = String(accountingMovements.filter((item) => item.journalId === input.journalCode).length + 1).padStart(5, '0')
+      const accountName = (code: string) => accountingSetup.accounts.find((item) => item.code === code)?.name ?? code
+      setAccountingMovements((current) => [{
+        id: `${input.journalCode}-${year}-${sequence}`,
+        date: input.entryDate,
+        journalId: input.journalCode,
+        journalName: journal?.name ?? input.journalCode,
+        document: input.documentReference,
+        description: input.description,
+        status: input.reviewed ? 'Conferido' : 'Por conferir',
+        amount: totalDebit,
+        lines: input.lines.map((line) => ({ account: line.accountCode, accountName: accountName(line.accountCode), description: line.description, debit: line.debit, credit: line.credit })),
+      }, ...current])
     },
     applyTaxonomySuggestions: async () => {
       if (setupSource === 'database') {

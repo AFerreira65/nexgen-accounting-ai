@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-06C");
+        StringAssert.Contains(payload, "F1-07");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -145,6 +145,51 @@ public sealed class FoundationApiTests
         Assert.IsFalse(islandPayload.Contains("\"code\":\"6221\"", StringComparison.Ordinal) &&
             islandPayload.Contains("Material de escritório", StringComparison.Ordinal));
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedResponse.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task MovementPostingRejectsUnbalancedAndUnknownReferences()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string movements = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/accounting/movements";
+
+        static StringContent Json(string body) => new(body, Encoding.UTF8, "application/json");
+
+        using var unbalanced = await client.PostAsync(movements, Json(
+            """{"journalCode":"GERAL","entryDate":"2026-03-20","documentReference":"OD","description":"Desequilibrado","reviewed":false,"lines":[{"accountCode":"6221","description":"D","debit":100,"credit":0},{"accountCode":"2211001","description":"C","debit":0,"credit":90}]}"""))
+            .ConfigureAwait(false);
+        var unbalancedPayload = await unbalanced.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unknownJournal = await client.PostAsync(movements, Json(
+            """{"journalCode":"ZZZ","entryDate":"2026-03-20","documentReference":"OD","description":"X","reviewed":false,"lines":[{"accountCode":"6221","description":"D","debit":100,"credit":0},{"accountCode":"2211001","description":"C","debit":0,"credit":100}]}"""))
+            .ConfigureAwait(false);
+
+        using var unknownAccount = await client.PostAsync(movements, Json(
+            """{"journalCode":"GERAL","entryDate":"2026-03-20","documentReference":"OD","description":"X","reviewed":false,"lines":[{"accountCode":"9999999","description":"D","debit":100,"credit":0},{"accountCode":"2211001","description":"C","debit":0,"credit":100}]}"""))
+            .ConfigureAwait(false);
+
+        using var noMembership = await client.PostAsync(
+            "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/99999999-9999-9999-9999-999999999999/accounting/movements", Json(
+            """{"journalCode":"GERAL","entryDate":"2026-03-20","documentReference":"OD","description":"X","reviewed":false,"lines":[]}"""))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, unbalanced.StatusCode);
+        StringAssert.Contains(unbalancedPayload, "movement");
+        Assert.AreEqual(HttpStatusCode.BadRequest, unknownJournal.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, unknownAccount.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, noMembership.StatusCode);
     }
 
     [TestMethod]

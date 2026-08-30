@@ -117,6 +117,7 @@ public sealed class SqlServerMigrationTests
                 .AddScoped<TaxonomyReviewService>()
                 .AddScoped<SaftCompanyCreationService>()
                 .AddScoped<OrganizationAdminService>()
+                .AddScoped<JournalPostingService>()
                 .BuildServiceProvider();
             await services.SeedDevelopmentOrganizationAsync().ConfigureAwait(false);
             await services.SeedDevelopmentAccountingAsync().ConfigureAwait(false);
@@ -456,6 +457,63 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual(
                     AccountingTemplateCatalog.For(AccountingStandard.SncGeneral).Accounts.Count,
                     provisionedAccounts);
+            }
+
+            await using (var postingScope = services.CreateAsyncScope())
+            {
+                var posting = postingScope.ServiceProvider.GetRequiredService<JournalPostingService>();
+
+                var movement = await posting
+                    .PostAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "GERAL",
+                        new DateOnly(2026, 3, 15),
+                        "OD 2026/1 · lançamento de teste",
+                        "Lançamento de teste",
+                        reviewed: false,
+                        [
+                            new JournalEntryLineInput("6221", "Débito", 100m, 0m),
+                            new JournalEntryLineInput("2211001", "Crédito", 0m, 100m)
+                        ])
+                    .ConfigureAwait(false);
+                Assert.AreEqual("GERAL-2026-00001", movement.Reference);
+                Assert.AreEqual(100m, movement.Amount);
+                Assert.HasCount(2, movement.Lines);
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await posting.PostAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "GERAL", new DateOnly(2026, 3, 16),
+                        "OD", "Desequilibrado", false,
+                        [
+                            new JournalEntryLineInput("6221", "D", 100m, 0m),
+                            new JournalEntryLineInput("2211001", "C", 0m, 90m)
+                        ]).ConfigureAwait(false));
+
+                await Assert.ThrowsAsync<ArgumentException>(async () =>
+                    await posting.PostAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "GERAL", new DateOnly(2026, 3, 16),
+                        "OD", "Conta inexistente", false,
+                        [
+                            new JournalEntryLineInput("9999999", "D", 100m, 0m),
+                            new JournalEntryLineInput("2211001", "C", 0m, 100m)
+                        ]).ConfigureAwait(false));
+
+                await Assert.ThrowsAsync<ArgumentException>(async () =>
+                    await posting.PostAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "GERAL", new DateOnly(2026, 3, 16),
+                        "OD", "Conta agregadora", false,
+                        [
+                            new JournalEntryLineInput("6", "D", 100m, 0m),
+                            new JournalEntryLineInput("2211001", "C", 0m, 100m)
+                        ]).ConfigureAwait(false));
+
+                var stored = await context.JournalEntries.AsNoTracking()
+                    .Include(entry => entry.Lines)
+                    .SingleAsync(entry => entry.CompanyId == DevelopmentDataSeeder.DemoCompanyId &&
+                        entry.Reference == "GERAL-2026-00001")
+                    .ConfigureAwait(false);
+                Assert.AreEqual(2, stored.Lines.Count);
+                Assert.AreEqual(stored.Lines.Sum(line => line.Debit), stored.Lines.Sum(line => line.Credit));
             }
 
             context.ChangeTracker.Clear();

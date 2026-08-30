@@ -61,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-06C",
+    phase = "F1-07",
     status = "ready"
 }));
 
@@ -277,6 +277,70 @@ if (app.Environment.IsDevelopment())
         });
 
         return Results.Ok(movements);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements", async (
+        Guid userId,
+        Guid companyId,
+        CreateMovementRequest request,
+        AccountingDbContext context,
+        JournalPostingService posting,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var lines = (request.Lines ?? [])
+                .Select(line => new JournalEntryLineInput(
+                    line.AccountCode,
+                    line.Description,
+                    line.Debit,
+                    line.Credit))
+                .ToList();
+
+            var movement = await posting
+                .PostAsync(
+                    companyId,
+                    request.JournalCode,
+                    request.EntryDate,
+                    request.DocumentReference,
+                    request.Description,
+                    request.Reviewed,
+                    lines,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            return Results.Ok(new
+            {
+                Id = movement.Reference,
+                Date = movement.EntryDate,
+                JournalId = movement.JournalCode,
+                movement.JournalName,
+                Document = movement.DocumentReference,
+                movement.Description,
+                movement.Status,
+                movement.Amount,
+                Lines = movement.Lines.Select(line => new
+                {
+                    Account = line.AccountCode,
+                    line.AccountName,
+                    line.Description,
+                    line.Debit,
+                    line.Credit
+                })
+            });
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["movement"] = [exception.Message]
+            });
+        }
     });
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/setup", async (
@@ -964,3 +1028,13 @@ public sealed record CreateOrganizationUserRequest(string DisplayName, string Em
 public sealed record UpdateOrganizationUserRequest(string DisplayName, string Email, bool IsActive);
 
 public sealed record SetMembershipRequest(string Role, bool IsActive);
+
+public sealed record MovementLineRequest(string AccountCode, string Description, decimal Debit, decimal Credit);
+
+public sealed record CreateMovementRequest(
+    string JournalCode,
+    DateOnly EntryDate,
+    string DocumentReference,
+    string Description,
+    bool Reviewed,
+    List<MovementLineRequest> Lines);

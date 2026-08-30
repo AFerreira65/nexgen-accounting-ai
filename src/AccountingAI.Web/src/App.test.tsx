@@ -72,6 +72,24 @@ describe('App', () => {
     expect(screen.getByText(/Catálogo S \(Portaria 302\/2016\)/)).toBeInTheDocument()
   })
 
+  it('registers a balanced movement from the movements screen in demo mode', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Novo lançamento/i }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Documento' }), { target: { value: 'OD 2026/1' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descrição' }), { target: { value: 'Lançamento de teste' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Conta da linha 1' }), { target: { value: '6221' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Débito da linha 1' }), { target: { value: '100' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Conta da linha 2' }), { target: { value: '2211001' } })
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Crédito da linha 2' }), { target: { value: '100' } })
+
+    expect(screen.getByText('Equilibrado')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Registar lançamento' }))
+
+    expect(screen.getByRole('link', { name: 'GERAL 2026 00001' })).toBeInTheDocument()
+  })
+
   it('shows the organisation screen with companies and users sections', () => {
     window.history.pushState({}, '', '/organizacao')
     render(<App />)
