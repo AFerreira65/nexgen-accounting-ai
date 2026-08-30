@@ -10,6 +10,7 @@ public static class DevelopmentDataSeeder
     public static readonly Guid DemoFirmId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     public static readonly Guid DemoCompanyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     public static readonly Guid DemoUserId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+    public static readonly Guid DemoIslandCompanyId = Guid.Parse("44444444-4444-4444-4444-444444444444");
 
     public static async Task SeedDevelopmentOrganizationAsync(
         this IServiceProvider services,
@@ -66,6 +67,38 @@ public static class DevelopmentDataSeeder
         {
             var settings = new UserCompanySettings(DemoCompanyId, DemoUserId);
             settings.Update("pt-PT", "Europe/Lisbon", 2026, InterfaceTheme.Light, false, 50);
+            context.Add(settings);
+        }
+
+        if (!await context.Companies
+                .AnyAsync(item => item.Id == DemoIslandCompanyId, cancellationToken)
+                .ConfigureAwait(false))
+        {
+            context.Add(new Company(
+                DemoIslandCompanyId,
+                DemoFirmId,
+                "Ilha Azul Serviços, Lda. (Demonstração)",
+                "DEMO-PT-0002",
+                TaxRegion.Azores));
+        }
+
+        if (!await context.CompanyUsers
+                .AnyAsync(
+                    item => item.CompanyId == DemoIslandCompanyId && item.UserId == DemoUserId,
+                    cancellationToken)
+                .ConfigureAwait(false))
+        {
+            context.Add(new CompanyUser(DemoIslandCompanyId, DemoUserId, CompanyUserRole.Accountant));
+        }
+
+        if (!await context.UserCompanySettings
+                .AnyAsync(
+                    item => item.CompanyId == DemoIslandCompanyId && item.UserId == DemoUserId,
+                    cancellationToken)
+                .ConfigureAwait(false))
+        {
+            var settings = new UserCompanySettings(DemoIslandCompanyId, DemoUserId);
+            settings.Update("pt-PT", "Atlantic/Azores", 2026, InterfaceTheme.System, true, 25);
             context.Add(settings);
         }
 

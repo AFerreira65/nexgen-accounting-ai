@@ -2,7 +2,7 @@
 
 Monitor Windows em C#/.NET para leitura e análise de ficheiros SAF-T (PT).
 
-## Nova plataforma contabilística — F1-02C multiempresa
+## Nova plataforma contabilística — F1-03A contexto de trabalho
 
 Sobre a fundação F1-01 foi criada a primeira experiência contabilística local:
 
@@ -13,11 +13,12 @@ Sobre a fundação F1-01 foi criada a primeira experiência contabilística loca
 - cadastro base de gabinete e empresa em SQL Server LocalDB;
 - base `accountingAI` em SQL Server Express, criada e atualizada por migrações no arranque;
 - utilizadores associados a uma ou mais empresas, com função e preferências próprias em cada empresa;
+- seletor de empresa ligado à API e ecrã para editar preferências próprias do utilizador na empresa ativa;
 - painel de trabalho apelativo e responsivo;
 - navegação contextual entre movimento, conta e diário;
 - testes de arquitetura, domínio, API, migrações e frontend.
 
-Esta evolução não altera o comportamento do monitor WinForms descrito abaixo. Os movimentos visíveis são dados demonstrativos de interface e ainda não constituem um núcleo de lançamentos. Consulte [F1-02A](docs/phase-1/F1-02A-LOCAL-EXPERIENCE.md), [F1-02B](docs/phase-1/F1-02B-ENGINEERING-GATES.md) e [F1-02C](docs/phase-1/F1-02C-MULTI-COMPANY-DATABASE.md).
+Esta evolução não altera o comportamento do monitor WinForms descrito abaixo. Os movimentos visíveis são dados demonstrativos de interface e ainda não constituem um núcleo de lançamentos. Consulte [F1-02A](docs/phase-1/F1-02A-LOCAL-EXPERIENCE.md), [F1-02B](docs/phase-1/F1-02B-ENGINEERING-GATES.md), [F1-02C](docs/phase-1/F1-02C-MULTI-COMPANY-DATABASE.md) e [F1-03A](docs/phase-1/F1-03A-WORK-CONTEXT.md).
 
 ### Abrir a aplicação web local
 

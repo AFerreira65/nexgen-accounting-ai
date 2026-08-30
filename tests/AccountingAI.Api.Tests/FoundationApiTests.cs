@@ -33,7 +33,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-02C");
+        StringAssert.Contains(payload, "F1-03A");
         StringAssert.Contains(payload, "ready");
     }
 

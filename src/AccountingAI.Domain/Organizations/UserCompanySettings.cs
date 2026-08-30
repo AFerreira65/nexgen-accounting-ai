@@ -81,5 +81,6 @@ public sealed class UserCompanySettings
         Theme = theme;
         CompactMode = compactMode;
         PageSize = pageSize;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 }

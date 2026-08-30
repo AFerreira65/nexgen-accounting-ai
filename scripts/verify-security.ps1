@@ -15,14 +15,21 @@ $packageOutput = dotnet list $solution package --vulnerable --include-transitive
 if ($LASTEXITCODE -ne 0) { throw 'A auditoria NuGet falhou.' }
 $packageReport = $packageOutput | ConvertFrom-Json
 $vulnerabilityCount = 0
+$packageCount = 0
 foreach ($project in @($packageReport.projects)) {
     foreach ($framework in @($project.frameworks)) {
         foreach ($package in @($framework.topLevelPackages) + @($framework.transitivePackages)) {
+            if ($null -ne $package) {
+                $packageCount++
+            }
             if ($null -ne $package -and $null -ne $package.vulnerabilities) {
                 $vulnerabilityCount += @($package.vulnerabilities).Count
             }
         }
     }
+}
+if ($packageCount -eq 0) {
+    throw 'A auditoria NuGet não devolveu pacotes; confirme que o restore terminou sem erros.'
 }
 if ($vulnerabilityCount -gt 0) {
     throw "Foram encontradas $vulnerabilityCount vulnerabilidades NuGet conhecidas."
