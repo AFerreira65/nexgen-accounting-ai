@@ -120,6 +120,10 @@ describe('App', () => {
     expect(screen.getByRole('combobox', { name: 'Tipo de documento' })).toBeInTheDocument()
     expect(screen.getAllByText('Total de débito').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-09-01' } })
+    expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
+    expect(screen.getByText('Sem lançamentos para os filtros escolhidos.')).toBeInTheDocument()
   })
 
   it('shows the trial balance with debit and credit totals', () => {
@@ -130,6 +134,10 @@ describe('App', () => {
     expect(screen.getByText('Total de débito')).toBeInTheDocument()
     expect(screen.getByText('Total de crédito')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '6221' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Data final'), { target: { value: '2020-12-31' } })
+    expect(screen.queryByRole('link', { name: '6221' })).not.toBeInTheDocument()
+    expect(screen.getByText('Sem movimentos para apresentar.')).toBeInTheDocument()
   })
 
   it('shows the organisation screen with companies and users sections', () => {

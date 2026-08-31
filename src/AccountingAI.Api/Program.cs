@@ -5,6 +5,7 @@ using AccountingAI.Domain.Organizations;
 using AccountingAI.Infrastructure.Files;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
+using System.Globalization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-12",
+    phase = "F1-13",
     status = "ready"
 }));
 
@@ -506,14 +507,21 @@ if (app.Environment.IsDevelopment())
         Guid companyId,
         AccountingDbContext context,
         AccountLedgerService ledger,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken,
+        string? from,
+        string? to) =>
     {
         if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
         {
             return Results.NotFound();
         }
 
-        var balance = await ledger.TrialBalanceAsync(companyId, cancellationToken).ConfigureAwait(false);
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        var balance = await ledger.TrialBalanceAsync(companyId, fromDate, toDate, cancellationToken).ConfigureAwait(false);
         return Results.Ok(new
         {
             balance.TotalDebit,
@@ -537,15 +545,22 @@ if (app.Environment.IsDevelopment())
         CancellationToken cancellationToken,
         string? journal,
         string? documentType,
-        int? year) =>
+        int? year,
+        string? from,
+        string? to) =>
     {
         if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
         {
             return Results.NotFound();
         }
 
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
         var report = await reportService
-            .BuildAsync(companyId, journal, documentType, year, cancellationToken)
+            .BuildAsync(companyId, journal, documentType, year, fromDate, toDate, cancellationToken)
             .ConfigureAwait(false);
 
         return Results.Ok(new
@@ -580,14 +595,21 @@ if (app.Environment.IsDevelopment())
         string code,
         AccountingDbContext context,
         AccountLedgerService ledger,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken,
+        string? from,
+        string? to) =>
     {
         if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
         {
             return Results.NotFound();
         }
 
-        var result = await ledger.AccountLedgerAsync(companyId, code, cancellationToken).ConfigureAwait(false);
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        var result = await ledger.AccountLedgerAsync(companyId, code, fromDate, toDate, cancellationToken).ConfigureAwait(false);
         if (result is null)
         {
             return Results.NotFound();
@@ -597,6 +619,7 @@ if (app.Environment.IsDevelopment())
         {
             result.AccountCode,
             result.AccountName,
+            result.OpeningBalance,
             result.Balance,
             Entries = result.Entries.Select(entry => new
             {
@@ -1158,6 +1181,57 @@ public partial class Program
             line.Credit
         })
     };
+
+    private static bool TryParseReportDateRange(
+        string? from,
+        string? to,
+        out DateOnly? fromDate,
+        out DateOnly? toDate,
+        out IResult? error)
+    {
+        fromDate = null;
+        toDate = null;
+        error = null;
+
+        if (!string.IsNullOrWhiteSpace(from))
+        {
+            if (!DateOnly.TryParseExact(from.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedFrom))
+            {
+                error = Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["from"] = ["Data inicial inválida. Use o formato AAAA-MM-DD."]
+                });
+                return false;
+            }
+
+            fromDate = parsedFrom;
+        }
+
+        if (!string.IsNullOrWhiteSpace(to))
+        {
+            if (!DateOnly.TryParseExact(to.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedTo))
+            {
+                error = Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["to"] = ["Data final inválida. Use o formato AAAA-MM-DD."]
+                });
+                return false;
+            }
+
+            toDate = parsedTo;
+        }
+
+        if (fromDate is not null && toDate is not null && fromDate > toDate)
+        {
+            error = Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["to"] = ["A data final não pode ser anterior à data inicial."]
+            });
+            return false;
+        }
+
+        return true;
+    }
 
     private static Task<bool> HasCompanyAccessAsync(
         AccountingDbContext context,

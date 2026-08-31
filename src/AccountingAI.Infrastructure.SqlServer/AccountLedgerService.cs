@@ -28,21 +28,39 @@ public sealed record AccountLedgerEntry(
 public sealed record AccountLedger(
     string AccountCode,
     string AccountName,
+    decimal OpeningBalance,
     decimal Balance,
     IReadOnlyList<AccountLedgerEntry> Entries);
 
 /// <summary>
 /// Agregações contabilísticas de leitura — balancete e razão de conta — sempre
-/// filtradas por empresa e excluindo os lançamentos anulados.
+/// filtradas por empresa e excluindo os lançamentos anulados. Aceitam um intervalo
+/// de datas opcional; a razão devolve também o saldo de abertura desse intervalo.
 /// </summary>
 public sealed class AccountLedgerService(AccountingDbContext context)
 {
-    public async Task<TrialBalance> TrialBalanceAsync(Guid companyId, CancellationToken cancellationToken = default)
+    public async Task<TrialBalance> TrialBalanceAsync(
+        Guid companyId,
+        DateOnly? fromDate = null,
+        DateOnly? toDate = null,
+        CancellationToken cancellationToken = default)
     {
-        var grouped = await context.JournalEntryLines
+        var lines = context.JournalEntryLines
             .AsNoTracking()
             .Where(line => line.CompanyId == companyId &&
-                line.JournalEntry.Status != JournalEntryStatus.Voided)
+                line.JournalEntry.Status != JournalEntryStatus.Voided);
+
+        if (fromDate is not null)
+        {
+            lines = lines.Where(line => line.JournalEntry.EntryDate >= fromDate.Value);
+        }
+
+        if (toDate is not null)
+        {
+            lines = lines.Where(line => line.JournalEntry.EntryDate <= toDate.Value);
+        }
+
+        var grouped = await lines
             .GroupBy(line => new { line.AccountId, line.Account.Code, line.Account.Name })
             .Select(group => new
             {
@@ -68,6 +86,8 @@ public sealed class AccountLedgerService(AccountingDbContext context)
     public async Task<AccountLedger?> AccountLedgerAsync(
         Guid companyId,
         string accountCode,
+        DateOnly? fromDate = null,
+        DateOnly? toDate = null,
         CancellationToken cancellationToken = default)
     {
         var normalizedCode = accountCode.Trim().ToUpperInvariant();
@@ -80,11 +100,33 @@ public sealed class AccountLedgerService(AccountingDbContext context)
             return null;
         }
 
-        var lines = await context.JournalEntryLines
+        var accountLines = context.JournalEntryLines
             .AsNoTracking()
             .Where(line => line.CompanyId == companyId &&
                 line.AccountId == account.Id &&
-                line.JournalEntry.Status != JournalEntryStatus.Voided)
+                line.JournalEntry.Status != JournalEntryStatus.Voided);
+
+        decimal openingBalance = 0;
+        if (fromDate is not null)
+        {
+            openingBalance = await accountLines
+                .Where(line => line.JournalEntry.EntryDate < fromDate.Value)
+                .SumAsync(line => line.Debit - line.Credit, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        var periodLines = accountLines;
+        if (fromDate is not null)
+        {
+            periodLines = periodLines.Where(line => line.JournalEntry.EntryDate >= fromDate.Value);
+        }
+
+        if (toDate is not null)
+        {
+            periodLines = periodLines.Where(line => line.JournalEntry.EntryDate <= toDate.Value);
+        }
+
+        var lines = await periodLines
             .OrderBy(line => line.JournalEntry.EntryDate)
             .ThenBy(line => line.JournalEntry.Reference)
             .ThenBy(line => line.Sequence)
@@ -101,7 +143,7 @@ public sealed class AccountLedgerService(AccountingDbContext context)
             .ConfigureAwait(false);
 
         var entries = new List<AccountLedgerEntry>(lines.Count);
-        decimal running = 0;
+        decimal running = openingBalance;
         foreach (var line in lines)
         {
             running += line.Debit - line.Credit;
@@ -109,6 +151,6 @@ public sealed class AccountLedgerService(AccountingDbContext context)
                 line.Reference, line.EntryDate, line.JournalCode, line.Description, line.Debit, line.Credit, running));
         }
 
-        return new AccountLedger(account.Code, account.Name, running, entries);
+        return new AccountLedger(account.Code, account.Name, openingBalance, running, entries);
     }
 }

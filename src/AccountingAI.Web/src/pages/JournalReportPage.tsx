@@ -11,12 +11,14 @@ type ReportEntry = {
 }
 type Report = { totalDebit: number; totalCredit: number; entries: ReportEntry[] }
 
-function fromMovements(movements: Movement[], journal: string, documentType: string, year: string): Report {
+function fromMovements(movements: Movement[], journal: string, documentType: string, year: string, from: string, to: string): Report {
   const entries = movements
     .filter((movement) => movement.status !== 'Anulado')
     .filter((movement) => !journal || movement.journalId === journal)
     .filter((movement) => !documentType || movement.documentType === documentType)
     .filter((movement) => !year || movement.date.slice(0, 4) === year)
+    .filter((movement) => !from || movement.date >= from)
+    .filter((movement) => !to || movement.date <= to)
     .map((movement) => ({
       id: movement.id, date: movement.date, journalId: movement.journalId, documentType: movement.documentType ?? null,
       document: movement.document, description: movement.description, status: movement.status, amount: movement.amount,
@@ -33,24 +35,28 @@ export function JournalReportPage() {
   const [journal, setJournal] = useState('')
   const [documentType, setDocumentType] = useState('')
   const [year, setYear] = useState(String(activeCompany.settings.defaultFiscalYear ?? new Date().getFullYear()))
-  const [data, setData] = useState<Report>(() => fromMovements(movements, '', '', ''))
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [data, setData] = useState<Report>(() => fromMovements(movements, '', '', '', '', ''))
 
   useEffect(() => {
     if (source !== 'database') {
-      setData(fromMovements(movements, journal, documentType, year))
+      setData(fromMovements(movements, journal, documentType, year, fromDate, toDate))
       return
     }
     const params = new URLSearchParams()
     if (journal) params.set('journal', journal)
     if (documentType) params.set('documentType', documentType)
     if (year) params.set('year', year)
+    if (fromDate) params.set('from', fromDate)
+    if (toDate) params.set('to', toDate)
     const controller = new AbortController()
     void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/journal-report?${params}`, { signal: controller.signal })
       .then(async (response) => response.ok ? await response.json() as Report : Promise.reject(new Error()))
       .then((result) => setData(result))
-      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, journal, documentType, year)) })
+      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, journal, documentType, year, fromDate, toDate)) })
     return () => controller.abort()
-  }, [activeCompany.companyId, documentType, journal, movements, source, user.id, year])
+  }, [activeCompany.companyId, documentType, fromDate, journal, movements, source, toDate, user.id, year])
 
   const balanced = useMemo(() => Math.round((data.totalDebit - data.totalCredit) * 100) === 0, [data.totalDebit, data.totalCredit])
 
@@ -61,6 +67,8 @@ export function JournalReportPage() {
       <label><Filter size={16} /><span className="sr-only">Diário</span><select value={journal} onChange={(event) => setJournal(event.target.value)}><option value="">Todos os diários</option>{accountingSetup.journals.map((item) => <option key={item.code} value={item.code}>{item.code} · {item.name}</option>)}</select></label>
       <label><BookText size={16} /><span className="sr-only">Tipo de documento</span><select value={documentType} onChange={(event) => setDocumentType(event.target.value)}><option value="">Todos os tipos</option>{accountingSetup.documentTypes.map((item) => <option key={item.code} value={item.code}>{item.code} · {item.name}</option>)}</select></label>
       <label><span className="sr-only">Exercício</span><input type="number" min="2000" max="2200" value={year} onChange={(event) => setYear(event.target.value)} placeholder="Exercício" /></label>
+      <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
+      <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <span className="catalog-count">{data.entries.length} lançamentos</span>
     </div>
 

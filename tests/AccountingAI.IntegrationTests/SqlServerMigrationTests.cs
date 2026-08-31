@@ -625,11 +625,33 @@ public sealed class SqlServerMigrationTests
                     .ConfigureAwait(false);
                 Assert.IsNotNull(accountLedger);
                 Assert.AreEqual(2, accountLedger!.Entries.Count);
+                Assert.AreEqual(0m, accountLedger.OpeningBalance);
                 Assert.AreEqual(1245m, accountLedger.Balance);
                 Assert.IsFalse(accountLedger.Entries.Any(entry => entry.Reference == "GERAL-2026-00001"));
                 Assert.IsNull(await ledger
                     .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "NAO-EXISTE")
                     .ConfigureAwait(false));
+
+                // Intervalo de datas: o balancete só apanha os lançamentos do seed (agosto de 2026).
+                var trialFromAugust = await ledger
+                    .TrialBalanceAsync(DevelopmentDataSeeder.DemoCompanyId, new DateOnly(2026, 8, 1), null)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(1200m, trialFromAugust.Rows.Single(row => row.AccountCode == "6221").Debit);
+
+                var trialUntilJuly = await ledger
+                    .TrialBalanceAsync(DevelopmentDataSeeder.DemoCompanyId, null, new DateOnly(2026, 7, 31))
+                    .ConfigureAwait(false);
+                Assert.AreEqual(45m, trialUntilJuly.Rows.Single(row => row.AccountCode == "6221").Debit);
+
+                // Razão por período: os 45 da correção ficam no saldo de abertura, o seed é o único movimento.
+                var ledgerFromAugust = await ledger
+                    .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "6221", new DateOnly(2026, 8, 1), null)
+                    .ConfigureAwait(false);
+                Assert.IsNotNull(ledgerFromAugust);
+                Assert.AreEqual(45m, ledgerFromAugust!.OpeningBalance);
+                Assert.HasCount(1, ledgerFromAugust.Entries);
+                Assert.AreEqual(1245m, ledgerFromAugust.Balance);
+                Assert.AreEqual(1245m, ledgerFromAugust.Entries[0].RunningBalance);
 
                 var report = ledgerScope.ServiceProvider.GetRequiredService<JournalReportService>();
 
@@ -655,6 +677,21 @@ public sealed class SqlServerMigrationTests
                     .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, null)
                     .ConfigureAwait(false);
                 Assert.IsFalse(full.Entries.Any(entry => entry.Reference == "GERAL-2026-00001"));
+
+                // Livro diário por intervalo de datas.
+                var august = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, null,
+                        new DateOnly(2026, 8, 1), new DateOnly(2026, 8, 31))
+                    .ConfigureAwait(false);
+                Assert.IsTrue(august.Entries.Count >= 3);
+                Assert.IsTrue(august.Entries.All(entry => entry.EntryDate.Month == 8 && entry.EntryDate.Year == 2026));
+                Assert.IsTrue(august.Entries.Any(entry => entry.Reference == "COMP-2026-00842"));
+
+                var afterYear = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, null,
+                        new DateOnly(2027, 1, 1), null)
+                    .ConfigureAwait(false);
+                Assert.HasCount(0, afterYear.Entries);
             }
 
             context.ChangeTracker.Clear();
