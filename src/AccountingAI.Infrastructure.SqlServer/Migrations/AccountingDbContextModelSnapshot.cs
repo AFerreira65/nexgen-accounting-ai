@@ -107,6 +107,40 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.ToTable("Journals", "accounting");
                 });
 
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.DocumentNumberSeries", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("NextNumber")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Series")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("nvarchar(24)");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "Series", "Year")
+                        .IsUnique();
+
+                    b.ToTable("DocumentNumberSeries", "accounting");
+                });
+
             modelBuilder.Entity("AccountingAI.Domain.Accounting.JournalEntry", b =>
                 {
                     b.Property<Guid>("Id")

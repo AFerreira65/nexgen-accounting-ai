@@ -60,6 +60,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260830234235_JournalEntryDocumentType");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260831215048_DocumentNumberSeries");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -607,6 +610,33 @@ public sealed class SqlServerMigrationTests
                             new JournalEntryLineInput("7211", "C", 0m, 10m)
                         ],
                         documentTypeCode: "NAO-EXISTE").ConfigureAwait(false));
+
+                // A numeração vem de um contador persistido por série e exercício.
+                context.ChangeTracker.Clear();
+                var ftvSeries = await context.DocumentNumberSeries.AsNoTracking()
+                    .SingleAsync(item => item.CompanyId == DevelopmentDataSeeder.DemoCompanyId &&
+                        item.Series == "FTV" && item.Year == 2026)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(3, ftvSeries.NextNumber); // duas faturas emitidas, próxima é a 3
+                Assert.IsFalse(await context.DocumentNumberSeries.AsNoTracking()
+                    .AnyAsync(item => item.Series == "NAO-EXISTE").ConfigureAwait(false));
+
+                // Corrigir mantém a referência e não gasta número da série.
+                var revisedInvoice2 = await posting
+                    .ReviseAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, invoice2.Reference, string.Empty,
+                        new DateOnly(2026, 4, 2), "FT 2026/2 corrigido", "Venda a cliente 2 corrigida", reviewed: false,
+                        [
+                            new JournalEntryLineInput("2111001", "Cliente", 50m, 0m),
+                            new JournalEntryLineInput("7211", "Serviço", 0m, 50m)
+                        ],
+                        documentTypeCode: "FTV")
+                    .ConfigureAwait(false);
+                Assert.AreEqual("FTV-2026-00002", revisedInvoice2.Reference);
+                context.ChangeTracker.Clear();
+                Assert.AreEqual(3, (await context.DocumentNumberSeries.AsNoTracking()
+                    .SingleAsync(item => item.CompanyId == DevelopmentDataSeeder.DemoCompanyId &&
+                        item.Series == "FTV" && item.Year == 2026).ConfigureAwait(false)).NextNumber);
             }
 
             await using (var ledgerScope = services.CreateAsyncScope())

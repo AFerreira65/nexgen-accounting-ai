@@ -1,0 +1,64 @@
+namespace AccountingAI.Domain.Accounting;
+
+/// <summary>
+/// Contador persistido de numeração dos lançamentos, por empresa, série
+/// (código do tipo de documento ou do diário) e exercício. Garante uma
+/// sequência sem saltos e independente de contagens sobre os lançamentos.
+/// </summary>
+public sealed class DocumentNumberSeries
+{
+    private DocumentNumberSeries()
+    {
+    }
+
+    public DocumentNumberSeries(Guid id, Guid companyId, string series, int year, int nextNumber = 1)
+    {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException("The series identifier is required.", nameof(id));
+        }
+
+        if (companyId == Guid.Empty)
+        {
+            throw new ArgumentException("The company identifier is required.", nameof(companyId));
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(series);
+
+        if (year < 2000 || year > 2200)
+        {
+            throw new ArgumentOutOfRangeException(nameof(year), year, "The fiscal year is out of range.");
+        }
+
+        if (nextNumber < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(nextNumber), nextNumber, "The next number must be positive.");
+        }
+
+        Id = id;
+        CompanyId = companyId;
+        Series = series.Trim().ToUpperInvariant();
+        Year = year;
+        NextNumber = nextNumber;
+    }
+
+    public Guid Id { get; private set; }
+
+    public Guid CompanyId { get; private set; }
+
+    public string Series { get; private set; } = string.Empty;
+
+    public int Year { get; private set; }
+
+    public int NextNumber { get; private set; }
+
+    public byte[] RowVersion { get; private set; } = [];
+
+    /// <summary>Devolve o número corrente e avança o contador.</summary>
+    public int Take()
+    {
+        var current = NextNumber;
+        NextNumber = current + 1;
+        return current;
+    }
+}

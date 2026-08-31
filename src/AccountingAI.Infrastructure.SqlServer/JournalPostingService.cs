@@ -268,24 +268,52 @@ public sealed class JournalPostingService(AccountingDbContext context)
         return accounts;
     }
 
+    /// <summary>
+    /// Reserva o próximo número da série <paramref name="prefix"/> no exercício
+    /// <paramref name="year"/>. A numeração vem de um contador persistido
+    /// (<see cref="DocumentNumberSeries"/>); na primeira utilização, o contador
+    /// arranca a seguir ao maior número já existente para essa série e exercício,
+    /// para não colidir com lançamentos anteriores.
+    /// </summary>
     private async Task<string> NextReferenceAsync(Guid companyId, string prefix, int year, CancellationToken cancellationToken)
     {
-        var referenceBase = $"{prefix}-{year}-";
-        var sequence = await context.JournalEntries
-            .CountAsync(
-                item => item.CompanyId == companyId && item.Reference.StartsWith(referenceBase),
+        var series = await context.DocumentNumberSeries
+            .SingleOrDefaultAsync(
+                item => item.CompanyId == companyId && item.Series == prefix && item.Year == year,
                 cancellationToken)
-            .ConfigureAwait(false) + 1;
-        var reference = $"{referenceBase}{sequence:D5}";
-        while (await context.JournalEntries
-            .AnyAsync(item => item.CompanyId == companyId && item.Reference == reference, cancellationToken)
-            .ConfigureAwait(false))
+            .ConfigureAwait(false);
+
+        if (series is null)
         {
-            sequence++;
-            reference = $"{referenceBase}{sequence:D5}";
+            var start = await HighestExistingNumberAsync(companyId, prefix, year, cancellationToken).ConfigureAwait(false) + 1;
+            series = new DocumentNumberSeries(Guid.NewGuid(), companyId, prefix, year, start);
+            context.DocumentNumberSeries.Add(series);
         }
 
-        return reference;
+        var number = series.Take();
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return $"{prefix}-{year}-{number:D5}";
+    }
+
+    private async Task<int> HighestExistingNumberAsync(Guid companyId, string prefix, int year, CancellationToken cancellationToken)
+    {
+        var referenceBase = $"{prefix}-{year}-";
+        var references = await context.JournalEntries
+            .Where(item => item.CompanyId == companyId && item.Reference.StartsWith(referenceBase))
+            .Select(item => item.Reference)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var highest = 0;
+        foreach (var reference in references)
+        {
+            if (int.TryParse(reference[referenceBase.Length..], out var value) && value > highest)
+            {
+                highest = value;
+            }
+        }
+
+        return highest;
     }
 
     private static PostedMovement Project(

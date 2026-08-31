@@ -181,6 +181,27 @@ public sealed class AccountingEntryTests
         Assert.IsTrue(documentType.IsActive);
     }
 
+    [TestMethod]
+    public void DocumentNumberSeriesHandsOutConsecutiveNumbers()
+    {
+        var series = new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), "ftv", 2026);
+        Assert.AreEqual("FTV", series.Series);
+        Assert.AreEqual(1, series.NextNumber);
+        Assert.AreEqual(1, series.Take());
+        Assert.AreEqual(2, series.Take());
+        Assert.AreEqual(3, series.NextNumber);
+
+        var resumed = new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), "OD", 2026, nextNumber: 843);
+        Assert.AreEqual(843, resumed.Take());
+
+        Assert.ThrowsExactly<ArgumentException>(() =>
+            new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), " ", 2026));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
+            new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), "OD", 1999));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
+            new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), "OD", 2026, nextNumber: 0));
+    }
+
     private static JournalEntry CreateEntry() => new(
         Guid.NewGuid(),
         Guid.NewGuid(),

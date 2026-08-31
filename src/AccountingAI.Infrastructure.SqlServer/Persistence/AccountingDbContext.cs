@@ -28,6 +28,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<AccountingDocumentType> AccountingDocumentTypes => Set<AccountingDocumentType>();
 
+    public DbSet<DocumentNumberSeries> DocumentNumberSeries => Set<DocumentNumberSeries>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -44,6 +46,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new JournalEntryConfiguration());
         modelBuilder.ApplyConfiguration(new JournalEntryLineConfiguration());
         modelBuilder.ApplyConfiguration(new AccountingDocumentTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new DocumentNumberSeriesConfiguration());
 
         modelBuilder.Entity<FoundationState>(entity =>
         {
