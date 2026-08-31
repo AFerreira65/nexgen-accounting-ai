@@ -140,6 +140,20 @@ describe('App', () => {
     expect(screen.getByText('Sem movimentos para apresentar.')).toBeInTheDocument()
   })
 
+  it('shows the account ledger with a running balance and a date filter', () => {
+    window.history.pushState({}, '', '/contas/6221')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: /6221 · Material de escritório/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Movimentos desta conta' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-09-01' } })
+    expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
+    expect(screen.getByText('Sem movimentos para esta conta.')).toBeInTheDocument()
+    expect(screen.getAllByText('Saldo de abertura').length).toBeGreaterThan(0)
+  })
+
   it('shows the organisation screen with companies and users sections', () => {
     window.history.pushState({}, '', '/organizacao')
     render(<App />)

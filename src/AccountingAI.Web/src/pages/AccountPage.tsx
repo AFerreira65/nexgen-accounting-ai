@@ -1,18 +1,117 @@
-import { ArrowLeft, BookOpen, Landmark } from 'lucide-react'
+import { ArrowLeft, BookOpen, Database, Landmark } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { euro, formatMovementDate } from '../app/demo-data'
+import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
+type LedgerEntry = {
+  reference: string; entryDate: string; journalCode: string; description: string
+  debit: number; credit: number; runningBalance: number
+}
+type Ledger = {
+  accountCode: string; accountName: string; openingBalance: number; balance: number
+  entries: LedgerEntry[]
+}
+
+function fromMovements(movements: Movement[], accountCode: string, accountName: string, from: string, to: string): Ledger {
+  const relevant = movements
+    .filter((movement) => movement.status !== 'Anulado')
+    .filter((movement) => movement.lines.some((line) => line.account === accountCode))
+    .map((movement) => {
+      const line = movement.lines.find((item) => item.account === accountCode)!
+      return {
+        reference: movement.id, entryDate: movement.date, journalCode: movement.journalId,
+        description: line.description, debit: line.debit, credit: line.credit,
+      }
+    })
+    .sort((a, b) => (a.entryDate + a.reference).localeCompare(b.entryDate + b.reference))
+
+  const openingBalance = from
+    ? relevant.filter((item) => item.entryDate < from).reduce((sum, item) => sum + item.debit - item.credit, 0)
+    : 0
+  const period = relevant.filter((item) => (!from || item.entryDate >= from) && (!to || item.entryDate <= to))
+
+  let running = openingBalance
+  const entries = period.map((item) => {
+    running += item.debit - item.credit
+    return { ...item, runningBalance: running }
+  })
+  return { accountCode, accountName, openingBalance, balance: running, entries }
+}
+
 export function AccountPage() {
-  const { accountCode } = useParams()
-  const { movements } = useWorkContext()
-  const related = movements.filter((movement) => movement.status !== 'Anulado' && movement.lines.some((line) => line.account === accountCode))
-  const line = related.flatMap((movement) => movement.lines).find((item) => item.account === accountCode)
-  let running = 0
+  const { accountCode = '' } = useParams()
+  const { activeCompany, accountingSetup, movements, source, user } = useWorkContext()
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const nameOf = useMemo(
+    () => accountingSetup.accounts.find((account) => account.code === accountCode)?.name
+      ?? movements.flatMap((movement) => movement.lines).find((line) => line.account === accountCode)?.accountName
+      ?? 'Conta contabilística',
+    [accountCode, accountingSetup.accounts, movements],
+  )
+  const [data, setData] = useState<Ledger>(() => fromMovements(movements, accountCode, nameOf, '', ''))
+
+  useEffect(() => {
+    if (source !== 'database') {
+      setData(fromMovements(movements, accountCode, nameOf, fromDate, toDate))
+      return
+    }
+    const params = new URLSearchParams()
+    if (fromDate) params.set('from', fromDate)
+    if (toDate) params.set('to', toDate)
+    const controller = new AbortController()
+    void fetch(
+      `/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/accounts/${encodeURIComponent(accountCode)}/ledger?${params}`,
+      { signal: controller.signal },
+    )
+      .then(async (response) => (response.ok ? (await response.json()) as Ledger : Promise.reject(new Error())))
+      .then((result) => setData(result))
+      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, accountCode, nameOf, fromDate, toDate)) })
+    return () => controller.abort()
+  }, [accountCode, activeCompany.companyId, fromDate, movements, nameOf, source, toDate, user.id])
+
+  const inPeriod = Boolean(fromDate || toDate)
+
   return <div className="page-stack">
     <Link className="back-link" to="/movimentos"><ArrowLeft size={16} /> Movimentos contabilísticos</Link>
-    <header className="page-heading detail-heading"><div><p className="eyebrow">Razão da conta</p><div className="heading-line"><span className="heading-symbol"><BookOpen /></span><h1>{accountCode} · {line?.accountName ?? 'Conta contabilística'}</h1></div><p>Consulta rápida de saldo e movimentos relacionados.</p></div><button className="button button-primary" type="button">Extrato da conta</button></header>
-    <section className="metric-grid compact-grid"><article className="metric-card"><div><small>Saldo atual</small><strong>{euro.format(related.reduce((total, movement) => { const accountLine = movement.lines.find((item) => item.account === accountCode); return total + (accountLine?.debit ?? 0) - (accountLine?.credit ?? 0) }, 0))}</strong><span>Exercício de 2026</span></div></article><article className="metric-card"><div><small>Movimentos</small><strong>{related.length}</strong><span>Com ligação direta ao lançamento</span></div></article></section>
-    <section className="panel"><div className="panel-heading"><div><h2>Movimentos desta conta</h2><p>Clique num movimento ou diário para consultar o contexto.</p></div></div><div className="table-wrap"><table><thead><tr><th>Movimento</th><th>Diário</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th></tr></thead><tbody>{related.map((movement) => { const accountLine = movement.lines.find((item) => item.account === accountCode)!; running += (accountLine.debit ?? 0) - (accountLine.credit ?? 0); return <tr key={movement.id}><td><Link className="primary-cell" to={`/movimentos/${movement.id}`}>{movement.id.replaceAll('-', ' ')}</Link><small>{formatMovementDate(movement.date)}</small></td><td><Link className="inline-link" to={`/diarios/${movement.journalId}`}><Landmark size={14} /> {movement.journalId}</Link></td><td>{movement.description}</td><td className="numeric">{accountLine.debit ? euro.format(accountLine.debit) : '—'}</td><td className="numeric">{accountLine.credit ? euro.format(accountLine.credit) : '—'}</td><td className="numeric strong">{euro.format(running)}</td></tr>})}</tbody></table></div></section>
+    <header className="page-heading detail-heading">
+      <div>
+        <p className="eyebrow">Razão da conta</p>
+        <div className="heading-line"><span className="heading-symbol"><BookOpen /></span><h1>{data.accountCode || accountCode} · {data.accountName || nameOf}</h1></div>
+        <p>Movimentos da conta por ordem cronológica, com saldo acumulado.</p>
+      </div>
+      <span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span>
+    </header>
+
+    <section className="metric-grid compact-grid">
+      {inPeriod && <article className="metric-card"><div><small>Saldo de abertura</small><strong>{euro.format(data.openingBalance)}</strong><span>Antes de {fromDate || '—'}</span></div></article>}
+      <article className="metric-card"><div><small>Saldo {inPeriod ? 'final' : 'atual'}</small><strong>{euro.format(data.balance)}</strong><span>{inPeriod ? 'No fim do período' : `Exercício de ${activeCompany.settings.defaultFiscalYear ?? 'atual'}`}</span></div></article>
+      <article className="metric-card"><div><small>Movimentos</small><strong>{data.entries.length}</strong><span>Com ligação direta ao lançamento</span></div></article>
+    </section>
+
+    <div className="filterbar">
+      <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
+      <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
+    </div>
+
+    <section className="panel">
+      <div className="panel-heading"><div><h2>Movimentos desta conta</h2><p>Clique num movimento ou diário para consultar o contexto.</p></div></div>
+      <div className="table-wrap"><table>
+        <thead><tr><th>Movimento</th><th>Diário</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th></tr></thead>
+        <tbody>
+          {inPeriod && <tr><td colSpan={5}>Saldo de abertura</td><td className="numeric strong">{euro.format(data.openingBalance)}</td></tr>}
+          {data.entries.map((entry) => <tr key={entry.reference}>
+            <td><Link className="primary-cell" to={`/movimentos/${entry.reference}`}>{entry.reference.replaceAll('-', ' ')}</Link><small>{formatMovementDate(entry.entryDate)}</small></td>
+            <td><Link className="inline-link" to={`/diarios/${entry.journalCode}`}><Landmark size={14} /> {entry.journalCode}</Link></td>
+            <td>{entry.description}</td>
+            <td className="numeric">{entry.debit ? euro.format(entry.debit) : '—'}</td>
+            <td className="numeric">{entry.credit ? euro.format(entry.credit) : '—'}</td>
+            <td className="numeric strong">{euro.format(entry.runningBalance)}</td>
+          </tr>)}
+        </tbody>
+      </table></div>
+      {data.entries.length === 0 && <p className="empty-state">Sem movimentos para esta conta.</p>}
+    </section>
   </div>
 }
