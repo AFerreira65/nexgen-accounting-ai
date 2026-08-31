@@ -617,6 +617,8 @@ public sealed class SqlServerMigrationTests
                     .TrialBalanceAsync(DevelopmentDataSeeder.DemoCompanyId)
                     .ConfigureAwait(false);
                 Assert.AreEqual(trial.TotalDebit, trial.TotalCredit);
+                Assert.AreEqual(0m, trial.TotalOpeningBalance);
+                Assert.IsTrue(trial.Rows.All(row => row.OpeningBalance == 0m)); // sem data inicial, não há abertura
                 var row6221 = trial.Rows.Single(row => row.AccountCode == "6221");
                 Assert.AreEqual(1245m, row6221.Debit); // 1200 do seed + 45 da correção; os 100 anulados ficam de fora
 
@@ -632,16 +634,28 @@ public sealed class SqlServerMigrationTests
                     .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "NAO-EXISTE")
                     .ConfigureAwait(false));
 
-                // Intervalo de datas: o balancete só apanha os lançamentos do seed (agosto de 2026).
+                // Intervalo de datas: o período do balancete só apanha os lançamentos do seed
+                // (agosto de 2026); a correção de março fica no saldo de abertura de cada conta.
                 var trialFromAugust = await ledger
                     .TrialBalanceAsync(DevelopmentDataSeeder.DemoCompanyId, new DateOnly(2026, 8, 1), null)
                     .ConfigureAwait(false);
-                Assert.AreEqual(1200m, trialFromAugust.Rows.Single(row => row.AccountCode == "6221").Debit);
+                var augustRow6221 = trialFromAugust.Rows.Single(row => row.AccountCode == "6221");
+                Assert.AreEqual(45m, augustRow6221.OpeningBalance);
+                Assert.AreEqual(1200m, augustRow6221.Debit);
+                Assert.AreEqual(1245m, augustRow6221.Balance);
+                Assert.AreEqual(0m, trialFromAugust.TotalOpeningBalance); // a abertura também equilibra
+                // A conta 11 só tem movimento anterior a agosto: aparece apenas com saldo de abertura.
+                var augustRow11 = trialFromAugust.Rows.Single(row => row.AccountCode == "11");
+                Assert.AreEqual(-45m, augustRow11.OpeningBalance);
+                Assert.AreEqual(0m, augustRow11.Debit);
+                Assert.AreEqual(0m, augustRow11.Credit);
+                Assert.AreEqual(-45m, augustRow11.Balance);
 
                 var trialUntilJuly = await ledger
                     .TrialBalanceAsync(DevelopmentDataSeeder.DemoCompanyId, null, new DateOnly(2026, 7, 31))
                     .ConfigureAwait(false);
                 Assert.AreEqual(45m, trialUntilJuly.Rows.Single(row => row.AccountCode == "6221").Debit);
+                Assert.AreEqual(0m, trialUntilJuly.TotalOpeningBalance); // sem data inicial, não há abertura
 
                 // Razão por período: os 45 da correção ficam no saldo de abertura, o seed é o único movimento.
                 var ledgerFromAugust = await ledger

@@ -143,6 +143,10 @@ describe('App', () => {
     expect(screen.getByText('Total de débito')).toBeInTheDocument()
     expect(screen.getByText('Total de crédito')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '6221' })).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Abertura' })).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-08-29' } })
+    expect(screen.getByRole('columnheader', { name: 'Abertura' })).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Data final'), { target: { value: '2020-12-31' } })
     expect(screen.queryByRole('link', { name: '6221' })).not.toBeInTheDocument()

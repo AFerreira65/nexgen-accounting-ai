@@ -524,12 +524,14 @@ if (app.Environment.IsDevelopment())
         var balance = await ledger.TrialBalanceAsync(companyId, fromDate, toDate, cancellationToken).ConfigureAwait(false);
         return Results.Ok(new
         {
+            balance.TotalOpeningBalance,
             balance.TotalDebit,
             balance.TotalCredit,
             Rows = balance.Rows.Select(row => new
             {
                 row.AccountCode,
                 row.AccountName,
+                row.OpeningBalance,
                 row.Debit,
                 row.Credit,
                 row.Balance
