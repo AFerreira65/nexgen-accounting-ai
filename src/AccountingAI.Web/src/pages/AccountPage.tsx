@@ -1,6 +1,7 @@
-import { ArrowLeft, BookOpen, Database, Landmark } from 'lucide-react'
+import { ArrowLeft, BookOpen, Database, Download, Landmark } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -73,6 +74,15 @@ export function AccountPage() {
 
   const inPeriod = Boolean(fromDate || toDate)
 
+  const exportCsv = () => {
+    const header = ['Movimento', 'Data', 'Diário', 'Descrição', 'Débito', 'Crédito', 'Saldo']
+    const opening = inPeriod ? [['Saldo de abertura', '', '', '', '', '', data.openingBalance]] : []
+    const body = data.entries.map((entry) => [
+      entry.reference, entry.entryDate, entry.journalCode, entry.description, entry.debit, entry.credit, entry.runningBalance,
+    ])
+    downloadCsv(csvFilename(`razao-${data.accountCode || accountCode}`, activeCompany.legalName), toCsv([header, ...opening, ...body]))
+  }
+
   return <div className="page-stack">
     <Link className="back-link" to="/movimentos"><ArrowLeft size={16} /> Movimentos contabilísticos</Link>
     <header className="page-heading detail-heading">
@@ -93,6 +103,7 @@ export function AccountPage() {
     <div className="filterbar">
       <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
+      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={data.entries.length === 0 && !inPeriod}><Download size={15} /> Exportar CSV</button>
     </div>
 
     <section className="panel">

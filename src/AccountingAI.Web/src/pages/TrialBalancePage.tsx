@@ -1,6 +1,7 @@
-import { Database, Scale, Search } from 'lucide-react'
+import { Database, Download, Scale, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -55,6 +56,13 @@ export function TrialBalancePage() {
   }, [data.rows, search])
   const balanced = Math.round((data.totalDebit - data.totalCredit) * 100) === 0
 
+  const exportCsv = () => {
+    const header = ['Conta', 'Descrição', 'Débito', 'Crédito', 'Saldo']
+    const body = rows.map((row) => [row.accountCode, row.accountName, row.debit, row.credit, row.balance])
+    const totals = ['Totais', '', data.totalDebit, data.totalCredit, '']
+    downloadCsv(csvFilename('balancete', activeCompany.legalName), toCsv([header, ...body, totals]))
+  }
+
   return <div className="page-stack">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Balancete</h1><p>Somas e saldos por conta de movimento, sem os lançamentos anulados.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
     <section className="metric-grid compact-grid">
@@ -65,6 +73,7 @@ export function TrialBalancePage() {
       <label><Search size={17} /><span className="sr-only">Pesquisar contas</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar conta ou descrição…" /></label>
       <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
+      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={rows.length === 0}><Download size={15} /> Exportar CSV</button>
     </div>
     <section className="panel"><div className="table-wrap"><table><thead><tr><th>Conta</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th></tr></thead><tbody>
       {rows.map((row) => <tr key={row.accountCode}><td><Link className="primary-cell" to={`/contas/${row.accountCode}`}>{row.accountCode}</Link></td><td>{row.accountName}</td><td className="numeric">{euro.format(row.debit)}</td><td className="numeric">{euro.format(row.credit)}</td><td className="numeric strong">{euro.format(row.balance)}</td></tr>)}

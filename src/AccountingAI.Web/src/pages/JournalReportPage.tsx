@@ -1,6 +1,7 @@
-import { BookText, Database, Filter } from 'lucide-react'
+import { BookText, Database, Download, Filter } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -60,6 +61,16 @@ export function JournalReportPage() {
 
   const balanced = useMemo(() => Math.round((data.totalDebit - data.totalCredit) * 100) === 0, [data.totalDebit, data.totalCredit])
 
+  const exportCsv = () => {
+    const header = ['Referência', 'Data', 'Diário', 'Tipo de documento', 'Documento', 'Descrição', 'Estado', 'Conta', 'Nome da conta', 'Descrição da linha', 'Débito', 'Crédito']
+    const lines = data.entries.flatMap((entry) => entry.lines.map((line) => [
+      entry.id, entry.date, entry.journalId, entry.documentType ?? '', entry.document, entry.description, entry.status,
+      line.account, line.accountName, line.description, line.debit, line.credit,
+    ]))
+    const totals = ['', '', '', '', '', '', '', '', '', 'Totais', data.totalDebit, data.totalCredit]
+    downloadCsv(csvFilename('livro-diario', activeCompany.legalName), toCsv([header, ...lines, totals]))
+  }
+
   return <div className="page-stack">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Livro diário</h1><p>Lançamentos por ordem cronológica, com as linhas e os totais. Sem os anulados.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
 
@@ -70,6 +81,7 @@ export function JournalReportPage() {
       <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <span className="catalog-count">{data.entries.length} lançamentos</span>
+      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={data.entries.length === 0}><Download size={15} /> Exportar CSV</button>
     </div>
 
     <section className="metric-grid compact-grid">
