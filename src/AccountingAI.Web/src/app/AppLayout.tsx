@@ -1,6 +1,7 @@
 import {
   Bell,
   BookOpen,
+  BookText,
   Building2,
   ChevronDown,
   CircleGauge,
@@ -21,6 +22,7 @@ import { useWorkContext } from './WorkContext'
 const links = [
   { to: '/', label: 'Visão geral', icon: CircleGauge, end: true },
   { to: '/movimentos', label: 'Movimentos', icon: WalletCards },
+  { to: '/livro-diario', label: 'Livro diário', icon: BookText },
   { to: '/balancete', label: 'Balancete', icon: Scale },
   { to: '/contas', label: 'Plano de contas', icon: BookOpen },
   { to: '/diarios', label: 'Diários', icon: Landmark },

@@ -61,7 +61,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-11",
+    phase = "F1-12",
     status = "ready"
 }));
 
@@ -525,6 +525,51 @@ if (app.Environment.IsDevelopment())
                 row.Debit,
                 row.Credit,
                 row.Balance
+            })
+        });
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/journal-report", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        JournalReportService reportService,
+        CancellationToken cancellationToken,
+        string? journal,
+        string? documentType,
+        int? year) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        var report = await reportService
+            .BuildAsync(companyId, journal, documentType, year, cancellationToken)
+            .ConfigureAwait(false);
+
+        return Results.Ok(new
+        {
+            report.TotalDebit,
+            report.TotalCredit,
+            Entries = report.Entries.Select(entry => new
+            {
+                Id = entry.Reference,
+                Date = entry.EntryDate,
+                JournalId = entry.JournalCode,
+                DocumentType = entry.DocumentType,
+                Document = entry.DocumentReference,
+                entry.Description,
+                entry.Status,
+                Amount = entry.Amount,
+                Lines = entry.Lines.Select(line => new
+                {
+                    Account = line.AccountCode,
+                    line.AccountName,
+                    line.Description,
+                    line.Debit,
+                    line.Credit
+                })
             })
         });
     });

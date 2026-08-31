@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-11");
+        StringAssert.Contains(payload, "F1-12");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -186,6 +186,15 @@ public sealed class FoundationApiTests
             "companies/99999999-9999-9999-9999-999999999999/accounting/trial-balance")
             .ConfigureAwait(false);
 
+        using var journalReport = await client.GetAsync($"{mainland}/journal-report").ConfigureAwait(false);
+        var journalReportPayload = await journalReport.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var filteredReport = await client.GetAsync($"{mainland}/journal-report?journal=VENDAS").ConfigureAwait(false);
+        var filteredReportPayload = await filteredReport.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var oldYearReport = await client.GetAsync($"{mainland}/journal-report?year=2020").ConfigureAwait(false);
+        var oldYearReportPayload = await oldYearReport.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.OK, trialBalance.StatusCode);
         StringAssert.Contains(trialBalancePayload, "\"totalDebit\"");
         StringAssert.Contains(trialBalancePayload, "\"accountCode\":\"6221\"");
@@ -194,6 +203,11 @@ public sealed class FoundationApiTests
         StringAssert.Contains(ledgerPayload, "\"runningBalance\"");
         Assert.AreEqual(HttpStatusCode.NotFound, unknownAccount.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unknownCompany.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, journalReport.StatusCode);
+        StringAssert.Contains(journalReportPayload, "COMP-2026-00842");
+        Assert.AreEqual(HttpStatusCode.OK, filteredReport.StatusCode);
+        Assert.IsFalse(filteredReportPayload.Contains("COMP-2026-00842", StringComparison.Ordinal));
+        StringAssert.Contains(oldYearReportPayload, "\"entries\":[]");
     }
 
     [TestMethod]

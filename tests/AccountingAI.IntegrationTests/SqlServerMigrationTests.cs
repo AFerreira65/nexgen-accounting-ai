@@ -122,6 +122,7 @@ public sealed class SqlServerMigrationTests
                 .AddScoped<OrganizationAdminService>()
                 .AddScoped<JournalPostingService>()
                 .AddScoped<AccountLedgerService>()
+                .AddScoped<JournalReportService>()
                 .BuildServiceProvider();
             await services.SeedDevelopmentOrganizationAsync().ConfigureAwait(false);
             await services.SeedDevelopmentAccountingAsync().ConfigureAwait(false);
@@ -629,6 +630,31 @@ public sealed class SqlServerMigrationTests
                 Assert.IsNull(await ledger
                     .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "NAO-EXISTE")
                     .ConfigureAwait(false));
+
+                var report = ledgerScope.ServiceProvider.GetRequiredService<JournalReportService>();
+
+                var vendas = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, "VENDAS", null, null)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(vendas.TotalDebit, vendas.TotalCredit);
+                Assert.IsTrue(vendas.Entries.Any(entry => entry.Reference == "FTV-2026-00001"));
+                Assert.IsTrue(vendas.Entries.All(entry => entry.JournalCode == "VENDAS"));
+
+                var invoices = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, "FTV", null)
+                    .ConfigureAwait(false);
+                Assert.HasCount(2, invoices.Entries);
+                Assert.IsTrue(invoices.Entries.All(entry => entry.DocumentType == "FTV"));
+
+                var noneInOldYear = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, 2020)
+                    .ConfigureAwait(false);
+                Assert.HasCount(0, noneInOldYear.Entries);
+
+                var full = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, null)
+                    .ConfigureAwait(false);
+                Assert.IsFalse(full.Entries.Any(entry => entry.Reference == "GERAL-2026-00001"));
             }
 
             context.ChangeTracker.Clear();

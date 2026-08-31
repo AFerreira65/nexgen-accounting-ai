@@ -111,6 +111,17 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'FTV 2026 00001' })).toBeInTheDocument()
   })
 
+  it('shows the journal report with chronological entries and totals', () => {
+    window.history.pushState({}, '', '/livro-diario')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Livro diário' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Diário' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Tipo de documento' })).toBeInTheDocument()
+    expect(screen.getAllByText('Total de débito').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+  })
+
   it('shows the trial balance with debit and credit totals', () => {
     window.history.pushState({}, '', '/balancete')
     render(<App />)
