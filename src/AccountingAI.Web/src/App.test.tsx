@@ -161,6 +161,14 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: '6221' })).toBeInTheDocument()
     expect(screen.queryByRole('columnheader', { name: 'Abertura' })).not.toBeInTheDocument()
 
+    expect(screen.queryByText(/Subtotal classe/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Agrupar por classe'))
+    expect(screen.getByText('6 · Gastos')).toBeInTheDocument()
+    expect(screen.getByText('Subtotal classe 6')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '6221' })).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Agrupar por classe'))
+    expect(screen.queryByText(/Subtotal classe/)).not.toBeInTheDocument()
+
     fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-08-29' } })
     expect(screen.getByRole('columnheader', { name: 'Abertura' })).toBeInTheDocument()
 
