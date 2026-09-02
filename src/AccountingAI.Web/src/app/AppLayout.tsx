@@ -27,6 +27,7 @@ const links = [
   { to: '/livro-diario', label: 'Livro diário', icon: BookText },
   { to: '/balancete', label: 'Balancete', icon: Scale },
   { to: '/resultados', label: 'Resultados', icon: TrendingUp },
+  { to: '/balanco', label: 'Balanço', icon: Scale },
   { to: '/contas', label: 'Plano de contas', icon: BookOpen },
   { to: '/diarios', label: 'Diários', icon: Landmark },
   { to: '/documentos', label: 'Documentos', icon: FileText },

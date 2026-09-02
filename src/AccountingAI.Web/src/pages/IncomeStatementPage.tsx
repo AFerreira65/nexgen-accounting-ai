@@ -1,55 +1,20 @@
 import { Database, Download, Search, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { groupBySubclass, type SubclassGroup } from '../app/accountClasses'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
 type Row = { accountCode: string; accountName: string; debit: number; credit: number }
 type TrialBalance = { rows: (Row & { openingBalance: number; balance: number })[] }
-type Line = { code: string; name: string; amount: number }
-type Group = { code: string; name: string; amount: number; lines: Line[] }
-
-const SUBCLASS_NAMES: Record<string, string> = {
-  '61': 'Custo das mercadorias vendidas e das matérias consumidas',
-  '62': 'Fornecimentos e serviços externos',
-  '63': 'Gastos com o pessoal',
-  '64': 'Gastos de depreciação e de amortização',
-  '65': 'Perdas por imparidade',
-  '66': 'Perdas por reduções de justo valor',
-  '67': 'Provisões do período',
-  '68': 'Outros gastos',
-  '69': 'Gastos e perdas de financiamento',
-  '71': 'Vendas',
-  '72': 'Prestações de serviços',
-  '73': 'Variações nos inventários da produção',
-  '74': 'Trabalhos para a própria entidade',
-  '75': 'Subsídios à exploração',
-  '76': 'Reversões',
-  '77': 'Ganhos por aumentos de justo valor',
-  '78': 'Outros rendimentos',
-  '79': 'Juros, dividendos e outros rendimentos similares',
-}
+type Group = SubclassGroup
 
 function build(rows: Row[], klass: '6' | '7'): { groups: Group[]; total: number } {
   const sign = klass === '6' ? 1 : -1
-  const byGroup = new Map<string, Group>()
-  for (const row of rows) {
-    if (row.accountCode.charAt(0) !== klass) continue
-    const amount = sign * (row.debit - row.credit)
-    if (amount === 0 && row.debit === 0 && row.credit === 0) continue
-    const code = row.accountCode.slice(0, 2)
-    let group = byGroup.get(code)
-    if (!group) {
-      group = { code, name: SUBCLASS_NAMES[code] ?? `Subclasse ${code}`, amount: 0, lines: [] }
-      byGroup.set(code, group)
-    }
-    group.lines.push({ code: row.accountCode, name: row.accountName, amount })
-    group.amount += amount
-  }
-  const groups = [...byGroup.values()].sort((a, b) => a.code.localeCompare(b.code, 'pt-PT'))
-  groups.forEach((group) => group.lines.sort((a, b) => a.code.localeCompare(b.code, 'pt-PT')))
-  return { groups, total: groups.reduce((sum, group) => sum + group.amount, 0) }
+  return groupBySubclass(rows
+    .filter((row) => row.accountCode.charAt(0) === klass)
+    .map((row) => ({ code: row.accountCode, name: row.accountName, amount: sign * (row.debit - row.credit) })))
 }
 
 function fromMovements(movements: ReturnType<typeof useWorkContext>['movements'], nameOf: (code: string) => string, from: string, to: string): Row[] {

@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './app/AppLayout'
 import { AccountPage } from './pages/AccountPage'
 import { AccountsPage, DocumentTypesPage, JournalsPage, TaxonomiesPage } from './pages/AccountingMastersPages'
+import { BalanceSheetPage } from './pages/BalanceSheetPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { IncomeStatementPage } from './pages/IncomeStatementPage'
 import { JournalPage } from './pages/JournalPage'
@@ -36,6 +37,7 @@ export function App() {
             <Route path="/organizacao" element={<OrganizationPage />} />
             <Route path="/balancete" element={<TrialBalancePage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />
+            <Route path="/balanco" element={<BalanceSheetPage />} />
             <Route path="/livro-diario" element={<JournalReportPage />} />
             <Route path="/tarefas" element={<PlaceholderPage title="Tarefas" />} />
             <Route path="/definicoes" element={<SettingsPage />} />

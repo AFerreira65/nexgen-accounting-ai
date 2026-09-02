@@ -190,6 +190,20 @@ describe('App', () => {
     expect(screen.getAllByText('Resultado líquido do período').length).toBeGreaterThan(0)
   })
 
+  it('shows the balance sheet with assets, liabilities and equity in balance', () => {
+    window.history.pushState({}, '', '/balanco')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Balanço' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Ativo' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Passivo' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Capital próprio' })).toBeInTheDocument()
+    expect(screen.getByText('21 · Clientes')).toBeInTheDocument()
+    expect(screen.getAllByText('24 · Estado e outros entes públicos').length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: '2111001' })).toBeInTheDocument()
+    expect(screen.getByText('Ativo = Passivo + CP')).toBeInTheDocument()
+  })
+
   it('shows the account ledger with a running balance and a date filter', () => {
     window.history.pushState({}, '', '/contas/6221')
     render(<App />)
