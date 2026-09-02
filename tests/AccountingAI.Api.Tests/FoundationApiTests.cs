@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-17");
+        StringAssert.Contains(payload, "F1-18");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -91,6 +91,17 @@ public sealed class FoundationApiTests
             .ConfigureAwait(false);
         var filteredPayload = await filteredResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+        using var seriesResponse = await client.GetAsync(
+            "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/accounting/number-series?year=2026")
+            .ConfigureAwait(false);
+        var seriesPayload = await seriesResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unauthorizedSeriesResponse = await client.GetAsync(
+            "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/99999999-9999-9999-9999-999999999999/accounting/number-series?year=2026")
+            .ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.OK, mainlandResponse.StatusCode);
         StringAssert.Contains(mainlandPayload, "COMP-2026-00842");
         StringAssert.Contains(mainlandPayload, "\"documentType\":null");
@@ -112,6 +123,10 @@ public sealed class FoundationApiTests
         StringAssert.Contains(islandSetupPayload, "\"code\":\"FTF\"");
         StringAssert.Contains(islandSetupPayload, "\"name\":\"Outros\"");
         StringAssert.Contains(islandSetupPayload, "\"taxonomyReference\":\"M\"");
+        Assert.AreEqual(HttpStatusCode.OK, seriesResponse.StatusCode);
+        StringAssert.Contains(seriesPayload, "\"series\":\"FTV\"");
+        StringAssert.Contains(seriesPayload, "\"origin\":\"Tipo de documento\"");
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedSeriesResponse.StatusCode);
     }
 
     [TestMethod]

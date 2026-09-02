@@ -10,7 +10,7 @@ export type DocumentTypeEditInput = { name: string; defaultJournalCode: string; 
 export type MovementLineInput = { accountCode: string; description: string; debit: number; credit: number }
 export type MovementInput = { journalCode: string; entryDate: string; documentReference: string; description: string; reviewed: boolean; lines: MovementLineInput[]; documentTypeCode?: string | null }
 
-async function problemMessage(response: Response) {
+export async function problemMessage(response: Response) {
   try {
     const body = await response.json() as { errors?: Record<string, string[]>; detail?: string; title?: string }
     const first = body.errors ? Object.values(body.errors).flat()[0] : undefined

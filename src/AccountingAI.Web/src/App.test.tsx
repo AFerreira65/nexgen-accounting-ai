@@ -72,6 +72,22 @@ describe('App', () => {
     expect(screen.getByText(/Catálogo S \(Portaria 302\/2016\)/)).toBeInTheDocument()
   })
 
+  it('shows and safely advances document number series', () => {
+    window.history.pushState({}, '', '/series')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Séries documentais' })).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /Tipo de documento/i }).length).toBeGreaterThan(0)
+    const ftvRow = screen.getByText('FTV').closest('tr') as HTMLElement
+    fireEvent.click(within(ftvRow).getByRole('button', { name: /Avançar/i }))
+    const nextNumber = within(ftvRow).getByRole('spinbutton', { name: 'Próximo número de FTV' })
+    fireEvent.change(nextNumber, { target: { value: '20' } })
+    fireEvent.click(within(ftvRow).getByRole('button', { name: 'Guardar' }))
+
+    expect(screen.getByText(/Série FTV ajustada apenas nesta demonstração/i)).toBeInTheDocument()
+    expect(within(screen.getByText('FTV').closest('tr') as HTMLElement).getByText('20')).toBeInTheDocument()
+  })
+
   it('registers a balanced movement from the movements screen in demo mode', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)

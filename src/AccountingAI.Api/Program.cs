@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-17",
+    phase = "F1-18",
     status = "ready"
 }));
 
@@ -336,7 +336,7 @@ if (app.Environment.IsDevelopment())
 
             return Results.Ok(ToMovementResponse(movement));
         }
-        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or TimeoutException)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
@@ -422,6 +422,56 @@ if (app.Environment.IsDevelopment())
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["movement"] = [exception.Message] });
+        }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/number-series", async (
+        Guid userId,
+        Guid companyId,
+        int year,
+        AccountingDbContext context,
+        DocumentNumberSeriesService numberSeries,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            return Results.Ok(await numberSeries.ListAsync(companyId, year, cancellationToken).ConfigureAwait(false));
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/number-series/{series}/{year:int}", async (
+        Guid userId,
+        Guid companyId,
+        string series,
+        int year,
+        UpdateDocumentNumberSeriesRequest request,
+        AccountingDbContext context,
+        DocumentNumberSeriesService numberSeries,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            return Results.Ok(await numberSeries
+                .AdvanceAsync(companyId, series, year, request.NextNumber, cancellationToken)
+                .ConfigureAwait(false));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or TimeoutException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["numberSeries"] = [exception.Message] });
         }
     });
 
@@ -1290,6 +1340,8 @@ public sealed record UpdateJournalRequest(string Name, bool IsActive);
 public sealed record CreateDocumentTypeRequest(string Code, string Name, string DefaultJournalCode);
 
 public sealed record UpdateDocumentTypeRequest(string Name, string DefaultJournalCode, bool IsActive);
+
+public sealed record UpdateDocumentNumberSeriesRequest(int NextNumber);
 
 public sealed record CreateSaftCompanyRequest(
     string TaxRegistrationNumber,

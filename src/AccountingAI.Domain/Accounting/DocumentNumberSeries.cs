@@ -25,6 +25,11 @@ public sealed class DocumentNumberSeries
 
         ArgumentException.ThrowIfNullOrWhiteSpace(series);
 
+        if (series.Trim().Length > 24)
+        {
+            throw new ArgumentException("The series cannot exceed 24 characters.", nameof(series));
+        }
+
         if (year < 2000 || year > 2200)
         {
             throw new ArgumentOutOfRangeException(nameof(year), year, "The fiscal year is out of range.");
@@ -60,5 +65,19 @@ public sealed class DocumentNumberSeries
         var current = NextNumber;
         NextNumber = current + 1;
         return current;
+    }
+
+    /// <summary>
+    /// Avança o próximo número reservado. Um contador nunca pode recuar, para
+    /// impedir a reutilização acidental de referências já emitidas.
+    /// </summary>
+    public void AdvanceTo(int nextNumber)
+    {
+        if (nextNumber < NextNumber)
+        {
+            throw new InvalidOperationException("O próximo número não pode ser inferior ao contador atual.");
+        }
+
+        NextNumber = nextNumber;
     }
 }

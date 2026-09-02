@@ -12,6 +12,7 @@ import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { TrialBalancePage } from './pages/TrialBalancePage'
+import { DocumentNumberSeriesPage } from './pages/DocumentNumberSeriesPage'
 import { WorkContextProvider } from './app/WorkContext'
 
 export function App() {
@@ -28,6 +29,7 @@ export function App() {
             <Route path="/contas" element={<AccountsPage />} />
             <Route path="/diarios" element={<JournalsPage />} />
             <Route path="/documentos" element={<DocumentTypesPage />} />
+            <Route path="/series" element={<DocumentNumberSeriesPage />} />
             <Route path="/taxonomias" element={<TaxonomiesPage />} />
             <Route path="/importar" element={<SaftImportPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />

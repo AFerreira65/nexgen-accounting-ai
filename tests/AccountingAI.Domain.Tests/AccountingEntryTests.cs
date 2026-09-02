@@ -202,6 +202,20 @@ public sealed class AccountingEntryTests
             new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), "OD", 2026, nextNumber: 0));
     }
 
+    [TestMethod]
+    public void DocumentNumberSeriesCanOnlyAdvance()
+    {
+        var series = new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), "FTV", 2026, nextNumber: 3);
+
+        series.AdvanceTo(10);
+
+        Assert.AreEqual(10, series.NextNumber);
+        series.AdvanceTo(10);
+        Assert.ThrowsExactly<InvalidOperationException>(() => series.AdvanceTo(9));
+        Assert.ThrowsExactly<ArgumentException>(() =>
+            new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), new string('X', 25), 2026));
+    }
+
     private static JournalEntry CreateEntry() => new(
         Guid.NewGuid(),
         Guid.NewGuid(),

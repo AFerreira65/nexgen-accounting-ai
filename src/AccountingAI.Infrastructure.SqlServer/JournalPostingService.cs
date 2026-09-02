@@ -277,6 +277,11 @@ public sealed class JournalPostingService(AccountingDbContext context)
     /// </summary>
     private async Task<string> NextReferenceAsync(Guid companyId, string prefix, int year, CancellationToken cancellationToken)
     {
+        await SqlServerApplicationLock.AcquireAsync(
+            context,
+            $"AccountingAI:NumberSeries:{companyId:N}:{prefix}:{year}",
+            cancellationToken).ConfigureAwait(false);
+
         var series = await context.DocumentNumberSeries
             .SingleOrDefaultAsync(
                 item => item.CompanyId == companyId && item.Series == prefix && item.Year == year,

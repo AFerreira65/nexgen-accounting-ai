@@ -11,7 +11,7 @@ namespace AccountingAI.IntegrationTests;
 public sealed class SqlServerMigrationTests
 {
     [TestMethod]
-    public async Task MigrationsAndAccountingSeedCanBeAppliedTwiceToLocalDb()
+    public async Task MigrationsAndAccountingSeedCanBeAppliedTwiceToSqlServer()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -19,9 +19,18 @@ public sealed class SqlServerMigrationTests
         }
 
         var databaseName = $"AccountingAI_Foundation_{Guid.NewGuid():N}";
-        var connectionString =
-            $"Server=(localdb)\\MSSQLLocalDB;Database={databaseName};Integrated Security=true;" +
-            "TrustServerCertificate=true;MultipleActiveResultSets=true";
+        var configuredServer = Environment.GetEnvironmentVariable("ACCOUNTINGAI_TEST_SQL_CONNECTION");
+        var connectionBuilder = string.IsNullOrWhiteSpace(configuredServer)
+            ? new SqlConnectionStringBuilder
+            {
+                DataSource = "(localdb)\\MSSQLLocalDB",
+                IntegratedSecurity = true,
+                TrustServerCertificate = true,
+                MultipleActiveResultSets = true
+            }
+            : new SqlConnectionStringBuilder(configuredServer);
+        connectionBuilder.InitialCatalog = databaseName;
+        var connectionString = connectionBuilder.ConnectionString;
 
         var options = new DbContextOptionsBuilder<AccountingDbContext>()
             .UseSqlServer(connectionString, sqlOptions =>
@@ -124,6 +133,7 @@ public sealed class SqlServerMigrationTests
                 .AddScoped<SaftCompanyCreationService>()
                 .AddScoped<OrganizationAdminService>()
                 .AddScoped<JournalPostingService>()
+                .AddScoped<DocumentNumberSeriesService>()
                 .AddScoped<AccountLedgerService>()
                 .AddScoped<JournalReportService>()
                 .BuildServiceProvider();
@@ -637,6 +647,52 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual(3, (await context.DocumentNumberSeries.AsNoTracking()
                     .SingleAsync(item => item.CompanyId == DevelopmentDataSeeder.DemoCompanyId &&
                         item.Series == "FTV" && item.Year == 2026).ConfigureAwait(false)).NextNumber);
+            }
+
+            // Várias sessões a emitir na mesma série ficam serializadas no SQL
+            // Server e recebem referências únicas e consecutivas.
+            var concurrentPosts = Enumerable.Range(1, 6).Select(async sequence =>
+            {
+                await using var scope = services.CreateAsyncScope();
+                var posting = scope.ServiceProvider.GetRequiredService<JournalPostingService>();
+                return await posting.PostAsync(
+                    esnlCompanyId,
+                    "GERAL",
+                    new DateOnly(2026, 6, sequence),
+                    $"TESTE {sequence}",
+                    "Emissão concorrente",
+                    reviewed: false,
+                    [
+                        new JournalEntryLineInput("11", "Débito", 10m, 0m),
+                        new JournalEntryLineInput("12", "Crédito", 0m, 10m)
+                    ]).ConfigureAwait(false);
+            });
+            var concurrentMovements = await Task.WhenAll(concurrentPosts).ConfigureAwait(false);
+            CollectionAssert.AreEquivalent(
+                Enumerable.Range(1, 6).Select(number => $"GERAL-2026-{number:D5}").ToArray(),
+                concurrentMovements.Select(item => item.Reference).ToArray());
+
+            await using (var seriesScope = services.CreateAsyncScope())
+            {
+                var seriesService = seriesScope.ServiceProvider.GetRequiredService<DocumentNumberSeriesService>();
+                var series = await seriesService
+                    .ListAsync(DevelopmentDataSeeder.DemoCompanyId, 2026)
+                    .ConfigureAwait(false);
+                var ftv = series.Single(item => item.Series == "FTV");
+                Assert.AreEqual(2, ftv.HighestIssuedNumber);
+                Assert.AreEqual(3, ftv.NextNumber);
+                Assert.AreEqual("Tipo de documento", ftv.Origin);
+
+                var advanced = await seriesService
+                    .AdvanceAsync(DevelopmentDataSeeder.DemoCompanyId, "ftv", 2026, 10)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(10, advanced.NextNumber);
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await seriesService.AdvanceAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "FTV", 2026, 9).ConfigureAwait(false));
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await seriesService.AdvanceAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "DESCONHECIDA", 2026, 1).ConfigureAwait(false));
             }
 
             await using (var ledgerScope = services.CreateAsyncScope())
