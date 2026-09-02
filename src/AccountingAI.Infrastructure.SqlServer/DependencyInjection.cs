@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<DocumentNumberSeriesService>();
         services.AddScoped<AccountLedgerService>();
         services.AddScoped<JournalReportService>();
+        services.AddScoped<YearEndClosingService>();
 
         services
             .AddHealthChecks()

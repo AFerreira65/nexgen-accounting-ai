@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-18",
+    phase = "F1-22",
     status = "ready"
 }));
 
@@ -684,6 +684,52 @@ if (app.Environment.IsDevelopment())
                 entry.RunningBalance
             })
         });
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/year-end-closing", async (
+        Guid userId,
+        Guid companyId,
+        int year,
+        AccountingDbContext context,
+        YearEndClosingService closing,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            return Results.Ok(await closing.PreviewAsync(companyId, year, cancellationToken).ConfigureAwait(false));
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/year-end-closing", async (
+        Guid userId,
+        Guid companyId,
+        int year,
+        AccountingDbContext context,
+        YearEndClosingService closing,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            return Results.Ok(ToMovementResponse(await closing.RegisterAsync(companyId, year, cancellationToken).ConfigureAwait(false)));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or TimeoutException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["yearEndClosing"] = [exception.Message] });
+        }
     });
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/taxonomy-review", async (

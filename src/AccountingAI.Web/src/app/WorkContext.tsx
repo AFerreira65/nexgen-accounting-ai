@@ -56,6 +56,7 @@ type WorkContextValue = WorkContextData & {
   taxonomyReview: TaxonomyReview
   taxonomyCatalog: TaxonomyCatalog
   movements: Movement[]
+  refreshAccounting: () => void
   selectCompany: (companyId: string) => void
   saveSettings: (settings: CompanySettings) => Promise<void>
   createAccount: (input: NewAccountInput) => Promise<void>
@@ -267,6 +268,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
     taxonomyReview,
     taxonomyCatalog,
     movements: accountingMovements,
+    refreshAccounting: () => setAccountingRevision((revision) => revision + 1),
     selectCompany: (companyId) => {
       if (!data.companies.some((company) => company.companyId === companyId)) return
       setActiveCompanyId(companyId)

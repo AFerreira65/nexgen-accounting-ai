@@ -134,6 +134,7 @@ public sealed class SqlServerMigrationTests
                 .AddScoped<OrganizationAdminService>()
                 .AddScoped<JournalPostingService>()
                 .AddScoped<DocumentNumberSeriesService>()
+                .AddScoped<YearEndClosingService>()
                 .AddScoped<AccountLedgerService>()
                 .AddScoped<JournalReportService>()
                 .BuildServiceProvider();
@@ -792,6 +793,33 @@ public sealed class SqlServerMigrationTests
                         new DateOnly(2027, 1, 1), null)
                     .ConfigureAwait(false);
                 Assert.HasCount(0, afterYear.Entries);
+            }
+
+            await using (var closingScope = services.CreateAsyncScope())
+            {
+                var closing = closingScope.ServiceProvider.GetRequiredService<YearEndClosingService>();
+
+                var preview = await closing.PreviewAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false);
+                Assert.IsFalse(preview.AlreadyClosed);
+                Assert.AreEqual(1425m, preview.NetResult); // rendimentos 2670 − gastos 1245
+                Assert.AreEqual(preview.Lines.Sum(line => line.Debit), preview.Lines.Sum(line => line.Credit));
+                var resultLine = preview.Lines.Single(line => line.AccountCode == "81");
+                Assert.AreEqual(1425m, resultLine.Credit);
+                Assert.IsTrue(preview.Lines.Any(line => line.AccountCode == "6221" && line.Credit == 1245m));
+                Assert.IsTrue(preview.Lines.Any(line => line.AccountCode == "7211" && line.Debit == 2670m));
+
+                var registered = await closing.RegisterAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false);
+                Assert.AreEqual("AP-2026-00001", registered.Reference);
+                Assert.AreEqual("APURAMENTO", registered.JournalCode);
+                Assert.AreEqual("AP", registered.DocumentTypeCode);
+                Assert.AreEqual(new DateOnly(2026, 12, 31), registered.EntryDate);
+
+                var afterClosing = await closing.PreviewAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false);
+                Assert.IsTrue(afterClosing.AlreadyClosed);
+                Assert.AreEqual("AP-2026-00001", afterClosing.ClosingReference);
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await closing.RegisterAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false));
             }
 
             context.ChangeTracker.Clear();

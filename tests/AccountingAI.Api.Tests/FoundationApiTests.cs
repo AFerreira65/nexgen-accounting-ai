@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-18");
+        StringAssert.Contains(payload, "F1-22");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -234,6 +234,13 @@ public sealed class FoundationApiTests
             .GetAsync($"{mainland}/trial-balance?from=2026-08-01").ConfigureAwait(false);
         var datedTrialBalancePayload = await datedTrialBalance.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+        using var closingPreview = await client
+            .GetAsync($"{mainland}/year-end-closing?year=2026").ConfigureAwait(false);
+        var closingPreviewPayload = await closingPreview.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var closingBadYear = await client
+            .GetAsync($"{mainland}/year-end-closing?year=1000").ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.OK, trialBalance.StatusCode);
         StringAssert.Contains(trialBalancePayload, "\"totalOpeningBalance\"");
         StringAssert.Contains(trialBalancePayload, "\"totalDebit\"");
@@ -262,6 +269,10 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, datedTrialBalance.StatusCode);
         StringAssert.Contains(datedTrialBalancePayload, "\"openingBalance\"");
         Assert.IsFalse(datedTrialBalancePayload.Contains("\"rows\":[]", StringComparison.Ordinal));
+        Assert.AreEqual(HttpStatusCode.OK, closingPreview.StatusCode);
+        StringAssert.Contains(closingPreviewPayload, "\"netResult\"");
+        StringAssert.Contains(closingPreviewPayload, "\"lines\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, closingBadYear.StatusCode);
     }
 
     [TestMethod]

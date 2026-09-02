@@ -204,6 +204,18 @@ describe('App', () => {
     expect(screen.getByText('Ativo = Passivo + CP')).toBeInTheDocument()
   })
 
+  it('previews the year-end closing entry and keeps register disabled in demo mode', () => {
+    window.history.pushState({}, '', '/apuramento')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Apuramento de resultados' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '7211' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '6221' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '81' })).toBeInTheDocument()
+    expect(screen.getByText(/requer ligação ao SQL Server/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Registar apuramento/ })).toBeDisabled()
+  })
+
   it('shows the account ledger with a running balance and a date filter', () => {
     window.history.pushState({}, '', '/contas/6221')
     render(<App />)
