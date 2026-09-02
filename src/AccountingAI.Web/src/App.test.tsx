@@ -177,6 +177,19 @@ describe('App', () => {
     expect(screen.getByText('Sem movimentos para apresentar.')).toBeInTheDocument()
   })
 
+  it('shows the income statement grouped by nature with a net result', () => {
+    window.history.pushState({}, '', '/resultados')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Demonstração de resultados' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Rendimentos' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Gastos' })).toBeInTheDocument()
+    expect(screen.getByText('72 · Prestações de serviços')).toBeInTheDocument()
+    expect(screen.getByText('62 · Fornecimentos e serviços externos')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '7211' })).toBeInTheDocument()
+    expect(screen.getAllByText('Resultado líquido do período').length).toBeGreaterThan(0)
+  })
+
   it('shows the account ledger with a running balance and a date filter', () => {
     window.history.pushState({}, '', '/contas/6221')
     render(<App />)

@@ -3,6 +3,7 @@ import { AppLayout } from './app/AppLayout'
 import { AccountPage } from './pages/AccountPage'
 import { AccountsPage, DocumentTypesPage, JournalsPage, TaxonomiesPage } from './pages/AccountingMastersPages'
 import { DashboardPage } from './pages/DashboardPage'
+import { IncomeStatementPage } from './pages/IncomeStatementPage'
 import { JournalPage } from './pages/JournalPage'
 import { JournalReportPage } from './pages/JournalReportPage'
 import { MovementPage } from './pages/MovementPage'
@@ -34,6 +35,7 @@ export function App() {
             <Route path="/importar" element={<SaftImportPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />
             <Route path="/balancete" element={<TrialBalancePage />} />
+            <Route path="/resultados" element={<IncomeStatementPage />} />
             <Route path="/livro-diario" element={<JournalReportPage />} />
             <Route path="/tarefas" element={<PlaceholderPage title="Tarefas" />} />
             <Route path="/definicoes" element={<SettingsPage />} />
