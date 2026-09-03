@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftInspection, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftInspection, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
 export type AccountEditInput = { name: string; isActive: boolean; taxonomyReference: string | null; taxonomyCode: number | null }
@@ -71,6 +71,7 @@ type WorkContextValue = WorkContextData & {
   voidMovement: (reference: string) => Promise<void>
   applyTaxonomySuggestions: () => Promise<number>
   inspectSaft: (file: File) => Promise<SaftInspection>
+  previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
   createSaftCompany: (input: SaftCompanyCreationInput) => Promise<SaftCompanyCreation>
 }
 
@@ -533,6 +534,34 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         match: matched
           ? { outcome: 'ExistingCompany', companyId: matched.companyId, legalName: matched.legalName, accountingStandard: null, accountingSetupVersion: null }
           : { outcome: 'NewCompanyProposed', companyId: null, legalName: null, accountingStandard: null, accountingSetupVersion: null },
+      }
+    },
+    previewSaftAccounts: async (companyId, file) => {
+      if (source === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/saft/accounts-preview`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/xml' },
+          body: file,
+        })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        return await response.json() as SaftAccountsPreview
+      }
+
+      const fileAccounts = parseSaftAccountsFromXml(await file.text())
+      const chart = new Set(accountingSetup.accounts.map((account) => account.code.toUpperCase()))
+      const accounts = fileAccounts
+        .map((account) => ({
+          code: account.code,
+          description: account.description,
+          state: (chart.has(account.code.toUpperCase()) ? 'Existing' : 'New') as 'Existing' | 'New',
+        }))
+        .sort((a, b) => a.code.localeCompare(b.code))
+      return {
+        fileAccountCount: accounts.length,
+        existingCount: accounts.filter((account) => account.state === 'Existing').length,
+        newCount: accounts.filter((account) => account.state === 'New').length,
+        companyPostingAccountCount: accountingSetup.accounts.filter((account) => account.allowsPosting).length,
+        accounts,
       }
     },
     createSaftCompany: async (input) => {

@@ -342,6 +342,40 @@ export function parseSaftHeaderFromXml(text: string): SaftInspectionHeader {
   }
 }
 
+export type SaftAccountStatus = { code: string; description: string; state: 'Existing' | 'New' }
+
+export type SaftAccountsPreview = {
+  fileAccountCount: number
+  existingCount: number
+  newCount: number
+  companyPostingAccountCount: number
+  accounts: SaftAccountStatus[]
+}
+
+// Extração do plano geral de contas no cliente, usada apenas no modo de
+// demonstração. Namespace-agnóstica e a parar antes dos movimentos, como o leitor
+// do servidor.
+export function parseSaftAccountsFromXml(text: string): { code: string; description: string }[] {
+  const doc = new DOMParser().parseFromString(text, 'application/xml')
+  if (doc.getElementsByTagName('parsererror').length > 0) {
+    throw new Error('O ficheiro não é um XML SAF-T legível.')
+  }
+  const block = doc.getElementsByTagNameNS('*', 'GeneralLedgerAccounts')[0]
+    ?? Array.from(doc.getElementsByTagName('*')).find((node) => node.localName === 'GeneralLedgerAccounts')
+  if (!block) return []
+
+  const seen = new Set<string>()
+  const result: { code: string; description: string }[] = []
+  for (const account of Array.from(block.children).filter((node) => node.localName === 'Account')) {
+    const child = (name: string) => Array.from(account.children).find((node) => node.localName === name)?.textContent?.trim() ?? ''
+    const code = child('AccountID')
+    if (!code || seen.has(code.toUpperCase())) continue
+    seen.add(code.toUpperCase())
+    result.push({ code, description: child('AccountDescription') })
+  }
+  return result
+}
+
 export const euro = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' })
 
 export function formatMovementDate(value: string) {

@@ -1,7 +1,7 @@
 import { CircleAlert, CircleCheck, Database, FileUp, Info } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
-import type { SaftCompanyCreation, SaftInspection } from '../app/demo-data'
+import type { SaftAccountsPreview, SaftCompanyCreation, SaftInspection } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
 const REGIONS: { value: 'Mainland' | 'Azores' | 'Madeira'; label: string }[] = [
@@ -77,22 +77,70 @@ function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
   </section>
 }
 
+function AccountsPreviewPanel({ companyId, file }: { companyId: string; file: File | null }) {
+  const { previewSaftAccounts } = useWorkContext()
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [preview, setPreview] = useState<SaftAccountsPreview | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => { setState('idle'); setPreview(null); setError('') }, [companyId, file])
+
+  async function run() {
+    if (!file) return
+    setState('loading'); setError('')
+    try {
+      setPreview(await previewSaftAccounts(companyId, file))
+      setState('done')
+    } catch (previewError) {
+      setState('error')
+      setError(previewError instanceof Error ? previewError.message : 'Não foi possível ler o plano de contas.')
+    }
+  }
+
+  return <section className="panel">
+    <div className="panel-heading"><div><h2>Plano de contas do ficheiro</h2><p>Compara os códigos do <code>GeneralLedgerAccounts</code> com o plano da empresa. Não cria contas.</p></div></div>
+    <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
+      <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A ler…' : 'Pré-visualizar plano de contas'}</button>
+    </div>
+    {state === 'error' && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
+    {preview && <>
+      <div className="settings-grid">
+        <div className="metadata-strip"><small>Contas no ficheiro</small><strong>{preview.fileAccountCount}</strong></div>
+        <div className="metadata-strip"><small>Já existentes</small><strong>{preview.existingCount}</strong></div>
+        <div className="metadata-strip"><small>Novas</small><strong>{preview.newCount}</strong></div>
+        <div className="metadata-strip"><small>Contas de movimento da empresa</small><strong>{preview.companyPostingAccountCount}</strong></div>
+      </div>
+      {preview.fileAccountCount === 0
+        ? <p className="save-status"><Info size={15} /> O ficheiro não tem plano geral de contas.</p>
+        : <div className="table-wrap"><table><thead><tr><th>Código</th><th>Descrição</th><th>Situação</th></tr></thead><tbody>
+            {preview.accounts.map((account) => <tr key={account.code}>
+              <td className="primary-cell">{account.code}</td>
+              <td>{account.description || '—'}</td>
+              <td><span className={`badge ${account.state === 'Existing' ? 'success' : 'warning'}`}>{account.state === 'Existing' ? 'Já existe' : 'Nova'}</span></td>
+            </tr>)}
+          </tbody></table></div>}
+    </>}
+  </section>
+}
+
 export function SaftImportPage() {
   const { inspectSaft, source } = useWorkContext()
   const inputRef = useRef<HTMLInputElement>(null)
   const [state, setState] = useState<'idle' | 'reading' | 'done' | 'error'>('idle')
   const [fileName, setFileName] = useState('')
+  const [file, setFile] = useState<File | null>(null)
   const [result, setResult] = useState<SaftInspection | null>(null)
   const [error, setError] = useState('')
 
-  async function onFile(file: File | undefined) {
-    if (!file) return
-    setFileName(file.name)
+  async function onFile(picked: File | undefined) {
+    if (!picked) return
+    setFileName(picked.name)
+    setFile(picked)
     setState('reading')
     setError('')
     setResult(null)
     try {
-      setResult(await inspectSaft(file))
+      setResult(await inspectSaft(picked))
       setState('done')
     } catch (readError) {
       setState('error')
@@ -102,12 +150,12 @@ export function SaftImportPage() {
 
   return <div className="page-stack">
     <header className="page-heading">
-      <div><p className="eyebrow">Importação contabilística</p><h1>Importar SAF-T</h1><p>Leitura do cabeçalho, correspondência da empresa pelo NIF e, quando não existe, criação e provisionamento dos cadastros. A importação dos movimentos ainda não está disponível.</p></div>
+      <div><p className="eyebrow">Importação contabilística</p><h1>Importar SAF-T</h1><p>Leitura do cabeçalho, correspondência da empresa pelo NIF, criação e provisionamento quando não existe, e pré-visualização do plano de contas do ficheiro. A importação dos movimentos ainda não está disponível.</p></div>
       <span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Ligado ao SQL Server' : 'Modo de demonstração'}</span>
     </header>
 
     <section className="panel">
-      <div className="panel-heading"><div><h2>Ficheiro SAF-T (PT)</h2><p>Aceita ficheiros de faturação, contabilidade ou integrados. Só o cabeçalho é lido.</p></div></div>
+      <div className="panel-heading"><div><h2>Ficheiro SAF-T (PT)</h2><p>Aceita ficheiros de faturação, contabilidade ou integrados. São lidos o cabeçalho e o plano de contas.</p></div></div>
       <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
         <input ref={inputRef} type="file" accept=".xml,text/xml,application/xml" className="sr-only" aria-label="Escolher ficheiro SAF-T" onChange={(event) => void onFile(event.target.files?.[0])} />
         <button className="button button-primary" type="button" onClick={() => inputRef.current?.click()}><FileUp size={16} /> Escolher ficheiro</button>
@@ -131,11 +179,14 @@ export function SaftImportPage() {
       </section>
 
       {result.match.outcome === 'ExistingCompany'
-        ? <section className="panel">
-            <div className="panel-heading"><div><h2>Correspondência de empresa</h2><p>Pesquisa pelo NIF do ficheiro entre as empresas a que tem acesso.</p></div><span className="success"><CircleCheck /></span></div>
-            <p>Empresa encontrada: <strong>{result.match.legalName}</strong>{result.match.accountingStandard ? ` · ${accountingStandardName(result.match.accountingStandard)}` : ''}{result.match.accountingSetupVersion ? ` · ${result.match.accountingSetupVersion}` : ''}.</p>
-            <p className="save-status"><Info size={15} /> Os próximos passos — confirmar norma e referencial, pré-visualizar e importar os movimentos — ainda não estão disponíveis.</p>
-          </section>
+        ? <>
+            <section className="panel">
+              <div className="panel-heading"><div><h2>Correspondência de empresa</h2><p>Pesquisa pelo NIF do ficheiro entre as empresas a que tem acesso.</p></div><span className="success"><CircleCheck /></span></div>
+              <p>Empresa encontrada: <strong>{result.match.legalName}</strong>{result.match.accountingStandard ? ` · ${accountingStandardName(result.match.accountingStandard)}` : ''}{result.match.accountingSetupVersion ? ` · ${result.match.accountingSetupVersion}` : ''}.</p>
+              <p className="save-status"><Info size={15} /> A importação dos movimentos do ficheiro ainda não está disponível.</p>
+            </section>
+            {result.match.companyId && <AccountsPreviewPanel companyId={result.match.companyId} file={file} />}
+          </>
         : <CompanyProposal inspection={result} />}
     </>}
   </div>

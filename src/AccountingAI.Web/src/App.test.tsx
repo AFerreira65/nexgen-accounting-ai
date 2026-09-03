@@ -379,7 +379,11 @@ describe('App', () => {
       '<TaxAccountingBasis>I</TaxAccountingBasis>',
       '<CompanyName>Empresa do Ficheiro, Lda.</CompanyName>',
       '<FiscalYear>2026</FiscalYear><StartDate>2026-01-01</StartDate><EndDate>2026-12-31</EndDate>',
-      '<CurrencyCode>EUR</CurrencyCode></Header></AuditFile>',
+      '<CurrencyCode>EUR</CurrencyCode></Header>',
+      '<MasterFiles><GeneralLedgerAccounts>',
+      '<Account><AccountID>11</AccountID><AccountDescription>Caixa</AccountDescription></Account>',
+      '<Account><AccountID>99999999</AccountID><AccountDescription>Conta nova do ficheiro</AccountDescription></Account>',
+      '</GeneralLedgerAccounts></MasterFiles></AuditFile>',
     ].join('\n')
 
     fireEvent.change(screen.getByLabelText(/Escolher ficheiro SAF-T/i), {
@@ -389,6 +393,11 @@ describe('App', () => {
     const matchLine = await screen.findByText(/Empresa encontrada/i)
     expect(matchLine).toHaveTextContent(/Almeida & Costa/)
     expect(screen.getByText(/com contabilidade/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Pré-visualizar plano de contas/i }))
+    const newRow = await screen.findByText('99999999')
+    expect(within(newRow.closest('tr') as HTMLElement).getByText('Nova')).toBeInTheDocument()
+    expect(within(screen.getByText('11').closest('tr') as HTMLElement).getByText('Já existe')).toBeInTheDocument()
   })
 
   it('proposes creating a company when the SAF-T tax number is unknown', async () => {
