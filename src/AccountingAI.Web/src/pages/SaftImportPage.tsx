@@ -186,6 +186,9 @@ function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: Fil
       {preview && preview.hasEntries && preview.transactionCount > 0 && source === 'database' && <button className="button button-primary" type="button" disabled={importState === 'importing'} onClick={() => void importEntries()}>{importState === 'importing' ? 'A importar…' : `Importar os ${preview.transactionCount} movimentos`}</button>}
     </div>
     {imported && <p className={`save-status ${imported.skippedCount > 0 ? 'warning' : 'success'}`}>{imported.skippedCount > 0 ? <CircleAlert size={15} /> : <CircleCheck size={15} />} {imported.importedCount} {imported.importedCount === 1 ? 'movimento importado' : 'movimentos importados'}{imported.journalsCreated.length > 0 ? `, ${imported.journalsCreated.length} ${imported.journalsCreated.length === 1 ? 'diário criado' : 'diários criados'} (${imported.journalsCreated.join(', ')})` : ''}{imported.skippedCount > 0 ? `, ${imported.skippedCount} ${imported.skippedCount === 1 ? 'saltado' : 'saltados'}` : ''}.</p>}
+    {imported && imported.matchesDeclaredTotals !== null && <p className={`save-status ${imported.matchesDeclaredTotals ? 'success' : 'warning'}`}>{imported.matchesDeclaredTotals ? <CircleCheck size={15} /> : <CircleAlert size={15} />} {imported.matchesDeclaredTotals
+      ? `Os totais da empresa no período do ficheiro (${euro.format(imported.companyPeriodDebit)}) coincidem com os declarados no SAF-T.`
+      : `Os totais da empresa no período do ficheiro (débito ${euro.format(imported.companyPeriodDebit)}, crédito ${euro.format(imported.companyPeriodCredit)}) não coincidem com os declarados no SAF-T (débito ${euro.format(imported.declaredTotalDebit ?? 0)}, crédito ${euro.format(imported.declaredTotalCredit ?? 0)}).`}</p>}
     {state === 'error' && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
     {preview && (preview.hasEntries
       ? <>

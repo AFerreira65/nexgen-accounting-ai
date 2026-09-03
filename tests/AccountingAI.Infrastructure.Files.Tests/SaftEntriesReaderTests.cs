@@ -123,10 +123,15 @@ public sealed class SaftEntriesReaderTests
     [TestMethod]
     public async Task ReadsTheTransactionsWithTheirLines()
     {
-        var transactions = await new SaftEntriesReader()
+        var read = await new SaftEntriesReader()
             .ReadTransactionsAsync(Utf8(SaftDocument(TwoJournals)))
             .ConfigureAwait(false);
 
+        Assert.AreEqual(3, read.DeclaredEntryCount);
+        Assert.AreEqual(150.00m, read.DeclaredTotalDebit);
+        Assert.AreEqual(150.00m, read.DeclaredTotalCredit);
+
+        var transactions = read.Items;
         Assert.HasCount(3, transactions);
 
         var first = transactions[0];
@@ -152,10 +157,11 @@ public sealed class SaftEntriesReaderTests
     [TestMethod]
     public async Task ReadsNoTransactionsWhenTheBlockIsAbsent()
     {
-        var transactions = await new SaftEntriesReader()
+        var read = await new SaftEntriesReader()
             .ReadTransactionsAsync(Utf8(SaftDocument("")))
             .ConfigureAwait(false);
 
-        Assert.AreEqual(0, transactions.Count);
+        Assert.AreEqual(0, read.Items.Count);
+        Assert.IsNull(read.DeclaredTotalDebit);
     }
 }

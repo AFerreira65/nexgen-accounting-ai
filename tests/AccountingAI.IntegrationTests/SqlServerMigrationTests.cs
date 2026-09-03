@@ -569,7 +569,7 @@ public sealed class SqlServerMigrationTests
                 };
                 var importReader = new FixedEntriesReader(
                     new SaftEntriesSummary(true, 5, 5, null, null, null, null, []),
-                    importTransactions);
+                    new SaftTransactions(5, 150m, 150m, importTransactions));
                 var entriesImport = new SaftEntriesImportService(importReader, importContext);
 
                 var importResult = await entriesImport
@@ -583,6 +583,15 @@ public sealed class SqlServerMigrationTests
                 Assert.IsTrue(importResult.Skipped.Any(item => item.TransactionId == "T 4" && item.Reason.Contains("999")));
                 Assert.IsTrue(importResult.Skipped.Any(item => item.TransactionId == "T 5" && item.Reason.Contains("duas linhas")));
 
+                // Reconciliação: os 150 importados (T 1 + T 2) cobrem os totais declarados
+                // no período do ficheiro (2026-02-10 a 2026-03-03).
+                Assert.AreEqual(new DateOnly(2026, 2, 10), importResult.FilePeriodFrom);
+                Assert.AreEqual(new DateOnly(2026, 3, 3), importResult.FilePeriodTo);
+                Assert.AreEqual(150m, importResult.CompanyPeriodDebit);
+                Assert.AreEqual(150m, importResult.CompanyPeriodCredit);
+                Assert.AreEqual(5, importResult.DeclaredEntryCount);
+                Assert.AreEqual(true, importResult.MatchesDeclaredTotals);
+
                 // Reimportar não duplica: T 1 e T 2 passam a "já existe".
                 var reimportResult = await entriesImport
                     .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
@@ -590,6 +599,19 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual(0, reimportResult!.ImportedCount);
                 Assert.AreEqual(5, reimportResult.SkippedCount);
                 Assert.AreEqual(0, reimportResult.JournalsCreated.Count);
+                Assert.AreEqual(true, reimportResult.MatchesDeclaredTotals);
+
+                // Totais declarados diferentes do que a empresa tem no período: não reconcilia.
+                var mismatchImport = new SaftEntriesImportService(
+                    new FixedEntriesReader(
+                        new SaftEntriesSummary(true, 5, 5, null, null, null, null, []),
+                        new SaftTransactions(5, 999m, 0m, importTransactions)),
+                    importContext);
+                var mismatch = await mismatchImport
+                    .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(0, mismatch!.ImportedCount);
+                Assert.AreEqual(false, mismatch.MatchesDeclaredTotals);
 
                 Assert.IsNull(await entriesImport
                     .ImportAsync(Guid.NewGuid(), created.CompanyId, Stream.Null)
@@ -1215,12 +1237,12 @@ public sealed class SqlServerMigrationTests
 
     private sealed class FixedEntriesReader(
         SaftEntriesSummary summary,
-        IReadOnlyList<SaftTransaction>? transactions = null) : ISaftEntriesReader
+        SaftTransactions? transactions = null) : ISaftEntriesReader
     {
         public Task<SaftEntriesSummary> ReadSummaryAsync(Stream content, CancellationToken cancellationToken = default) =>
             Task.FromResult(summary);
 
-        public Task<IReadOnlyList<SaftTransaction>> ReadTransactionsAsync(Stream content, CancellationToken cancellationToken = default) =>
-            Task.FromResult(transactions ?? []);
+        public Task<SaftTransactions> ReadTransactionsAsync(Stream content, CancellationToken cancellationToken = default) =>
+            Task.FromResult(transactions ?? new SaftTransactions(null, null, null, []));
     }
 }

@@ -14,7 +14,9 @@ namespace AccountingAI.Infrastructure.SqlServer;
 /// uma conta inexistente/inativa/agregadora, que tenha menos de duas linhas, que
 /// não equilibre, ou cuja data caia num exercício já apurado ou no período
 /// bloqueado da empresa. Uma só transação de base de dados envolve toda a
-/// importação.
+/// importação. No fim, reconcilia: soma os débitos e créditos da empresa (sem
+/// anulados) no período do ficheiro para confrontar com o
+/// <c>TotalDebit</c>/<c>TotalCredit</c> declarados.
 /// </summary>
 public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, AccountingDbContext context)
 {
@@ -38,10 +40,22 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
             return null;
         }
 
-        var transactions = await entriesReader.ReadTransactionsAsync(content, cancellationToken).ConfigureAwait(false);
+        var read = await entriesReader.ReadTransactionsAsync(content, cancellationToken).ConfigureAwait(false);
+        var transactions = read.Items;
+
+        var fileDates = transactions
+            .Where(item => item.Date is not null)
+            .Select(item => item.Date!.Value)
+            .ToList();
+        DateOnly? periodFrom = fileDates.Count > 0 ? fileDates.Min() : null;
+        DateOnly? periodTo = fileDates.Count > 0 ? fileDates.Max() : null;
+
         if (transactions.Count == 0)
         {
-            return new SaftEntriesImportResult(0, 0, [], []);
+            return new SaftEntriesImportResult(
+                0, 0, [], [],
+                read.DeclaredEntryCount, read.DeclaredTotalDebit, read.DeclaredTotalCredit,
+                null, null, 0m, 0m);
         }
 
         var imported = 0;
@@ -232,7 +246,32 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
-        return new SaftEntriesImportResult(imported, skipped.Count, journalsCreated, skipped);
+        // Reconciliação: a soma dos débitos e créditos da empresa (sem anulados) no
+        // período do ficheiro, para confrontar com os totais declarados.
+        var companyDebit = 0m;
+        var companyCredit = 0m;
+        if (periodFrom is { } from && periodTo is { } to)
+        {
+            var periodEntries = await context.JournalEntries
+                .AsNoTracking()
+                .Where(entry => entry.CompanyId == companyId &&
+                    entry.Status != JournalEntryStatus.Voided &&
+                    entry.EntryDate >= from &&
+                    entry.EntryDate <= to)
+                .Select(entry => new
+                {
+                    Debit = entry.Lines.Sum(line => line.Debit),
+                    Credit = entry.Lines.Sum(line => line.Credit)
+                })
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            companyDebit = periodEntries.Sum(item => item.Debit);
+            companyCredit = periodEntries.Sum(item => item.Credit);
+        }
+
+        return new SaftEntriesImportResult(
+            imported, skipped.Count, journalsCreated, skipped,
+            read.DeclaredEntryCount, read.DeclaredTotalDebit, read.DeclaredTotalCredit,
+            periodFrom, periodTo, companyDebit, companyCredit);
     }
 
     private static string Normalize(string? value) => (value ?? string.Empty).Trim().ToUpperInvariant();

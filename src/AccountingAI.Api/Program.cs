@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-53",
+    phase = "F1-54",
     status = "ready"
 }));
 
@@ -1381,7 +1381,15 @@ if (app.Environment.IsDevelopment())
                 result.ImportedCount,
                 result.SkippedCount,
                 result.JournalsCreated,
-                Skipped = result.Skipped.Select(item => new { item.TransactionId, item.Reason })
+                Skipped = result.Skipped.Select(item => new { item.TransactionId, item.Reason }),
+                result.DeclaredEntryCount,
+                result.DeclaredTotalDebit,
+                result.DeclaredTotalCredit,
+                result.FilePeriodFrom,
+                result.FilePeriodTo,
+                result.CompanyPeriodDebit,
+                result.CompanyPeriodCredit,
+                result.MatchesDeclaredTotals
             });
         }
         catch (Exception exception) when (exception is SaftFileFormatException or ArgumentException or InvalidOperationException)

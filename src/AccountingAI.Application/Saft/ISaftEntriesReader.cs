@@ -11,8 +11,8 @@ public interface ISaftEntriesReader
 
     /// <summary>
     /// Lê as transações do bloco <c>GeneralLedgerEntries</c> com as linhas, uma
-    /// transação de cada vez (subárvore por subárvore). Um ficheiro sem o bloco
-    /// devolve uma lista vazia.
+    /// transação de cada vez (subárvore por subárvore), e os totais declarados no
+    /// cabeçalho do bloco. Um ficheiro sem o bloco devolve uma lista vazia.
     /// </summary>
-    Task<IReadOnlyList<SaftTransaction>> ReadTransactionsAsync(Stream content, CancellationToken cancellationToken = default);
+    Task<SaftTransactions> ReadTransactionsAsync(Stream content, CancellationToken cancellationToken = default);
 }

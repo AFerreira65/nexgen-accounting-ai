@@ -382,6 +382,14 @@ export type SaftEntriesImport = {
   skippedCount: number
   journalsCreated: string[]
   skipped: { transactionId: string; reason: string }[]
+  declaredEntryCount: number | null
+  declaredTotalDebit: number | null
+  declaredTotalCredit: number | null
+  filePeriodFrom: string | null
+  filePeriodTo: string | null
+  companyPeriodDebit: number
+  companyPeriodCredit: number
+  matchesDeclaredTotals: boolean | null
 }
 
 // Extração do plano geral de contas no cliente, usada apenas no modo de

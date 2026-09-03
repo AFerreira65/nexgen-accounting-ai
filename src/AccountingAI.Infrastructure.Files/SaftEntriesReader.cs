@@ -152,7 +152,7 @@ public sealed class SaftEntriesReader : ISaftEntriesReader
             journals.Select(item => new SaftJournalSummary(item.Code, item.Description, item.TransactionCount)).ToList());
     }
 
-    public async Task<IReadOnlyList<SaftTransaction>> ReadTransactionsAsync(Stream content, CancellationToken cancellationToken = default)
+    public async Task<SaftTransactions> ReadTransactionsAsync(Stream content, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(content);
 
@@ -169,6 +169,9 @@ public sealed class SaftEntriesReader : ISaftEntriesReader
         };
 
         var transactions = new List<SaftTransaction>();
+        int? declaredEntryCount = null;
+        decimal? totalDebit = null;
+        decimal? totalCredit = null;
         var currentJournalCode = string.Empty;
         var currentJournalDescription = string.Empty;
         var journalDescriptionPending = false;
@@ -201,6 +204,18 @@ public sealed class SaftEntriesReader : ISaftEntriesReader
                 {
                     case "GeneralLedgerEntries":
                         inEntries = true;
+                        break;
+                    case "NumberOfEntries" when inEntries:
+                        declaredEntryCount = ParseInt(await reader.ReadElementContentAsStringAsync().ConfigureAwait(false));
+                        consumed = true;
+                        break;
+                    case "TotalDebit" when inEntries:
+                        totalDebit = ParseDecimal(await reader.ReadElementContentAsStringAsync().ConfigureAwait(false));
+                        consumed = true;
+                        break;
+                    case "TotalCredit" when inEntries:
+                        totalCredit = ParseDecimal(await reader.ReadElementContentAsStringAsync().ConfigureAwait(false));
+                        consumed = true;
                         break;
                     case "Journal" when inEntries:
                         currentJournalCode = string.Empty;
@@ -240,7 +255,7 @@ public sealed class SaftEntriesReader : ISaftEntriesReader
             throw new SaftFileFormatException($"O ficheiro não é um XML SAF-T legível: {exception.Message}");
         }
 
-        return transactions;
+        return new SaftTransactions(declaredEntryCount, totalDebit, totalCredit, transactions);
     }
 
     private static SaftTransaction BuildTransaction(XElement transaction, string journalCode, string journalDescription)
