@@ -123,6 +123,23 @@ describe('App', () => {
     expect(within(screen.getByRole('link', { name: 'GERAL 2026 00001' }).closest('tr') as HTMLElement).getByText('Anulado')).toBeInTheDocument()
   })
 
+  it('duplicates a movement into a prefilled new entry', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    const comprasRow = screen.getByRole('link', { name: 'COMP 2026 00842' }).closest('tr') as HTMLElement
+    fireEvent.click(within(comprasRow).getByRole('button', { name: 'Duplicar' }))
+
+    expect(screen.getByRole('heading', { name: 'Novo lançamento a partir de COMP 2026 00842' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Descrição' })).toHaveValue('Aquisição de material de escritório')
+    expect(screen.getByRole('combobox', { name: 'Conta da linha 1' })).toHaveValue('6221')
+    expect(screen.getByRole('combobox', { name: 'Conta da linha 3' })).toHaveValue('2211001')
+    expect(screen.getByRole('textbox', { name: 'Documento' })).toHaveValue('')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Registar lançamento' }))
+    expect(screen.getByRole('link', { name: 'COMPRAS 2026 00001' })).toBeInTheDocument()
+  })
+
   it('advances fields with Enter and adds a line from the last field', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)

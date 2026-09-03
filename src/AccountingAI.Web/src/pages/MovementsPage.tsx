@@ -7,9 +7,11 @@ import { useWorkContext, type MovementLineInput } from '../app/WorkContext'
 const today = () => new Date().toISOString().slice(0, 10)
 const emptyLine = (): MovementLineInput => ({ accountCode: '', description: '', debit: 0, credit: 0 })
 
-function MovementEditor({ movement, onClose }: { movement: Movement | null; onClose: () => void }) {
+function MovementEditor({ movement, duplicate = false, onClose }: { movement: Movement | null; duplicate?: boolean; onClose: () => void }) {
   const { accountingSetup, activeCompany, createMovement, reviseMovement, source, user } = useWorkContext()
-  const isEdit = movement !== null
+  const isEdit = movement !== null && !duplicate
+  // Em duplicação, o movimento de origem semeia os campos mas o lançamento é novo.
+  const template = duplicate ? movement : null
   const [closedYears, setClosedYears] = useState<number[]>([])
   const [postingLockDate, setPostingLockDate] = useState<string | null>(null)
 
@@ -29,13 +31,13 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
   const journals = accountingSetup.journals.filter((item) => item.isActive || item.code === movement?.journalId)
   const postingAccounts = accountingSetup.accounts.filter((item) => item.allowsPosting && item.isActive)
   const documentTypes = accountingSetup.documentTypes.filter((item) => item.isActive)
-  const [documentTypeCode, setDocumentTypeCode] = useState('')
+  const [documentTypeCode, setDocumentTypeCode] = useState(template?.documentType ?? '')
   const [journalCode, setJournalCode] = useState(movement?.journalId ?? journals[0]?.code ?? '')
-  const [entryDate, setEntryDate] = useState(movement?.date ?? today())
-  const [documentReference, setDocumentReference] = useState(movement?.document ?? '')
+  const [entryDate, setEntryDate] = useState(isEdit && movement ? movement.date : today())
+  const [documentReference, setDocumentReference] = useState(isEdit && movement ? movement.document : '')
   const [description, setDescription] = useState(movement?.description ?? '')
   const [notes, setNotes] = useState(movement?.notes ?? '')
-  const [reviewed, setReviewed] = useState(movement?.status === 'Conferido')
+  const [reviewed, setReviewed] = useState(isEdit && movement?.status === 'Conferido')
   const [lines, setLines] = useState<MovementLineInput[]>(
     movement ? movement.lines.map((line) => ({ accountCode: line.account, description: line.description, debit: line.debit, credit: line.credit })) : [emptyLine(), emptyLine()],
   )
@@ -119,7 +121,7 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
   }
 
   return <section className="panel settings-panel">
-    <div className="panel-heading"><div><h2>{isEdit ? `Corrigir ${movement.id.replaceAll('-', ' ')}` : 'Novo lançamento'}</h2><p>Débito igual a crédito, pelo menos duas linhas. Enter avança para o campo seguinte; no último campo da última linha, cria uma linha nova. {isEdit ? 'Só um lançamento por conferir pode ser corrigido.' : 'A referência é gerada pelo diário e exercício.'}</p></div><button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button></div>
+    <div className="panel-heading"><div><h2>{isEdit ? `Corrigir ${movement.id.replaceAll('-', ' ')}` : (duplicate ? `Novo lançamento a partir de ${movement!.id.replaceAll('-', ' ')}` : 'Novo lançamento')}</h2><p>Débito igual a crédito, pelo menos duas linhas. Enter avança para o campo seguinte; no último campo da última linha, cria uma linha nova. {isEdit ? 'Só um lançamento por conferir pode ser corrigido.' : 'A referência é gerada pelo diário e exercício.'}</p></div><button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button></div>
     <form onSubmit={submit} onKeyDown={handleFormKeyDown}>
       <datalist id="posting-accounts">{postingAccounts.map((account) => <option key={account.code} value={account.code}>{account.name}</option>)}</datalist>
       <div className="settings-grid">
@@ -157,7 +159,7 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
 
 export function MovementsPage() {
   const { accountingLoading, accountingSetup, accountingSource, activeCompany, movements, reviewMovement, source, user, voidMovement } = useWorkContext()
-  const [editing, setEditing] = useState<Movement | null | undefined>(undefined)
+  const [editing, setEditing] = useState<{ movement: Movement | null; duplicate: boolean } | undefined>(undefined)
   const [busy, setBusy] = useState('')
   const [search, setSearch] = useState('')
   const [journalFilter, setJournalFilter] = useState('')
@@ -206,9 +208,9 @@ export function MovementsPage() {
       <label><span className="sr-only">Diário</span><select value={journalFilter} onChange={(event) => setJournalFilter(event.target.value)}><option value="">Todos os diários</option>{accountingSetup.journals.map((journal) => <option key={journal.code} value={journal.code}>{journal.code} · {journal.name}</option>)}</select></label>
       <label><span className="sr-only">Estado</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="">Todos os estados</option><option value="Por conferir">Por conferir</option><option value="Conferido">Conferido</option><option value="Anulado">Anulado</option></select></label>
       <span className="catalog-count">{visible.length} de {movements.length}</span>
-      <button className="button button-primary" type="button" onClick={() => setEditing(null)}><Plus size={16} /> Novo lançamento</button>
+      <button className="button button-primary" type="button" onClick={() => setEditing({ movement: null, duplicate: false })}><Plus size={16} /> Novo lançamento</button>
     </div>
-    {editing !== undefined && <MovementEditor movement={editing} onClose={() => setEditing(undefined)} />}
+    {editing !== undefined && <MovementEditor movement={editing.movement} duplicate={editing.duplicate} onClose={() => setEditing(undefined)} />}
     <section className="panel"><div className="table-wrap"><table><thead><tr><th>Movimento</th><th>Descrição</th><th>Diário</th><th>Estado</th><th className="numeric">Valor</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{visible.map((movement) => <tr key={movement.id}>
       <td><Link className="primary-cell" to={`/movimentos/${movement.id}`}>{movement.id.replaceAll('-', ' ')}</Link><small>{formatMovementDate(movement.date)}</small></td>
       <td>{movement.description}{movement.notes ? <span className="note-flag" title={movement.notes}><StickyNote size={13} /> nota</span> : null}<small>{movement.documentType ? `${movement.documentType} · ` : ''}{movement.document}</small></td>
@@ -219,9 +221,10 @@ export function MovementsPage() {
         {(() => {
           const blocked = blockedReason(movement)
           return <>
-            {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => setEditing(movement)}>Corrigir</button>}
+            {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => setEditing({ movement, duplicate: false })}>Corrigir</button>}
             {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => reviewMovement(movement.id))}>Conferir</button>}
             {movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => act(movement.id, () => voidMovement(movement.id))}>Anular</button>}
+            {movement.documentType !== 'AP' && movement.documentType !== 'AB' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => setEditing({ movement, duplicate: true })}>Duplicar</button>}
             {blocked !== null && movement.status !== 'Anulado' && <small className="row-actions-note">{blocked}</small>}
           </>
         })()}
