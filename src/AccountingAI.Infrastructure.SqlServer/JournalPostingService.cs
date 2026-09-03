@@ -131,15 +131,16 @@ public sealed class JournalPostingService(AccountingDbContext context)
     }
 
     public Task<PostedMovement> MarkReviewedAsync(Guid companyId, string reference, CancellationToken cancellationToken = default) =>
-        TransitionAsync(companyId, reference, entry => entry.MarkReviewed(), cancellationToken);
+        TransitionAsync(companyId, reference, entry => entry.MarkReviewed(), enforceOpenYear: false, cancellationToken);
 
     public Task<PostedMovement> VoidAsync(Guid companyId, string reference, CancellationToken cancellationToken = default) =>
-        TransitionAsync(companyId, reference, entry => entry.Void(), cancellationToken);
+        TransitionAsync(companyId, reference, entry => entry.Void(), enforceOpenYear: true, cancellationToken);
 
     private async Task<PostedMovement> TransitionAsync(
         Guid companyId,
         string reference,
         Action<JournalEntry> transition,
+        bool enforceOpenYear,
         CancellationToken cancellationToken)
     {
         var normalizedReference = Normalize(reference);
@@ -158,6 +159,11 @@ public sealed class JournalPostingService(AccountingDbContext context)
                     cancellationToken)
                 .ConfigureAwait(false)
                 ?? throw new InvalidOperationException("O lançamento não existe.");
+
+            if (enforceOpenYear)
+            {
+                await EnsureYearIsOpenAsync(companyId, entry.EntryDate.Year, entry.DocumentType?.Code, cancellationToken).ConfigureAwait(false);
+            }
 
             transition(entry);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

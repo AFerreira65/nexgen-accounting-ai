@@ -822,7 +822,7 @@ public sealed class SqlServerMigrationTests
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                     await closing.RegisterAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false));
 
-                // Exercício apurado: não se lançam movimentos com data de 2026.
+                // Exercício apurado: não se lançam, corrigem nem anulam movimentos de 2026.
                 var blockedPosting = closingScope.ServiceProvider.GetRequiredService<JournalPostingService>();
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                     await blockedPosting.PostAsync(
@@ -832,6 +832,8 @@ public sealed class SqlServerMigrationTests
                             new JournalEntryLineInput("6221", "D", 5m, 0m),
                             new JournalEntryLineInput("2211001", "C", 0m, 5m)
                         ]).ConfigureAwait(false));
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await blockedPosting.VoidAsync(DevelopmentDataSeeder.DemoCompanyId, "COMP-2026-00842").ConfigureAwait(false));
             }
 
             await using (var openingScope = services.CreateAsyncScope())
