@@ -135,6 +135,11 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       })
       .then((context) => {
         if (context.companies.length === 0) return
+        // Uma empresa sem preferências gravadas vem sem `settings`: garante o objeto.
+        context.companies = context.companies.map((company) => ({
+          ...company,
+          settings: company.settings ?? { culture: 'pt-PT', timeZone: 'Europe/Lisbon', defaultFiscalYear: null, theme: 'System', compactMode: false, pageSize: 50, textSize: 'Normal' },
+        }))
         setData(context)
         setSource('database')
         setActiveCompanyId((current) => context.companies.some((company) => company.companyId === current) ? current : context.companies[0].companyId)

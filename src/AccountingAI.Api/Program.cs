@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-51",
+    phase = "F1-52",
     status = "ready"
 }));
 
@@ -164,7 +164,7 @@ if (app.Environment.IsDevelopment())
                     AccountingStandard = item.Company.AccountingStandard.ToString(),
                     item.Company.AccountingSetupVersion,
                     Role = item.Role.ToString(),
-                    Settings = ToSettingsResponse(item.Settings)
+                    Settings = ToSettingsResponse(item.Settings) ?? DefaultSettingsResponse()
                 })
         });
     });
@@ -1656,6 +1656,20 @@ public partial class Program
             TextSize = settings.TextSize.ToString(),
             settings.UpdatedAtUtc
         };
+
+    // Preferências por omissão para uma empresa a que o utilizador está associado
+    // mas ainda não personalizou — evita um objeto nulo no contexto de trabalho.
+    private static object DefaultSettingsResponse() => new
+    {
+        Culture = "pt-PT",
+        TimeZone = "Europe/Lisbon",
+        DefaultFiscalYear = (int?)null,
+        Theme = InterfaceTheme.System.ToString(),
+        CompactMode = false,
+        PageSize = 50,
+        TextSize = InterfaceTextSize.Normal.ToString(),
+        UpdatedAtUtc = (DateTimeOffset?)null
+    };
 }
 
 public sealed record UpdateUserCompanySettingsRequest(
