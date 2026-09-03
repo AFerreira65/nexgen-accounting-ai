@@ -752,6 +752,9 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual(0m, accountLedger.OpeningBalance);
                 Assert.AreEqual(1245m, accountLedger.Balance);
                 Assert.IsFalse(accountLedger.Entries.Any(entry => entry.Reference == "GERAL-2026-00001"));
+                Assert.AreEqual(
+                    "Corrigido após revisão",
+                    accountLedger.Entries.Single(entry => entry.Reference == "GERAL-2026-00002").Notes);
                 Assert.IsNull(await ledger
                     .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "NAO-EXISTE")
                     .ConfigureAwait(false));

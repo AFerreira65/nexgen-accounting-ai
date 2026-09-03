@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-38");
+        StringAssert.Contains(payload, "F1-39");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -277,6 +277,7 @@ public sealed class FoundationApiTests
         StringAssert.Contains(ledgerPayload, "\"accountCode\":\"6221\"");
         StringAssert.Contains(ledgerPayload, "\"openingBalance\"");
         StringAssert.Contains(ledgerPayload, "\"runningBalance\"");
+        StringAssert.Contains(ledgerPayload, "\"notes\"");
         Assert.AreEqual(HttpStatusCode.NotFound, unknownAccount.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unknownCompany.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, journalReport.StatusCode);

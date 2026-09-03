@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, Database, Download, Landmark } from 'lucide-react'
+import { ArrowLeft, BookOpen, Database, Download, Landmark, StickyNote } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
@@ -6,7 +6,7 @@ import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
 type LedgerEntry = {
-  reference: string; entryDate: string; journalCode: string; description: string
+  reference: string; entryDate: string; journalCode: string; description: string; notes?: string | null
   debit: number; credit: number; runningBalance: number
 }
 type Ledger = {
@@ -22,7 +22,7 @@ function fromMovements(movements: Movement[], accountCode: string, accountName: 
       const line = movement.lines.find((item) => item.account === accountCode)!
       return {
         reference: movement.id, entryDate: movement.date, journalCode: movement.journalId,
-        description: line.description, debit: line.debit, credit: line.credit,
+        description: line.description, notes: movement.notes, debit: line.debit, credit: line.credit,
       }
     })
     .sort((a, b) => (a.entryDate + a.reference).localeCompare(b.entryDate + b.reference))
@@ -115,7 +115,7 @@ export function AccountPage() {
           {data.entries.map((entry) => <tr key={entry.reference}>
             <td><Link className="primary-cell" to={`/movimentos/${entry.reference}`}>{entry.reference.replaceAll('-', ' ')}</Link><small>{formatMovementDate(entry.entryDate)}</small></td>
             <td><Link className="inline-link" to={`/diarios/${entry.journalCode}`}><Landmark size={14} /> {entry.journalCode}</Link></td>
-            <td>{entry.description}</td>
+            <td>{entry.description}{entry.notes ? <span className="note-flag" title={entry.notes}><StickyNote size={13} /> nota</span> : null}</td>
             <td className="numeric">{entry.debit ? euro.format(entry.debit) : '—'}</td>
             <td className="numeric">{entry.credit ? euro.format(entry.credit) : '—'}</td>
             <td className="numeric strong">{euro.format(entry.runningBalance)}</td>

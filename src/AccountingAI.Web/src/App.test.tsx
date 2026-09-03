@@ -108,6 +108,11 @@ describe('App', () => {
 
     const row = screen.getByRole('link', { name: 'GERAL 2026 00001' }).closest('tr') as HTMLElement
     expect(within(row).getByText('Por conferir')).toBeInTheDocument()
+    expect(within(row).getByText('nota')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Pesquisar movimentos' }), { target: { value: 'rever com o cliente' } })
+    expect(screen.getByRole('link', { name: 'GERAL 2026 00001' })).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Pesquisar movimentos' }), { target: { value: '' } })
 
     fireEvent.click(screen.getByRole('link', { name: 'GERAL 2026 00001' }))
     expect(screen.getByRole('heading', { name: 'Observações' })).toBeInTheDocument()
@@ -290,7 +295,8 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: /6221 · Material de escritório/ })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Movimentos desta conta' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+    const comprasRow = screen.getByRole('link', { name: 'COMP 2026 00842' }).closest('tr') as HTMLElement
+    expect(within(comprasRow).getByText('nota')).toHaveAttribute('title', expect.stringContaining('30 dias'))
 
     fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-09-01' } })
     expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()

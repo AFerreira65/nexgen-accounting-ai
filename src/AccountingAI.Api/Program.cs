@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-38",
+    phase = "F1-39",
     status = "ready"
 }));
 
@@ -682,6 +682,7 @@ if (app.Environment.IsDevelopment())
                 entry.EntryDate,
                 entry.JournalCode,
                 entry.Description,
+                entry.Notes,
                 entry.Debit,
                 entry.Credit,
                 entry.RunningBalance

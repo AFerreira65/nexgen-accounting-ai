@@ -1,4 +1,4 @@
-import { Database, Plus, Search, Trash2, X } from 'lucide-react'
+import { Database, Plus, Search, StickyNote, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
@@ -195,7 +195,7 @@ export function MovementsPage() {
 
   const term = search.trim().toLocaleLowerCase('pt-PT')
   const visible = movements.filter((movement) =>
-    (!term || `${movement.id} ${movement.description} ${movement.document ?? ''}`.toLocaleLowerCase('pt-PT').includes(term))
+    (!term || `${movement.id} ${movement.description} ${movement.document ?? ''} ${movement.notes ?? ''}`.toLocaleLowerCase('pt-PT').includes(term))
     && (!journalFilter || movement.journalId === journalFilter)
     && (!statusFilter || movement.status === statusFilter))
 
@@ -211,7 +211,7 @@ export function MovementsPage() {
     {editing !== undefined && <MovementEditor movement={editing} onClose={() => setEditing(undefined)} />}
     <section className="panel"><div className="table-wrap"><table><thead><tr><th>Movimento</th><th>Descrição</th><th>Diário</th><th>Estado</th><th className="numeric">Valor</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{visible.map((movement) => <tr key={movement.id}>
       <td><Link className="primary-cell" to={`/movimentos/${movement.id}`}>{movement.id.replaceAll('-', ' ')}</Link><small>{formatMovementDate(movement.date)}</small></td>
-      <td>{movement.description}<small>{movement.documentType ? `${movement.documentType} · ` : ''}{movement.document}</small></td>
+      <td>{movement.description}{movement.notes ? <span className="note-flag" title={movement.notes}><StickyNote size={13} /> nota</span> : null}<small>{movement.documentType ? `${movement.documentType} · ` : ''}{movement.document}</small></td>
       <td><Link className="inline-link" to={`/diarios/${movement.journalId}`}>{movement.journalId}</Link></td>
       <td><span className={`badge ${movement.status === 'Conferido' ? 'success' : movement.status === 'Anulado' ? 'neutral' : 'warning'}`}>{movement.status}</span></td>
       <td className="numeric strong">{euro.format(movement.amount)}</td>

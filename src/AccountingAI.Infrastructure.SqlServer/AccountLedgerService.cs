@@ -23,6 +23,7 @@ public sealed record AccountLedgerEntry(
     DateOnly EntryDate,
     string JournalCode,
     string Description,
+    string? Notes,
     decimal Debit,
     decimal Credit,
     decimal RunningBalance);
@@ -176,6 +177,7 @@ public sealed class AccountLedgerService(AccountingDbContext context)
                 line.JournalEntry.EntryDate,
                 JournalCode = line.JournalEntry.Journal.Code,
                 line.Description,
+                line.JournalEntry.Notes,
                 line.Debit,
                 line.Credit
             })
@@ -188,7 +190,7 @@ public sealed class AccountLedgerService(AccountingDbContext context)
         {
             running += line.Debit - line.Credit;
             entries.Add(new AccountLedgerEntry(
-                line.Reference, line.EntryDate, line.JournalCode, line.Description, line.Debit, line.Credit, running));
+                line.Reference, line.EntryDate, line.JournalCode, line.Description, line.Notes, line.Debit, line.Credit, running));
         }
 
         return new AccountLedger(account.Code, account.Name, openingBalance, running, entries);

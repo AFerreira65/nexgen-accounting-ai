@@ -149,6 +149,7 @@ export const movements: Movement[] = [
     journalName: 'Diário de Compras',
     document: 'FT 2026/418 · Norte Office, Lda.',
     description: 'Aquisição de material de escritório',
+    notes: 'Confirmar condições de pagamento a 30 dias com o fornecedor.',
     status: 'Conferido',
     amount: 1476,
     lines: [
