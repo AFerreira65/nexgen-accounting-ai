@@ -10,6 +10,8 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Bom dia, António' })).toBeInTheDocument()
+    expect(screen.getByText('Resultado')).toBeInTheDocument()
+    expect(screen.getByText('Total do ativo')).toBeInTheDocument()
 
     fireEvent.click(screen.getAllByRole('link', { name: /COMP 2026 00842/i })[0])
     expect(screen.getByRole('heading', { name: 'COMP 2026 00842' })).toBeInTheDocument()
