@@ -572,6 +572,22 @@ public sealed class SqlServerMigrationTests
                     new SaftTransactions(5, 150m, 150m, importTransactions));
                 var entriesImport = new SaftEntriesImportService(importReader, importContext);
 
+                // Análise (sem escrever): prevê 2 importados, 3 saltados, o diário CX a
+                // criar, e que os totais previstos (0 + 150) baterão certo com os declarados.
+                var dryRun = await entriesImport
+                    .AnalyzeAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.IsNotNull(dryRun);
+                Assert.AreEqual(2, dryRun!.WouldImportCount);
+                Assert.AreEqual(3, dryRun.WouldSkipCount);
+                CollectionAssert.AreEquivalent(new[] { "CX" }, dryRun.JournalsToCreate.ToArray());
+                Assert.IsTrue(dryRun.Skipped.Any(item => item.TransactionId == "T 3" && item.Reason.Contains("não coincidem")));
+                Assert.AreEqual(150m, dryRun.ProjectedPeriodDebit);
+                Assert.AreEqual(true, dryRun.WouldMatchDeclaredTotals);
+                Assert.IsNull(await entriesImport
+                    .AnalyzeAsync(Guid.NewGuid(), created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false));
+
                 var importResult = await entriesImport
                     .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
                     .ConfigureAwait(false);
@@ -591,6 +607,17 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual(150m, importResult.CompanyPeriodCredit);
                 Assert.AreEqual(5, importResult.DeclaredEntryCount);
                 Assert.AreEqual(true, importResult.MatchesDeclaredTotals);
+
+                // Analisar depois de importar: nada entraria (T 1/T 2 já existem), mas
+                // a reconciliação prevista continua a bater certo.
+                var dryRunAfter = await entriesImport
+                    .AnalyzeAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(0, dryRunAfter!.WouldImportCount);
+                Assert.AreEqual(5, dryRunAfter.WouldSkipCount);
+                Assert.AreEqual(0, dryRunAfter.JournalsToCreate.Count);
+                Assert.AreEqual(150m, dryRunAfter.ProjectedPeriodDebit);
+                Assert.AreEqual(true, dryRunAfter.WouldMatchDeclaredTotals);
 
                 // Reimportar não duplica: T 1 e T 2 passam a "já existe".
                 var reimportResult = await entriesImport

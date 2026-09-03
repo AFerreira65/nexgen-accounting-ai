@@ -377,6 +377,21 @@ export type SaftEntriesPreview = {
   journals: { code: string; description: string; transactionCount: number; exists: boolean }[]
 }
 
+export type SaftEntriesAnalysis = {
+  wouldImportCount: number
+  wouldSkipCount: number
+  journalsToCreate: string[]
+  skipped: { transactionId: string; reason: string }[]
+  declaredEntryCount: number | null
+  declaredTotalDebit: number | null
+  declaredTotalCredit: number | null
+  filePeriodFrom: string | null
+  filePeriodTo: string | null
+  projectedPeriodDebit: number
+  projectedPeriodCredit: number
+  wouldMatchDeclaredTotals: boolean | null
+}
+
 export type SaftEntriesImport = {
   importedCount: number
   skippedCount: number

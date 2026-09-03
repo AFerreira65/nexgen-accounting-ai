@@ -71,6 +71,38 @@ public sealed record SaftTransactions(
     IReadOnlyList<SaftTransaction> Items);
 
 /// <summary>
+/// Análise (sem escrever) do que aconteceria ao importar os movimentos de um SAF-T
+/// para uma empresa: quantos lançamentos entrariam, quantos seriam saltados (com a
+/// razão), que diários seriam criados, e a reconciliação prevista — a soma atual da
+/// empresa no período do ficheiro mais os débitos e créditos que entrariam, face
+/// aos totais declarados.
+/// </summary>
+public sealed record SaftEntriesAnalysis(
+    int WouldImportCount,
+    int WouldSkipCount,
+    IReadOnlyList<string> JournalsToCreate,
+    IReadOnlyList<SaftEntrySkipped> Skipped,
+    int? DeclaredEntryCount,
+    decimal? DeclaredTotalDebit,
+    decimal? DeclaredTotalCredit,
+    DateOnly? FilePeriodFrom,
+    DateOnly? FilePeriodTo,
+    decimal ProjectedPeriodDebit,
+    decimal ProjectedPeriodCredit)
+{
+    /// <summary>
+    /// `true` quando o ficheiro declara totais e a soma prevista da empresa no
+    /// período (o que já lá está mais o que entraria) coincide, a 2 casas, com
+    /// esses totais; `null` quando o ficheiro não declara totais.
+    /// </summary>
+    public bool? WouldMatchDeclaredTotals =>
+        DeclaredTotalDebit is { } declaredDebit && DeclaredTotalCredit is { } declaredCredit
+            ? decimal.Round(ProjectedPeriodDebit, 2) == decimal.Round(declaredDebit, 2) &&
+              decimal.Round(ProjectedPeriodCredit, 2) == decimal.Round(declaredCredit, 2)
+            : null;
+}
+
+/// <summary>
 /// Resultado da importação dos movimentos de um SAF-T para uma empresa: quantos
 /// lançamentos entraram, quantos foram saltados (com a razão), e os diários criados;
 /// mais a reconciliação com os totais declarados no ficheiro — a soma dos débitos e

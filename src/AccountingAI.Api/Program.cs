@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-54",
+    phase = "F1-55",
     status = "ready"
 }));
 
@@ -1342,6 +1342,54 @@ if (app.Environment.IsDevelopment())
                     journal.TransactionCount,
                     journal.Exists
                 })
+            });
+        }
+        catch (SaftFileFormatException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["saft"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/entries-analyze", async (
+        Guid userId,
+        Guid companyId,
+        HttpRequest request,
+        SaftEntriesImportService import,
+        CancellationToken cancellationToken) =>
+    {
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = null;
+        }
+
+        try
+        {
+            var result = await import
+                .AnalyzeAsync(userId, companyId, request.Body, cancellationToken)
+                .ConfigureAwait(false);
+            if (result is null)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(new
+            {
+                result.WouldImportCount,
+                result.WouldSkipCount,
+                result.JournalsToCreate,
+                Skipped = result.Skipped.Select(item => new { item.TransactionId, item.Reason }),
+                result.DeclaredEntryCount,
+                result.DeclaredTotalDebit,
+                result.DeclaredTotalCredit,
+                result.FilePeriodFrom,
+                result.FilePeriodTo,
+                result.ProjectedPeriodDebit,
+                result.ProjectedPeriodCredit,
+                result.WouldMatchDeclaredTotals
             });
         }
         catch (SaftFileFormatException exception)

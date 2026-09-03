@@ -1,7 +1,7 @@
 import { CircleAlert, CircleCheck, Database, FileUp, Info } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
-import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection } from '../app/demo-data'
+import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
 const REGIONS: { value: 'Mainland' | 'Azores' | 'Madeira'; label: string }[] = [
@@ -143,24 +143,40 @@ function AccountsPreviewPanel({ companyId, file }: { companyId: string; file: Fi
 }
 
 function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: File | null }) {
-  const { previewSaftEntries, importSaftEntries, source } = useWorkContext()
+  const { previewSaftEntries, analyzeSaftEntries, importSaftEntries, source } = useWorkContext()
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [preview, setPreview] = useState<SaftEntriesPreview | null>(null)
   const [error, setError] = useState('')
+  const [analyzeState, setAnalyzeState] = useState<'idle' | 'analyzing'>('idle')
+  const [analysis, setAnalysis] = useState<SaftEntriesAnalysis | null>(null)
   const [importState, setImportState] = useState<'idle' | 'importing' | 'done'>('idle')
   const [imported, setImported] = useState<SaftEntriesImport | null>(null)
 
-  useEffect(() => { setState('idle'); setPreview(null); setError(''); setImportState('idle'); setImported(null) }, [companyId, file])
+  useEffect(() => { setState('idle'); setPreview(null); setError(''); setAnalyzeState('idle'); setAnalysis(null); setImportState('idle'); setImported(null) }, [companyId, file])
 
   async function run() {
     if (!file) return
     setState('loading'); setError('')
     try {
       setPreview(await previewSaftEntries(companyId, file))
+      setAnalysis(null); setImported(null)
       setState('done')
     } catch (previewError) {
       setState('error')
       setError(previewError instanceof Error ? previewError.message : 'Não foi possível ler os movimentos.')
+    }
+  }
+
+  async function analyzeEntries() {
+    if (!file) return
+    setAnalyzeState('analyzing'); setError('')
+    try {
+      setAnalysis(await analyzeSaftEntries(companyId, file))
+    } catch (analyzeError) {
+      setState('error')
+      setError(analyzeError instanceof Error ? analyzeError.message : 'Não foi possível analisar os movimentos.')
+    } finally {
+      setAnalyzeState('idle')
     }
   }
 
@@ -170,6 +186,7 @@ function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: Fil
     try {
       const result = await importSaftEntries(companyId, file)
       setImported(result)
+      setAnalysis(null)
       setImportState('done')
       setPreview(await previewSaftEntries(companyId, file))
     } catch (importError) {
@@ -179,12 +196,21 @@ function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: Fil
     }
   }
 
+  const skippedRows = imported?.skipped ?? analysis?.skipped ?? []
+
   return <section className="panel">
     <div className="panel-heading"><div><h2>Movimentos do ficheiro</h2><p>Resumo do bloco <code>GeneralLedgerEntries</code> — leitura em streaming. A importação usa o <code>TransactionID</code> do ficheiro como referência, cria os diários em falta e não duplica ao reimportar.</p></div></div>
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
       <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A ler…' : 'Pré-visualizar movimentos'}</button>
-      {preview && preview.hasEntries && preview.transactionCount > 0 && source === 'database' && <button className="button button-primary" type="button" disabled={importState === 'importing'} onClick={() => void importEntries()}>{importState === 'importing' ? 'A importar…' : `Importar os ${preview.transactionCount} movimentos`}</button>}
+      {preview && preview.hasEntries && preview.transactionCount > 0 && source === 'database' && <>
+        <button className="button button-secondary" type="button" disabled={analyzeState === 'analyzing' || importState === 'importing'} onClick={() => void analyzeEntries()}>{analyzeState === 'analyzing' ? 'A analisar…' : 'Analisar importação'}</button>
+        <button className="button button-primary" type="button" disabled={importState === 'importing'} onClick={() => void importEntries()}>{importState === 'importing' ? 'A importar…' : `Importar os ${preview.transactionCount} movimentos`}</button>
+      </>}
     </div>
+    {analysis && !imported && <p className={`save-status ${analysis.wouldSkipCount > 0 ? 'warning' : 'success'}`}>{analysis.wouldSkipCount > 0 ? <CircleAlert size={15} /> : <CircleCheck size={15} />} Seriam importados {analysis.wouldImportCount} {analysis.wouldImportCount === 1 ? 'movimento' : 'movimentos'}{analysis.journalsToCreate.length > 0 ? `, ${analysis.journalsToCreate.length} ${analysis.journalsToCreate.length === 1 ? 'diário a criar' : 'diários a criar'} (${analysis.journalsToCreate.join(', ')})` : ''}{analysis.wouldSkipCount > 0 ? `, ${analysis.wouldSkipCount} ${analysis.wouldSkipCount === 1 ? 'saltado' : 'saltados'}` : ''}.</p>}
+    {analysis && !imported && analysis.wouldMatchDeclaredTotals !== null && <p className={`save-status ${analysis.wouldMatchDeclaredTotals ? 'success' : 'warning'}`}>{analysis.wouldMatchDeclaredTotals ? <CircleCheck size={15} /> : <CircleAlert size={15} />} {analysis.wouldMatchDeclaredTotals
+      ? `Depois de importar, os totais da empresa no período do ficheiro (${euro.format(analysis.projectedPeriodDebit)}) coincidiriam com os declarados no SAF-T.`
+      : `Depois de importar, os totais da empresa no período do ficheiro (débito ${euro.format(analysis.projectedPeriodDebit)}, crédito ${euro.format(analysis.projectedPeriodCredit)}) não coincidiriam com os declarados no SAF-T (débito ${euro.format(analysis.declaredTotalDebit ?? 0)}, crédito ${euro.format(analysis.declaredTotalCredit ?? 0)}).`}</p>}
     {imported && <p className={`save-status ${imported.skippedCount > 0 ? 'warning' : 'success'}`}>{imported.skippedCount > 0 ? <CircleAlert size={15} /> : <CircleCheck size={15} />} {imported.importedCount} {imported.importedCount === 1 ? 'movimento importado' : 'movimentos importados'}{imported.journalsCreated.length > 0 ? `, ${imported.journalsCreated.length} ${imported.journalsCreated.length === 1 ? 'diário criado' : 'diários criados'} (${imported.journalsCreated.join(', ')})` : ''}{imported.skippedCount > 0 ? `, ${imported.skippedCount} ${imported.skippedCount === 1 ? 'saltado' : 'saltados'}` : ''}.</p>}
     {imported && imported.matchesDeclaredTotals !== null && <p className={`save-status ${imported.matchesDeclaredTotals ? 'success' : 'warning'}`}>{imported.matchesDeclaredTotals ? <CircleCheck size={15} /> : <CircleAlert size={15} />} {imported.matchesDeclaredTotals
       ? `Os totais da empresa no período do ficheiro (${euro.format(imported.companyPeriodDebit)}) coincidem com os declarados no SAF-T.`
@@ -207,8 +233,8 @@ function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: Fil
               <td><span className={`badge ${journal.exists ? 'success' : 'warning'}`}>{journal.exists ? 'Já existe' : 'Novo'}</span></td>
             </tr>)}
           </tbody></table></div>
-          {imported && imported.skipped.length > 0 && <div className="table-wrap"><table><thead><tr><th>Transação saltada</th><th>Motivo</th></tr></thead><tbody>
-            {imported.skipped.map((entry) => <tr key={entry.transactionId}>
+          {skippedRows.length > 0 && <div className="table-wrap"><table><thead><tr><th>{imported ? 'Transação saltada' : 'Transação que seria saltada'}</th><th>Motivo</th></tr></thead><tbody>
+            {skippedRows.map((entry) => <tr key={entry.transactionId}>
               <td className="primary-cell">{entry.transactionId}</td>
               <td>{entry.reason}</td>
             </tr>)}
