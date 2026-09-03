@@ -123,8 +123,9 @@ tr.subtotal-row td { border-top: 1px solid #d5dfe1; background: #fbfdfd; color: 
 .badge.warning { color: #9a5a17; background: #fff0da; }
 .badge.neutral { color: #5a6b72; background: #eef1f2; }
 .row-action { color: #087970; font-size: 10px; font-weight: 750; }
-.row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .row-actions .button { min-height: 30px; padding: 0 10px; font-size: 10px; }
+.row-actions-note { color: #b4690e; font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.04em; }
 
 .attention-panel { display: grid; }
 .attention-count { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 8px; color: #986018; background: #fff0dc; font-size: 10px; font-weight: 800; }

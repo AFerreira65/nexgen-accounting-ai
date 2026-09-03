@@ -152,12 +152,37 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
 }
 
 export function MovementsPage() {
-  const { accountingLoading, accountingSetup, accountingSource, movements, reviewMovement, voidMovement } = useWorkContext()
+  const { accountingLoading, accountingSetup, accountingSource, activeCompany, movements, reviewMovement, source, user, voidMovement } = useWorkContext()
   const [editing, setEditing] = useState<Movement | null | undefined>(undefined)
   const [busy, setBusy] = useState('')
   const [search, setSearch] = useState('')
   const [journalFilter, setJournalFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [closedYears, setClosedYears] = useState<number[]>([])
+  const [postingLockDate, setPostingLockDate] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (source !== 'database') { setClosedYears([]); setPostingLockDate(null); return }
+    const controller = new AbortController()
+    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/closed-years`, { signal: controller.signal })
+      .then(async (response) => (response.ok ? (await response.json()) as number[] : []))
+      .then(setClosedYears)
+      .catch(() => { /* aviso opcional */ })
+    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/posting-lock-date`, { signal: controller.signal })
+      .then(async (response) => (response.ok ? (await response.json()) as { lockDate: string | null } : { lockDate: null }))
+      .then((payload) => setPostingLockDate(payload.lockDate))
+      .catch(() => { /* aviso opcional */ })
+    return () => controller.abort()
+  }, [activeCompany.companyId, source, user.id])
+
+  // Motivo pelo qual um movimento com esta data não pode ser corrigido nem anulado.
+  // Os lançamentos de sistema (apuramento e abertura) ficam isentos, tal como na API.
+  function blockedReason(movement: Movement): string | null {
+    if (movement.documentType === 'AP' || movement.documentType === 'AB') return null
+    if (closedYears.includes(Number(movement.date.slice(0, 4)))) return 'Exercício apurado'
+    if (postingLockDate !== null && movement.date <= postingLockDate) return 'Período bloqueado'
+    return null
+  }
 
   async function act(reference: string, action: () => Promise<void>) {
     setBusy(reference)
@@ -187,9 +212,15 @@ export function MovementsPage() {
       <td><span className={`badge ${movement.status === 'Conferido' ? 'success' : movement.status === 'Anulado' ? 'neutral' : 'warning'}`}>{movement.status}</span></td>
       <td className="numeric strong">{euro.format(movement.amount)}</td>
       <td><div className="row-actions">
-        {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => setEditing(movement)}>Corrigir</button>}
-        {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => reviewMovement(movement.id))}>Conferir</button>}
-        {movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => voidMovement(movement.id))}>Anular</button>}
+        {(() => {
+          const blocked = blockedReason(movement)
+          return <>
+            {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => setEditing(movement)}>Corrigir</button>}
+            {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => reviewMovement(movement.id))}>Conferir</button>}
+            {movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => act(movement.id, () => voidMovement(movement.id))}>Anular</button>}
+            {blocked !== null && movement.status !== 'Anulado' && <small className="row-actions-note">{blocked}</small>}
+          </>
+        })()}
       </div></td>
     </tr>)}</tbody></table></div>{accountingLoading && <p className="empty-state">A carregar movimentos da base de dados…</p>}{!accountingLoading && movements.length === 0 && <p className="empty-state">Esta empresa ainda não tem movimentos.</p>}{!accountingLoading && movements.length > 0 && visible.length === 0 && <p className="empty-state">Nenhum movimento corresponde aos filtros.</p>}</section>
   </div>
