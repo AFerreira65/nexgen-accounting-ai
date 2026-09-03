@@ -1,15 +1,8 @@
 import { CircleAlert, CircleCheck, Database, FileUp, Info } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
 import type { SaftCompanyCreation, SaftInspection } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
-
-const STANDARD_NAMES: Record<string, string> = {
-  SncGeneral: 'SNC — Regime geral',
-  SncSmallEntities: 'SNC — Pequenas entidades',
-  SncMicroEntities: 'SNC — Microentidades',
-  SncNonProfit: 'SNC — Entidades do setor não lucrativo',
-  IfrsEu: 'Normas internacionais adotadas pela UE',
-}
 
 const REGIONS: { value: 'Mainland' | 'Azores' | 'Madeira'; label: string }[] = [
   { value: 'Mainland', label: 'Continente' },
@@ -56,7 +49,7 @@ function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
 
   if (created) {
     return <section className="panel">
-      <div className="panel-heading"><div><h2>Empresa criada</h2><p>{created.legalName} · {STANDARD_NAMES[created.accountingStandard] ?? created.accountingStandard}</p></div><span className="success"><CircleCheck /></span></div>
+      <div className="panel-heading"><div><h2>Empresa criada</h2><p>{created.legalName} · {accountingStandardName(created.accountingStandard)}</p></div><span className="success"><CircleCheck /></span></div>
       <div className="settings-grid">
         <div className="metadata-strip"><small>NIF</small><strong>{created.taxRegistrationNumber}</strong></div>
         <div className="metadata-strip"><small>Versão do plano base</small><strong>{created.accountingSetupVersion ?? '—'}</strong></div>
@@ -73,7 +66,7 @@ function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
     <form className="settings-grid" onSubmit={submit}>
       <label><span>Designação</span><input value={legalName} onChange={(event) => setLegalName(event.target.value)} /></label>
       <label><span>Região fiscal</span><select value={taxRegion} onChange={(event) => setTaxRegion(event.target.value as typeof taxRegion)}>{REGIONS.map((region) => <option key={region.value} value={region.value}>{region.label}</option>)}</select></label>
-      <label><span>Norma contabilística</span><select value={accountingStandard} onChange={(event) => setAccountingStandard(event.target.value)}>{Object.entries(STANDARD_NAMES).map(([value, name]) => <option key={value} value={value}>{name}</option>)}</select></label>
+      <label><span>Norma contabilística</span><select value={accountingStandard} onChange={(event) => setAccountingStandard(event.target.value)}>{Object.entries(ACCOUNTING_STANDARD_NAMES).map(([value, name]) => <option key={value} value={value}>{name}</option>)}</select></label>
       <label><span>Moeda base</span><input value={baseCurrency} onChange={(event) => setBaseCurrency(event.target.value)} maxLength={3} /></label>
       <footer className="settings-actions">
         {source !== 'database' && <span className="save-status">A criação requer ligação ao SQL Server.</span>}
@@ -140,7 +133,7 @@ export function SaftImportPage() {
       {result.match.outcome === 'ExistingCompany'
         ? <section className="panel">
             <div className="panel-heading"><div><h2>Correspondência de empresa</h2><p>Pesquisa pelo NIF do ficheiro entre as empresas a que tem acesso.</p></div><span className="success"><CircleCheck /></span></div>
-            <p>Empresa encontrada: <strong>{result.match.legalName}</strong>{result.match.accountingStandard ? ` · ${STANDARD_NAMES[result.match.accountingStandard] ?? result.match.accountingStandard}` : ''}{result.match.accountingSetupVersion ? ` · ${result.match.accountingSetupVersion}` : ''}.</p>
+            <p>Empresa encontrada: <strong>{result.match.legalName}</strong>{result.match.accountingStandard ? ` · ${accountingStandardName(result.match.accountingStandard)}` : ''}{result.match.accountingSetupVersion ? ` · ${result.match.accountingSetupVersion}` : ''}.</p>
             <p className="save-status"><Info size={15} /> Os próximos passos — confirmar norma e referencial, pré-visualizar e importar os movimentos — ainda não estão disponíveis.</p>
           </section>
         : <CompanyProposal inspection={result} />}

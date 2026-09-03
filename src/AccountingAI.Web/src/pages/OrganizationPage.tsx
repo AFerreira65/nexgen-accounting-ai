@@ -1,5 +1,6 @@
 import { Building2, Database, Plus, Users, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { ACCOUNTING_STANDARDS, accountingStandardName } from '../app/accountingStandards'
 import { useWorkContext } from '../app/WorkContext'
 
 type OrgUser = { userId: string; displayName: string; email: string; role: string; isActive: boolean }
@@ -7,7 +8,6 @@ type OrgCompany = { id: string; legalName: string; taxRegistrationNumber: string
 type OrgFirm = { id: string; name: string; slug: string; companies: OrgCompany[] }
 
 const REGION_LABELS: Record<string, string> = { Mainland: 'Continente', Azores: 'Açores', Madeira: 'Madeira' }
-const STANDARDS = ['SncGeneral', 'SncSmallEntities', 'SncMicroEntities', 'SncNonProfit', 'IfrsEu'] as const
 
 async function problem(response: Response) {
   try {
@@ -136,7 +136,7 @@ function CompanyEditor({ company, firmId, onDone, onCancel }: { company: OrgComp
     </label>
     {isCreate ? <label><span>Norma contabilística</span>
       <select value={accountingStandard} onChange={(event) => setAccountingStandard(event.target.value)}>
-        {STANDARDS.map((standard) => <option key={standard} value={standard}>{standard}</option>)}
+        {ACCOUNTING_STANDARDS.map((standard) => <option key={standard} value={standard}>{accountingStandardName(standard)}</option>)}
       </select>
     </label> : null}
     <label><span>Moeda base</span><input value={baseCurrency} maxLength={3} onChange={(event) => setBaseCurrency(event.target.value)} /></label>
