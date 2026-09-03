@@ -11,6 +11,7 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
   const { accountingSetup, activeCompany, createMovement, reviseMovement, source, user } = useWorkContext()
   const isEdit = movement !== null
   const [closedYears, setClosedYears] = useState<number[]>([])
+  const [postingLockDate, setPostingLockDate] = useState<string | null>(null)
 
   useEffect(() => {
     if (source !== 'database') return
@@ -18,6 +19,10 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
     void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/closed-years`, { signal: controller.signal })
       .then(async (response) => (response.ok ? (await response.json()) as number[] : []))
       .then(setClosedYears)
+      .catch(() => { /* aviso opcional */ })
+    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/posting-lock-date`, { signal: controller.signal })
+      .then(async (response) => (response.ok ? (await response.json()) as { lockDate: string | null } : { lockDate: null }))
+      .then((payload) => setPostingLockDate(payload.lockDate))
       .catch(() => { /* aviso opcional */ })
     return () => controller.abort()
   }, [activeCompany.companyId, source, user.id])
@@ -80,6 +85,7 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
   const difference = Math.round((totalDebit - totalCredit) * 100) / 100
   const entryYear = Number(entryDate.slice(0, 4))
   const yearClosed = closedYears.includes(entryYear)
+  const periodLocked = postingLockDate !== null && entryDate <= postingLockDate
 
   function patchLine(index: number, patch: Partial<MovementLineInput>) {
     setLines((current) => current.map((line, position) => position === index ? { ...line, ...patch } : line))
@@ -136,9 +142,10 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
       <footer className="settings-actions">
         <span className={`save-status ${difference === 0 ? 'success' : 'error'}`}>{difference === 0 ? 'Equilibrado' : `Diferença de ${euro.format(difference)}`}</span>
         {yearClosed && <span className="save-status error">O exercício de {entryYear} está apurado. Reabra-o para lançar com esta data.</span>}
+        {periodLocked && !yearClosed && <span className="save-status error">O período até {postingLockDate} está bloqueado para lançamentos.</span>}
         {status === 'error' && <span className="save-status error">{error}</span>}
         <button className="button button-secondary" type="button" onClick={onClose}>Cancelar</button>
-        <button className="button button-primary" type="submit" disabled={status === 'saving' || difference !== 0 || yearClosed}>{status === 'saving' ? 'A guardar…' : (isEdit ? 'Guardar correção' : 'Registar lançamento')}</button>
+        <button className="button button-primary" type="submit" disabled={status === 'saving' || difference !== 0 || yearClosed || periodLocked}>{status === 'saving' ? 'A guardar…' : (isEdit ? 'Guardar correção' : 'Registar lançamento')}</button>
       </footer>
     </form>
   </section>

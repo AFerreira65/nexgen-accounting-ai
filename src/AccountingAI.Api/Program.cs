@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-35",
+    phase = "F1-36",
     status = "ready"
 }));
 
@@ -723,6 +723,25 @@ if (app.Environment.IsDevelopment())
         }
 
         return Results.Ok(await closing.ClosedYearsAsync(companyId, cancellationToken).ConfigureAwait(false));
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/posting-lock-date", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        var lockDate = await context.Companies.AsNoTracking()
+            .Where(company => company.Id == companyId)
+            .Select(company => company.PostingLockDate)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return Results.Ok(new { lockDate });
     });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/year-end-closing", async (

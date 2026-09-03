@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-35");
+        StringAssert.Contains(payload, "F1-36");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -108,6 +108,17 @@ public sealed class FoundationApiTests
             .ConfigureAwait(false);
         var closedYearsPayload = await closedYearsResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+        using var lockDateResponse = await client.GetAsync(
+            "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/accounting/posting-lock-date")
+            .ConfigureAwait(false);
+        var lockDatePayload = await lockDateResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unauthorizedLockDateResponse = await client.GetAsync(
+            "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/99999999-9999-9999-9999-999999999999/accounting/posting-lock-date")
+            .ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.OK, mainlandResponse.StatusCode);
         StringAssert.Contains(mainlandPayload, "COMP-2026-00842");
         StringAssert.Contains(mainlandPayload, "\"documentType\":null");
@@ -135,6 +146,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedSeriesResponse.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, closedYearsResponse.StatusCode);
         StringAssert.StartsWith(closedYearsPayload.Trim(), "[");
+        Assert.AreEqual(HttpStatusCode.OK, lockDateResponse.StatusCode);
+        StringAssert.Contains(lockDatePayload, "\"lockDate\"");
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedLockDateResponse.StatusCode);
     }
 
     [TestMethod]
