@@ -1,3 +1,4 @@
+using AccountingAI.Application.Saft;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
@@ -464,6 +465,42 @@ public sealed class SqlServerMigrationTests
                         TaxRegion.Azores,
                         AccountingStandard.SncSmallEntities,
                         "EUR").ConfigureAwait(false));
+
+                // Importar o plano de contas de um SAF-T: cria as novas, liga à conta-mãe
+                // pelo prefixo e respeita a regra dos códigos curtos; é idempotente.
+                await using var importScope = services.CreateAsyncScope();
+                var importContext = importScope.ServiceProvider.GetRequiredService<AccountingDbContext>();
+                var reader = new FixedAccountsReader(
+                [
+                    new SaftAccount("11", "Caixa (já existe)"),
+                    new SaftAccount("13", "Outros meios monetários"),
+                    new SaftAccount("131", "Cofre"),
+                    new SaftAccount("11", "Duplicado a ignorar")
+                ]);
+                var importService = new SaftAccountsImportService(reader, importContext);
+
+                var import = await importService
+                    .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.IsNotNull(import);
+                Assert.AreEqual(2, import!.CreatedCount);
+                Assert.AreEqual(1, import.AlreadyExistedCount);
+                var razao13 = import.Created.Single(item => item.Code == "13");
+                Assert.IsFalse(razao13.AllowsPosting); // 2 dígitos: integração
+                Assert.AreEqual("1", razao13.ParentCode);
+                var cofre = import.Created.Single(item => item.Code == "131");
+                Assert.IsTrue(cofre.AllowsPosting); // 3 dígitos: movimento
+                Assert.AreEqual("13", cofre.ParentCode);
+
+                var reimport = await importService
+                    .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(0, reimport!.CreatedCount);
+
+                var noAccess = await importService
+                    .ImportAsync(Guid.NewGuid(), created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.IsNull(noAccess);
             }
 
             await using (var adminScope = services.CreateAsyncScope())
@@ -1052,4 +1089,9 @@ public sealed class SqlServerMigrationTests
         exception.Message.Contains("Local Database Runtime", StringComparison.OrdinalIgnoreCase) ||
         exception.Message.Contains("automatic instance", StringComparison.OrdinalIgnoreCase);
 
+    private sealed class FixedAccountsReader(IReadOnlyList<SaftAccount> accounts) : ISaftAccountsReader
+    {
+        public Task<IReadOnlyList<SaftAccount>> ReadAsync(Stream content, CancellationToken cancellationToken = default) =>
+            Task.FromResult(accounts);
+    }
 }

@@ -359,6 +359,12 @@ export type SaftAccountsPreview = {
   accounts: SaftAccountStatus[]
 }
 
+export type SaftAccountsImport = {
+  createdCount: number
+  alreadyExistedCount: number
+  created: { code: string; name: string; parentCode: string | null; allowsPosting: boolean }[]
+}
+
 // Extração do plano geral de contas no cliente, usada apenas no modo de
 // demonstração. Namespace-agnóstica e a parar antes dos movimentos, como o leitor
 // do servidor.

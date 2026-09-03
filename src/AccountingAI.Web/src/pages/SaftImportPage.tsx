@@ -1,7 +1,7 @@
 import { CircleAlert, CircleCheck, Database, FileUp, Info } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
-import type { SaftAccountsPreview, SaftCompanyCreation, SaftInspection } from '../app/demo-data'
+import type { SaftAccountsImport, SaftAccountsPreview, SaftCompanyCreation, SaftInspection } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
 const REGIONS: { value: 'Mainland' | 'Azores' | 'Madeira'; label: string }[] = [
@@ -78,12 +78,14 @@ function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
 }
 
 function AccountsPreviewPanel({ companyId, file }: { companyId: string; file: File | null }) {
-  const { previewSaftAccounts } = useWorkContext()
+  const { previewSaftAccounts, importSaftAccounts, source } = useWorkContext()
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [preview, setPreview] = useState<SaftAccountsPreview | null>(null)
   const [error, setError] = useState('')
+  const [importState, setImportState] = useState<'idle' | 'importing' | 'done'>('idle')
+  const [imported, setImported] = useState<SaftAccountsImport | null>(null)
 
-  useEffect(() => { setState('idle'); setPreview(null); setError('') }, [companyId, file])
+  useEffect(() => { setState('idle'); setPreview(null); setError(''); setImportState('idle'); setImported(null) }, [companyId, file])
 
   async function run() {
     if (!file) return
@@ -97,11 +99,28 @@ function AccountsPreviewPanel({ companyId, file }: { companyId: string; file: Fi
     }
   }
 
+  async function importNew() {
+    if (!file) return
+    setImportState('importing'); setError('')
+    try {
+      const result = await importSaftAccounts(companyId, file)
+      setImported(result)
+      setImportState('done')
+      setPreview(await previewSaftAccounts(companyId, file))
+    } catch (importError) {
+      setImportState('idle')
+      setState('error')
+      setError(importError instanceof Error ? importError.message : 'Não foi possível criar as contas.')
+    }
+  }
+
   return <section className="panel">
-    <div className="panel-heading"><div><h2>Plano de contas do ficheiro</h2><p>Compara os códigos do <code>GeneralLedgerAccounts</code> com o plano da empresa. Não cria contas.</p></div></div>
+    <div className="panel-heading"><div><h2>Plano de contas do ficheiro</h2><p>Compara os códigos do <code>GeneralLedgerAccounts</code> com o plano da empresa.</p></div></div>
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
       <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A ler…' : 'Pré-visualizar plano de contas'}</button>
+      {preview && preview.newCount > 0 && source === 'database' && <button className="button button-primary" type="button" disabled={importState === 'importing'} onClick={() => void importNew()}>{importState === 'importing' ? 'A criar…' : `Criar as ${preview.newCount} contas novas`}</button>}
     </div>
+    {imported && <p className="save-status success"><CircleCheck size={15} /> {imported.createdCount} contas criadas ({imported.alreadyExistedCount} já existiam).</p>}
     {state === 'error' && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
     {preview && <>
       <div className="settings-grid">

@@ -26,3 +26,15 @@ public sealed record SaftAccountsReconciliation(
     int NewCount,
     int CompanyPostingAccountCount,
     IReadOnlyList<SaftAccountStatus> Accounts);
+
+/// <summary>Uma conta criada na empresa a partir do plano de contas de um SAF-T.</summary>
+public sealed record SaftAccountCreated(string Code, string Name, string? ParentCode, bool AllowsPosting);
+
+/// <summary>
+/// Resultado de importar o plano de contas de um SAF-T: cria as contas que ainda
+/// não existem na empresa, na ordem hierárquica, e não toca nas existentes.
+/// </summary>
+public sealed record SaftAccountsImportResult(
+    int CreatedCount,
+    int AlreadyExistedCount,
+    IReadOnlyList<SaftAccountCreated> Created);
