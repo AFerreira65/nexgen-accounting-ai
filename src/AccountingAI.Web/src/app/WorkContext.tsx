@@ -8,7 +8,7 @@ export type JournalEditInput = { name: string; isActive: boolean }
 export type NewDocumentTypeInput = { code: string; name: string; defaultJournalCode: string }
 export type DocumentTypeEditInput = { name: string; defaultJournalCode: string; isActive: boolean }
 export type MovementLineInput = { accountCode: string; description: string; debit: number; credit: number }
-export type MovementInput = { journalCode: string; entryDate: string; documentReference: string; description: string; reviewed: boolean; lines: MovementLineInput[]; documentTypeCode?: string | null }
+export type MovementInput = { journalCode: string; entryDate: string; documentReference: string; description: string; reviewed: boolean; lines: MovementLineInput[]; documentTypeCode?: string | null; notes?: string | null }
 
 export async function problemMessage(response: Response) {
   try {
@@ -443,6 +443,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         documentTypeName: documentType?.name ?? null,
         document: input.documentReference,
         description: input.description,
+        notes: input.notes?.trim() || null,
         status: input.reviewed ? 'Conferido' : 'Por conferir',
         amount: totalDebit,
         lines: input.lines.map((line) => ({ account: line.accountCode, accountName: accountName(line.accountCode), description: line.description, debit: line.debit, credit: line.credit })),
@@ -469,6 +470,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         journalName,
         document: input.documentReference,
         description: input.description,
+        notes: input.notes?.trim() || null,
         status: input.reviewed ? 'Conferido' : 'Por conferir',
         amount: totalDebit,
         lines: input.lines.map((line) => ({ account: line.accountCode, accountName: accountName(line.accountCode), description: line.description, debit: line.debit, credit: line.credit })),

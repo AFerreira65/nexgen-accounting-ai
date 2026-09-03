@@ -22,6 +22,7 @@ public sealed record PostedMovement(
     string? DocumentTypeName,
     string DocumentReference,
     string Description,
+    string? Notes,
     string Status,
     decimal Amount,
     IReadOnlyList<PostedMovementLine> Lines);
@@ -44,7 +45,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
         bool reviewed,
         IReadOnlyList<JournalEntryLineInput> lines,
         CancellationToken cancellationToken = default,
-        string? documentTypeCode = null)
+        string? documentTypeCode = null,
+        string? notes = null)
     {
         RequireLines(lines);
         PostedMovement? result = null;
@@ -58,7 +60,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             var reference = await NextReferenceAsync(companyId, prefix, entryDate.Year, cancellationToken).ConfigureAwait(false);
 
             var entry = new JournalEntry(
-                Guid.NewGuid(), companyId, journal.Id, reference, entryDate, documentReference, description, documentType?.Id);
+                Guid.NewGuid(), companyId, journal.Id, reference, entryDate, documentReference, description, documentType?.Id, notes);
             foreach (var line in lines)
             {
                 entry.AddLine(Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit);
@@ -83,7 +85,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
         bool reviewed,
         IReadOnlyList<JournalEntryLineInput> lines,
         CancellationToken cancellationToken = default,
-        string? documentTypeCode = null)
+        string? documentTypeCode = null,
+        string? notes = null)
     {
         RequireLines(lines);
         var normalizedReference = Normalize(reference);
@@ -115,7 +118,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             var entry = new JournalEntry(
-                Guid.NewGuid(), companyId, journal.Id, normalizedReference, entryDate, documentReference, description, documentType?.Id);
+                Guid.NewGuid(), companyId, journal.Id, normalizedReference, entryDate, documentReference, description, documentType?.Id, notes);
             foreach (var line in lines)
             {
                 entry.AddLine(Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit);
@@ -388,6 +391,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             type?.Name,
             entry.DocumentReference,
             entry.Description,
+            entry.Notes,
             entry.Status switch
             {
                 JournalEntryStatus.Reviewed => "Conferido",

@@ -30,6 +30,8 @@ export function MovementPage() {
       </tbody><tfoot><tr><td colSpan={2}>Totais</td><td className="numeric">{euro.format(movement.amount)}</td><td className="numeric">{euro.format(movement.amount)}</td></tr></tfoot></table></div>
     </section>
 
+    {movement.notes ? <section className="panel notes-panel"><div className="panel-heading"><div><h2>Observações</h2><p>Nota interna, não sai em documentos oficiais</p></div></div><p className="notes-body">{movement.notes}</p></section> : null}
+
     <section className="metadata-strip"><span><small>Data</small><strong>{formatMovementDate(movement.date)}</strong></span><span><small>Período</small><strong>{movement.date.slice(0, 7).replace('-', ' / ')}</strong></span><span><small>Origem</small><strong>Dados de teste locais</strong></span><span><small>Referência</small><strong>{movement.document.split(' · ')[0]}</strong></span></section>
   </div>
 }

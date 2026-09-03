@@ -15,6 +15,7 @@ export type Movement = {
   documentTypeName?: string | null
   document: string
   description: string
+  notes?: string | null
   status: 'Conferido' | 'Por conferir' | 'Anulado'
   amount: number
   lines: MovementLine[]

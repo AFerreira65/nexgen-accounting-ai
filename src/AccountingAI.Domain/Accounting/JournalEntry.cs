@@ -14,7 +14,8 @@ public sealed class JournalEntry
         DateOnly entryDate,
         string documentReference,
         string description,
-        Guid? documentTypeId = null)
+        Guid? documentTypeId = null,
+        string? notes = null)
     {
         if (id == Guid.Empty)
         {
@@ -48,8 +49,12 @@ public sealed class JournalEntry
         EntryDate = entryDate;
         DocumentReference = documentReference.Trim();
         Description = description.Trim();
+        Notes = NormalizeNotes(notes);
         Status = JournalEntryStatus.PendingReview;
     }
+
+    /// <summary>Máximo de caracteres das observações internas do lançamento.</summary>
+    public const int NotesMaxLength = 2000;
 
     public Guid Id { get; private set; }
 
@@ -66,6 +71,9 @@ public sealed class JournalEntry
     public string DocumentReference { get; private set; } = string.Empty;
 
     public string Description { get; private set; } = string.Empty;
+
+    /// <summary>Observações internas livres; `null` quando não há nota.</summary>
+    public string? Notes { get; private set; }
 
     public JournalEntryStatus Status { get; private set; }
 
@@ -162,5 +170,27 @@ public sealed class JournalEntry
     public void Void()
     {
         Status = JournalEntryStatus.Voided;
+    }
+
+    /// <summary>Define ou remove (com `null` ou texto vazio) as observações internas.</summary>
+    public void SetNotes(string? notes)
+    {
+        Notes = NormalizeNotes(notes);
+    }
+
+    private static string? NormalizeNotes(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+        {
+            return null;
+        }
+
+        var trimmed = notes.Trim();
+        if (trimmed.Length > NotesMaxLength)
+        {
+            throw new ArgumentException($"As observações não podem exceder {NotesMaxLength} caracteres.", nameof(notes));
+        }
+
+        return trimmed;
     }
 }

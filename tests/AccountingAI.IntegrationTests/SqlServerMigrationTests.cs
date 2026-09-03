@@ -78,6 +78,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260903131441_CompanyPostingLockDate");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260903134406_JournalEntryNotes");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -501,10 +504,12 @@ public sealed class SqlServerMigrationTests
                         [
                             new JournalEntryLineInput("6221", "Débito", 100m, 0m),
                             new JournalEntryLineInput("2211001", "Crédito", 0m, 100m)
-                        ])
+                        ],
+                        notes: "  Conferir contra o extrato  ")
                     .ConfigureAwait(false);
                 Assert.AreEqual("GERAL-2026-00001", movement.Reference);
                 Assert.AreEqual(100m, movement.Amount);
+                Assert.AreEqual("Conferir contra o extrato", movement.Notes);
                 Assert.HasCount(2, movement.Lines);
 
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -540,6 +545,7 @@ public sealed class SqlServerMigrationTests
                         entry.Reference == "GERAL-2026-00001")
                     .ConfigureAwait(false);
                 Assert.AreEqual(2, stored.Lines.Count);
+                Assert.AreEqual("Conferir contra o extrato", stored.Notes);
                 Assert.AreEqual(stored.Lines.Sum(line => line.Debit), stored.Lines.Sum(line => line.Credit));
 
                 var reviewedMovement = await posting
@@ -579,11 +585,13 @@ public sealed class SqlServerMigrationTests
                         [
                             new JournalEntryLineInput("6221", "D", 45m, 0m),
                             new JournalEntryLineInput("11", "C", 0m, 45m)
-                        ])
+                        ],
+                        notes: "Corrigido após revisão")
                     .ConfigureAwait(false);
                 Assert.AreEqual("CAIXA", revisedSecond.JournalCode);
                 Assert.AreEqual("Conferido", revisedSecond.Status);
                 Assert.AreEqual(45m, revisedSecond.Amount);
+                Assert.AreEqual("Corrigido após revisão", revisedSecond.Notes);
 
                 var invoice = await posting
                     .PostAsync(

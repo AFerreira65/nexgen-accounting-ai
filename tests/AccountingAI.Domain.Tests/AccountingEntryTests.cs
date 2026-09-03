@@ -233,6 +233,26 @@ public sealed class AccountingEntryTests
             new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), "OD", 2026, width: 20));
     }
 
+    [TestMethod]
+    public void EntryNotesAreTrimmedSetClearedAndLengthLimited()
+    {
+        var entry = CreateEntry();
+        Assert.IsNull(entry.Notes);
+
+        entry.SetNotes("  Reconciliar com o extrato bancário  ");
+        Assert.AreEqual("Reconciliar com o extrato bancário", entry.Notes);
+
+        entry.SetNotes("   ");
+        Assert.IsNull(entry.Notes);
+
+        Assert.ThrowsExactly<ArgumentException>(() => entry.SetNotes(new string('x', JournalEntry.NotesMaxLength + 1)));
+
+        var withNotes = new JournalEntry(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "TEST-2026-00002",
+            new DateOnly(2026, 8, 30), "Doc", "Mov", notes: "  Nota inicial  ");
+        Assert.AreEqual("Nota inicial", withNotes.Notes);
+    }
+
     private static JournalEntry CreateEntry() => new(
         Guid.NewGuid(),
         Guid.NewGuid(),

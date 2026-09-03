@@ -174,6 +174,10 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.Property<Guid>("JournalId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<string>("Reference")
                         .IsRequired()
                         .HasMaxLength(48)

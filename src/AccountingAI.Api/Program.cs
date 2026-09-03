@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-36",
+    phase = "F1-38",
     status = "ready"
 }));
 
@@ -277,6 +277,7 @@ if (app.Environment.IsDevelopment())
             DocumentTypeName = item.DocumentType == null ? null : item.DocumentType.Name,
             Document = item.DocumentReference,
             item.Description,
+            item.Notes,
             Status = item.Status switch
             {
                 JournalEntryStatus.Reviewed => "Conferido",
@@ -332,7 +333,8 @@ if (app.Environment.IsDevelopment())
                     request.Reviewed,
                     lines,
                     cancellationToken,
-                    request.DocumentTypeCode)
+                    request.DocumentTypeCode,
+                    request.Notes)
                 .ConfigureAwait(false);
 
             return Results.Ok(ToMovementResponse(movement));
@@ -368,7 +370,7 @@ if (app.Environment.IsDevelopment())
             var movement = await posting
                 .ReviseAsync(companyId, reference, request.JournalCode, request.EntryDate,
                     request.DocumentReference, request.Description, request.Reviewed, lines, cancellationToken,
-                    request.DocumentTypeCode)
+                    request.DocumentTypeCode, request.Notes)
                 .ConfigureAwait(false);
             return Results.Ok(ToMovementResponse(movement));
         }
@@ -1406,6 +1408,7 @@ public partial class Program
         DocumentTypeName = movement.DocumentTypeName,
         Document = movement.DocumentReference,
         movement.Description,
+        movement.Notes,
         movement.Status,
         movement.Amount,
         Lines = movement.Lines.Select(line => new
@@ -1564,4 +1567,5 @@ public sealed record CreateMovementRequest(
     string Description,
     bool Reviewed,
     List<MovementLineRequest> Lines,
-    string? DocumentTypeCode = null);
+    string? DocumentTypeCode = null,
+    string? Notes = null);

@@ -101,6 +101,7 @@ describe('App', () => {
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Débito da linha 1' }), { target: { value: '100' } })
     fireEvent.change(screen.getByRole('combobox', { name: 'Conta da linha 2' }), { target: { value: '2211001' } })
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Crédito da linha 2' }), { target: { value: '100' } })
+    fireEvent.change(screen.getByRole('textbox', { name: /Observações/ }), { target: { value: 'Rever com o cliente' } })
 
     expect(screen.getByText('Equilibrado')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Registar lançamento' }))
@@ -108,7 +109,12 @@ describe('App', () => {
     const row = screen.getByRole('link', { name: 'GERAL 2026 00001' }).closest('tr') as HTMLElement
     expect(within(row).getByText('Por conferir')).toBeInTheDocument()
 
-    fireEvent.click(within(row).getByRole('button', { name: 'Anular' }))
+    fireEvent.click(screen.getByRole('link', { name: 'GERAL 2026 00001' }))
+    expect(screen.getByRole('heading', { name: 'Observações' })).toBeInTheDocument()
+    expect(screen.getByText('Rever com o cliente')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('link', { name: /Movimentos contabilísticos/ }))
+
+    fireEvent.click(within(screen.getByRole('link', { name: 'GERAL 2026 00001' }).closest('tr') as HTMLElement).getByRole('button', { name: 'Anular' }))
     expect(within(screen.getByRole('link', { name: 'GERAL 2026 00001' }).closest('tr') as HTMLElement).getByText('Anulado')).toBeInTheDocument()
   })
 

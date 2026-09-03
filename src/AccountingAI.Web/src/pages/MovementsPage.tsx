@@ -34,6 +34,7 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
   const [entryDate, setEntryDate] = useState(movement?.date ?? today())
   const [documentReference, setDocumentReference] = useState(movement?.document ?? '')
   const [description, setDescription] = useState(movement?.description ?? '')
+  const [notes, setNotes] = useState(movement?.notes ?? '')
   const [reviewed, setReviewed] = useState(movement?.status === 'Conferido')
   const [lines, setLines] = useState<MovementLineInput[]>(
     movement ? movement.lines.map((line) => ({ accountCode: line.account, description: line.description, debit: line.debit, credit: line.credit })) : [emptyLine(), emptyLine()],
@@ -102,6 +103,7 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
         entryDate,
         documentReference,
         description,
+        notes: notes.trim() || null,
         reviewed,
         lines: lines
           .filter((line) => line.accountCode.trim())
@@ -128,6 +130,8 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
         <label><span>Descrição</span><input data-field-key="description" ref={register('description')} value={description} onChange={(event) => setDescription(event.target.value)} /></label>
         <label className="toggle-field"><input data-field-key="reviewed" ref={register('reviewed')} type="checkbox" checked={reviewed} onChange={(event) => setReviewed(event.target.checked)} /><span><strong>Conferido</strong><small>Caso contrário fica por conferir.</small></span></label>
       </div>
+
+      <label className="field-block"><span>Observações <small>(opcional, uso interno)</small></span><textarea value={notes} rows={2} maxLength={2000} onChange={(event) => setNotes(event.target.value)} placeholder="Notas internas sobre este lançamento" /></label>
 
       <div className="table-wrap"><table><thead><tr><th>Conta</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
         {lines.map((line, index) => <tr key={index}>
