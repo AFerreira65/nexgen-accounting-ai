@@ -231,6 +231,12 @@ describe('App', () => {
     expect(screen.getAllByText('24 · Estado e outros entes públicos').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: '2111001' })).toBeInTheDocument()
     expect(screen.getByText('Ativo = Passivo + CP')).toBeInTheDocument()
+
+    expect(screen.queryByRole('columnheader', { name: 'Homólogo' })).not.toBeInTheDocument()
+    fireEvent.change(screen.getAllByLabelText('Data inicial')[0], { target: { value: '2026-01-01' } })
+    fireEvent.change(screen.getAllByLabelText('Data final')[0], { target: { value: '2026-12-31' } })
+    fireEvent.click(screen.getByLabelText('Comparar com período homólogo'))
+    expect(screen.getAllByRole('columnheader', { name: 'Homólogo' }).length).toBeGreaterThan(0)
   })
 
   it('previews the year-end closing entry and keeps register disabled in demo mode', () => {
