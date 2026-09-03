@@ -205,6 +205,12 @@ describe('App', () => {
     expect(screen.getByText('62 · Fornecimentos e serviços externos')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '7211' })).toBeInTheDocument()
     expect(screen.getAllByText('Resultado líquido do período').length).toBeGreaterThan(0)
+
+    expect(screen.queryByRole('columnheader', { name: 'Homólogo' })).not.toBeInTheDocument()
+    fireEvent.change(screen.getAllByLabelText('Data inicial')[0], { target: { value: '2026-01-01' } })
+    fireEvent.change(screen.getAllByLabelText('Data final')[0], { target: { value: '2026-12-31' } })
+    fireEvent.click(screen.getByLabelText('Comparar com período homólogo'))
+    expect(screen.getAllByRole('columnheader', { name: 'Homólogo' }).length).toBeGreaterThan(0)
   })
 
   it('shows the balance sheet with assets, liabilities and equity in balance', () => {
