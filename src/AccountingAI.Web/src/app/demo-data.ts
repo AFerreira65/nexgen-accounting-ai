@@ -86,7 +86,7 @@ export type TaxonomyReview = {
 // Correspondências de taxonomia inequívocas incluídas no plano de contas base
 // versionado (conta 11 = Caixa, conta 12 = Depósitos à ordem). Espelha
 // AccountingTemplateCatalog no servidor; as restantes contas ficam por classificar.
-export const templateTaxonomySuggestions: Record<string, number> = { '11': 1, '12': 2 }
+export const templateTaxonomySuggestions: Record<string, number> = { '111': 1, '121': 2 }
 
 export type TaxonomyCatalogEntry = { code: number; description: string; sncAccounts: string[] }
 
@@ -104,8 +104,8 @@ export const demoTaxonomyCatalog: TaxonomyCatalog = {
   source: 'Amostra de demonstração — o catálogo completo chega pela API local.',
   disclaimer: 'Transcrição a confirmar contra o texto oficial.',
   codes: [
-    { code: 1, description: 'Caixa', sncAccounts: ['11'] },
-    { code: 2, description: 'Depósitos à ordem', sncAccounts: ['12'] },
+    { code: 1, description: 'Caixa', sncAccounts: ['11', '111'] },
+    { code: 2, description: 'Depósitos à ordem', sncAccounts: ['12', '121'] },
     { code: 3, description: 'Outros depósitos bancários', sncAccounts: ['13'] },
     { code: 22, description: 'Clientes - Outros Clientes', sncAccounts: ['213', '214', '215', '216', '217'] },
     { code: 357, description: 'Fornecimentos e serviços externos - Serviços especializados - Trabalhos especializados', sncAccounts: ['6221'] },
@@ -227,10 +227,17 @@ const demoDocuments: AccountingDocumentType[] = [
 ]
 const demoAccounts: AccountingAccount[] = [
   { code: '1', name: 'Meios financeiros líquidos', parentCode: null, allowsPosting: false, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: templateSource },
-  { code: '11', name: 'Caixa', parentCode: '1', allowsPosting: true, taxonomyReference: 'S', taxonomyCode: 1, isActive: true, sourceTemplateVersion: templateSource },
-  { code: '12', name: 'Depósitos à ordem', parentCode: '1', allowsPosting: true, taxonomyReference: 'S', taxonomyCode: 2, isActive: true, sourceTemplateVersion: templateSource },
+  { code: '11', name: 'Caixa', parentCode: '1', allowsPosting: false, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: templateSource },
+  { code: '111', name: 'Caixa — geral', parentCode: '11', allowsPosting: true, taxonomyReference: 'S', taxonomyCode: 1, isActive: true, sourceTemplateVersion: templateSource },
+  { code: '12', name: 'Depósitos à ordem', parentCode: '1', allowsPosting: false, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: templateSource },
+  { code: '121', name: 'Depósito à ordem — geral', parentCode: '12', allowsPosting: true, taxonomyReference: 'S', taxonomyCode: 2, isActive: true, sourceTemplateVersion: templateSource },
+  { code: '2', name: 'Contas a receber e a pagar', parentCode: null, allowsPosting: false, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: templateSource },
+  { code: '21', name: 'Clientes', parentCode: '2', allowsPosting: false, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: templateSource },
   { code: '2111001', name: 'Maré Clara, SA', parentCode: '21', allowsPosting: true, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: null },
+  { code: '22', name: 'Fornecedores', parentCode: '2', allowsPosting: false, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: templateSource },
   { code: '2211001', name: 'Norte Office, Lda.', parentCode: '22', allowsPosting: true, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: null },
+  { code: '6', name: 'Gastos', parentCode: null, allowsPosting: false, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: templateSource },
+  { code: '62', name: 'Fornecimentos e serviços externos', parentCode: '6', allowsPosting: false, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: templateSource },
   { code: '6221', name: 'Material de escritório', parentCode: '62', allowsPosting: true, taxonomyReference: null, taxonomyCode: null, isActive: true, sourceTemplateVersion: null },
 ]
 

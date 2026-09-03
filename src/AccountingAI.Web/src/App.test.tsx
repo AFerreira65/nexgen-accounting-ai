@@ -481,7 +481,7 @@ describe('App', () => {
 
     expect(screen.getByText(/2 de 5/)).toBeInTheDocument()
 
-    const row = screen.getByRole('link', { name: '12' }).closest('tr') as HTMLElement
+    const row = screen.getByRole('link', { name: '121' }).closest('tr') as HTMLElement
     fireEvent.click(within(row).getByRole('button', { name: 'Limpar' }))
     expect(await screen.findByText(/1 de 5/)).toBeInTheDocument()
 

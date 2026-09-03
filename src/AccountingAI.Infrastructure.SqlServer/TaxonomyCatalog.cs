@@ -51,10 +51,37 @@ public static class TaxonomyCatalog
             return 1;
         }
 
-        var matches = For(reference)
+        var entries = For(reference);
+        var exact = entries
             .Where(entry => entry.SncAccounts.Contains(normalized, StringComparer.Ordinal))
             .ToList();
-        return matches.Count == 1 ? matches[0].Code : null;
+        if (exact.Count == 1)
+        {
+            return exact[0].Code;
+        }
+
+        if (exact.Count > 1)
+        {
+            return null;
+        }
+
+        // Sem correspondência exata: uma subconta de movimento herda a taxonomia da
+        // conta-razão (código de 2 dígitos) de que é prefixo, se for inequívoca. Só
+        // se aplica a razões que a taxonomia não subdivide (ex. 11 → 111, 12 → 121).
+        var byPrefix = entries
+            .Select(entry => (entry.Code, Prefix: entry.SncAccounts
+                .Where(snc => snc.Length == 2 && normalized.Length > 2 && normalized.StartsWith(snc, StringComparison.Ordinal))
+                .FirstOrDefault()))
+            .Where(match => match.Prefix is not null)
+            .ToList();
+        if (byPrefix.Count == 0)
+        {
+            return null;
+        }
+
+        var longest = byPrefix.Max(match => match.Prefix!.Length);
+        var best = byPrefix.Where(match => match.Prefix!.Length == longest).ToList();
+        return best.Count == 1 ? best[0].Code : null;
     }
 
     private static CatalogData Load()

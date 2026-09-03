@@ -84,6 +84,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260903151623_UserCompanySettingsTextSize");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260903154133_ShortAccountCodesAreIntegration");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -257,9 +260,11 @@ public sealed class SqlServerMigrationTests
             Assert.AreEqual("Outros", microAccount14.Name);
             Assert.AreEqual("Clientes e utentes", esnlAccount21.Name);
 
+            // A conta de razão 12 é de integração; a subconta de movimento 121 herda
+            // a taxonomia (código 2) do prefixo.
             var taxonomyAccounts = await context.Accounts
                 .AsNoTracking()
-                .Where(item => item.Code == "12" &&
+                .Where(item => item.Code == "121" &&
                     (item.CompanyId == DevelopmentDataSeeder.DemoCompanyId ||
                      item.CompanyId == DevelopmentDataSeeder.DemoIslandCompanyId))
                 .ToDictionaryAsync(item => item.CompanyId)
@@ -303,7 +308,16 @@ public sealed class SqlServerMigrationTests
                         DevelopmentDataSeeder.DemoCompanyId,
                         "9002",
                         "Filha de uma conta de movimento",
-                        "11",
+                        "6221",
+                        allowsPosting: true).ConfigureAwait(false));
+
+                // Contas de 1 ou 2 dígitos não podem ser de movimento.
+                await Assert.ThrowsAsync<ArgumentException>(async () =>
+                    await masterData.CreateAccountAsync(
+                        DevelopmentDataSeeder.DemoCompanyId,
+                        "77",
+                        "Razão a lançar diretamente",
+                        null,
                         allowsPosting: true).ConfigureAwait(false));
 
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -588,7 +602,7 @@ public sealed class SqlServerMigrationTests
                         new DateOnly(2026, 3, 21), "OD 2026/2 corrigido", "Segundo corrigido", reviewed: true,
                         [
                             new JournalEntryLineInput("6221", "D", 45m, 0m),
-                            new JournalEntryLineInput("11", "C", 0m, 45m)
+                            new JournalEntryLineInput("111", "C", 0m, 45m)
                         ],
                         notes: "Corrigido após revisão")
                     .ConfigureAwait(false);
@@ -684,8 +698,8 @@ public sealed class SqlServerMigrationTests
                     "Emissão concorrente",
                     reviewed: false,
                     [
-                        new JournalEntryLineInput("11", "Débito", 10m, 0m),
-                        new JournalEntryLineInput("12", "Crédito", 0m, 10m)
+                        new JournalEntryLineInput("111", "Débito", 10m, 0m),
+                        new JournalEntryLineInput("121", "Crédito", 0m, 10m)
                     ]).ConfigureAwait(false);
             });
             var concurrentMovements = await Task.WhenAll(concurrentPosts).ConfigureAwait(false);
@@ -785,12 +799,12 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual(1200m, augustRow6221.Debit);
                 Assert.AreEqual(1245m, augustRow6221.Balance);
                 Assert.AreEqual(0m, trialFromAugust.TotalOpeningBalance); // a abertura também equilibra
-                // A conta 11 só tem movimento anterior a agosto: aparece apenas com saldo de abertura.
-                var augustRow11 = trialFromAugust.Rows.Single(row => row.AccountCode == "11");
-                Assert.AreEqual(-45m, augustRow11.OpeningBalance);
-                Assert.AreEqual(0m, augustRow11.Debit);
-                Assert.AreEqual(0m, augustRow11.Credit);
-                Assert.AreEqual(-45m, augustRow11.Balance);
+                // A conta 111 só tem movimento anterior a agosto: aparece apenas com saldo de abertura.
+                var augustRow111 = trialFromAugust.Rows.Single(row => row.AccountCode == "111");
+                Assert.AreEqual(-45m, augustRow111.OpeningBalance);
+                Assert.AreEqual(0m, augustRow111.Debit);
+                Assert.AreEqual(0m, augustRow111.Credit);
+                Assert.AreEqual(-45m, augustRow111.Balance);
 
                 var trialUntilJuly = await ledger
                     .TrialBalanceAsync(DevelopmentDataSeeder.DemoCompanyId, null, new DateOnly(2026, 7, 31))

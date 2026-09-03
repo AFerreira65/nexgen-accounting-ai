@@ -44,6 +44,13 @@ public sealed class AccountingMasterDataService(AccountingDbContext context)
         CancellationToken cancellationToken = default)
     {
         var normalizedCode = NormalizeCode(code);
+        if (allowsPosting && normalizedCode.Length <= 2)
+        {
+            throw new ArgumentException(
+                "As contas de 1 ou 2 dígitos são de integração; crie uma subconta de movimento (3 ou mais dígitos).",
+                nameof(code));
+        }
+
         AccountMasterData? result = null;
 
         await ExecuteInTransactionAsync(async () =>
