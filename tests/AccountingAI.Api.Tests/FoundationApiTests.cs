@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-27");
+        StringAssert.Contains(payload, "F1-28");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -102,6 +102,12 @@ public sealed class FoundationApiTests
             "companies/99999999-9999-9999-9999-999999999999/accounting/number-series?year=2026")
             .ConfigureAwait(false);
 
+        using var closedYearsResponse = await client.GetAsync(
+            "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/accounting/closed-years")
+            .ConfigureAwait(false);
+        var closedYearsPayload = await closedYearsResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.OK, mainlandResponse.StatusCode);
         StringAssert.Contains(mainlandPayload, "COMP-2026-00842");
         StringAssert.Contains(mainlandPayload, "\"documentType\":null");
@@ -127,6 +133,8 @@ public sealed class FoundationApiTests
         StringAssert.Contains(seriesPayload, "\"series\":\"FTV\"");
         StringAssert.Contains(seriesPayload, "\"origin\":\"Tipo de documento\"");
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorizedSeriesResponse.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, closedYearsResponse.StatusCode);
+        StringAssert.StartsWith(closedYearsPayload.Trim(), "[");
     }
 
     [TestMethod]

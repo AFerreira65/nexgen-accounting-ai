@@ -8,8 +8,19 @@ const today = () => new Date().toISOString().slice(0, 10)
 const emptyLine = (): MovementLineInput => ({ accountCode: '', description: '', debit: 0, credit: 0 })
 
 function MovementEditor({ movement, onClose }: { movement: Movement | null; onClose: () => void }) {
-  const { accountingSetup, createMovement, reviseMovement } = useWorkContext()
+  const { accountingSetup, activeCompany, createMovement, reviseMovement, source, user } = useWorkContext()
   const isEdit = movement !== null
+  const [closedYears, setClosedYears] = useState<number[]>([])
+
+  useEffect(() => {
+    if (source !== 'database') return
+    const controller = new AbortController()
+    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/closed-years`, { signal: controller.signal })
+      .then(async (response) => (response.ok ? (await response.json()) as number[] : []))
+      .then(setClosedYears)
+      .catch(() => { /* aviso opcional */ })
+    return () => controller.abort()
+  }, [activeCompany.companyId, source, user.id])
   const journals = accountingSetup.journals.filter((item) => item.isActive || item.code === movement?.journalId)
   const postingAccounts = accountingSetup.accounts.filter((item) => item.allowsPosting && item.isActive)
   const documentTypes = accountingSetup.documentTypes.filter((item) => item.isActive)
@@ -67,6 +78,8 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
   const totalDebit = lines.reduce((sum, line) => sum + (Number(line.debit) || 0), 0)
   const totalCredit = lines.reduce((sum, line) => sum + (Number(line.credit) || 0), 0)
   const difference = Math.round((totalDebit - totalCredit) * 100) / 100
+  const entryYear = Number(entryDate.slice(0, 4))
+  const yearClosed = closedYears.includes(entryYear)
 
   function patchLine(index: number, patch: Partial<MovementLineInput>) {
     setLines((current) => current.map((line, position) => position === index ? { ...line, ...patch } : line))
@@ -122,9 +135,10 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
 
       <footer className="settings-actions">
         <span className={`save-status ${difference === 0 ? 'success' : 'error'}`}>{difference === 0 ? 'Equilibrado' : `Diferença de ${euro.format(difference)}`}</span>
+        {yearClosed && <span className="save-status error">O exercício de {entryYear} está apurado. Reabra-o para lançar com esta data.</span>}
         {status === 'error' && <span className="save-status error">{error}</span>}
         <button className="button button-secondary" type="button" onClick={onClose}>Cancelar</button>
-        <button className="button button-primary" type="submit" disabled={status === 'saving' || difference !== 0}>{status === 'saving' ? 'A guardar…' : (isEdit ? 'Guardar correção' : 'Registar lançamento')}</button>
+        <button className="button button-primary" type="submit" disabled={status === 'saving' || difference !== 0 || yearClosed}>{status === 'saving' ? 'A guardar…' : (isEdit ? 'Guardar correção' : 'Registar lançamento')}</button>
       </footer>
     </form>
   </section>

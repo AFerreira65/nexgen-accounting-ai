@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-27",
+    phase = "F1-28",
     status = "ready"
 }));
 
@@ -707,6 +707,21 @@ if (app.Environment.IsDevelopment())
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = [exception.Message] });
         }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/closed-years", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        YearEndClosingService closing,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        return Results.Ok(await closing.ClosedYearsAsync(companyId, cancellationToken).ConfigureAwait(false));
     });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/year-end-closing", async (

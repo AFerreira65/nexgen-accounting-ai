@@ -25,6 +25,20 @@ public sealed class YearEndClosingService(AccountingDbContext context, JournalPo
     private const string ResultAccountCode = "81";
     private const string ClosingDocumentType = "AP";
 
+    /// <summary>Exercícios da empresa com apuramento (<c>AP</c>) não anulado.</summary>
+    public async Task<IReadOnlyList<int>> ClosedYearsAsync(Guid companyId, CancellationToken cancellationToken = default) =>
+        await context.JournalEntries
+            .AsNoTracking()
+            .Where(entry => entry.CompanyId == companyId &&
+                entry.Status != JournalEntryStatus.Voided &&
+                entry.DocumentType != null &&
+                entry.DocumentType.Code == ClosingDocumentType)
+            .Select(entry => entry.EntryDate.Year)
+            .Distinct()
+            .OrderBy(year => year)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
     public async Task<YearEndClosingPreview> PreviewAsync(Guid companyId, int year, CancellationToken cancellationToken = default)
     {
         if (year is < 2000 or > 2200)
