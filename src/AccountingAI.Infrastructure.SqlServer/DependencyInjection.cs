@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<AccountLedgerService>();
         services.AddScoped<JournalReportService>();
         services.AddScoped<YearEndClosingService>();
+        services.AddScoped<YearOpeningService>();
 
         services
             .AddHealthChecks()

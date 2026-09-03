@@ -15,6 +15,7 @@ import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { TrialBalancePage } from './pages/TrialBalancePage'
 import { YearEndClosingPage } from './pages/YearEndClosingPage'
+import { YearOpeningPage } from './pages/YearOpeningPage'
 import { DocumentNumberSeriesPage } from './pages/DocumentNumberSeriesPage'
 import { WorkContextProvider } from './app/WorkContext'
 
@@ -40,6 +41,7 @@ export function App() {
             <Route path="/resultados" element={<IncomeStatementPage />} />
             <Route path="/balanco" element={<BalanceSheetPage />} />
             <Route path="/apuramento" element={<YearEndClosingPage />} />
+            <Route path="/abertura" element={<YearOpeningPage />} />
             <Route path="/livro-diario" element={<JournalReportPage />} />
             <Route path="/tarefas" element={<PlaceholderPage title="Tarefas" />} />
             <Route path="/definicoes" element={<SettingsPage />} />

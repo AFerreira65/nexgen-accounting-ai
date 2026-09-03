@@ -135,6 +135,7 @@ public sealed class SqlServerMigrationTests
                 .AddScoped<JournalPostingService>()
                 .AddScoped<DocumentNumberSeriesService>()
                 .AddScoped<YearEndClosingService>()
+                .AddScoped<YearOpeningService>()
                 .AddScoped<AccountLedgerService>()
                 .AddScoped<JournalReportService>()
                 .BuildServiceProvider();
@@ -820,6 +821,41 @@ public sealed class SqlServerMigrationTests
 
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                     await closing.RegisterAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false));
+            }
+
+            await using (var openingScope = services.CreateAsyncScope())
+            {
+                var opening = openingScope.ServiceProvider.GetRequiredService<YearOpeningService>();
+
+                // Abrir 2027 antes de apurar 2026 é impossível; aqui 2026 já foi apurado.
+                var preview = await opening.PreviewAsync(DevelopmentDataSeeder.DemoCompanyId, 2027).ConfigureAwait(false);
+                Assert.IsTrue(preview.PreviousYearClosed);
+                Assert.IsFalse(preview.AlreadyOpened);
+                Assert.AreEqual(preview.Lines.Sum(line => line.Debit), preview.Lines.Sum(line => line.Credit));
+                // O resultado de 2026 (81 credor 1425) é transportado para 56.
+                var retained = preview.Lines.Single(line => line.AccountCode == "56");
+                Assert.AreEqual(1425m, retained.Credit);
+                Assert.IsFalse(preview.Lines.Any(line => line.AccountCode == "81"));
+                Assert.IsFalse(preview.Lines.Any(line => line.AccountCode.StartsWith("6") || line.AccountCode.StartsWith("7")));
+
+                var registered = await opening.RegisterAsync(DevelopmentDataSeeder.DemoCompanyId, 2027).ConfigureAwait(false);
+                Assert.AreEqual("AB-2027-00001", registered.Reference);
+                Assert.AreEqual("ABERTURA", registered.JournalCode);
+                Assert.AreEqual("AB", registered.DocumentTypeCode);
+                Assert.AreEqual(new DateOnly(2027, 1, 1), registered.EntryDate);
+
+                var afterOpening = await opening.PreviewAsync(DevelopmentDataSeeder.DemoCompanyId, 2027).ConfigureAwait(false);
+                Assert.IsTrue(afterOpening.AlreadyOpened);
+                Assert.AreEqual("AB-2027-00001", afterOpening.OpeningReference);
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await opening.RegisterAsync(DevelopmentDataSeeder.DemoCompanyId, 2027).ConfigureAwait(false));
+
+                // 2026 não pode abrir: 2025 não está apurado.
+                var earlyPreview = await opening.PreviewAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false);
+                Assert.IsFalse(earlyPreview.PreviousYearClosed);
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await opening.RegisterAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false));
             }
 
             context.ChangeTracker.Clear();
