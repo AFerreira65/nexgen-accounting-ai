@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { groupBySubclass, type SubclassGroup } from '../app/accountClasses'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro } from '../app/demo-data'
+import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 
 type Row = { accountCode: string; accountName: string; debit: number; credit: number }
@@ -143,6 +144,7 @@ export function IncomeStatementPage() {
       <label><Search size={17} /><span className="sr-only">Pesquisar rubricas</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar rubrica ou conta…" /></label>
       <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
+      <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       <label className="toggle-inline"><input type="checkbox" checked={compare} onChange={(event) => setCompare(event.target.checked)} /><Layers size={15} /> Comparar com período homólogo</label>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={income.groups.length === 0 && expenses.groups.length === 0}><Download size={15} /> Exportar CSV</button>
     </div>

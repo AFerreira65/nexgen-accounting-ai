@@ -273,6 +273,10 @@ describe('App', () => {
     fireEvent.click(screen.getByLabelText('Agrupar por classe'))
     expect(screen.queryByText(/Subtotal classe/)).not.toBeInTheDocument()
 
+    fireEvent.click(within(screen.getByRole('group', { name: 'Períodos rápidos' })).getByRole('button', { name: 'Ano' }))
+    expect(screen.getByLabelText('Data inicial')).toHaveValue('2026-01-01')
+    expect(screen.getByLabelText('Data final')).toHaveValue('2026-12-31')
+
     fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-08-29' } })
     expect(screen.getByRole('columnheader', { name: 'Abertura' })).toBeInTheDocument()
 

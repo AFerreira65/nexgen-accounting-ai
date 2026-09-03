@@ -116,6 +116,9 @@ td small { display: block; margin-top: 4px; color: #8a979d; font-size: 9px; }
 tfoot td { border-top: 1px solid #cfdadd; color: #20343c; background: #f8fafb; font-weight: 800; }
 tbody.group-row, tr.group-row td { background: #f2f6f7; color: #33474f; font-weight: 800; text-transform: uppercase; font-size: 9px; letter-spacing: .04em; }
 tr.subtotal-row td { border-top: 1px solid #d5dfe1; background: #fbfdfd; color: #2b3d45; font-weight: 750; }
+.period-shortcuts { display: flex; align-items: center; gap: 6px; }
+.period-chip { padding: 0 12px; min-height: 34px; border: 1px solid #cbd8db; border-radius: 8px; color: #37525b; background: white; font-size: 10px; font-weight: 750; letter-spacing: 0.03em; text-transform: uppercase; cursor: pointer; }
+.period-chip:hover { border-color: #45a89e; color: #0b9286; }
 .toggle-inline { width: auto !important; gap: 6px; color: #5a6b72 !important; font-size: 10px; font-weight: 700; white-space: nowrap; cursor: pointer; }
 .toggle-inline input { width: auto; min-height: 0; accent-color: #16736a; }
 .badge { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 999px; font-size: 8px; font-weight: 800; white-space: nowrap; }
