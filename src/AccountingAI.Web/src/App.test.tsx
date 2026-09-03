@@ -189,6 +189,12 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-08-29' } })
     expect(screen.getByRole('columnheader', { name: 'Abertura' })).toBeInTheDocument()
 
+    expect(screen.queryByRole('columnheader', { name: 'Saldo homólogo' })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Data final'), { target: { value: '2026-12-31' } })
+    fireEvent.click(screen.getByLabelText('Comparar com período homólogo'))
+    expect(screen.getByRole('columnheader', { name: 'Saldo homólogo' })).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Comparar com período homólogo'))
+
     fireEvent.change(screen.getByLabelText('Data final'), { target: { value: '2020-12-31' } })
     expect(screen.queryByRole('link', { name: '6221' })).not.toBeInTheDocument()
     expect(screen.getByText('Sem movimentos para apresentar.')).toBeInTheDocument()
