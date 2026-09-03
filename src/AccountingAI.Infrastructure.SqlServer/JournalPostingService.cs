@@ -52,6 +52,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
         await InTransactionAsync(async () =>
         {
             context.ChangeTracker.Clear();
+            await EnsureYearIsOpenAsync(companyId, entryDate.Year, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var (journal, prefix, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
             var reference = await NextReferenceAsync(companyId, prefix, entryDate.Year, cancellationToken).ConfigureAwait(false);
@@ -102,6 +103,9 @@ public sealed class JournalPostingService(AccountingDbContext context)
             {
                 throw new InvalidOperationException("Só um lançamento por conferir pode ser corrigido.");
             }
+
+            await EnsureYearIsOpenAsync(companyId, existing.EntryDate.Year, documentTypeCode, cancellationToken).ConfigureAwait(false);
+            await EnsureYearIsOpenAsync(companyId, entryDate.Year, documentTypeCode, cancellationToken).ConfigureAwait(false);
 
             var (journal, _, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
@@ -266,6 +270,33 @@ public sealed class JournalPostingService(AccountingDbContext context)
         }
 
         return accounts;
+    }
+
+    /// <summary>
+    /// Recusa lançar ou corrigir movimentos num exercício já apurado. As próprias
+    /// operações de apuramento e abertura (<c>AP</c>/<c>AB</c>) ficam de fora.
+    /// </summary>
+    private async Task EnsureYearIsOpenAsync(Guid companyId, int year, string? documentTypeCode, CancellationToken cancellationToken)
+    {
+        var normalizedDocumentType = Normalize(documentTypeCode);
+        if (normalizedDocumentType is "AP" or "AB")
+        {
+            return;
+        }
+
+        var closed = await context.JournalEntries
+            .AsNoTracking()
+            .AnyAsync(entry => entry.CompanyId == companyId &&
+                entry.Status != JournalEntryStatus.Voided &&
+                entry.EntryDate.Year == year &&
+                entry.DocumentType != null &&
+                entry.DocumentType.Code == "AP", cancellationToken)
+            .ConfigureAwait(false);
+        if (closed)
+        {
+            throw new InvalidOperationException(
+                $"O exercício de {year} está apurado. Reabra-o para lançar movimentos com esta data.");
+        }
     }
 
     /// <summary>
