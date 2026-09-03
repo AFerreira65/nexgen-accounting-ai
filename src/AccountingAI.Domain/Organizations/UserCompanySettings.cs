@@ -24,7 +24,7 @@ public sealed class UserCompanySettings
 
         CompanyId = companyId;
         UserId = userId;
-        Update(culture, timeZone, null, InterfaceTheme.System, false, 50);
+        Update(culture, timeZone, null, InterfaceTheme.System, false, 50, InterfaceTextSize.Normal);
     }
 
     public Guid CompanyId { get; private set; }
@@ -43,6 +43,8 @@ public sealed class UserCompanySettings
 
     public int PageSize { get; private set; }
 
+    public InterfaceTextSize TextSize { get; private set; }
+
     public DateTimeOffset UpdatedAtUtc { get; private set; }
 
     public byte[] RowVersion { get; private set; } = [];
@@ -55,7 +57,8 @@ public sealed class UserCompanySettings
         int? defaultFiscalYear,
         InterfaceTheme theme,
         bool compactMode,
-        int pageSize)
+        int pageSize,
+        InterfaceTextSize textSize)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(culture);
         ArgumentException.ThrowIfNullOrWhiteSpace(timeZone);
@@ -75,12 +78,18 @@ public sealed class UserCompanySettings
             throw new ArgumentOutOfRangeException(nameof(pageSize));
         }
 
+        if (!Enum.IsDefined(textSize))
+        {
+            throw new ArgumentOutOfRangeException(nameof(textSize));
+        }
+
         Culture = culture.Trim();
         TimeZone = timeZone.Trim();
         DefaultFiscalYear = defaultFiscalYear;
         Theme = theme;
         CompactMode = compactMode;
         PageSize = pageSize;
+        TextSize = textSize;
         UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 }

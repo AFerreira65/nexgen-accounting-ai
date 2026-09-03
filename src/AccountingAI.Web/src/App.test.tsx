@@ -39,6 +39,12 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Preferências de trabalho' })).toBeInTheDocument()
     expect(screen.getByText(/configuração exclusiva de Ilha Azul Serviços/i)).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Fuso horário' })).toHaveValue('Atlantic/Azores')
+
+    // A empresa dos Açores tem o texto "Grande"; mudar para "Maior" aplica-o ao root.
+    expect(document.documentElement.dataset.textSize).toBe('large')
+    fireEvent.change(screen.getByRole('combobox', { name: 'Tamanho do texto' }), { target: { value: 'Larger' } })
+    fireEvent.click(screen.getByRole('button', { name: /Guardar preferências/i }))
+    expect(document.documentElement.dataset.textSize).toBe('larger')
   })
 
   it('switches the accounting fallback together with the active company', () => {

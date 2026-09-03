@@ -34,8 +34,40 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-42");
+        StringAssert.Contains(payload, "F1-45");
         StringAssert.Contains(payload, "ready");
+    }
+
+    [TestMethod]
+    public async Task WorkContextSettingsRejectAnUnknownTextSize()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        var body = new StringContent(
+            """
+            {"culture":"pt-PT","timeZone":"Europe/Lisbon","defaultFiscalYear":2026,"theme":"Light","compactMode":false,"pageSize":50,"textSize":"Gigante"}
+            """,
+            Encoding.UTF8,
+            "application/json");
+        using var response = await client
+            .PutAsync(
+                "/api/v1/development/work-context/33333333-3333-3333-3333-333333333333/" +
+                "companies/22222222-2222-2222-2222-222222222222/settings",
+                body)
+            .ConfigureAwait(false);
+        var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        StringAssert.Contains(payload, "tamanho do texto");
     }
 
     [TestMethod]

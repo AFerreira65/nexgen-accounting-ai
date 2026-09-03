@@ -81,6 +81,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260903134406_JournalEntryNotes");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260903151623_UserCompanySettingsTextSize");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -102,7 +105,7 @@ public sealed class SqlServerMigrationTests
             var user = new UserAccount(userId, "Utilizador Sintético", "user@test.invalid");
             var membership = new CompanyUser(companyId, userId, CompanyUserRole.Accountant);
             var settings = new UserCompanySettings(companyId, userId);
-            settings.Update("pt-PT", "Europe/Lisbon", 2026, InterfaceTheme.Light, false, 100);
+            settings.Update("pt-PT", "Europe/Lisbon", 2026, InterfaceTheme.Light, false, 100, InterfaceTextSize.Larger);
 
             context.AddRange(firm, company, secondCompany, user, membership, settings);
             await context.SaveChangesAsync().ConfigureAwait(false);
@@ -120,6 +123,7 @@ public sealed class SqlServerMigrationTests
             Assert.AreEqual(TaxRegion.Madeira, storedCompany.TaxRegion);
             Assert.AreEqual("EUR", storedCompany.BaseCurrency);
             Assert.AreEqual(100, storedSettings.PageSize);
+            Assert.AreEqual(InterfaceTextSize.Larger, storedSettings.TextSize);
 
             context.Add(new UserCompanySettings(secondCompanyId, userId));
             await Assert.ThrowsAsync<DbUpdateException>(async () =>

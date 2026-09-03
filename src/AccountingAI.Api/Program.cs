@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-42",
+    phase = "F1-45",
     status = "ready"
 }));
 
@@ -118,7 +118,8 @@ if (app.Environment.IsDevelopment())
                                         membership.Settings.DefaultFiscalYear,
                                         Theme = membership.Settings.Theme.ToString(),
                                         membership.Settings.CompactMode,
-                                        membership.Settings.PageSize
+                                        membership.Settings.PageSize,
+                                        TextSize = membership.Settings.TextSize.ToString()
                                     }
                             })
                     })
@@ -196,6 +197,14 @@ if (app.Environment.IsDevelopment())
             });
         }
 
+        if (!Enum.TryParse<InterfaceTextSize>(request.TextSize, true, out var textSize))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.TextSize)] = ["O tamanho do texto deve ser Normal, Large ou Larger."]
+            });
+        }
+
         try
         {
             var settings = membership.Settings ?? new UserCompanySettings(companyId, userId);
@@ -205,7 +214,8 @@ if (app.Environment.IsDevelopment())
                 request.DefaultFiscalYear,
                 theme,
                 request.CompactMode,
-                request.PageSize);
+                request.PageSize,
+                textSize);
 
             if (membership.Settings is null)
             {
@@ -1544,6 +1554,7 @@ public partial class Program
             Theme = settings.Theme.ToString(),
             settings.CompactMode,
             settings.PageSize,
+            TextSize = settings.TextSize.ToString(),
             settings.UpdatedAtUtc
         };
 }
@@ -1554,7 +1565,8 @@ public sealed record UpdateUserCompanySettingsRequest(
     int? DefaultFiscalYear,
     string Theme,
     bool CompactMode,
-    int PageSize);
+    int PageSize,
+    string TextSize = "Normal");
 
 public sealed record CreateAccountRequest(
     string Code,

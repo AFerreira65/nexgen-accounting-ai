@@ -139,7 +139,8 @@ public sealed class OrganizationTests
         var userId = Guid.NewGuid();
         var settings = new UserCompanySettings(companyId, userId);
 
-        settings.Update("pt-PT", "Atlantic/Azores", 2026, InterfaceTheme.Dark, true, 100);
+        Assert.AreEqual(InterfaceTextSize.Normal, settings.TextSize);
+        settings.Update("pt-PT", "Atlantic/Azores", 2026, InterfaceTheme.Dark, true, 100, InterfaceTextSize.Larger);
 
         Assert.AreEqual(companyId, settings.CompanyId);
         Assert.AreEqual(userId, settings.UserId);
@@ -148,19 +149,17 @@ public sealed class OrganizationTests
         Assert.AreEqual(InterfaceTheme.Dark, settings.Theme);
         Assert.IsTrue(settings.CompactMode);
         Assert.AreEqual(100, settings.PageSize);
+        Assert.AreEqual(InterfaceTextSize.Larger, settings.TextSize);
     }
 
     [TestMethod]
-    public void UserCompanySettingsRejectInvalidPageSize()
+    public void UserCompanySettingsRejectInvalidPageSizeAndTextSize()
     {
         var settings = new UserCompanySettings(Guid.NewGuid(), Guid.NewGuid());
 
         Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => settings.Update(
-            "pt-PT",
-            "Europe/Lisbon",
-            2026,
-            InterfaceTheme.System,
-            false,
-            500));
+            "pt-PT", "Europe/Lisbon", 2026, InterfaceTheme.System, false, 500, InterfaceTextSize.Normal));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => settings.Update(
+            "pt-PT", "Europe/Lisbon", 2026, InterfaceTheme.System, false, 50, (InterfaceTextSize)9));
     }
 }

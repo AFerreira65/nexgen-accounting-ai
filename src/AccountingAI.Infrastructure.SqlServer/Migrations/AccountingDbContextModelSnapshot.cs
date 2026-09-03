@@ -509,6 +509,11 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<int>("TextSize")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.Property<int>("Theme")
                         .HasColumnType("int");
 

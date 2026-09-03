@@ -234,6 +234,10 @@ html[data-theme='dark'] .workspace { color: #dce8ea; background: #102129; }
 html[data-theme='dark'] .topbar, html[data-theme='dark'] .panel, html[data-theme='dark'] .metric-card, html[data-theme='dark'] .context-card, html[data-theme='dark'] .metadata-strip { background-color: #182d36; border-color: #29414a; }
 html[data-theme='dark'] .page-heading h1, html[data-theme='dark'] .panel h2, html[data-theme='dark'] .metric-card strong { color: #eef7f7; }
 html[data-compact='true'] td { padding-top: 8px; padding-bottom: 8px; }
+
+/* Tamanho do texto por utilizador/empresa: amplia a área de trabalho. */
+html[data-text-size='large'] .workspace { zoom: 1.06; }
+html[data-text-size='larger'] .workspace { zoom: 1.12; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 @media (max-width: 1160px) {

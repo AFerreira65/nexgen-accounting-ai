@@ -70,7 +70,7 @@ public static class DevelopmentDataSeeder
                 .ConfigureAwait(false))
         {
             var settings = new UserCompanySettings(DemoCompanyId, DemoUserId);
-            settings.Update("pt-PT", "Europe/Lisbon", 2026, InterfaceTheme.Light, false, 50);
+            settings.Update("pt-PT", "Europe/Lisbon", 2026, InterfaceTheme.Light, false, 50, InterfaceTextSize.Normal);
             context.Add(settings);
         }
 
@@ -106,7 +106,7 @@ public static class DevelopmentDataSeeder
                 .ConfigureAwait(false))
         {
             var settings = new UserCompanySettings(DemoIslandCompanyId, DemoUserId);
-            settings.Update("pt-PT", "Atlantic/Azores", 2026, InterfaceTheme.System, true, 25);
+            settings.Update("pt-PT", "Atlantic/Azores", 2026, InterfaceTheme.System, true, 25, InterfaceTextSize.Large);
             context.Add(settings);
         }
 

@@ -27,6 +27,7 @@ export type CompanySettings = {
   theme: 'System' | 'Light' | 'Dark'
   compactMode: boolean
   pageSize: number
+  textSize: 'Normal' | 'Large' | 'Larger'
   updatedAtUtc?: string
 }
 
@@ -87,7 +88,7 @@ const fallbackContext: WorkContextData = {
       region: 'Mainland',
       baseCurrency: 'EUR',
       role: 'Owner',
-      settings: { culture: 'pt-PT', timeZone: 'Europe/Lisbon', defaultFiscalYear: 2026, theme: 'Light', compactMode: false, pageSize: 50 },
+      settings: { culture: 'pt-PT', timeZone: 'Europe/Lisbon', defaultFiscalYear: 2026, theme: 'Light', compactMode: false, pageSize: 50, textSize: 'Normal' },
     },
     {
       companyId: '44444444-4444-4444-4444-444444444444',
@@ -96,7 +97,7 @@ const fallbackContext: WorkContextData = {
       region: 'Azores',
       baseCurrency: 'EUR',
       role: 'Accountant',
-      settings: { culture: 'pt-PT', timeZone: 'Atlantic/Azores', defaultFiscalYear: 2026, theme: 'System', compactMode: true, pageSize: 25 },
+      settings: { culture: 'pt-PT', timeZone: 'Atlantic/Azores', defaultFiscalYear: 2026, theme: 'System', compactMode: true, pageSize: 25, textSize: 'Large' },
     },
   ],
 }
@@ -255,7 +256,8 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.theme = activeCompany.settings.theme.toLowerCase()
     document.documentElement.dataset.compact = String(activeCompany.settings.compactMode)
-  }, [activeCompany.settings.compactMode, activeCompany.settings.theme])
+    document.documentElement.dataset.textSize = activeCompany.settings.textSize.toLowerCase()
+  }, [activeCompany.settings.compactMode, activeCompany.settings.textSize, activeCompany.settings.theme])
 
   const value = useMemo<WorkContextValue>(() => ({
     ...data,
