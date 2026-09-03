@@ -140,6 +140,40 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'COMPRAS 2026 00001' })).toBeInTheDocument()
   })
 
+  it('rejects an integration account in a movement line', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Novo lançamento/i }))
+    const account1 = screen.getByRole('combobox', { name: 'Conta da linha 1' })
+
+    fireEvent.change(account1, { target: { value: '1' } })
+    fireEvent.blur(account1)
+    expect(account1).toHaveClass('invalid')
+    expect(screen.getByText(/conta de integração/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Registar lançamento' })).toBeDisabled()
+
+    fireEvent.change(account1, { target: { value: '6221' } })
+    fireEvent.blur(account1)
+    expect(account1).not.toHaveClass('invalid')
+    expect(screen.queryByText(/conta de integração/i)).not.toBeInTheDocument()
+  })
+
+  it('suggests movement accounts while typing in the editor', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Novo lançamento/i }))
+    const account1 = screen.getByRole('combobox', { name: 'Conta da linha 1' })
+    fireEvent.focus(account1)
+    fireEvent.change(account1, { target: { value: '22' } })
+
+    const option = screen.getByText('2211001')
+    expect(option).toBeInTheDocument()
+    fireEvent.mouseDown(option)
+    expect(account1).toHaveValue('2211001')
+  })
+
   it('advances fields with Enter and adds a line from the last field', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)
