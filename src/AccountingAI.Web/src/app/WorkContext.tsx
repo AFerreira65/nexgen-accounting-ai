@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftInspection, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesPreview, type SaftInspection, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
 export type AccountEditInput = { name: string; isActive: boolean; taxonomyReference: string | null; taxonomyCode: number | null }
@@ -75,6 +75,7 @@ type WorkContextValue = WorkContextData & {
   inspectSaft: (file: File) => Promise<SaftInspection>
   previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
   importSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsImport>
+  previewSaftEntries: (companyId: string, file: File) => Promise<SaftEntriesPreview>
   createSaftCompany: (input: SaftCompanyCreationInput) => Promise<SaftCompanyCreation>
 }
 
@@ -580,6 +581,15 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error(await problemMessage(response))
       setAccountingRevision((revision) => revision + 1)
       return await response.json() as SaftAccountsImport
+    },
+    previewSaftEntries: async (companyId, file) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/saft/entries-preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/xml' },
+        body: file,
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SaftEntriesPreview
     },
     createSaftCompany: async (input) => {
       if (source !== 'database') {

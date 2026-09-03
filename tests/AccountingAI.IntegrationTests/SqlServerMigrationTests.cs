@@ -504,6 +504,37 @@ public sealed class SqlServerMigrationTests
                     .ImportAsync(Guid.NewGuid(), created.CompanyId, Stream.Null)
                     .ConfigureAwait(false);
                 Assert.IsNull(noAccess);
+
+                // Pré-visualização dos movimentos: resume o ficheiro e marca os diários
+                // que já existem na empresa (o SncSmallEntities provisiona GERAL).
+                var entriesReader = new FixedEntriesReader(new SaftEntriesSummary(
+                    HasEntries: true,
+                    TransactionCount: 4,
+                    DeclaredEntryCount: 4,
+                    TotalDebit: 500m,
+                    TotalCredit: 500m,
+                    FromDate: new DateOnly(2026, 1, 10),
+                    ToDate: new DateOnly(2026, 11, 3),
+                    Journals:
+                    [
+                        new SaftJournalSummary("GERAL", "Operações diversas", 3),
+                        new SaftJournalSummary("NOVOD", "Diário só do ficheiro", 1)
+                    ]));
+                var entriesPreview = new SaftEntriesPreviewService(entriesReader, importContext);
+                var entries = await entriesPreview
+                    .PreviewAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.IsNotNull(entries);
+                Assert.IsTrue(entries!.HasEntries);
+                Assert.AreEqual(4, entries.TransactionCount);
+                Assert.IsTrue(entries.Balanced);
+                Assert.AreEqual(new DateOnly(2026, 1, 10), entries.FromDate);
+                Assert.IsTrue(entries.Journals.Single(j => j.Code == "GERAL").Exists);
+                Assert.IsFalse(entries.Journals.Single(j => j.Code == "NOVOD").Exists);
+
+                Assert.IsNull(await entriesPreview
+                    .PreviewAsync(Guid.NewGuid(), created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false));
             }
 
             await using (var adminScope = services.CreateAsyncScope())
@@ -1101,5 +1132,11 @@ public sealed class SqlServerMigrationTests
     {
         public Task<IReadOnlyList<SaftAccount>> ReadAsync(Stream content, CancellationToken cancellationToken = default) =>
             Task.FromResult(accounts);
+    }
+
+    private sealed class FixedEntriesReader(SaftEntriesSummary summary) : ISaftEntriesReader
+    {
+        public Task<SaftEntriesSummary> ReadSummaryAsync(Stream content, CancellationToken cancellationToken = default) =>
+            Task.FromResult(summary);
     }
 }

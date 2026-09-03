@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-50",
+    phase = "F1-51",
     status = "ready"
 }));
 
@@ -1294,6 +1294,57 @@ if (app.Environment.IsDevelopment())
             });
         }
         catch (Exception exception) when (exception is SaftFileFormatException or ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["saft"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/entries-preview", async (
+        Guid userId,
+        Guid companyId,
+        HttpRequest request,
+        SaftEntriesPreviewService preview,
+        CancellationToken cancellationToken) =>
+    {
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = null;
+        }
+
+        try
+        {
+            var result = await preview
+                .PreviewAsync(userId, companyId, request.Body, cancellationToken)
+                .ConfigureAwait(false);
+            if (result is null)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(new
+            {
+                result.HasEntries,
+                result.TransactionCount,
+                result.DeclaredEntryCount,
+                result.TotalDebit,
+                result.TotalCredit,
+                result.Balanced,
+                result.FromDate,
+                result.ToDate,
+                Journals = result.Journals.Select(journal => new
+                {
+                    journal.Code,
+                    journal.Description,
+                    journal.TransactionCount,
+                    journal.Exists
+                })
+            });
+        }
+        catch (SaftFileFormatException exception)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {

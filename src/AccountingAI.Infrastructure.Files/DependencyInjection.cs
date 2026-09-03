@@ -11,6 +11,7 @@ public static class DependencyInjection
 
         services.AddSingleton<ISaftHeaderReader, SaftHeaderReader>();
         services.AddSingleton<ISaftAccountsReader, SaftAccountsReader>();
+        services.AddSingleton<ISaftEntriesReader, SaftEntriesReader>();
 
         return services;
     }

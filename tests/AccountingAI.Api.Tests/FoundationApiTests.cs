@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-50");
+        StringAssert.Contains(payload, "F1-51");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -696,6 +696,22 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, noAccountsResponse.StatusCode);
         StringAssert.Contains(noAccountsPayload, "\"fileAccountCount\":0");
         Assert.AreEqual(HttpStatusCode.NotFound, forbiddenResponse.StatusCode);
+
+        const string entriesPath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/saft/entries-preview";
+        using var entriesResponse = await client
+            .PostAsync(entriesPath, new StringContent(SaftDocumentWithEntries(), Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+        var entriesPayload = await entriesResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, entriesResponse.StatusCode);
+        StringAssert.Contains(entriesPayload, "\"hasEntries\":true");
+        StringAssert.Contains(entriesPayload, "\"transactionCount\":2");
+        StringAssert.Contains(entriesPayload, "\"balanced\":true");
+        StringAssert.Contains(entriesPayload, "\"code\":\"COMPRAS\"");
+        StringAssert.Contains(entriesPayload, "\"exists\":true");
+        StringAssert.Contains(entriesPayload, "\"code\":\"NOVO\"");
+        StringAssert.Contains(entriesPayload, "\"exists\":false");
     }
 
     private static string SaftDocument(string taxNumber, string basis) =>
@@ -738,6 +754,42 @@ public sealed class FoundationApiTests
         </AuditFile>
         """;
     }
+
+    private static string SaftDocumentWithEntries() =>
+        """
+        <?xml version="1.0" encoding="utf-8"?>
+        <AuditFile xmlns="urn:OECD:StandardAuditFile-Tax:PT_1.04_01">
+          <Header><AuditFileVersion>1.04_01</AuditFileVersion></Header>
+          <MasterFiles />
+          <GeneralLedgerEntries>
+            <NumberOfEntries>2</NumberOfEntries>
+            <TotalDebit>300.00</TotalDebit>
+            <TotalCredit>300.00</TotalCredit>
+            <Journal>
+              <JournalID>COMPRAS</JournalID>
+              <Description>Diário de compras</Description>
+              <Transaction TransactionID="C 1">
+                <TransactionDate>2026-02-10</TransactionDate>
+                <Lines>
+                  <DebitLine><AccountID>6221</AccountID><DebitAmount><Amount>200.00</Amount></DebitAmount></DebitLine>
+                  <CreditLine><AccountID>2211001</AccountID><CreditAmount><Amount>200.00</Amount></CreditAmount></CreditLine>
+                </Lines>
+              </Transaction>
+            </Journal>
+            <Journal>
+              <JournalID>NOVO</JournalID>
+              <Description>Diário só do ficheiro</Description>
+              <Transaction TransactionID="N 1">
+                <TransactionDate>2026-09-01</TransactionDate>
+                <Lines>
+                  <DebitLine><AccountID>6221</AccountID><DebitAmount><Amount>100.00</Amount></DebitAmount></DebitLine>
+                  <CreditLine><AccountID>2211001</AccountID><CreditAmount><Amount>100.00</Amount></CreditAmount></CreditLine>
+                </Lines>
+              </Transaction>
+            </Journal>
+          </GeneralLedgerEntries>
+        </AuditFile>
+        """;
 
     private sealed class FoundationApiFactory(
         string? connectionString = null,

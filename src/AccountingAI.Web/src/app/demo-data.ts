@@ -365,6 +365,18 @@ export type SaftAccountsImport = {
   created: { code: string; name: string; parentCode: string | null; allowsPosting: boolean }[]
 }
 
+export type SaftEntriesPreview = {
+  hasEntries: boolean
+  transactionCount: number
+  declaredEntryCount: number | null
+  totalDebit: number | null
+  totalCredit: number | null
+  balanced: boolean
+  fromDate: string | null
+  toDate: string | null
+  journals: { code: string; description: string; transactionCount: number; exists: boolean }[]
+}
+
 // Extração do plano geral de contas no cliente, usada apenas no modo de
 // demonstração. Namespace-agnóstica e a parar antes dos movimentos, como o leitor
 // do servidor.

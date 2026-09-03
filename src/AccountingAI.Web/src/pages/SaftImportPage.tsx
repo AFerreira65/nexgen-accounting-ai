@@ -1,7 +1,7 @@
 import { CircleAlert, CircleCheck, Database, FileUp, Info } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
-import type { SaftAccountsImport, SaftAccountsPreview, SaftCompanyCreation, SaftInspection } from '../app/demo-data'
+import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesPreview, type SaftInspection } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
 const REGIONS: { value: 'Mainland' | 'Azores' | 'Madeira'; label: string }[] = [
@@ -142,6 +142,54 @@ function AccountsPreviewPanel({ companyId, file }: { companyId: string; file: Fi
   </section>
 }
 
+function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: File | null }) {
+  const { previewSaftEntries } = useWorkContext()
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [preview, setPreview] = useState<SaftEntriesPreview | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => { setState('idle'); setPreview(null); setError('') }, [companyId, file])
+
+  async function run() {
+    if (!file) return
+    setState('loading'); setError('')
+    try {
+      setPreview(await previewSaftEntries(companyId, file))
+      setState('done')
+    } catch (previewError) {
+      setState('error')
+      setError(previewError instanceof Error ? previewError.message : 'Não foi possível ler os movimentos.')
+    }
+  }
+
+  return <section className="panel">
+    <div className="panel-heading"><div><h2>Movimentos do ficheiro</h2><p>Resumo do bloco <code>GeneralLedgerEntries</code> — leitura em streaming, sem carregar as linhas. A importação dos movimentos ainda não está disponível.</p></div></div>
+    <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
+      <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A ler…' : 'Pré-visualizar movimentos'}</button>
+    </div>
+    {state === 'error' && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
+    {preview && (preview.hasEntries
+      ? <>
+          <div className="settings-grid">
+            <div className="metadata-strip"><small>Transações</small><strong>{preview.transactionCount}{preview.declaredEntryCount !== null && preview.declaredEntryCount !== preview.transactionCount ? ` (declaradas ${preview.declaredEntryCount})` : ''}</strong></div>
+            <div className="metadata-strip"><small>Total de débito</small><strong>{preview.totalDebit !== null ? euro.format(preview.totalDebit) : '—'}</strong></div>
+            <div className="metadata-strip"><small>Total de crédito</small><strong>{preview.totalCredit !== null ? euro.format(preview.totalCredit) : '—'}</strong></div>
+            <div className="metadata-strip"><small>Período</small><strong>{preview.fromDate ?? '—'} a {preview.toDate ?? '—'}</strong></div>
+          </div>
+          <p className={`save-status ${preview.balanced ? 'success' : 'error'}`}>{preview.balanced ? <CircleCheck size={15} /> : <CircleAlert size={15} />} {preview.balanced ? 'Débito e crédito declarados equilibrados.' : 'Débito e crédito declarados diferentes.'}</p>
+          <div className="table-wrap"><table><thead><tr><th>Diário</th><th>Descrição</th><th className="numeric">Transações</th><th>Situação</th></tr></thead><tbody>
+            {preview.journals.map((journal) => <tr key={journal.code}>
+              <td className="primary-cell">{journal.code}</td>
+              <td>{journal.description || '—'}</td>
+              <td className="numeric">{journal.transactionCount}</td>
+              <td><span className={`badge ${journal.exists ? 'success' : 'warning'}`}>{journal.exists ? 'Já existe' : 'Novo'}</span></td>
+            </tr>)}
+          </tbody></table></div>
+        </>
+      : <p className="save-status"><Info size={15} /> O ficheiro não tem movimentos (bloco <code>GeneralLedgerEntries</code>).</p>)}
+  </section>
+}
+
 export function SaftImportPage() {
   const { inspectSaft, source } = useWorkContext()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -205,6 +253,7 @@ export function SaftImportPage() {
               <p className="save-status"><Info size={15} /> A importação dos movimentos do ficheiro ainda não está disponível.</p>
             </section>
             {result.match.companyId && <AccountsPreviewPanel companyId={result.match.companyId} file={file} />}
+            {result.match.companyId && source === 'database' && <EntriesPreviewPanel companyId={result.match.companyId} file={file} />}
           </>
         : <CompanyProposal inspection={result} />}
     </>}
