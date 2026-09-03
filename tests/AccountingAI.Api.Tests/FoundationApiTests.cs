@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-39");
+        StringAssert.Contains(payload, "F1-40");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -245,6 +245,14 @@ public sealed class FoundationApiTests
             .GetAsync($"{mainland}/journal-report?from=ontem").ConfigureAwait(false);
         var badDateReportPayload = await badDateReport.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+        using var accountReport = await client
+            .GetAsync($"{mainland}/journal-report?account=6221").ConfigureAwait(false);
+        var accountReportPayload = await accountReport.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var missingAccountReport = await client
+            .GetAsync($"{mainland}/journal-report?account=NAO-EXISTE").ConfigureAwait(false);
+        var missingAccountReportPayload = await missingAccountReport.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         using var datedLedger = await client
             .GetAsync($"{mainland}/accounts/6221/ledger?from=2026-08-01").ConfigureAwait(false);
         var datedLedgerPayload = await datedLedger.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -290,6 +298,9 @@ public sealed class FoundationApiTests
         StringAssert.Contains(afterDateReportPayload, "\"entries\":[]");
         Assert.AreEqual(HttpStatusCode.BadRequest, badDateReport.StatusCode);
         StringAssert.Contains(badDateReportPayload, "Data inicial");
+        Assert.AreEqual(HttpStatusCode.OK, accountReport.StatusCode);
+        StringAssert.Contains(accountReportPayload, "COMP-2026-00842");
+        StringAssert.Contains(missingAccountReportPayload, "\"entries\":[]");
         Assert.AreEqual(HttpStatusCode.OK, datedLedger.StatusCode);
         StringAssert.Contains(datedLedgerPayload, "\"openingBalance\"");
         Assert.AreEqual(HttpStatusCode.OK, earlyTrialBalance.StatusCode);

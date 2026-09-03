@@ -831,6 +831,19 @@ public sealed class SqlServerMigrationTests
                         new DateOnly(2027, 1, 1), null)
                     .ConfigureAwait(false);
                 Assert.HasCount(0, afterYear.Entries);
+
+                // Livro diário por conta movimentada.
+                var byAccount = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, null, null, null, default, "6221")
+                    .ConfigureAwait(false);
+                Assert.IsTrue(byAccount.Entries.Count >= 1);
+                Assert.IsTrue(byAccount.Entries.All(entry => entry.Lines.Any(line => line.AccountCode == "6221")));
+                Assert.IsTrue(byAccount.Entries.Any(entry => entry.Reference == "COMP-2026-00842"));
+
+                var byMissingAccount = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, null, null, null, default, "NAO-EXISTE")
+                    .ConfigureAwait(false);
+                Assert.HasCount(0, byMissingAccount.Entries);
             }
 
             await using (var closingScope = services.CreateAsyncScope())

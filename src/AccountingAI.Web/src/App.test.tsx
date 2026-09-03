@@ -188,6 +188,11 @@ describe('App', () => {
     expect(clickSpy).toHaveBeenCalledTimes(1)
     clickSpy.mockRestore()
 
+    fireEvent.change(screen.getByLabelText('Conta'), { target: { value: '7211' } })
+    expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'VEND 2026 00327' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Conta'), { target: { value: '' } })
+
     fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-09-01' } })
     expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
     expect(screen.getByText('Sem lançamentos para os filtros escolhidos.')).toBeInTheDocument()

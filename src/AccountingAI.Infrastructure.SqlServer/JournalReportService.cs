@@ -29,8 +29,8 @@ public sealed record JournalReport(
 
 /// <summary>
 /// Livro diário: lançamentos de uma empresa por ordem cronológica, com as linhas
-/// e os totais, opcionalmente filtrados por diário, tipo de documento, exercício e
-/// intervalo de datas. Exclui sempre os lançamentos anulados.
+/// e os totais, opcionalmente filtrados por diário, tipo de documento, exercício,
+/// intervalo de datas e conta movimentada. Exclui sempre os lançamentos anulados.
 /// </summary>
 public sealed class JournalReportService(AccountingDbContext context)
 {
@@ -41,7 +41,8 @@ public sealed class JournalReportService(AccountingDbContext context)
         int? year,
         DateOnly? fromDate = null,
         DateOnly? toDate = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? accountCode = null)
     {
         var query = context.JournalEntries
             .AsNoTracking()
@@ -77,6 +78,12 @@ public sealed class JournalReportService(AccountingDbContext context)
         if (toDate is not null)
         {
             query = query.Where(entry => entry.EntryDate <= toDate.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(accountCode))
+        {
+            var normalizedAccount = accountCode.Trim().ToUpperInvariant();
+            query = query.Where(entry => entry.Lines.Any(line => line.Account.Code == normalizedAccount));
         }
 
         var entries = await query

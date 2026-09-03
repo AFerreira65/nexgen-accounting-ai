@@ -12,7 +12,8 @@ type ReportEntry = {
 }
 type Report = { totalDebit: number; totalCredit: number; entries: ReportEntry[] }
 
-function fromMovements(movements: Movement[], journal: string, documentType: string, year: string, from: string, to: string): Report {
+function fromMovements(movements: Movement[], journal: string, documentType: string, year: string, from: string, to: string, account: string): Report {
+  const normalizedAccount = account.trim().toUpperCase()
   const entries = movements
     .filter((movement) => movement.status !== 'Anulado')
     .filter((movement) => !journal || movement.journalId === journal)
@@ -20,6 +21,7 @@ function fromMovements(movements: Movement[], journal: string, documentType: str
     .filter((movement) => !year || movement.date.slice(0, 4) === year)
     .filter((movement) => !from || movement.date >= from)
     .filter((movement) => !to || movement.date <= to)
+    .filter((movement) => !normalizedAccount || movement.lines.some((line) => line.account.toUpperCase() === normalizedAccount))
     .map((movement) => ({
       id: movement.id, date: movement.date, journalId: movement.journalId, documentType: movement.documentType ?? null,
       document: movement.document, description: movement.description, status: movement.status, amount: movement.amount,
@@ -38,11 +40,12 @@ export function JournalReportPage() {
   const [year, setYear] = useState(String(activeCompany.settings.defaultFiscalYear ?? new Date().getFullYear()))
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
-  const [data, setData] = useState<Report>(() => fromMovements(movements, '', '', '', '', ''))
+  const [account, setAccount] = useState('')
+  const [data, setData] = useState<Report>(() => fromMovements(movements, '', '', '', '', '', ''))
 
   useEffect(() => {
     if (source !== 'database') {
-      setData(fromMovements(movements, journal, documentType, year, fromDate, toDate))
+      setData(fromMovements(movements, journal, documentType, year, fromDate, toDate, account))
       return
     }
     const params = new URLSearchParams()
@@ -51,13 +54,14 @@ export function JournalReportPage() {
     if (year) params.set('year', year)
     if (fromDate) params.set('from', fromDate)
     if (toDate) params.set('to', toDate)
+    if (account.trim()) params.set('account', account.trim())
     const controller = new AbortController()
     void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/journal-report?${params}`, { signal: controller.signal })
       .then(async (response) => response.ok ? await response.json() as Report : Promise.reject(new Error()))
       .then((result) => setData(result))
-      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, journal, documentType, year, fromDate, toDate)) })
+      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, journal, documentType, year, fromDate, toDate, account)) })
     return () => controller.abort()
-  }, [activeCompany.companyId, documentType, fromDate, journal, movements, source, toDate, user.id, year])
+  }, [account, activeCompany.companyId, documentType, fromDate, journal, movements, source, toDate, user.id, year])
 
   const balanced = useMemo(() => Math.round((data.totalDebit - data.totalCredit) * 100) === 0, [data.totalDebit, data.totalCredit])
 
@@ -80,6 +84,8 @@ export function JournalReportPage() {
       <label><span className="sr-only">Exercício</span><input type="number" min="2000" max="2200" value={year} onChange={(event) => setYear(event.target.value)} placeholder="Exercício" /></label>
       <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
+      <label><span className="sr-only">Conta</span><input aria-label="Conta" list="journal-report-accounts" value={account} onChange={(event) => setAccount(event.target.value)} placeholder="Conta" /></label>
+      <datalist id="journal-report-accounts">{accountingSetup.accounts.filter((item) => item.allowsPosting).map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</datalist>
       <span className="catalog-count">{data.entries.length} lançamentos</span>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={data.entries.length === 0}><Download size={15} /> Exportar CSV</button>
     </div>
