@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-28",
+    phase = "F1-33",
     status = "ready"
 }));
 
@@ -466,7 +466,7 @@ if (app.Environment.IsDevelopment())
         try
         {
             return Results.Ok(await numberSeries
-                .AdvanceAsync(companyId, series, year, request.NextNumber, cancellationToken)
+                .AdvanceAsync(companyId, series, year, request.NextNumber, request.Width, cancellationToken)
                 .ConfigureAwait(false));
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or TimeoutException)
@@ -1494,7 +1494,7 @@ public sealed record CreateDocumentTypeRequest(string Code, string Name, string 
 
 public sealed record UpdateDocumentTypeRequest(string Name, string DefaultJournalCode, bool IsActive);
 
-public sealed record UpdateDocumentNumberSeriesRequest(int NextNumber);
+public sealed record UpdateDocumentNumberSeriesRequest(int NextNumber, int? Width = null);
 
 public sealed record CreateSaftCompanyRequest(
     string TaxRegistrationNumber,

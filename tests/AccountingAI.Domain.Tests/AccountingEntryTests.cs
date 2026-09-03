@@ -216,6 +216,23 @@ public sealed class AccountingEntryTests
             new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), new string('X', 25), 2026));
     }
 
+    [TestMethod]
+    public void DocumentNumberSeriesFormatsWithConfigurableWidth()
+    {
+        var series = new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), "ftv", 2026);
+        Assert.AreEqual(5, series.Width);
+        Assert.AreEqual("FTV-2026-00007", series.Format(7));
+
+        series.ChangeWidth(3);
+        Assert.AreEqual("FTV-2026-007", series.Format(7));
+        Assert.AreEqual("FTV-2026-1234", series.Format(1234)); // não trunca acima da largura
+
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => series.ChangeWidth(0));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => series.ChangeWidth(13));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
+            new DocumentNumberSeries(Guid.NewGuid(), Guid.NewGuid(), "OD", 2026, width: 20));
+    }
+
     private static JournalEntry CreateEntry() => new(
         Guid.NewGuid(),
         Guid.NewGuid(),

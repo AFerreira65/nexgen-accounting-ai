@@ -334,7 +334,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
 
         var number = series.Take();
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return $"{prefix}-{year}-{number:D5}";
+        return series.Format(number);
     }
 
     private async Task<int> HighestExistingNumberAsync(Guid companyId, string prefix, int year, CancellationToken cancellationToken)

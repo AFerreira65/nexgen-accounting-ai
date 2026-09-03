@@ -130,6 +130,11 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(24)
                         .HasColumnType("nvarchar(24)");
 
+                    b.Property<int>("Width")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(5);
+
                     b.Property<int>("Year")
                         .HasColumnType("int");
 

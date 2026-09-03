@@ -72,6 +72,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260831215048_DocumentNumberSeries");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260903124046_DocumentNumberSeriesWidth");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -683,18 +686,37 @@ public sealed class SqlServerMigrationTests
                 var ftv = series.Single(item => item.Series == "FTV");
                 Assert.AreEqual(2, ftv.HighestIssuedNumber);
                 Assert.AreEqual(3, ftv.NextNumber);
+                Assert.AreEqual(5, ftv.Width);
                 Assert.AreEqual("Tipo de documento", ftv.Origin);
 
                 var advanced = await seriesService
-                    .AdvanceAsync(DevelopmentDataSeeder.DemoCompanyId, "ftv", 2026, 10)
+                    .AdvanceAsync(DevelopmentDataSeeder.DemoCompanyId, "ftv", 2026, 10, width: 6)
                     .ConfigureAwait(false);
                 Assert.AreEqual(10, advanced.NextNumber);
+                Assert.AreEqual(6, advanced.Width);
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                     await seriesService.AdvanceAsync(
                         DevelopmentDataSeeder.DemoCompanyId, "FTV", 2026, 9).ConfigureAwait(false));
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                     await seriesService.AdvanceAsync(
                         DevelopmentDataSeeder.DemoCompanyId, "DESCONHECIDA", 2026, 1).ConfigureAwait(false));
+                await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
+                    await seriesService.AdvanceAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "FTV", 2026, 10, width: 99).ConfigureAwait(false));
+
+                // O próximo lançamento FTV usa a nova largura; anula-se logo para não
+                // alterar os totais dos blocos seguintes.
+                var posting = seriesScope.ServiceProvider.GetRequiredService<JournalPostingService>();
+                var wide = await posting.PostAsync(
+                    DevelopmentDataSeeder.DemoCompanyId, string.Empty, new DateOnly(2026, 5, 5),
+                    "FT larga", "Fatura com largura 6", reviewed: false,
+                    [
+                        new JournalEntryLineInput("2111001", "Cliente", 10m, 0m),
+                        new JournalEntryLineInput("7211", "Serviço", 0m, 10m)
+                    ],
+                    documentTypeCode: "FTV").ConfigureAwait(false);
+                Assert.AreEqual("FTV-2026-000010", wide.Reference);
+                await posting.VoidAsync(DevelopmentDataSeeder.DemoCompanyId, wide.Reference).ConfigureAwait(false);
             }
 
             await using (var ledgerScope = services.CreateAsyncScope())

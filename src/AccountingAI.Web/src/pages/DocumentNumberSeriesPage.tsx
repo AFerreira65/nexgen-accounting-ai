@@ -8,6 +8,7 @@ type NumberSeries = {
   year: number
   highestIssuedNumber: number
   nextNumber: number
+  width: number
   hasCounter: boolean
   origin: string
   name: string
@@ -26,6 +27,7 @@ export function DocumentNumberSeriesPage() {
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<string | null>(null)
   const [requestedNext, setRequestedNext] = useState('')
+  const [requestedWidth, setRequestedWidth] = useState('5')
   const [status, setStatus] = useState<'idle' | 'loading' | 'saving' | 'error' | 'saved'>('idle')
   const [message, setMessage] = useState('')
 
@@ -51,6 +53,7 @@ export function DocumentNumberSeriesPage() {
       year,
       highestIssuedNumber: highest.get(series) ?? 0,
       nextNumber: (highest.get(series) ?? 0) + 1,
+      width: 5,
       hasCounter: false,
       ...definition,
     }))
@@ -96,6 +99,7 @@ export function DocumentNumberSeriesPage() {
   function beginEdit(row: NumberSeries) {
     setEditing(row.series)
     setRequestedNext(String(row.nextNumber))
+    setRequestedWidth(String(row.width ?? 5))
     setStatus('idle')
     setMessage('')
   }
@@ -103,22 +107,28 @@ export function DocumentNumberSeriesPage() {
   async function save(event: FormEvent, row: NumberSeries) {
     event.preventDefault()
     const nextNumber = Number(requestedNext)
+    const width = Number(requestedWidth)
     const minimum = Math.max(row.nextNumber, row.highestIssuedNumber + 1)
     if (!Number.isInteger(nextNumber) || nextNumber < minimum) {
       setStatus('error')
       setMessage(`O próximo número tem de ser um inteiro igual ou superior a ${minimum}.`)
       return
     }
+    if (!Number.isInteger(width) || width < 1 || width > 12) {
+      setStatus('error')
+      setMessage('A largura tem de ser um inteiro entre 1 e 12.')
+      return
+    }
 
     setStatus('saving')
     setMessage('')
     try {
-      let updated = { ...row, nextNumber, hasCounter: true }
+      let updated = { ...row, nextNumber, width, hasCounter: true }
       if (source === 'database') {
         const response = await fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/number-series/${encodeURIComponent(row.series)}/${row.year}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nextNumber }),
+          body: JSON.stringify({ nextNumber, width }),
         })
         if (!response.ok) throw new Error(await problemMessage(response))
         updated = await response.json() as NumberSeries
@@ -155,14 +165,15 @@ export function DocumentNumberSeriesPage() {
 
     <section className="panel">
       <div className="panel-heading"><div><h2>Controlo por série</h2><p>O contador só pode avançar. A emissão concorrente é serializada para evitar referências duplicadas.</p></div><ShieldCheck size={19} /></div>
-      <div className="table-wrap"><table><thead><tr><th>Série</th><th>Origem</th><th>Descrição</th><th className="numeric">Último emitido</th><th className="numeric">Próximo</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead>
+      <div className="table-wrap"><table><thead><tr><th>Série</th><th>Origem</th><th>Descrição</th><th className="numeric">Último emitido</th><th className="numeric">Próximo</th><th className="numeric">Largura</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead>
         <tbody>{filtered.map((row) => <tr key={row.series}>
           <td><strong>{row.series}</strong><small className="table-subline">{row.year}</small></td>
           <td>{row.originRoute ? <Link className="inline-link" to={row.originRoute}>{row.origin.includes('Diário') ? <Landmark size={14} /> : <FileText size={14} />}{row.origin}</Link> : row.origin}</td>
           <td>{row.name}</td><td className="numeric">{row.highestIssuedNumber || '—'}</td><td className="numeric strong">{row.nextNumber}</td>
+          <td className="numeric">{row.width ?? 5}<small className="table-subline">{row.series}-{row.year}-{String(row.nextNumber).padStart(row.width ?? 5, '0')}</small></td>
           <td><span className={`badge ${row.hasCounter ? 'success' : 'neutral'}`}>{row.hasCounter ? 'Persistido' : 'Por iniciar'}</span></td>
           <td>{editing === row.series
-            ? <form className="series-editor" onSubmit={(event) => void save(event, row)}><input aria-label={`Próximo número de ${row.series}`} type="number" min={Math.max(row.nextNumber, row.highestIssuedNumber + 1)} value={requestedNext} onChange={(event) => setRequestedNext(event.target.value)} autoFocus /><button className="button button-primary" type="submit" disabled={status === 'saving'}><Save size={14} />Guardar</button><button className="button button-secondary" type="button" onClick={() => setEditing(null)}>Cancelar</button></form>
+            ? <form className="series-editor" onSubmit={(event) => void save(event, row)}><input aria-label={`Próximo número de ${row.series}`} type="number" min={Math.max(row.nextNumber, row.highestIssuedNumber + 1)} value={requestedNext} onChange={(event) => setRequestedNext(event.target.value)} autoFocus /><input aria-label={`Largura de ${row.series}`} type="number" min="1" max="12" value={requestedWidth} onChange={(event) => setRequestedWidth(event.target.value)} /><button className="button button-primary" type="submit" disabled={status === 'saving'}><Save size={14} />Guardar</button><button className="button button-secondary" type="button" onClick={() => setEditing(null)}>Cancelar</button></form>
             : <button className="button button-secondary" type="button" onClick={() => beginEdit(row)}><ArrowUp size={14} />Avançar</button>}</td>
         </tr>)}</tbody>
       </table></div>

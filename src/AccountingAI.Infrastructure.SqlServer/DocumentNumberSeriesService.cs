@@ -9,6 +9,7 @@ public sealed record DocumentNumberSeriesState(
     int Year,
     int HighestIssuedNumber,
     int NextNumber,
+    int Width,
     bool HasCounter,
     string Origin,
     string Name,
@@ -99,6 +100,7 @@ public sealed class DocumentNumberSeriesService(AccountingDbContext context)
                     year,
                     highest,
                     counter?.NextNumber ?? highest + 1,
+                    counter?.Width ?? DocumentNumberSeries.DefaultWidth,
                     counter is not null,
                     item.Value.Origin,
                     item.Value.Name,
@@ -112,6 +114,7 @@ public sealed class DocumentNumberSeriesService(AccountingDbContext context)
         string series,
         int year,
         int nextNumber,
+        int? width = null,
         CancellationToken cancellationToken = default)
     {
         Validate(companyId, year);
@@ -119,6 +122,11 @@ public sealed class DocumentNumberSeriesService(AccountingDbContext context)
         if (nextNumber < 1)
         {
             throw new ArgumentOutOfRangeException(nameof(nextNumber), "O próximo número tem de ser positivo.");
+        }
+
+        if (width is < DocumentNumberSeries.MinWidth or > DocumentNumberSeries.MaxWidth)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width), $"A largura tem de estar entre {DocumentNumberSeries.MinWidth} e {DocumentNumberSeries.MaxWidth}.");
         }
 
         var configured = await context.AccountingDocumentTypes
@@ -157,12 +165,16 @@ public sealed class DocumentNumberSeriesService(AccountingDbContext context)
 
             if (counter is null)
             {
-                counter = new DocumentNumberSeries(Guid.NewGuid(), companyId, normalizedSeries, year, nextNumber);
+                counter = new DocumentNumberSeries(Guid.NewGuid(), companyId, normalizedSeries, year, nextNumber, width ?? DocumentNumberSeries.DefaultWidth);
                 context.DocumentNumberSeries.Add(counter);
             }
             else
             {
                 counter.AdvanceTo(nextNumber);
+                if (width is not null)
+                {
+                    counter.ChangeWidth(width.Value);
+                }
             }
 
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

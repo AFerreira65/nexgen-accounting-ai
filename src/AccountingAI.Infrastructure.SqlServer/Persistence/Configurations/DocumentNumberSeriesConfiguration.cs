@@ -13,6 +13,7 @@ internal sealed class DocumentNumberSeriesConfiguration
         builder.HasKey(item => item.Id);
         builder.Property(item => item.Series).HasMaxLength(24).IsRequired();
         builder.Property(item => item.NextNumber).IsRequired();
+        builder.Property(item => item.Width).IsRequired().HasDefaultValue(DocumentNumberSeries.DefaultWidth);
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.HasIndex(item => new { item.CompanyId, item.Series, item.Year }).IsUnique();
     }

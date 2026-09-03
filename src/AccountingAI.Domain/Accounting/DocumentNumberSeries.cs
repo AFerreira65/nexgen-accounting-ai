@@ -11,7 +11,11 @@ public sealed class DocumentNumberSeries
     {
     }
 
-    public DocumentNumberSeries(Guid id, Guid companyId, string series, int year, int nextNumber = 1)
+    public const int DefaultWidth = 5;
+    public const int MinWidth = 1;
+    public const int MaxWidth = 12;
+
+    public DocumentNumberSeries(Guid id, Guid companyId, string series, int year, int nextNumber = 1, int width = DefaultWidth)
     {
         if (id == Guid.Empty)
         {
@@ -40,11 +44,17 @@ public sealed class DocumentNumberSeries
             throw new ArgumentOutOfRangeException(nameof(nextNumber), nextNumber, "The next number must be positive.");
         }
 
+        if (width is < MinWidth or > MaxWidth)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width), width, $"The width must be between {MinWidth} and {MaxWidth}.");
+        }
+
         Id = id;
         CompanyId = companyId;
         Series = series.Trim().ToUpperInvariant();
         Year = year;
         NextNumber = nextNumber;
+        Width = width;
     }
 
     public Guid Id { get; private set; }
@@ -57,7 +67,23 @@ public sealed class DocumentNumberSeries
 
     public int NextNumber { get; private set; }
 
+    /// <summary>Largura de preenchimento do número na referência (`{SERIE}-{ANO}-{N}`).</summary>
+    public int Width { get; private set; } = DefaultWidth;
+
     public byte[] RowVersion { get; private set; } = [];
+
+    /// <summary>Formata a referência de um número desta série e exercício.</summary>
+    public string Format(int number) => $"{Series}-{Year}-{number.ToString(System.Globalization.CultureInfo.InvariantCulture).PadLeft(Width, '0')}";
+
+    public void ChangeWidth(int width)
+    {
+        if (width is < MinWidth or > MaxWidth)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width), width, $"The width must be between {MinWidth} and {MaxWidth}.");
+        }
+
+        Width = width;
+    }
 
     /// <summary>Devolve o número corrente e avança o contador.</summary>
     public int Take()
