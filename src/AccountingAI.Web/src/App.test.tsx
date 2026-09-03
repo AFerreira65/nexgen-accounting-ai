@@ -110,6 +110,23 @@ describe('App', () => {
     expect(within(screen.getByRole('link', { name: 'GERAL 2026 00001' }).closest('tr') as HTMLElement).getByText('Anulado')).toBeInTheDocument()
   })
 
+  it('advances fields with Enter and adds a line from the last field', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Novo lançamento/i }))
+
+    const account1 = screen.getByRole('combobox', { name: 'Conta da linha 1' })
+    fireEvent.keyDown(account1, { key: 'Enter' })
+    expect(screen.getByRole('textbox', { name: 'Descrição da linha 1' })).toHaveFocus()
+
+    expect(screen.queryByRole('combobox', { name: 'Conta da linha 3' })).not.toBeInTheDocument()
+    fireEvent.keyDown(screen.getByRole('spinbutton', { name: 'Crédito da linha 2' }), { key: 'Enter' })
+    const account3 = screen.getByRole('combobox', { name: 'Conta da linha 3' })
+    expect(account3).toBeInTheDocument()
+    expect(account3).toHaveFocus()
+  })
+
   it('numbers a movement by document type in demo mode', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)

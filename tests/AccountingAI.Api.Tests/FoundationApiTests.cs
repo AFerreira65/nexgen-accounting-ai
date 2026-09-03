@@ -215,7 +215,7 @@ public sealed class FoundationApiTests
         var datedReportPayload = await datedReport.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         using var afterDateReport = await client
-            .GetAsync($"{mainland}/journal-report?from=2026-09-01").ConfigureAwait(false);
+            .GetAsync($"{mainland}/journal-report?from=2099-01-01").ConfigureAwait(false);
         var afterDateReportPayload = await afterDateReport.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         using var badDateReport = await client
