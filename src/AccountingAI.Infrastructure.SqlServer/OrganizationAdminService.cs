@@ -44,7 +44,8 @@ public sealed class OrganizationAdminService(
         TaxRegion taxRegion,
         AccountingStandard accountingStandard,
         string baseCurrency,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Guid? associateUserId = null)
     {
         var normalizedTaxNumber = (taxRegistrationNumber ?? string.Empty).Trim().ToUpperInvariant();
         if (string.IsNullOrWhiteSpace(normalizedTaxNumber))
@@ -86,6 +87,20 @@ public sealed class OrganizationAdminService(
                 accountingStandard);
             context.Companies.Add(company);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            // Em desenvolvimento, associa o utilizador atual à empresa que acabou de
+            // criar para que ela apareça de imediato no seletor de empresa.
+            if (associateUserId is { } userId)
+            {
+                var userExists = await context.UserAccounts
+                    .AnyAsync(item => item.Id == userId, cancellationToken)
+                    .ConfigureAwait(false);
+                if (userExists)
+                {
+                    context.CompanyUsers.Add(new CompanyUser(company.Id, userId, CompanyUserRole.Owner));
+                    await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                }
+            }
 
             await provisioner.ProvisionAsync(company.Id, cancellationToken).ConfigureAwait(false);
 

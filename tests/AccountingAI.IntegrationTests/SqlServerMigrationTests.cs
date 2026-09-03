@@ -88,6 +88,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260903154133_ShortAccountCodesAreIntegration");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260903161831_AssociateDemoUserWithMemberlessCompanies");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -509,9 +512,14 @@ public sealed class SqlServerMigrationTests
 
                 var adminCompany = await admin
                     .CreateCompanyAsync(firmId, "Empresa de Gabinete, Lda.", "515222000", TaxRegion.Mainland,
-                        AccountingStandard.SncGeneral, "EUR")
+                        AccountingStandard.SncGeneral, "EUR", associateUserId: DevelopmentDataSeeder.DemoUserId)
                     .ConfigureAwait(false);
                 Assert.AreEqual("515222000", adminCompany.TaxRegistrationNumber);
+                var adminCompanyMembership = await context.CompanyUsers.AsNoTracking()
+                    .SingleAsync(item => item.CompanyId == adminCompany.Id && item.UserId == DevelopmentDataSeeder.DemoUserId)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(CompanyUserRole.Owner, adminCompanyMembership.Role);
+                Assert.IsTrue(adminCompanyMembership.IsActive);
 
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                     await admin.CreateCompanyAsync(firmId, "Duplicada", "515222000", TaxRegion.Mainland,

@@ -17,7 +17,7 @@ async function problem(response: Response) {
 }
 
 export function OrganizationPage() {
-  const { source } = useWorkContext()
+  const { source, refreshWorkContext } = useWorkContext()
   const database = source === 'database'
   const [firms, setFirms] = useState<OrgFirm[]>([])
   const [loading, setLoading] = useState(true)
@@ -28,7 +28,10 @@ export function OrganizationPage() {
     | null
   >(null)
 
-  const reload = useCallback(() => setRevision((value) => value + 1), [])
+  const reload = useCallback(() => {
+    setRevision((value) => value + 1)
+    void refreshWorkContext() // as empresas novas aparecem no seletor de empresa
+  }, [refreshWorkContext])
 
   useEffect(() => {
     if (!database) { setLoading(false); return }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftInspection, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -58,6 +58,7 @@ type WorkContextValue = WorkContextData & {
   taxonomyCatalog: TaxonomyCatalog
   movements: Movement[]
   refreshAccounting: () => void
+  refreshWorkContext: () => Promise<void>
   selectCompany: (companyId: string) => void
   saveSettings: (settings: CompanySettings) => Promise<void>
   createAccount: (input: NewAccountInput) => Promise<void>
@@ -124,11 +125,9 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
   const [accountingRevision, setAccountingRevision] = useState(0)
   const [activeCompanyId, setActiveCompanyId] = useState(storedCompanyId() ?? fallbackContext.companies[0].companyId)
 
-  useEffect(() => {
-    if (import.meta.env.MODE === 'test') return
-
-    const controller = new AbortController()
-    void fetch(`/api/v1/development/work-context/${demoUserId}`, { signal: controller.signal })
+  const loadWorkContext = useCallback((signal?: AbortSignal) => {
+    if (import.meta.env.MODE === 'test') return Promise.resolve()
+    return fetch(`/api/v1/development/work-context/${demoUserId}`, { signal })
       .then(async (response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         return await response.json() as WorkContextData
@@ -143,9 +142,13 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         if (error instanceof DOMException && error.name === 'AbortError') return
         setSource('demonstration')
       })
-
-    return () => controller.abort()
   }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void loadWorkContext(controller.signal)
+    return () => controller.abort()
+  }, [loadWorkContext])
 
   const activeCompany = data.companies.find((company) => company.companyId === activeCompanyId) ?? data.companies[0]
 
@@ -273,6 +276,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
     taxonomyCatalog,
     movements: accountingMovements,
     refreshAccounting: () => setAccountingRevision((revision) => revision + 1),
+    refreshWorkContext: () => loadWorkContext() ?? Promise.resolve(),
     selectCompany: (companyId) => {
       if (!data.companies.some((company) => company.companyId === companyId)) return
       setActiveCompanyId(companyId)
@@ -589,7 +593,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as SaftCompanyCreation
     },
-  }), [accountingLoading, accountingMovements, accountingSetup, accountingSource, activeCompany, data, setupLoading, setupSource, source, taxonomyCatalog, taxonomyReview])
+  }), [accountingLoading, accountingMovements, accountingSetup, accountingSource, activeCompany, data, loadWorkContext, setupLoading, setupSource, source, taxonomyCatalog, taxonomyReview])
 
   return <Context.Provider value={value}>{children}</Context.Provider>
 }

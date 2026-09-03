@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-48",
+    phase = "F1-50",
     status = "ready"
 }));
 
@@ -1393,7 +1393,8 @@ if (app.Environment.IsDevelopment())
                     region,
                     standard,
                     string.IsNullOrWhiteSpace(request.BaseCurrency) ? "EUR" : request.BaseCurrency!,
-                    cancellationToken)
+                    cancellationToken,
+                    associateUserId: DevelopmentDataSeeder.DemoUserId)
                 .ConfigureAwait(false);
             return Results.Ok(company);
         }
