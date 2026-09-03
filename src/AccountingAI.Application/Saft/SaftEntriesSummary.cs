@@ -39,3 +39,32 @@ public sealed record SaftEntriesReconciliation(
     DateOnly? FromDate,
     DateOnly? ToDate,
     IReadOnlyList<SaftEntriesJournalStatus> Journals);
+
+/// <summary>Uma linha de uma transação do SAF-T: uma conta e um débito ou um crédito.</summary>
+public sealed record SaftTransactionLine(string AccountCode, string Description, decimal Debit, decimal Credit);
+
+/// <summary>
+/// Uma transação completa do bloco <c>GeneralLedgerEntries</c>, com as linhas. É lida
+/// em streaming, uma transação de cada vez, para não carregar o ficheiro inteiro.
+/// </summary>
+public sealed record SaftTransaction(
+    string JournalCode,
+    string JournalDescription,
+    string TransactionId,
+    DateOnly? Date,
+    string Description,
+    string DocumentReference,
+    IReadOnlyList<SaftTransactionLine> Lines);
+
+/// <summary>Uma transação do ficheiro que não foi importada e a razão (em pt-PT).</summary>
+public sealed record SaftEntrySkipped(string TransactionId, string Reason);
+
+/// <summary>
+/// Resultado da importação dos movimentos de um SAF-T para uma empresa: quantos
+/// lançamentos entraram, quantos foram saltados (com a razão), e os diários criados.
+/// </summary>
+public sealed record SaftEntriesImportResult(
+    int ImportedCount,
+    int SkippedCount,
+    IReadOnlyList<string> JournalsCreated,
+    IReadOnlyList<SaftEntrySkipped> Skipped);

@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-52",
+    phase = "F1-53",
     status = "ready"
 }));
 
@@ -1345,6 +1345,46 @@ if (app.Environment.IsDevelopment())
             });
         }
         catch (SaftFileFormatException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["saft"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/entries-import", async (
+        Guid userId,
+        Guid companyId,
+        HttpRequest request,
+        SaftEntriesImportService import,
+        CancellationToken cancellationToken) =>
+    {
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = null;
+        }
+
+        try
+        {
+            var result = await import
+                .ImportAsync(userId, companyId, request.Body, cancellationToken)
+                .ConfigureAwait(false);
+            if (result is null)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(new
+            {
+                result.ImportedCount,
+                result.SkippedCount,
+                result.JournalsCreated,
+                Skipped = result.Skipped.Select(item => new { item.TransactionId, item.Reason })
+            });
+        }
+        catch (Exception exception) when (exception is SaftFileFormatException or ArgumentException or InvalidOperationException)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {

@@ -8,4 +8,11 @@ namespace AccountingAI.Application.Saft;
 public interface ISaftEntriesReader
 {
     Task<SaftEntriesSummary> ReadSummaryAsync(Stream content, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lê as transações do bloco <c>GeneralLedgerEntries</c> com as linhas, uma
+    /// transação de cada vez (subárvore por subárvore). Um ficheiro sem o bloco
+    /// devolve uma lista vazia.
+    /// </summary>
+    Task<IReadOnlyList<SaftTransaction>> ReadTransactionsAsync(Stream content, CancellationToken cancellationToken = default);
 }

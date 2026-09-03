@@ -1,7 +1,7 @@
 import { CircleAlert, CircleCheck, Database, FileUp, Info } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
-import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesPreview, type SaftInspection } from '../app/demo-data'
+import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
 const REGIONS: { value: 'Mainland' | 'Azores' | 'Madeira'; label: string }[] = [
@@ -57,7 +57,7 @@ function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
         <div className="metadata-strip"><small>Diários</small><strong>{created.journalCount}</strong></div>
         <div className="metadata-strip"><small>Tipos de documento</small><strong>{created.documentTypeCount}</strong></div>
       </div>
-      <p className="save-status"><Info size={15} /> A empresa e os cadastros ficam disponíveis no seletor após recarregar. A leitura e a importação dos movimentos do ficheiro ainda não estão disponíveis.</p>
+      <p className="save-status"><Info size={15} /> A empresa e os cadastros ficam disponíveis no seletor após recarregar. Depois disso, volte a escolher o ficheiro para pré-visualizar e importar o plano de contas e os movimentos.</p>
     </section>
   }
 
@@ -143,12 +143,14 @@ function AccountsPreviewPanel({ companyId, file }: { companyId: string; file: Fi
 }
 
 function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: File | null }) {
-  const { previewSaftEntries } = useWorkContext()
+  const { previewSaftEntries, importSaftEntries, source } = useWorkContext()
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [preview, setPreview] = useState<SaftEntriesPreview | null>(null)
   const [error, setError] = useState('')
+  const [importState, setImportState] = useState<'idle' | 'importing' | 'done'>('idle')
+  const [imported, setImported] = useState<SaftEntriesImport | null>(null)
 
-  useEffect(() => { setState('idle'); setPreview(null); setError('') }, [companyId, file])
+  useEffect(() => { setState('idle'); setPreview(null); setError(''); setImportState('idle'); setImported(null) }, [companyId, file])
 
   async function run() {
     if (!file) return
@@ -162,11 +164,28 @@ function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: Fil
     }
   }
 
+  async function importEntries() {
+    if (!file) return
+    setImportState('importing'); setError('')
+    try {
+      const result = await importSaftEntries(companyId, file)
+      setImported(result)
+      setImportState('done')
+      setPreview(await previewSaftEntries(companyId, file))
+    } catch (importError) {
+      setImportState('idle')
+      setState('error')
+      setError(importError instanceof Error ? importError.message : 'Não foi possível importar os movimentos.')
+    }
+  }
+
   return <section className="panel">
-    <div className="panel-heading"><div><h2>Movimentos do ficheiro</h2><p>Resumo do bloco <code>GeneralLedgerEntries</code> — leitura em streaming, sem carregar as linhas. A importação dos movimentos ainda não está disponível.</p></div></div>
+    <div className="panel-heading"><div><h2>Movimentos do ficheiro</h2><p>Resumo do bloco <code>GeneralLedgerEntries</code> — leitura em streaming. A importação usa o <code>TransactionID</code> do ficheiro como referência, cria os diários em falta e não duplica ao reimportar.</p></div></div>
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
       <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A ler…' : 'Pré-visualizar movimentos'}</button>
+      {preview && preview.hasEntries && preview.transactionCount > 0 && source === 'database' && <button className="button button-primary" type="button" disabled={importState === 'importing'} onClick={() => void importEntries()}>{importState === 'importing' ? 'A importar…' : `Importar os ${preview.transactionCount} movimentos`}</button>}
     </div>
+    {imported && <p className={`save-status ${imported.skippedCount > 0 ? 'warning' : 'success'}`}>{imported.skippedCount > 0 ? <CircleAlert size={15} /> : <CircleCheck size={15} />} {imported.importedCount} {imported.importedCount === 1 ? 'movimento importado' : 'movimentos importados'}{imported.journalsCreated.length > 0 ? `, ${imported.journalsCreated.length} ${imported.journalsCreated.length === 1 ? 'diário criado' : 'diários criados'} (${imported.journalsCreated.join(', ')})` : ''}{imported.skippedCount > 0 ? `, ${imported.skippedCount} ${imported.skippedCount === 1 ? 'saltado' : 'saltados'}` : ''}.</p>}
     {state === 'error' && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
     {preview && (preview.hasEntries
       ? <>
@@ -185,6 +204,12 @@ function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: Fil
               <td><span className={`badge ${journal.exists ? 'success' : 'warning'}`}>{journal.exists ? 'Já existe' : 'Novo'}</span></td>
             </tr>)}
           </tbody></table></div>
+          {imported && imported.skipped.length > 0 && <div className="table-wrap"><table><thead><tr><th>Transação saltada</th><th>Motivo</th></tr></thead><tbody>
+            {imported.skipped.map((entry) => <tr key={entry.transactionId}>
+              <td className="primary-cell">{entry.transactionId}</td>
+              <td>{entry.reason}</td>
+            </tr>)}
+          </tbody></table></div>}
         </>
       : <p className="save-status"><Info size={15} /> O ficheiro não tem movimentos (bloco <code>GeneralLedgerEntries</code>).</p>)}
   </section>
@@ -217,7 +242,7 @@ export function SaftImportPage() {
 
   return <div className="page-stack">
     <header className="page-heading">
-      <div><p className="eyebrow">Importação contabilística</p><h1>Importar SAF-T</h1><p>Leitura do cabeçalho, correspondência da empresa pelo NIF, criação e provisionamento quando não existe, e pré-visualização do plano de contas do ficheiro. A importação dos movimentos ainda não está disponível.</p></div>
+      <div><p className="eyebrow">Importação contabilística</p><h1>Importar SAF-T</h1><p>Leitura do cabeçalho, correspondência da empresa pelo NIF, criação e provisionamento quando não existe, e pré-visualização e importação do plano de contas e dos movimentos do ficheiro.</p></div>
       <span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Ligado ao SQL Server' : 'Modo de demonstração'}</span>
     </header>
 
@@ -250,7 +275,7 @@ export function SaftImportPage() {
             <section className="panel">
               <div className="panel-heading"><div><h2>Correspondência de empresa</h2><p>Pesquisa pelo NIF do ficheiro entre as empresas a que tem acesso.</p></div><span className="success"><CircleCheck /></span></div>
               <p>Empresa encontrada: <strong>{result.match.legalName}</strong>{result.match.accountingStandard ? ` · ${accountingStandardName(result.match.accountingStandard)}` : ''}{result.match.accountingSetupVersion ? ` · ${result.match.accountingSetupVersion}` : ''}.</p>
-              <p className="save-status"><Info size={15} /> A importação dos movimentos do ficheiro ainda não está disponível.</p>
+              <p className="save-status"><Info size={15} /> Importe primeiro o plano de contas do ficheiro; só depois os movimentos, para que as contas referidas existam.</p>
             </section>
             {result.match.companyId && <AccountsPreviewPanel companyId={result.match.companyId} file={file} />}
             {result.match.companyId && source === 'database' && <EntriesPreviewPanel companyId={result.match.companyId} file={file} />}

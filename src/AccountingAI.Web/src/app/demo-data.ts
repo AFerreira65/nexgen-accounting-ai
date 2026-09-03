@@ -377,6 +377,13 @@ export type SaftEntriesPreview = {
   journals: { code: string; description: string; transactionCount: number; exists: boolean }[]
 }
 
+export type SaftEntriesImport = {
+  importedCount: number
+  skippedCount: number
+  journalsCreated: string[]
+  skipped: { transactionId: string; reason: string }[]
+}
+
 // Extração do plano geral de contas no cliente, usada apenas no modo de
 // demonstração. Namespace-agnóstica e a parar antes dos movimentos, como o leitor
 // do servidor.

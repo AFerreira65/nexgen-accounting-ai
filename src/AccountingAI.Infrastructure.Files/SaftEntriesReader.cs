@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Xml;
+using System.Xml.Linq;
 using AccountingAI.Application.Saft;
 
 namespace AccountingAI.Infrastructure.Files;
@@ -149,6 +150,158 @@ public sealed class SaftEntriesReader : ISaftEntriesReader
             fromDate,
             toDate,
             journals.Select(item => new SaftJournalSummary(item.Code, item.Description, item.TransactionCount)).ToList());
+    }
+
+    public async Task<IReadOnlyList<SaftTransaction>> ReadTransactionsAsync(Stream content, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+
+        var settings = new XmlReaderSettings
+        {
+            Async = true,
+            CloseInput = false,
+            DtdProcessing = DtdProcessing.Prohibit,
+            IgnoreComments = true,
+            IgnoreProcessingInstructions = true,
+            IgnoreWhitespace = true,
+            MaxCharactersFromEntities = 0,
+            XmlResolver = null
+        };
+
+        var transactions = new List<SaftTransaction>();
+        var currentJournalCode = string.Empty;
+        var currentJournalDescription = string.Empty;
+        var journalDescriptionPending = false;
+        var inEntries = false;
+
+        try
+        {
+            using var reader = XmlReader.Create(content, settings);
+            var moved = await reader.ReadAsync().ConfigureAwait(false);
+            while (moved)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (reader.NodeType == XmlNodeType.EndElement &&
+                    reader.LocalName.Equals("GeneralLedgerEntries", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+
+                if (reader.NodeType != XmlNodeType.Element)
+                {
+                    moved = await reader.ReadAsync().ConfigureAwait(false);
+                    continue;
+                }
+
+                // Alguns ramos consomem o conteúdo do elemento (o que já deixa o
+                // leitor no nó seguinte); nesse caso não se avança de novo no topo.
+                var consumed = false;
+                switch (reader.LocalName)
+                {
+                    case "GeneralLedgerEntries":
+                        inEntries = true;
+                        break;
+                    case "Journal" when inEntries:
+                        currentJournalCode = string.Empty;
+                        currentJournalDescription = string.Empty;
+                        journalDescriptionPending = false;
+                        break;
+                    case "JournalID" when inEntries:
+                        currentJournalCode = (await reader.ReadElementContentAsStringAsync().ConfigureAwait(false)).Trim();
+                        journalDescriptionPending = true;
+                        consumed = true;
+                        break;
+                    case "Description" when inEntries && journalDescriptionPending:
+                        currentJournalDescription = (await reader.ReadElementContentAsStringAsync().ConfigureAwait(false)).Trim();
+                        journalDescriptionPending = false;
+                        consumed = true;
+                        break;
+                    case "Transaction" when inEntries:
+                        journalDescriptionPending = false;
+                        using (var subtree = reader.ReadSubtree())
+                        {
+                            var element = await XElement
+                                .LoadAsync(subtree, LoadOptions.None, cancellationToken)
+                                .ConfigureAwait(false);
+                            transactions.Add(BuildTransaction(element, currentJournalCode, currentJournalDescription));
+                        }
+                        // O leitor exterior fica no fim do elemento <Transaction>.
+                        break;
+                }
+
+                moved = consumed
+                    ? reader.ReadState == ReadState.Interactive
+                    : await reader.ReadAsync().ConfigureAwait(false);
+            }
+        }
+        catch (XmlException exception)
+        {
+            throw new SaftFileFormatException($"O ficheiro não é um XML SAF-T legível: {exception.Message}");
+        }
+
+        return transactions;
+    }
+
+    private static SaftTransaction BuildTransaction(XElement transaction, string journalCode, string journalDescription)
+    {
+        // O SAF-T (PT) 1.04 traz o TransactionID como elemento filho; alguns
+        // ficheiros e ferramentas usam-no como atributo de <Transaction>.
+        var transactionId = (ChildValue(transaction, "TransactionID")
+            ?? transaction.Attribute("TransactionID")?.Value
+            ?? string.Empty).Trim();
+        var date = ParseDate(ChildValue(transaction, "TransactionDate") ?? string.Empty);
+        var description = (ChildValue(transaction, "Description") ?? string.Empty).Trim();
+        var archival = (ChildValue(transaction, "DocArchivalNumber") ?? string.Empty).Trim();
+
+        var lines = new List<SaftTransactionLine>();
+        var linesElement = transaction.Elements().FirstOrDefault(element => element.Name.LocalName == "Lines");
+        if (linesElement is not null)
+        {
+            foreach (var lineElement in linesElement.Elements())
+            {
+                var isDebit = lineElement.Name.LocalName.Equals("DebitLine", StringComparison.OrdinalIgnoreCase);
+                var isCredit = lineElement.Name.LocalName.Equals("CreditLine", StringComparison.OrdinalIgnoreCase);
+                if (!isDebit && !isCredit)
+                {
+                    continue;
+                }
+
+                var accountCode = (ChildValue(lineElement, "AccountID") ?? string.Empty).Trim();
+                var lineDescription = (ChildValue(lineElement, "Description") ?? string.Empty).Trim();
+                var amount = ParseAmount(lineElement.Elements()
+                    .FirstOrDefault(element => element.Name.LocalName == (isDebit ? "DebitAmount" : "CreditAmount")));
+                lines.Add(new SaftTransactionLine(
+                    accountCode,
+                    lineDescription,
+                    isDebit ? amount : 0m,
+                    isCredit ? amount : 0m));
+            }
+        }
+
+        return new SaftTransaction(
+            journalCode,
+            journalDescription,
+            transactionId,
+            date,
+            description,
+            archival.Length > 0 ? archival : transactionId,
+            lines);
+    }
+
+    private static string? ChildValue(XElement parent, string localName) =>
+        parent.Elements().FirstOrDefault(element => element.Name.LocalName.Equals(localName, StringComparison.OrdinalIgnoreCase))?.Value;
+
+    private static decimal ParseAmount(XElement? amountElement)
+    {
+        if (amountElement is null)
+        {
+            return 0m;
+        }
+
+        var inner = amountElement.Elements()
+            .FirstOrDefault(element => element.Name.LocalName.Equals("Amount", StringComparison.OrdinalIgnoreCase));
+        return ParseDecimal((inner?.Value ?? amountElement.Value).Trim()) ?? 0m;
     }
 
     private static int? ParseInt(string value) =>

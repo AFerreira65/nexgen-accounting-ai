@@ -119,4 +119,43 @@ public sealed class SaftEntriesReaderTests
         await Assert.ThrowsAsync<SaftFileFormatException>(async () =>
             await new SaftEntriesReader().ReadSummaryAsync(Utf8("<AuditFile><broken")).ConfigureAwait(false));
     }
+
+    [TestMethod]
+    public async Task ReadsTheTransactionsWithTheirLines()
+    {
+        var transactions = await new SaftEntriesReader()
+            .ReadTransactionsAsync(Utf8(SaftDocument(TwoJournals)))
+            .ConfigureAwait(false);
+
+        Assert.HasCount(3, transactions);
+
+        var first = transactions[0];
+        Assert.AreEqual("COMPRAS", first.JournalCode);
+        Assert.AreEqual("Diário de compras", first.JournalDescription);
+        Assert.AreEqual("C 1", first.TransactionId);
+        Assert.AreEqual(new DateOnly(2026, 3, 5), first.Date);
+        Assert.AreEqual("Fatura de fornecedor", first.Description);
+        Assert.HasCount(2, first.Lines);
+        var debit = first.Lines.Single(line => line.Debit > 0);
+        Assert.AreEqual("6221", debit.AccountCode);
+        Assert.AreEqual(100.00m, debit.Debit);
+        Assert.AreEqual(0m, debit.Credit);
+        var credit = first.Lines.Single(line => line.Credit > 0);
+        Assert.AreEqual("2211001", credit.AccountCode);
+        Assert.AreEqual(100.00m, credit.Credit);
+
+        Assert.AreEqual("VENDAS", transactions[2].JournalCode);
+        Assert.AreEqual("V 1", transactions[2].TransactionId);
+        Assert.AreEqual("7211", transactions[2].Lines.Single(line => line.Credit > 0).AccountCode);
+    }
+
+    [TestMethod]
+    public async Task ReadsNoTransactionsWhenTheBlockIsAbsent()
+    {
+        var transactions = await new SaftEntriesReader()
+            .ReadTransactionsAsync(Utf8(SaftDocument("")))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(0, transactions.Count);
+    }
 }

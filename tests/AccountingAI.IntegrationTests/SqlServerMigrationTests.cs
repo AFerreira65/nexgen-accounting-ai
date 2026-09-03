@@ -1,4 +1,5 @@
 using AccountingAI.Application.Saft;
+using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
@@ -534,6 +535,84 @@ public sealed class SqlServerMigrationTests
 
                 Assert.IsNull(await entriesPreview
                     .PreviewAsync(Guid.NewGuid(), created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false));
+
+                // Importar os movimentos de um SAF-T: cria os diários em falta, usa o
+                // TransactionID como referência (idempotente) e salta as transações que
+                // não equilibram, referem contas inválidas ou têm menos de duas linhas.
+                var importTransactions = new List<SaftTransaction>
+                {
+                    new("GERAL", "Operações diversas", "T 1", new DateOnly(2026, 2, 10), "Depósito", "T 1",
+                    [
+                        new SaftTransactionLine("121", "Depósito", 100m, 0m),
+                        new SaftTransactionLine("111", "Saída de caixa", 0m, 100m)
+                    ]),
+                    new("CX", "Diário de caixa do ficheiro", "T 2", new DateOnly(2026, 2, 15), "Levantamento", "T 2",
+                    [
+                        new SaftTransactionLine("111", "Entrada de caixa", 50m, 0m),
+                        new SaftTransactionLine("121", "Levantamento", 0m, 50m)
+                    ]),
+                    new("GERAL", "Operações diversas", "T 3", new DateOnly(2026, 3, 1), "Desequilibrado", "T 3",
+                    [
+                        new SaftTransactionLine("121", "D", 30m, 0m),
+                        new SaftTransactionLine("111", "C", 0m, 20m)
+                    ]),
+                    new("GERAL", "Operações diversas", "T 4", new DateOnly(2026, 3, 2), "Conta inexistente", "T 4",
+                    [
+                        new SaftTransactionLine("999", "D", 10m, 0m),
+                        new SaftTransactionLine("111", "C", 0m, 10m)
+                    ]),
+                    new("GERAL", "Operações diversas", "T 5", new DateOnly(2026, 3, 3), "Uma só linha", "T 5",
+                    [
+                        new SaftTransactionLine("121", "D", 10m, 0m)
+                    ])
+                };
+                var importReader = new FixedEntriesReader(
+                    new SaftEntriesSummary(true, 5, 5, null, null, null, null, []),
+                    importTransactions);
+                var entriesImport = new SaftEntriesImportService(importReader, importContext);
+
+                var importResult = await entriesImport
+                    .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.IsNotNull(importResult);
+                Assert.AreEqual(2, importResult!.ImportedCount);
+                Assert.AreEqual(3, importResult.SkippedCount);
+                CollectionAssert.AreEquivalent(new[] { "CX" }, importResult.JournalsCreated.ToArray());
+                Assert.IsTrue(importResult.Skipped.Any(item => item.TransactionId == "T 3" && item.Reason.Contains("não coincidem")));
+                Assert.IsTrue(importResult.Skipped.Any(item => item.TransactionId == "T 4" && item.Reason.Contains("999")));
+                Assert.IsTrue(importResult.Skipped.Any(item => item.TransactionId == "T 5" && item.Reason.Contains("duas linhas")));
+
+                // Reimportar não duplica: T 1 e T 2 passam a "já existe".
+                var reimportResult = await entriesImport
+                    .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.AreEqual(0, reimportResult!.ImportedCount);
+                Assert.AreEqual(5, reimportResult.SkippedCount);
+                Assert.AreEqual(0, reimportResult.JournalsCreated.Count);
+
+                Assert.IsNull(await entriesImport
+                    .ImportAsync(Guid.NewGuid(), created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false));
+
+                context.ChangeTracker.Clear();
+                var importedEntries = await importContext.JournalEntries
+                    .AsNoTracking()
+                    .Include(item => item.Journal)
+                    .Include(item => item.Lines)
+                    .Where(item => item.CompanyId == created.CompanyId)
+                    .ToListAsync()
+                    .ConfigureAwait(false);
+                Assert.HasCount(2, importedEntries);
+                CollectionAssert.AreEquivalent(
+                    new[] { "T 1", "T 2" },
+                    importedEntries.Select(item => item.Reference).ToArray());
+                Assert.IsTrue(importedEntries.All(item => item.Status == JournalEntryStatus.Reviewed));
+                Assert.IsTrue(importedEntries.All(item =>
+                    item.Lines.Sum(line => line.Debit) == item.Lines.Sum(line => line.Credit)));
+                Assert.AreEqual("CX", importedEntries.Single(item => item.Reference == "T 2").Journal.Code);
+                Assert.IsTrue(await importContext.Journals.AsNoTracking()
+                    .AnyAsync(item => item.CompanyId == created.CompanyId && item.Code == "CX")
                     .ConfigureAwait(false));
             }
 
@@ -1134,9 +1213,14 @@ public sealed class SqlServerMigrationTests
             Task.FromResult(accounts);
     }
 
-    private sealed class FixedEntriesReader(SaftEntriesSummary summary) : ISaftEntriesReader
+    private sealed class FixedEntriesReader(
+        SaftEntriesSummary summary,
+        IReadOnlyList<SaftTransaction>? transactions = null) : ISaftEntriesReader
     {
         public Task<SaftEntriesSummary> ReadSummaryAsync(Stream content, CancellationToken cancellationToken = default) =>
             Task.FromResult(summary);
+
+        public Task<IReadOnlyList<SaftTransaction>> ReadTransactionsAsync(Stream content, CancellationToken cancellationToken = default) =>
+            Task.FromResult(transactions ?? []);
     }
 }
