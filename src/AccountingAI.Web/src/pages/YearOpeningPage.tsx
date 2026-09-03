@@ -96,9 +96,27 @@ export function YearOpeningPage() {
     }
   }
 
+  async function reopen() {
+    setStatus('saving')
+    setMessage('')
+    try {
+      const response = await fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/year-opening/reopen?year=${year}`, { method: 'POST' })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      const movement = await response.json() as { id: string }
+      setStatus('saved')
+      setMessage(`Abertura ${movement.id} anulada. O exercício pode ser reaberto.`)
+      refreshAccounting()
+      load()
+    } catch (error) {
+      setStatus('error')
+      setMessage(error instanceof Error ? error.message : 'Não foi possível reabrir o exercício.')
+    }
+  }
+
   const totalDebit = data.lines.reduce((sum, line) => sum + line.debit, 0)
   const totalCredit = data.lines.reduce((sum, line) => sum + line.credit, 0)
   const canRegister = source === 'database' && !data.alreadyOpened && data.previousYearClosed && data.lines.length >= 2 && status !== 'saving'
+  const canReopen = source === 'database' && data.alreadyOpened && status !== 'saving'
 
   return <div className="page-stack">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Abertura do exercício</h1><p>Transporta os saldos de balanço do exercício anterior e leva o resultado à conta 56, no diário de abertura. Só uma vez por exercício.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
@@ -112,7 +130,9 @@ export function YearOpeningPage() {
 
     <div className="filterbar series-filterbar">
       <label className="year-filter"><span>Exercício</span><input aria-label="Exercício da abertura" type="number" min="2001" max="2200" value={year} onChange={(event) => setYear(Number(event.target.value))} /></label>
-      <button type="button" className="button button-primary" onClick={() => void register()} disabled={!canRegister}><DoorOpen size={15} /> Registar abertura</button>
+      {data.alreadyOpened
+        ? <button type="button" className="button button-secondary" onClick={() => void reopen()} disabled={!canReopen}><DoorOpen size={15} /> Reabrir exercício</button>
+        : <button type="button" className="button button-primary" onClick={() => void register()} disabled={!canRegister}><DoorOpen size={15} /> Registar abertura</button>}
     </div>
 
     {message && <div className={`series-message ${status === 'error' ? 'error' : 'success'}`}>{message}</div>}

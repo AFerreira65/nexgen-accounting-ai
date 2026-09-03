@@ -856,6 +856,22 @@ public sealed class SqlServerMigrationTests
                 Assert.IsFalse(earlyPreview.PreviousYearClosed);
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                     await opening.RegisterAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false));
+
+                // Reabertura: não se pode reabrir o apuramento de 2026 enquanto 2027 está aberto.
+                var closing = openingScope.ServiceProvider.GetRequiredService<YearEndClosingService>();
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await closing.ReopenAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false));
+
+                var reopenedOpening = await opening.ReopenAsync(DevelopmentDataSeeder.DemoCompanyId, 2027).ConfigureAwait(false);
+                Assert.AreEqual("Anulado", reopenedOpening.Status);
+                Assert.IsFalse((await opening.PreviewAsync(DevelopmentDataSeeder.DemoCompanyId, 2027).ConfigureAwait(false)).AlreadyOpened);
+
+                var reopenedClosing = await closing.ReopenAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false);
+                Assert.AreEqual("Anulado", reopenedClosing.Status);
+                Assert.IsFalse((await closing.PreviewAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false)).AlreadyClosed);
+
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await closing.ReopenAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false));
             }
 
             context.ChangeTracker.Clear();

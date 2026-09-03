@@ -134,4 +134,29 @@ public sealed class YearEndClosingService(AccountingDbContext context, JournalPo
             cancellationToken,
             documentTypeCode: ClosingDocumentType).ConfigureAwait(false);
     }
+
+    /// <summary>Anula o lançamento de apuramento para o exercício poder ser reapurado.</summary>
+    public async Task<PostedMovement> ReopenAsync(Guid companyId, int year, CancellationToken cancellationToken = default)
+    {
+        var preview = await PreviewAsync(companyId, year, cancellationToken).ConfigureAwait(false);
+        if (!preview.AlreadyClosed || preview.ClosingReference is null)
+        {
+            throw new InvalidOperationException($"O exercício de {year} não está apurado.");
+        }
+
+        var nextYearOpened = await context.JournalEntries
+            .AsNoTracking()
+            .AnyAsync(entry => entry.CompanyId == companyId &&
+                entry.Status != JournalEntryStatus.Voided &&
+                entry.EntryDate.Year == year + 1 &&
+                entry.DocumentType != null &&
+                entry.DocumentType.Code == "AB", cancellationToken)
+            .ConfigureAwait(false);
+        if (nextYearOpened)
+        {
+            throw new InvalidOperationException($"Reabra primeiro o exercício de {year + 1}.");
+        }
+
+        return await posting.VoidAsync(companyId, preview.ClosingReference, cancellationToken).ConfigureAwait(false);
+    }
 }

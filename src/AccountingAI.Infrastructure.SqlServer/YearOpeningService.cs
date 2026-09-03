@@ -142,6 +142,31 @@ public sealed class YearOpeningService(AccountingDbContext context, JournalPosti
             documentTypeCode: OpeningDocumentType).ConfigureAwait(false);
     }
 
+    /// <summary>Anula o lançamento de abertura para o exercício poder ser reaberto.</summary>
+    public async Task<PostedMovement> ReopenAsync(Guid companyId, int year, CancellationToken cancellationToken = default)
+    {
+        var preview = await PreviewAsync(companyId, year, cancellationToken).ConfigureAwait(false);
+        if (!preview.AlreadyOpened || preview.OpeningReference is null)
+        {
+            throw new InvalidOperationException($"O exercício de {year} não está aberto.");
+        }
+
+        var yearClosed = await context.JournalEntries
+            .AsNoTracking()
+            .AnyAsync(entry => entry.CompanyId == companyId &&
+                entry.Status != JournalEntryStatus.Voided &&
+                entry.EntryDate.Year == year &&
+                entry.DocumentType != null &&
+                entry.DocumentType.Code == ClosingDocumentType, cancellationToken)
+            .ConfigureAwait(false);
+        if (yearClosed)
+        {
+            throw new InvalidOperationException($"Reabra primeiro o apuramento de {year}.");
+        }
+
+        return await posting.VoidAsync(companyId, preview.OpeningReference, cancellationToken).ConfigureAwait(false);
+    }
+
     private async Task<string> RetainedEarningsNameAsync(Guid companyId, CancellationToken cancellationToken) =>
         await context.Accounts
             .AsNoTracking()

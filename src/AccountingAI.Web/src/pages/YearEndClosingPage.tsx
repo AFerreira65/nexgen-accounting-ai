@@ -98,9 +98,27 @@ export function YearEndClosingPage() {
     }
   }
 
+  async function reopen() {
+    setStatus('saving')
+    setMessage('')
+    try {
+      const response = await fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/year-end-closing/reopen?year=${year}`, { method: 'POST' })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      const movement = await response.json() as { id: string }
+      setStatus('saved')
+      setMessage(`Apuramento ${movement.id} anulado. O exercício pode ser reapurado.`)
+      refreshAccounting()
+      load()
+    } catch (error) {
+      setStatus('error')
+      setMessage(error instanceof Error ? error.message : 'Não foi possível reabrir o exercício.')
+    }
+  }
+
   const totalDebit = data.lines.reduce((sum, line) => sum + line.debit, 0)
   const totalCredit = data.lines.reduce((sum, line) => sum + line.credit, 0)
   const canRegister = source === 'database' && !data.alreadyClosed && data.lines.length >= 2 && status !== 'saving'
+  const canReopen = source === 'database' && data.alreadyClosed && status !== 'saving'
 
   return <div className="page-stack">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Apuramento de resultados</h1><p>Fecha as contas das classes 6 e 7 do exercício contra a conta 81, no diário de apuramento. Só uma vez por exercício.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
@@ -114,7 +132,9 @@ export function YearEndClosingPage() {
 
     <div className="filterbar series-filterbar">
       <label className="year-filter"><span>Exercício</span><input aria-label="Exercício do apuramento" type="number" min="2000" max="2200" value={year} onChange={(event) => setYear(Number(event.target.value))} /></label>
-      <button type="button" className="button button-primary" onClick={() => void register()} disabled={!canRegister}><Lock size={15} /> Registar apuramento</button>
+      {data.alreadyClosed
+        ? <button type="button" className="button button-secondary" onClick={() => void reopen()} disabled={!canReopen}><Lock size={15} /> Reabrir exercício</button>
+        : <button type="button" className="button button-primary" onClick={() => void register()} disabled={!canRegister}><Lock size={15} /> Registar apuramento</button>}
     </div>
 
     {message && <div className={`series-message ${status === 'error' ? 'error' : 'success'}`}>{message}</div>}

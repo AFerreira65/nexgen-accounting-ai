@@ -231,6 +231,7 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: '81' })).toBeInTheDocument()
     expect(screen.getByText(/requer ligação ao SQL Server/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Registar apuramento/ })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /Reabrir exercício/ })).not.toBeInTheDocument()
   })
 
   it('previews the year-opening entry carrying balances forward, register disabled in demo', () => {
@@ -242,6 +243,7 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: '56' })).toBeInTheDocument()
     expect(screen.getByText(/requer ligação ao SQL Server/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Registar abertura/ })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /Reabrir exercício/ })).not.toBeInTheDocument()
   })
 
   it('shows the account ledger with a running balance and a date filter', () => {
