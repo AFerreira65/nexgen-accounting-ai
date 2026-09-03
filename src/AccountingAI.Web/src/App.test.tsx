@@ -129,6 +129,18 @@ describe('App', () => {
     expect(account3).toHaveFocus()
   })
 
+  it('filters the movement list by journal and status', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Estado'), { target: { value: 'Anulado' } })
+    expect(screen.getByText('Nenhum movimento corresponde aos filtros.')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Estado'), { target: { value: 'Por conferir' } })
+    expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'BANC 2026 00196' })).toBeInTheDocument()
+  })
+
   it('numbers a movement by document type in demo mode', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)

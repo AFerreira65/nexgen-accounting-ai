@@ -145,20 +145,35 @@ function MovementEditor({ movement, onClose }: { movement: Movement | null; onCl
 }
 
 export function MovementsPage() {
-  const { accountingLoading, accountingSource, movements, reviewMovement, voidMovement } = useWorkContext()
+  const { accountingLoading, accountingSetup, accountingSource, movements, reviewMovement, voidMovement } = useWorkContext()
   const [editing, setEditing] = useState<Movement | null | undefined>(undefined)
   const [busy, setBusy] = useState('')
+  const [search, setSearch] = useState('')
+  const [journalFilter, setJournalFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
 
   async function act(reference: string, action: () => Promise<void>) {
     setBusy(reference)
     try { await action() } catch { /* a página volta a carregar o estado */ } finally { setBusy('') }
   }
 
+  const term = search.trim().toLocaleLowerCase('pt-PT')
+  const visible = movements.filter((movement) =>
+    (!term || `${movement.id} ${movement.description} ${movement.document ?? ''}`.toLocaleLowerCase('pt-PT').includes(term))
+    && (!journalFilter || movement.journalId === journalFilter)
+    && (!statusFilter || movement.status === statusFilter))
+
   return <div className="page-stack">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Movimentos contabilísticos</h1><p>Consulte, percorra e registe lançamentos sem perder o contexto.</p></div><span className={`connection-badge ${accountingSource}`}><Database size={15} />{accountingSource === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
-    <div className="filterbar"><label><Search size={17} /><input aria-label="Pesquisar movimentos" placeholder="Pesquisar movimento ou descrição…" /></label><button className="button button-primary" type="button" onClick={() => setEditing(null)}><Plus size={16} /> Novo lançamento</button></div>
+    <div className="filterbar">
+      <label><Search size={17} /><input aria-label="Pesquisar movimentos" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar movimento ou descrição…" /></label>
+      <label><span className="sr-only">Diário</span><select value={journalFilter} onChange={(event) => setJournalFilter(event.target.value)}><option value="">Todos os diários</option>{accountingSetup.journals.map((journal) => <option key={journal.code} value={journal.code}>{journal.code} · {journal.name}</option>)}</select></label>
+      <label><span className="sr-only">Estado</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="">Todos os estados</option><option value="Por conferir">Por conferir</option><option value="Conferido">Conferido</option><option value="Anulado">Anulado</option></select></label>
+      <span className="catalog-count">{visible.length} de {movements.length}</span>
+      <button className="button button-primary" type="button" onClick={() => setEditing(null)}><Plus size={16} /> Novo lançamento</button>
+    </div>
     {editing !== undefined && <MovementEditor movement={editing} onClose={() => setEditing(undefined)} />}
-    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Movimento</th><th>Descrição</th><th>Diário</th><th>Estado</th><th className="numeric">Valor</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{movements.map((movement) => <tr key={movement.id}>
+    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Movimento</th><th>Descrição</th><th>Diário</th><th>Estado</th><th className="numeric">Valor</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{visible.map((movement) => <tr key={movement.id}>
       <td><Link className="primary-cell" to={`/movimentos/${movement.id}`}>{movement.id.replaceAll('-', ' ')}</Link><small>{formatMovementDate(movement.date)}</small></td>
       <td>{movement.description}<small>{movement.documentType ? `${movement.documentType} · ` : ''}{movement.document}</small></td>
       <td><Link className="inline-link" to={`/diarios/${movement.journalId}`}>{movement.journalId}</Link></td>
@@ -169,6 +184,6 @@ export function MovementsPage() {
         {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => reviewMovement(movement.id))}>Conferir</button>}
         {movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => voidMovement(movement.id))}>Anular</button>}
       </div></td>
-    </tr>)}</tbody></table></div>{accountingLoading && <p className="empty-state">A carregar movimentos da base de dados…</p>}{!accountingLoading && movements.length === 0 && <p className="empty-state">Esta empresa ainda não tem movimentos.</p>}</section>
+    </tr>)}</tbody></table></div>{accountingLoading && <p className="empty-state">A carregar movimentos da base de dados…</p>}{!accountingLoading && movements.length === 0 && <p className="empty-state">Esta empresa ainda não tem movimentos.</p>}{!accountingLoading && movements.length > 0 && visible.length === 0 && <p className="empty-state">Nenhum movimento corresponde aos filtros.</p>}</section>
   </div>
 }
