@@ -75,6 +75,12 @@ public sealed class Company
 
     public bool IsActive { get; private set; }
 
+    /// <summary>
+    /// Data até à qual (inclusive) os lançamentos estão bloqueados. `null` = sem
+    /// bloqueio de período.
+    /// </summary>
+    public DateOnly? PostingLockDate { get; private set; }
+
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
     public byte[] RowVersion { get; private set; } = [];
@@ -137,4 +143,15 @@ public sealed class Company
     public void Deactivate() => IsActive = false;
 
     public void Reactivate() => IsActive = true;
+
+    /// <summary>Define ou remove (com `null`) a data de bloqueio de lançamentos.</summary>
+    public void SetPostingLockDate(DateOnly? lockDate)
+    {
+        if (lockDate is { } value && (value.Year < 2000 || value.Year > 2200))
+        {
+            throw new ArgumentOutOfRangeException(nameof(lockDate), value, "The posting lock date is out of range.");
+        }
+
+        PostingLockDate = lockDate;
+    }
 }

@@ -75,6 +75,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260903124046_DocumentNumberSeriesWidth");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260903131441_CompanyPostingLockDate");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -470,10 +473,11 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual("Viewer", rerole.Role);
 
                 var updated = await admin
-                    .UpdateCompanyAsync(adminCompany.Id, "Empresa de Gabinete II, Lda.", TaxRegion.Azores, "USD", isActive: false)
+                    .UpdateCompanyAsync(adminCompany.Id, "Empresa de Gabinete II, Lda.", TaxRegion.Azores, "USD", isActive: false, postingLockDate: new DateOnly(2025, 12, 31))
                     .ConfigureAwait(false);
                 Assert.AreEqual("Empresa de Gabinete II, Lda.", updated.LegalName);
                 Assert.IsFalse(updated.IsActive);
+                Assert.AreEqual(new DateOnly(2025, 12, 31), updated.PostingLockDate);
 
                 var provisionedAccounts = await context.Accounts.AsNoTracking()
                     .CountAsync(a => a.CompanyId == adminCompany.Id).ConfigureAwait(false);
@@ -918,6 +922,29 @@ public sealed class SqlServerMigrationTests
                         new JournalEntryLineInput("2211001", "C", 0m, 5m)
                     ]).ConfigureAwait(false);
                 Assert.IsTrue(lateEntry.Reference.StartsWith("GERAL-2026-", StringComparison.Ordinal));
+            }
+
+            await using (var lockScope = services.CreateAsyncScope())
+            {
+                var lockContext = lockScope.ServiceProvider.GetRequiredService<AccountingDbContext>();
+                var demo = await lockContext.Companies
+                    .SingleAsync(item => item.Id == DevelopmentDataSeeder.DemoCompanyId)
+                    .ConfigureAwait(false);
+                demo.SetPostingLockDate(new DateOnly(2026, 6, 30));
+                await lockContext.SaveChangesAsync().ConfigureAwait(false);
+
+                var posting = lockScope.ServiceProvider.GetRequiredService<JournalPostingService>();
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await posting.PostAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "GERAL", new DateOnly(2026, 6, 15),
+                        "OD bloqueado", "Período bloqueado", reviewed: false,
+                        [
+                            new JournalEntryLineInput("6221", "D", 1m, 0m),
+                            new JournalEntryLineInput("2211001", "C", 0m, 1m)
+                        ]).ConfigureAwait(false));
+
+                demo.SetPostingLockDate(null);
+                await lockContext.SaveChangesAsync().ConfigureAwait(false);
             }
 
             context.ChangeTracker.Clear();

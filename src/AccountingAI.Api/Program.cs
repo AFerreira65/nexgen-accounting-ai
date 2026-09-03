@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-33",
+    phase = "F1-35",
     status = "ready"
 }));
 
@@ -99,6 +99,7 @@ if (app.Environment.IsDevelopment())
                         Region = company.TaxRegion.ToString(),
                         company.BaseCurrency,
                         company.IsActive,
+                        company.PostingLockDate,
                         Users = company.UserMemberships
                             .OrderBy(membership => membership.User.DisplayName)
                             .Select(membership => new
@@ -1287,10 +1288,21 @@ if (app.Environment.IsDevelopment())
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["taxRegion"] = ["Região fiscal desconhecida."] });
         }
 
+        DateOnly? postingLockDate = null;
+        if (!string.IsNullOrWhiteSpace(request.PostingLockDate))
+        {
+            if (!DateOnly.TryParseExact(request.PostingLockDate.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["postingLockDate"] = ["Data de bloqueio inválida. Use o formato AAAA-MM-DD."] });
+            }
+
+            postingLockDate = parsed;
+        }
+
         try
         {
             var company = await admin
-                .UpdateCompanyAsync(companyId, request.LegalName, region, request.BaseCurrency, request.IsActive, cancellationToken)
+                .UpdateCompanyAsync(companyId, request.LegalName, region, request.BaseCurrency, request.IsActive, postingLockDate, cancellationToken)
                 .ConfigureAwait(false);
             return Results.Ok(company);
         }
@@ -1515,7 +1527,8 @@ public sealed record UpdateOrganizationCompanyRequest(
     string LegalName,
     string TaxRegion,
     string BaseCurrency,
-    bool IsActive);
+    bool IsActive,
+    string? PostingLockDate = null);
 
 public sealed record CreateOrganizationUserRequest(string DisplayName, string Email);
 

@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-33");
+        StringAssert.Contains(payload, "F1-35");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -395,12 +395,20 @@ public sealed class FoundationApiTests
             Json("""{"role":"Supreme","isActive":true}"""))
             .ConfigureAwait(false);
 
+        using var badLockDate = await client.PutAsync(
+            "/api/v1/development/organization/companies/22222222-2222-2222-2222-222222222222", Json(
+            """{"legalName":"X","taxRegion":"Mainland","baseCurrency":"EUR","isActive":true,"postingLockDate":"ontem"}"""))
+            .ConfigureAwait(false);
+        var badLockDatePayload = await badLockDate.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.BadRequest, duplicateCompany.StatusCode);
         StringAssert.Contains(duplicateCompanyPayload, "NIF DEMO-PT-0001");
         Assert.AreEqual(HttpStatusCode.BadRequest, badRegion.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, duplicateUser.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, unknownCompany.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badRole.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, badLockDate.StatusCode);
+        StringAssert.Contains(badLockDatePayload, "Data de bloqueio");
     }
 
     [TestMethod]

@@ -52,7 +52,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
         await InTransactionAsync(async () =>
         {
             context.ChangeTracker.Clear();
-            await EnsureYearIsOpenAsync(companyId, entryDate.Year, documentTypeCode, cancellationToken).ConfigureAwait(false);
+            await EnsurePeriodIsOpenAsync(companyId, entryDate, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var (journal, prefix, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
             var reference = await NextReferenceAsync(companyId, prefix, entryDate.Year, cancellationToken).ConfigureAwait(false);
@@ -104,8 +104,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
                 throw new InvalidOperationException("Só um lançamento por conferir pode ser corrigido.");
             }
 
-            await EnsureYearIsOpenAsync(companyId, existing.EntryDate.Year, documentTypeCode, cancellationToken).ConfigureAwait(false);
-            await EnsureYearIsOpenAsync(companyId, entryDate.Year, documentTypeCode, cancellationToken).ConfigureAwait(false);
+            await EnsurePeriodIsOpenAsync(companyId, existing.EntryDate, documentTypeCode, cancellationToken).ConfigureAwait(false);
+            await EnsurePeriodIsOpenAsync(companyId, entryDate, documentTypeCode, cancellationToken).ConfigureAwait(false);
 
             var (journal, _, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
@@ -162,7 +162,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
 
             if (enforceOpenYear)
             {
-                await EnsureYearIsOpenAsync(companyId, entry.EntryDate.Year, entry.DocumentType?.Code, cancellationToken).ConfigureAwait(false);
+                await EnsurePeriodIsOpenAsync(companyId, entry.EntryDate, entry.DocumentType?.Code, cancellationToken).ConfigureAwait(false);
             }
 
             transition(entry);
@@ -279,10 +279,11 @@ public sealed class JournalPostingService(AccountingDbContext context)
     }
 
     /// <summary>
-    /// Recusa lançar ou corrigir movimentos num exercício já apurado. As próprias
+    /// Recusa lançar, corrigir ou anular movimentos num exercício já apurado ou
+    /// num período bloqueado pela data de bloqueio da empresa. As próprias
     /// operações de apuramento e abertura (<c>AP</c>/<c>AB</c>) ficam de fora.
     /// </summary>
-    private async Task EnsureYearIsOpenAsync(Guid companyId, int year, string? documentTypeCode, CancellationToken cancellationToken)
+    private async Task EnsurePeriodIsOpenAsync(Guid companyId, DateOnly entryDate, string? documentTypeCode, CancellationToken cancellationToken)
     {
         var normalizedDocumentType = Normalize(documentTypeCode);
         if (normalizedDocumentType is "AP" or "AB")
@@ -290,18 +291,30 @@ public sealed class JournalPostingService(AccountingDbContext context)
             return;
         }
 
+        var lockDate = await context.Companies
+            .AsNoTracking()
+            .Where(company => company.Id == companyId)
+            .Select(company => company.PostingLockDate)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (lockDate is { } limit && entryDate <= limit)
+        {
+            throw new InvalidOperationException(
+                $"O período até {limit:yyyy-MM-dd} está bloqueado para lançamentos.");
+        }
+
         var closed = await context.JournalEntries
             .AsNoTracking()
             .AnyAsync(entry => entry.CompanyId == companyId &&
                 entry.Status != JournalEntryStatus.Voided &&
-                entry.EntryDate.Year == year &&
+                entry.EntryDate.Year == entryDate.Year &&
                 entry.DocumentType != null &&
                 entry.DocumentType.Code == "AP", cancellationToken)
             .ConfigureAwait(false);
         if (closed)
         {
             throw new InvalidOperationException(
-                $"O exercício de {year} está apurado. Reabra-o para lançar movimentos com esta data.");
+                $"O exercício de {entryDate.Year} está apurado. Reabra-o para lançar movimentos com esta data.");
         }
     }
 

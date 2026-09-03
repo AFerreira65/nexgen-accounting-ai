@@ -13,7 +13,8 @@ public sealed record CompanyAdminData(
     string BaseCurrency,
     string AccountingStandard,
     string? AccountingSetupVersion,
-    bool IsActive);
+    bool IsActive,
+    DateOnly? PostingLockDate);
 
 public sealed record UserAdminData(
     Guid Id,
@@ -101,6 +102,7 @@ public sealed class OrganizationAdminService(
         TaxRegion taxRegion,
         string baseCurrency,
         bool isActive,
+        DateOnly? postingLockDate,
         CancellationToken cancellationToken = default)
     {
         var company = await context.Companies
@@ -111,6 +113,7 @@ public sealed class OrganizationAdminService(
         company.Rename(legalName);
         company.ChangeTaxRegion(taxRegion);
         company.ChangeBaseCurrency(baseCurrency);
+        company.SetPostingLockDate(postingLockDate);
         if (isActive)
         {
             company.Reactivate();
@@ -237,5 +240,6 @@ public sealed class OrganizationAdminService(
         company.BaseCurrency,
         company.AccountingStandard.ToString(),
         company.AccountingSetupVersion,
-        company.IsActive);
+        company.IsActive,
+        company.PostingLockDate);
 }

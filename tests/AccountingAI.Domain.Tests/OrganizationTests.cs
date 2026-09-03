@@ -90,6 +90,21 @@ public sealed class OrganizationTests
     }
 
     [TestMethod]
+    public void CompanyPostingLockDateCanBeSetAndCleared()
+    {
+        var company = new Company(Guid.NewGuid(), Guid.NewGuid(), "Empresa", "DEMO-PT-0009", TaxRegion.Mainland);
+        Assert.IsNull(company.PostingLockDate);
+
+        company.SetPostingLockDate(new DateOnly(2026, 12, 31));
+        Assert.AreEqual(new DateOnly(2026, 12, 31), company.PostingLockDate);
+
+        company.SetPostingLockDate(null);
+        Assert.IsNull(company.PostingLockDate);
+
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => company.SetPostingLockDate(new DateOnly(1990, 1, 1)));
+    }
+
+    [TestMethod]
     public void UserAccountRenameAndEmailChange()
     {
         var user = new UserAccount(Guid.NewGuid(), "Ana", "ana@example.pt");
