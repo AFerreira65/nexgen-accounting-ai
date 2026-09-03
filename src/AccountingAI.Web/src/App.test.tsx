@@ -366,6 +366,16 @@ describe('App', () => {
     expect(screen.getAllByText('Saldo de abertura').length).toBeGreaterThan(0)
   })
 
+  it('aggregates the movement sub-accounts for an integration account', () => {
+    window.history.pushState({}, '', '/contas/1')
+    render(<App />)
+
+    expect(screen.getByText(/Conta de integração: soma dos movimentos das subcontas/i)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Conta' })).toBeInTheDocument()
+    const bancRow = screen.getByRole('link', { name: 'BANC 2026 00196' }).closest('tr') as HTMLElement
+    expect(within(bancRow).getByRole('link', { name: '1211' })).toBeInTheDocument()
+  })
+
   it('shows the organisation screen with companies and users sections', () => {
     window.history.pushState({}, '', '/organizacao')
     render(<App />)

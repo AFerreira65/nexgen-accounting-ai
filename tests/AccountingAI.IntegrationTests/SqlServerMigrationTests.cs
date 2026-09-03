@@ -753,6 +753,8 @@ public sealed class SqlServerMigrationTests
                     .ConfigureAwait(false);
                 Assert.IsNotNull(accountLedger);
                 Assert.AreEqual(2, accountLedger!.Entries.Count);
+                Assert.IsFalse(accountLedger.IsAggregate);
+                Assert.IsTrue(accountLedger.Entries.All(entry => entry.AccountCode == "6221"));
                 Assert.AreEqual(0m, accountLedger.OpeningBalance);
                 Assert.AreEqual(1245m, accountLedger.Balance);
                 Assert.IsFalse(accountLedger.Entries.Any(entry => entry.Reference == "GERAL-2026-00001"));
@@ -762,6 +764,16 @@ public sealed class SqlServerMigrationTests
                 Assert.IsNull(await ledger
                     .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "NAO-EXISTE")
                     .ConfigureAwait(false));
+
+                // Conta de integração: a razão soma as contas de movimento com o mesmo prefixo.
+                var classSixLedger = await ledger
+                    .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "6")
+                    .ConfigureAwait(false);
+                Assert.IsNotNull(classSixLedger);
+                Assert.IsTrue(classSixLedger!.IsAggregate);
+                Assert.IsTrue(classSixLedger.Entries.Count >= accountLedger.Entries.Count);
+                Assert.IsTrue(classSixLedger.Entries.All(entry => entry.AccountCode.StartsWith("6", StringComparison.Ordinal)));
+                Assert.IsTrue(classSixLedger.Entries.Any(entry => entry.AccountCode == "6221"));
 
                 // Intervalo de datas: o período do balancete só apanha os lançamentos do seed
                 // (agosto de 2026); a correção de março fica no saldo de abertura de cada conta.

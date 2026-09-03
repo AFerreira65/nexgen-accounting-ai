@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-45");
+        StringAssert.Contains(payload, "F1-46");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -249,6 +249,9 @@ public sealed class FoundationApiTests
         using var ledger = await client.GetAsync($"{mainland}/accounts/6221/ledger").ConfigureAwait(false);
         var ledgerPayload = await ledger.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+        using var aggregateLedger = await client.GetAsync($"{mainland}/accounts/6/ledger").ConfigureAwait(false);
+        var aggregateLedgerPayload = await aggregateLedger.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         using var unknownAccount = await client.GetAsync($"{mainland}/accounts/NAO-EXISTE/ledger").ConfigureAwait(false);
 
         using var unknownCompany = await client.GetAsync(
@@ -318,6 +321,11 @@ public sealed class FoundationApiTests
         StringAssert.Contains(ledgerPayload, "\"openingBalance\"");
         StringAssert.Contains(ledgerPayload, "\"runningBalance\"");
         StringAssert.Contains(ledgerPayload, "\"notes\"");
+        StringAssert.Contains(ledgerPayload, "\"isAggregate\":false");
+        Assert.AreEqual(HttpStatusCode.OK, aggregateLedger.StatusCode);
+        StringAssert.Contains(aggregateLedgerPayload, "\"accountCode\":\"6\"");
+        StringAssert.Contains(aggregateLedgerPayload, "\"isAggregate\":true");
+        StringAssert.Contains(aggregateLedgerPayload, "\"accountCode\":\"6221\"");
         Assert.AreEqual(HttpStatusCode.NotFound, unknownAccount.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unknownCompany.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, journalReport.StatusCode);

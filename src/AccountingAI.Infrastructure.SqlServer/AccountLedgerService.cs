@@ -22,6 +22,7 @@ public sealed record AccountLedgerEntry(
     string Reference,
     DateOnly EntryDate,
     string JournalCode,
+    string AccountCode,
     string Description,
     string? Notes,
     decimal Debit,
@@ -31,6 +32,7 @@ public sealed record AccountLedgerEntry(
 public sealed record AccountLedger(
     string AccountCode,
     string AccountName,
+    bool IsAggregate,
     decimal OpeningBalance,
     decimal Balance,
     IReadOnlyList<AccountLedgerEntry> Entries);
@@ -141,10 +143,20 @@ public sealed class AccountLedgerService(AccountingDbContext context)
             return null;
         }
 
+        // Uma conta de integração (agregadora) não tem movimentos próprios: a razão
+        // soma os das contas de movimento com o mesmo prefixo de código.
+        var isAggregate = !account.AllowsPosting;
+        var accountIds = isAggregate
+            ? await context.Accounts.AsNoTracking()
+                .Where(item => item.CompanyId == companyId && item.Code.StartsWith(normalizedCode))
+                .Select(item => item.Id)
+                .ToListAsync(cancellationToken).ConfigureAwait(false)
+            : [account.Id];
+
         var accountLines = context.JournalEntryLines
             .AsNoTracking()
             .Where(line => line.CompanyId == companyId &&
-                line.AccountId == account.Id &&
+                accountIds.Contains(line.AccountId) &&
                 line.JournalEntry.Status != JournalEntryStatus.Voided);
 
         decimal openingBalance = 0;
@@ -176,6 +188,7 @@ public sealed class AccountLedgerService(AccountingDbContext context)
                 line.JournalEntry.Reference,
                 line.JournalEntry.EntryDate,
                 JournalCode = line.JournalEntry.Journal.Code,
+                AccountCode = line.Account.Code,
                 line.Description,
                 line.JournalEntry.Notes,
                 line.Debit,
@@ -190,9 +203,9 @@ public sealed class AccountLedgerService(AccountingDbContext context)
         {
             running += line.Debit - line.Credit;
             entries.Add(new AccountLedgerEntry(
-                line.Reference, line.EntryDate, line.JournalCode, line.Description, line.Notes, line.Debit, line.Credit, running));
+                line.Reference, line.EntryDate, line.JournalCode, line.AccountCode, line.Description, line.Notes, line.Debit, line.Credit, running));
         }
 
-        return new AccountLedger(account.Code, account.Name, openingBalance, running, entries);
+        return new AccountLedger(account.Code, account.Name, isAggregate, openingBalance, running, entries);
     }
 }
