@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<SaftCompanyCreationService>();
         services.AddScoped<SaftAccountsPreviewService>();
         services.AddScoped<SaftAccountsImportService>();
+        services.AddScoped<SaftOpeningBalancesImportService>();
         services.AddScoped<SaftEntriesPreviewService>();
         services.AddScoped<SaftEntriesImportService>();
         services.AddScoped<OrganizationAdminService>();

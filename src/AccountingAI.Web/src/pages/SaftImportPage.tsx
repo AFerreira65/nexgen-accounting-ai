@@ -1,7 +1,7 @@
 import { CircleAlert, CircleCheck, Database, FileUp, Info } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
-import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection } from '../app/demo-data'
+import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection, type SaftOpeningBalancesImport } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
 const REGIONS: { value: 'Mainland' | 'Azores' | 'Madeira'; label: string }[] = [
@@ -77,15 +77,17 @@ function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
   </section>
 }
 
-function AccountsPreviewPanel({ companyId, file }: { companyId: string; file: File | null }) {
-  const { previewSaftAccounts, importSaftAccounts, source } = useWorkContext()
+function AccountsPreviewPanel({ companyId, file, fiscalYear }: { companyId: string; file: File | null; fiscalYear: number }) {
+  const { previewSaftAccounts, importSaftAccounts, importSaftOpeningBalances, source } = useWorkContext()
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [preview, setPreview] = useState<SaftAccountsPreview | null>(null)
   const [error, setError] = useState('')
   const [importState, setImportState] = useState<'idle' | 'importing' | 'done'>('idle')
   const [imported, setImported] = useState<SaftAccountsImport | null>(null)
+  const [openingState, setOpeningState] = useState<'idle' | 'importing'>('idle')
+  const [opening, setOpening] = useState<SaftOpeningBalancesImport | null>(null)
 
-  useEffect(() => { setState('idle'); setPreview(null); setError(''); setImportState('idle'); setImported(null) }, [companyId, file])
+  useEffect(() => { setState('idle'); setPreview(null); setError(''); setImportState('idle'); setImported(null); setOpeningState('idle'); setOpening(null) }, [companyId, file])
 
   async function run() {
     if (!file) return
@@ -114,13 +116,32 @@ function AccountsPreviewPanel({ companyId, file }: { companyId: string; file: Fi
     }
   }
 
+  async function importOpening() {
+    if (!file) return
+    setOpeningState('importing'); setError('')
+    try {
+      setOpening(await importSaftOpeningBalances(companyId, fiscalYear, file))
+    } catch (openingError) {
+      setState('error')
+      setError(openingError instanceof Error ? openingError.message : 'Não foi possível importar os saldos iniciais.')
+    } finally {
+      setOpeningState('idle')
+    }
+  }
+
   return <section className="panel">
-    <div className="panel-heading"><div><h2>Plano de contas do ficheiro</h2><p>Compara os códigos do <code>GeneralLedgerAccounts</code> com o plano da empresa.</p></div></div>
+    <div className="panel-heading"><div><h2>Plano de contas do ficheiro</h2><p>Compara os códigos do <code>GeneralLedgerAccounts</code> com o plano da empresa. Os saldos de abertura das contas de movimento podem entrar como um lançamento de abertura ({fiscalYear}).</p></div></div>
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
       <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A ler…' : 'Pré-visualizar plano de contas'}</button>
       {preview && preview.newCount > 0 && source === 'database' && <button className="button button-primary" type="button" disabled={importState === 'importing'} onClick={() => void importNew()}>{importState === 'importing' ? 'A criar…' : `Criar as ${preview.newCount} contas novas`}</button>}
+      {preview && preview.fileAccountCount > 0 && source === 'database' && <button className="button button-secondary" type="button" disabled={openingState === 'importing'} onClick={() => void importOpening()}>{openingState === 'importing' ? 'A importar…' : 'Importar saldos iniciais'}</button>}
     </div>
     {imported && <p className="save-status success"><CircleCheck size={15} /> {imported.createdCount} contas criadas ({imported.alreadyExistedCount} já existiam).</p>}
+    {opening && <p className={`save-status ${opening.alreadyImported ? 'warning' : opening.lineCount > 0 ? 'success' : ''}`}>{opening.alreadyImported ? <Info size={15} /> : opening.lineCount > 0 ? <CircleCheck size={15} /> : <Info size={15} />} {opening.alreadyImported
+      ? `Já existe abertura para ${fiscalYear}${opening.entryReference ? ` (${opening.entryReference})` : ''}; os saldos iniciais não foram reimportados.`
+      : opening.lineCount > 0
+        ? `Abertura ${opening.entryReference ?? ''} criada com ${opening.lineCount} linhas (${euro.format(opening.totalDebit)}).`
+        : 'O ficheiro não tem saldos de abertura em contas de movimento da empresa.'}</p>}
     {state === 'error' && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
     {preview && <>
       <div className="settings-grid">
@@ -306,7 +327,7 @@ export function SaftImportPage() {
               <p>Empresa encontrada: <strong>{result.match.legalName}</strong>{result.match.accountingStandard ? ` · ${accountingStandardName(result.match.accountingStandard)}` : ''}{result.match.accountingSetupVersion ? ` · ${result.match.accountingSetupVersion}` : ''}.</p>
               <p className="save-status"><Info size={15} /> Importe primeiro o plano de contas do ficheiro; só depois os movimentos, para que as contas referidas existam.</p>
             </section>
-            {result.match.companyId && <AccountsPreviewPanel companyId={result.match.companyId} file={file} />}
+            {result.match.companyId && <AccountsPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} />}
             {result.match.companyId && source === 'database' && <EntriesPreviewPanel companyId={result.match.companyId} file={file} />}
           </>
         : <CompanyProposal inspection={result} />}

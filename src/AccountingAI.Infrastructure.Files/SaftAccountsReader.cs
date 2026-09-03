@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -87,9 +88,16 @@ public sealed class SaftAccountsReader : ISaftAccountsReader
                 continue;
             }
 
-            result.Add(new SaftAccount(code, Field("AccountDescription") ?? string.Empty));
+            result.Add(new SaftAccount(
+                code,
+                Field("AccountDescription") ?? string.Empty,
+                ParseAmount(Field("OpeningDebitBalance")),
+                ParseAmount(Field("OpeningCreditBalance"))));
         }
 
         return result;
     }
+
+    private static decimal ParseAmount(string? value) =>
+        decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var result) ? result : 0m;
 }

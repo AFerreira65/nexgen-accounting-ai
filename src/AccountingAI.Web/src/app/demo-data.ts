@@ -365,6 +365,14 @@ export type SaftAccountsImport = {
   created: { code: string; name: string; parentCode: string | null; allowsPosting: boolean }[]
 }
 
+export type SaftOpeningBalancesImport = {
+  lineCount: number
+  totalDebit: number
+  totalCredit: number
+  entryReference: string | null
+  alreadyImported: boolean
+}
+
 export type SaftEntriesPreview = {
   hasEntries: boolean
   transactionCount: number

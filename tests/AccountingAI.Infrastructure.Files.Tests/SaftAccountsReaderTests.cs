@@ -40,6 +40,8 @@ public sealed class SaftAccountsReaderTests
           <Account>
             <AccountID>11</AccountID>
             <AccountDescription>Caixa</AccountDescription>
+            <OpeningDebitBalance>1500.00</OpeningDebitBalance>
+            <OpeningCreditBalance>0.00</OpeningCreditBalance>
             <GroupingCategory>GM</GroupingCategory>
           </Account>
           <Account>
@@ -67,6 +69,9 @@ public sealed class SaftAccountsReaderTests
         CollectionAssert.AreEqual(new[] { "11", "6221" }, accounts.Select(account => account.Code).ToArray());
         Assert.AreEqual("Caixa", accounts[0].Description);
         Assert.AreEqual("Material de escritório", accounts[1].Description);
+        Assert.AreEqual(1500.00m, accounts[0].OpeningDebit);
+        Assert.AreEqual(0m, accounts[0].OpeningCredit);
+        Assert.AreEqual(0m, accounts[1].OpeningDebit);
     }
 
     [TestMethod]

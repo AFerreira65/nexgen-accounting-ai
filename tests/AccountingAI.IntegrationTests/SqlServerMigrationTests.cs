@@ -663,6 +663,58 @@ public sealed class SqlServerMigrationTests
                 Assert.IsTrue(await importContext.Journals.AsNoTracking()
                     .AnyAsync(item => item.CompanyId == created.CompanyId && item.Code == "CX")
                     .ConfigureAwait(false));
+
+                // Saldos de abertura do plano de contas: entram como um lançamento no
+                // diário de abertura, datado de 1 de janeiro, só para contas de movimento.
+                var openingReader = new FixedAccountsReader(
+                [
+                    new SaftAccount("111", "Caixa geral", 1500m, 0m),
+                    new SaftAccount("121", "Depósito à ordem", 0m, 900m),
+                    new SaftAccount("221", "Fornecedores", 0m, 600m),
+                    new SaftAccount("11", "Caixa (agregadora, ignorada)", 1500m, 0m)
+                ]);
+                var openingImport = new SaftOpeningBalancesImportService(
+                    openingReader, new JournalPostingService(importContext), importContext);
+
+                var openingResult = await openingImport
+                    .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, 2026, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.IsNotNull(openingResult);
+                Assert.AreEqual(3, openingResult!.LineCount);
+                Assert.AreEqual(1500m, openingResult.TotalDebit);
+                Assert.AreEqual(1500m, openingResult.TotalCredit);
+                Assert.IsFalse(openingResult.AlreadyImported);
+                Assert.IsNotNull(openingResult.EntryReference);
+
+                var openingAgain = await openingImport
+                    .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, 2026, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.IsTrue(openingAgain!.AlreadyImported);
+                Assert.AreEqual(openingResult.EntryReference, openingAgain.EntryReference);
+
+                Assert.IsNull(await openingImport
+                    .ImportAsync(Guid.NewGuid(), created.CompanyId, 2026, Stream.Null)
+                    .ConfigureAwait(false));
+
+                importContext.ChangeTracker.Clear();
+                var abEntry = await importContext.JournalEntries
+                    .AsNoTracking()
+                    .Include(item => item.Lines)
+                    .Include(item => item.DocumentType)
+                    .SingleAsync(item => item.CompanyId == created.CompanyId && item.DocumentType!.Code == "AB")
+                    .ConfigureAwait(false);
+                Assert.HasCount(3, abEntry.Lines);
+                Assert.AreEqual(new DateOnly(2026, 1, 1), abEntry.EntryDate);
+                Assert.AreEqual(abEntry.Lines.Sum(line => line.Debit), abEntry.Lines.Sum(line => line.Credit));
+
+                // Saldos de abertura que não equilibram: recusa com mensagem em pt-PT.
+                var unbalancedOpening = new SaftOpeningBalancesImportService(
+                    new FixedAccountsReader([new SaftAccount("622", "Só débito", 100m, 0m)]),
+                    new JournalPostingService(importContext), importContext);
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await unbalancedOpening
+                        .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, 2027, Stream.Null)
+                        .ConfigureAwait(false));
             }
 
             await using (var adminScope = services.CreateAsyncScope())

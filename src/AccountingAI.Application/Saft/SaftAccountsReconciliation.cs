@@ -1,7 +1,14 @@
 namespace AccountingAI.Application.Saft;
 
-/// <summary>Uma conta do plano geral lida do bloco <c>GeneralLedgerAccounts</c> de um SAF-T.</summary>
-public sealed record SaftAccount(string Code, string Description);
+/// <summary>
+/// Uma conta do plano geral lida do bloco <c>GeneralLedgerAccounts</c> de um SAF-T,
+/// com os saldos de abertura declarados (0 quando ausentes).
+/// </summary>
+public sealed record SaftAccount(
+    string Code,
+    string Description,
+    decimal OpeningDebit = 0m,
+    decimal OpeningCredit = 0m);
 
 /// <summary>Situação de uma conta do ficheiro face ao plano de contas da empresa.</summary>
 public enum SaftAccountState
@@ -38,3 +45,16 @@ public sealed record SaftAccountsImportResult(
     int CreatedCount,
     int AlreadyExistedCount,
     IReadOnlyList<SaftAccountCreated> Created);
+
+/// <summary>
+/// Resultado de importar os saldos de abertura do plano de contas de um SAF-T como
+/// um lançamento no diário de abertura (tipo de documento <c>AB</c>), datado de 1
+/// de janeiro do exercício. Só considera contas de movimento da empresa com saldo
+/// de abertura não nulo. Não repete se já existir abertura para o exercício.
+/// </summary>
+public sealed record SaftOpeningBalancesImportResult(
+    int LineCount,
+    decimal TotalDebit,
+    decimal TotalCredit,
+    string? EntryReference,
+    bool AlreadyImported);
