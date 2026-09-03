@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<TaxonomyReviewService>();
         services.AddScoped<SaftInspectionService>();
         services.AddScoped<SaftCompanyCreationService>();
+        services.AddScoped<SaftAccountsPreviewService>();
         services.AddScoped<OrganizationAdminService>();
         services.AddScoped<JournalPostingService>();
         services.AddScoped<DocumentNumberSeriesService>();

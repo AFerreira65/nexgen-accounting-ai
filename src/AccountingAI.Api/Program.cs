@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-40",
+    phase = "F1-42",
     status = "ready"
 }));
 
@@ -1188,6 +1188,52 @@ if (app.Environment.IsDevelopment())
                     result.Match.AccountingStandard,
                     result.Match.AccountingSetupVersion
                 }
+            });
+        }
+        catch (SaftFileFormatException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["saft"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/accounts-preview", async (
+        Guid userId,
+        Guid companyId,
+        HttpRequest request,
+        SaftAccountsPreviewService preview,
+        CancellationToken cancellationToken) =>
+    {
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = null;
+        }
+
+        try
+        {
+            var result = await preview
+                .PreviewAsync(userId, companyId, request.Body, cancellationToken)
+                .ConfigureAwait(false);
+            if (result is null)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(new
+            {
+                result.FileAccountCount,
+                result.ExistingCount,
+                result.NewCount,
+                result.CompanyPostingAccountCount,
+                Accounts = result.Accounts.Select(account => new
+                {
+                    account.Code,
+                    account.Description,
+                    State = account.State.ToString()
+                })
             });
         }
         catch (SaftFileFormatException exception)

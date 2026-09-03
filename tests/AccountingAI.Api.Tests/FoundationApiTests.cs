@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-40");
+        StringAssert.Contains(payload, "F1-42");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -607,6 +607,57 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.NotFound, unknownUserResponse.StatusCode);
     }
 
+    [TestMethod]
+    public async Task SaftAccountsPreviewClassifiesTheFileAccountsAgainstTheCompanyChart()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string previewPath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/saft/accounts-preview";
+
+        using var previewResponse = await client
+            .PostAsync(previewPath, new StringContent(SaftDocumentWithAccounts("11", "6221", "ZZZ999"), Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+        var previewPayload = await previewResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var malformedResponse = await client
+            .PostAsync(previewPath, new StringContent("<AuditFile><broken", Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+
+        using var noAccountsResponse = await client
+            .PostAsync(previewPath, new StringContent(SaftDocument("DEMO-PT-0001", "F"), Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+        var noAccountsPayload = await noAccountsResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var forbiddenResponse = await client
+            .PostAsync(
+                "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+                "companies/99999999-9999-9999-9999-999999999999/saft/accounts-preview",
+                new StringContent(SaftDocumentWithAccounts("11"), Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, previewResponse.StatusCode);
+        StringAssert.Contains(previewPayload, "\"fileAccountCount\":3");
+        StringAssert.Contains(previewPayload, "\"existingCount\":2");
+        StringAssert.Contains(previewPayload, "\"newCount\":1");
+        StringAssert.Contains(previewPayload, "\"state\":\"New\"");
+        StringAssert.Contains(previewPayload, "\"state\":\"Existing\"");
+        StringAssert.Contains(previewPayload, "ZZZ999");
+        Assert.AreEqual(HttpStatusCode.BadRequest, malformedResponse.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, noAccountsResponse.StatusCode);
+        StringAssert.Contains(noAccountsPayload, "\"fileAccountCount\":0");
+        Assert.AreEqual(HttpStatusCode.NotFound, forbiddenResponse.StatusCode);
+    }
+
     private static string SaftDocument(string taxNumber, string basis) =>
         $"""
         <?xml version="1.0" encoding="utf-8"?>
@@ -623,6 +674,30 @@ public sealed class FoundationApiTests
           </Header>
         </AuditFile>
         """;
+
+    private static string SaftDocumentWithAccounts(params string[] codes)
+    {
+        var accounts = string.Concat(codes.Select(code =>
+            $"<Account><AccountID>{code}</AccountID><AccountDescription>Conta {code}</AccountDescription></Account>"));
+        return $"""
+        <?xml version="1.0" encoding="utf-8"?>
+        <AuditFile xmlns="urn:OECD:StandardAuditFile-Tax:PT_1.04_01">
+          <Header>
+            <AuditFileVersion>1.04_01</AuditFileVersion>
+            <TaxRegistrationNumber>DEMO-PT-0001</TaxRegistrationNumber>
+            <TaxAccountingBasis>I</TaxAccountingBasis>
+            <CompanyName>Empresa do Ficheiro, Lda.</CompanyName>
+            <FiscalYear>2026</FiscalYear>
+            <StartDate>2026-01-01</StartDate>
+            <EndDate>2026-12-31</EndDate>
+            <CurrencyCode>EUR</CurrencyCode>
+          </Header>
+          <MasterFiles>
+            <GeneralLedgerAccounts>{accounts}</GeneralLedgerAccounts>
+          </MasterFiles>
+        </AuditFile>
+        """;
+    }
 
     private sealed class FoundationApiFactory(
         string? connectionString = null,

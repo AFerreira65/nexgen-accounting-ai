@@ -10,6 +10,7 @@ public static class DependencyInjection
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<ISaftHeaderReader, SaftHeaderReader>();
+        services.AddSingleton<ISaftAccountsReader, SaftAccountsReader>();
 
         return services;
     }
