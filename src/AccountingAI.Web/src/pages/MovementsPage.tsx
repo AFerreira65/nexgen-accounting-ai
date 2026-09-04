@@ -1,10 +1,11 @@
-import { Database, Download, Plus, Search, StickyNote } from 'lucide-react'
-import { useState } from 'react'
+import { ChevronLeft, ChevronRight, Database, Download, Plus, Search, StickyNote } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { useMovementGuards } from '../app/movementGuards'
+import { paginate } from '../app/pagination'
 import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 import { MovementEditor } from './MovementEditor'
@@ -19,6 +20,7 @@ export function MovementsPage() {
   const [sourceFilter, setSourceFilter] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [page, setPage] = useState(1)
   const blockedReason = useMovementGuards()
 
   async function act(reference: string, action: () => Promise<void>) {
@@ -34,6 +36,12 @@ export function MovementsPage() {
     && (!sourceFilter || (movement.source ?? 'Manual') === sourceFilter)
     && (!fromDate || movement.date >= fromDate)
     && (!toDate || movement.date <= toDate))
+
+  // Pagina-se pelo tamanho de página da empresa (definido em Preferências),
+  // voltando à primeira página quando um filtro muda.
+  const { items: paged, currentPage, totalPages } = paginate(visible, activeCompany.settings.pageSize, page)
+
+  useEffect(() => setPage(1), [search, journalFilter, statusFilter, sourceFilter, fromDate, toDate])
 
   const exportCsv = () => {
     const header = ['Movimento', 'Data', 'Diário', 'Tipo de documento', 'Documento', 'Origem', 'Descrição', 'Notas', 'Estado', 'Conta', 'Nome da conta', 'Descrição da linha', 'Débito', 'Crédito']
@@ -60,7 +68,7 @@ export function MovementsPage() {
       <button className="button button-primary" type="button" onClick={() => setEditing({ movement: null, duplicate: false })}><Plus size={16} /> Novo lançamento</button>
     </div>
     {editing !== undefined && <MovementEditor movement={editing.movement} duplicate={editing.duplicate} onClose={() => setEditing(undefined)} />}
-    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Movimento</th><th>Descrição</th><th>Diário</th><th>Estado</th><th className="numeric">Valor</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{visible.map((movement) => <tr key={movement.id}>
+    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Movimento</th><th>Descrição</th><th>Diário</th><th>Estado</th><th className="numeric">Valor</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{paged.map((movement) => <tr key={movement.id}>
       <td><Link className="primary-cell" to={`/movimentos/${movement.id}`}>{movement.id.replaceAll('-', ' ')}</Link><small>{formatMovementDate(movement.date)}</small></td>
       <td>{movement.description}{movement.notes ? <span className="note-flag" title={movement.notes}><StickyNote size={13} /> nota</span> : null}<small>{movement.documentType ? `${movement.documentType} · ` : ''}{movement.document}{movement.source && movement.source !== 'Manual' ? ` · ${entrySourceLabel(movement.source)}` : ''}</small></td>
       <td><Link className="inline-link" to={`/diarios/${movement.journalId}`}>{movement.journalId}</Link></td>
@@ -79,6 +87,12 @@ export function MovementsPage() {
           </>
         })()}
       </div></td>
-    </tr>)}</tbody></table></div>{accountingLoading && <p className="empty-state">A carregar movimentos da base de dados…</p>}{!accountingLoading && movements.length === 0 && <p className="empty-state">Esta empresa ainda não tem movimentos.</p>}{!accountingLoading && movements.length > 0 && visible.length === 0 && <p className="empty-state">Nenhum movimento corresponde aos filtros.</p>}</section>
+    </tr>)}</tbody></table></div>
+    {totalPages > 1 && <div className="pager">
+      <button className="button button-secondary" type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><ChevronLeft size={15} /> Anterior</button>
+      <span>Página {currentPage} de {totalPages}</span>
+      <button className="button button-secondary" type="button" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}>Seguinte <ChevronRight size={15} /></button>
+    </div>}
+    {accountingLoading && <p className="empty-state">A carregar movimentos da base de dados…</p>}{!accountingLoading && movements.length === 0 && <p className="empty-state">Esta empresa ainda não tem movimentos.</p>}{!accountingLoading && movements.length > 0 && visible.length === 0 && <p className="empty-state">Nenhum movimento corresponde aos filtros.</p>}</section>
   </div>
 }

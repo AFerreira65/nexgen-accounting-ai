@@ -7,6 +7,11 @@ import { useWorkContext } from '../app/WorkContext'
 
 type Balance = { accountCode: string; balance: number }
 
+// Uma empresa com um histórico muito grande não deve desenhar todos os
+// movimentos aqui — é só um resumo; a lista completa e paginada fica em
+// Movimentos.
+const RECENT_MOVEMENTS = 8
+
 // O saldo de cada conta é sempre cumulativo até `to` — `from` só existe para
 // os relatórios que separam abertura de movimento do período, o que aqui não
 // interessa: só queremos a posição financeira numa data de referência.
@@ -101,7 +106,7 @@ export function DashboardPage() {
           <div className="table-wrap">
             <table>
               <thead><tr><th>Movimento</th><th>Descrição</th><th>Diário</th><th>Estado</th><th className="numeric">Valor</th></tr></thead>
-              <tbody>{movements.map((movement) => <tr key={movement.id}>
+              <tbody>{movements.slice(0, RECENT_MOVEMENTS).map((movement) => <tr key={movement.id}>
                 <td><Link className="primary-cell" to={`/movimentos/${movement.id}`}>{movement.id.replaceAll('-', ' ')}</Link><small>{formatMovementDate(movement.date)}</small></td>
                 <td>{movement.description}<small>{movement.document}</small></td>
                 <td><Link className="inline-link" to={`/diarios/${movement.journalId}`}><Landmark size={13} /> {movement.journalId}</Link></td>
