@@ -1,9 +1,11 @@
-import { ArrowRight, CircleCheck, Clock3, Receipt, Tags } from 'lucide-react'
+import { ArrowRight, CircleCheck, Clock3, Receipt, Tags, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
 const VISIBLE_PENDING = 6
+const DISMISSED_VAT_KEY_PREFIX = 'accounting-ai.dismissed-vat.'
 
 // Posição de IVA atual, calculada sobre os movimentos já carregados pelo
 // WorkContext (sem pedido adicional) — mesma fórmula do dashboard e do
@@ -21,8 +23,20 @@ function currentVatPosition(movements: ReturnType<typeof useWorkContext>['moveme
   return liquidado - dedutivel
 }
 
+// «Dispensar até à próxima entrega» só vale para o valor exato dispensado
+// (em cêntimos, para não perder por arredondamento): assim que a posição de
+// IVA mudar — nova entrega ou novo movimento — o lembrete volta a aparecer.
+function readDismissedVatCents(companyId: string): number | null {
+  try {
+    const raw = window.localStorage.getItem(`${DISMISSED_VAT_KEY_PREFIX}${companyId}`)
+    return raw === null ? null : Number(raw)
+  } catch {
+    return null
+  }
+}
+
 export function TasksPage() {
-  const { movements, taxonomyReview } = useWorkContext()
+  const { activeCompany, movements, taxonomyReview } = useWorkContext()
   const pending = [...movements]
     .filter((movement) => movement.status === 'Por conferir')
     .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))
@@ -30,7 +44,14 @@ export function TasksPage() {
   const suggested = taxonomyReview.accounts.filter((account) => account.status === 'SuggestionAvailable')
   const taxonomyPending = unclassified.length + suggested.length
   const vatPosition = currentVatPosition(movements)
-  const vatDue = vatPosition > 0
+  const vatCents = Math.round(vatPosition * 100)
+  const [dismissedVatCents, setDismissedVatCents] = useState<number | null>(() => readDismissedVatCents(activeCompany.companyId))
+  useEffect(() => setDismissedVatCents(readDismissedVatCents(activeCompany.companyId)), [activeCompany.companyId])
+  const vatDue = vatPosition > 0 && vatCents !== dismissedVatCents
+  const dismissVat = () => {
+    try { window.localStorage.setItem(`${DISMISSED_VAT_KEY_PREFIX}${activeCompany.companyId}`, String(vatCents)) } catch { /* storage é opcional */ }
+    setDismissedVatCents(vatCents)
+  }
   const nothingPending = pending.length === 0 && taxonomyPending === 0 && !vatDue
 
   return <div className="page-stack">
@@ -45,6 +66,7 @@ export function TasksPage() {
         <span><strong>Posição de IVA a entregar ao Estado</strong><small>Contas 2432 (dedutível) e 2433 (liquidado)</small></span>
         <ArrowRight size={16} />
       </Link>
+      <button type="button" className="text-link" onClick={dismissVat}><X size={15} /> Dispensar até à próxima entrega</button>
     </section>}
 
     {pending.length > 0 && <section className="panel attention-panel">

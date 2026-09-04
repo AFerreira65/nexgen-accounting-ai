@@ -644,7 +644,7 @@ describe('App', () => {
 
   it('lists pending movements and unclassified accounts on the tasks screen', () => {
     window.history.pushState({}, '', '/tarefas')
-    render(<App />)
+    const { unmount } = render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Tarefas' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Movimentos por conferir' })).toBeInTheDocument()
@@ -656,5 +656,15 @@ describe('App', () => {
     const vatTask = screen.getByRole('link', { name: /Posição de IVA a entregar ao Estado/ })
     expect(vatTask).toHaveAttribute('href', '/iva')
     expect(screen.getByText('299,00 €')).toBeInTheDocument()
+
+    // Dispensar esconde o lembrete e o esconde entre visitas, enquanto a
+    // posição de IVA não mudar (persiste em localStorage por empresa).
+    fireEvent.click(screen.getByRole('button', { name: /Dispensar até à próxima entrega/ }))
+    expect(screen.queryByRole('heading', { name: 'IVA a entregar' })).not.toBeInTheDocument()
+    unmount()
+    window.history.pushState({}, '', '/tarefas')
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'Tarefas' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'IVA a entregar' })).not.toBeInTheDocument()
   })
 })
