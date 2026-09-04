@@ -1058,6 +1058,20 @@ public sealed class SqlServerMigrationTests
                     .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "NAO-EXISTE")
                     .ConfigureAwait(false));
 
+                // Filtro de origem: só restringe as linhas mostradas — o saldo de
+                // abertura e o saldo final continuam a somar todas as origens.
+                var manualLedger = await ledger
+                    .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "6221", null, null, default, "Manual")
+                    .ConfigureAwait(false);
+                Assert.AreEqual(2, manualLedger!.Entries.Count);
+                Assert.AreEqual(accountLedger.Balance, manualLedger.Balance);
+                var openingLedger = await ledger
+                    .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "6221", null, null, default, "Opening")
+                    .ConfigureAwait(false);
+                Assert.AreEqual(0, openingLedger!.Entries.Count);
+                Assert.AreEqual(accountLedger.OpeningBalance, openingLedger.OpeningBalance);
+                Assert.AreEqual(accountLedger.Balance, openingLedger.Balance);
+
                 // Conta de integração: a razão soma as contas de movimento com o mesmo prefixo.
                 var classSixLedger = await ledger
                     .AccountLedgerAsync(DevelopmentDataSeeder.DemoCompanyId, "6")

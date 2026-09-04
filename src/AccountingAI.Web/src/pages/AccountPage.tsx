@@ -3,19 +3,20 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
+import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 
 type LedgerEntry = {
   reference: string; entryDate: string; journalCode: string; accountCode: string; description: string; notes?: string | null
-  debit: number; credit: number; runningBalance: number
+  debit: number; credit: number; runningBalance: number; source: string
 }
 type Ledger = {
   accountCode: string; accountName: string; isAggregate: boolean; openingBalance: number; balance: number
   entries: LedgerEntry[]
 }
 
-function fromMovements(movements: Movement[], accountCode: string, accountName: string, from: string, to: string, isAggregate: boolean): Ledger {
+function fromMovements(movements: Movement[], accountCode: string, accountName: string, from: string, to: string, isAggregate: boolean, sourceFilter: string): Ledger {
   const belongs = (code: string) => isAggregate ? code.startsWith(accountCode) : code === accountCode
   const relevant = movements
     .filter((movement) => movement.status !== 'Anulado')
@@ -23,7 +24,7 @@ function fromMovements(movements: Movement[], accountCode: string, accountName: 
       .filter((line) => belongs(line.account))
       .map((line) => ({
         reference: movement.id, entryDate: movement.date, journalCode: movement.journalId, accountCode: line.account,
-        description: line.description, notes: movement.notes, debit: line.debit, credit: line.credit,
+        description: line.description, notes: movement.notes, debit: line.debit, credit: line.credit, source: movement.source ?? 'Manual',
       })))
     .sort((a, b) => (a.entryDate + a.reference).localeCompare(b.entryDate + b.reference))
 
@@ -32,12 +33,16 @@ function fromMovements(movements: Movement[], accountCode: string, accountName: 
     : 0
   const period = relevant.filter((item) => (!from || item.entryDate >= from) && (!to || item.entryDate <= to))
 
+  // O saldo acumulado soma sempre todas as origens; o filtro só restringe as
+  // linhas mostradas, calculado depois do saldo, para este continuar a bater
+  // certo mesmo a ver só uma parte dos movimentos.
   let running = openingBalance
   const entries = period.map((item) => {
     running += item.debit - item.credit
     return { ...item, runningBalance: running }
   })
-  return { accountCode, accountName, isAggregate, openingBalance, balance: running, entries }
+  const shown = sourceFilter ? entries.filter((entry) => entry.source === sourceFilter) : entries
+  return { accountCode, accountName, isAggregate, openingBalance, balance: running, entries: shown }
 }
 
 export function AccountPage() {
@@ -45,6 +50,7 @@ export function AccountPage() {
   const { activeCompany, accountingSetup, movements, source, user } = useWorkContext()
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [sourceFilter, setSourceFilter] = useState('')
   const chartAccount = useMemo(
     () => accountingSetup.accounts.find((account) => account.code === accountCode),
     [accountCode, accountingSetup.accounts],
@@ -54,16 +60,17 @@ export function AccountPage() {
     ?? 'Conta contabilística'
   // Uma conta do plano sem permissão de movimento é agregadora: soma as subcontas.
   const aggregate = chartAccount ? !chartAccount.allowsPosting : false
-  const [data, setData] = useState<Ledger>(() => fromMovements(movements, accountCode, nameOf, '', '', aggregate))
+  const [data, setData] = useState<Ledger>(() => fromMovements(movements, accountCode, nameOf, '', '', aggregate, ''))
 
   useEffect(() => {
     if (source !== 'database') {
-      setData(fromMovements(movements, accountCode, nameOf, fromDate, toDate, aggregate))
+      setData(fromMovements(movements, accountCode, nameOf, fromDate, toDate, aggregate, sourceFilter))
       return
     }
     const params = new URLSearchParams()
     if (fromDate) params.set('from', fromDate)
     if (toDate) params.set('to', toDate)
+    if (sourceFilter) params.set('source', sourceFilter)
     const controller = new AbortController()
     void fetch(
       `/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/accounts/${encodeURIComponent(accountCode)}/ledger?${params}`,
@@ -71,21 +78,21 @@ export function AccountPage() {
     )
       .then(async (response) => (response.ok ? (await response.json()) as Ledger : Promise.reject(new Error())))
       .then((result) => setData(result))
-      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, accountCode, nameOf, fromDate, toDate, aggregate)) })
+      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, accountCode, nameOf, fromDate, toDate, aggregate, sourceFilter)) })
     return () => controller.abort()
-  }, [accountCode, activeCompany.companyId, aggregate, fromDate, movements, nameOf, source, toDate, user.id])
+  }, [accountCode, activeCompany.companyId, aggregate, fromDate, movements, nameOf, source, sourceFilter, toDate, user.id])
 
   const inPeriod = Boolean(fromDate || toDate)
 
   const exportCsv = () => {
     const header = data.isAggregate
-      ? ['Movimento', 'Data', 'Diário', 'Conta', 'Descrição', 'Débito', 'Crédito', 'Saldo']
-      : ['Movimento', 'Data', 'Diário', 'Descrição', 'Débito', 'Crédito', 'Saldo']
+      ? ['Movimento', 'Data', 'Diário', 'Conta', 'Descrição', 'Origem', 'Débito', 'Crédito', 'Saldo']
+      : ['Movimento', 'Data', 'Diário', 'Descrição', 'Origem', 'Débito', 'Crédito', 'Saldo']
     const pad = data.isAggregate ? [''] : []
-    const opening = inPeriod ? [['Saldo de abertura', '', '', ...pad, '', '', '', data.openingBalance]] : []
+    const opening = inPeriod ? [['Saldo de abertura', '', '', ...pad, '', '', '', '', data.openingBalance]] : []
     const body = data.entries.map((entry) => data.isAggregate
-      ? [entry.reference, entry.entryDate, entry.journalCode, entry.accountCode, entry.description, entry.debit, entry.credit, entry.runningBalance]
-      : [entry.reference, entry.entryDate, entry.journalCode, entry.description, entry.debit, entry.credit, entry.runningBalance])
+      ? [entry.reference, entry.entryDate, entry.journalCode, entry.accountCode, entry.description, entrySourceLabel(entry.source), entry.debit, entry.credit, entry.runningBalance]
+      : [entry.reference, entry.entryDate, entry.journalCode, entry.description, entrySourceLabel(entry.source), entry.debit, entry.credit, entry.runningBalance])
     downloadCsv(csvFilename(`razao-${data.accountCode || accountCode}`, activeCompany.legalName), toCsv([header, ...opening, ...body]))
   }
 
@@ -102,14 +109,15 @@ export function AccountPage() {
 
     <section className="metric-grid compact-grid">
       {inPeriod && <article className="metric-card"><div><small>Saldo de abertura</small><strong>{euro.format(data.openingBalance)}</strong><span>Antes de {fromDate || '—'}</span></div></article>}
-      <article className="metric-card"><div><small>Saldo {inPeriod ? 'final' : 'atual'}</small><strong>{euro.format(data.balance)}</strong><span>{inPeriod ? 'No fim do período' : `Exercício de ${activeCompany.settings.defaultFiscalYear ?? 'atual'}`}</span></div></article>
-      <article className="metric-card"><div><small>Movimentos</small><strong>{data.entries.length}</strong><span>Com ligação direta ao lançamento</span></div></article>
+      <article className="metric-card"><div><small>Saldo {inPeriod ? 'final' : 'atual'}</small><strong>{euro.format(data.balance)}</strong><span>{sourceFilter ? 'Todas as origens' : inPeriod ? 'No fim do período' : `Exercício de ${activeCompany.settings.defaultFiscalYear ?? 'atual'}`}</span></div></article>
+      <article className="metric-card"><div><small>Movimentos</small><strong>{data.entries.length}</strong><span>{sourceFilter ? `Só ${ENTRY_SOURCE_LABELS[sourceFilter].toLocaleLowerCase('pt-PT')}` : 'Com ligação direta ao lançamento'}</span></div></article>
     </section>
 
     <div className="filterbar">
       <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
+      <label><span className="sr-only">Origem</span><select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="">Todas as origens</option>{ENTRY_SOURCES.map((code) => <option key={code} value={code}>{ENTRY_SOURCE_LABELS[code]}</option>)}</select></label>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={data.entries.length === 0 && !inPeriod}><Download size={15} /> Exportar CSV</button>
     </div>
 

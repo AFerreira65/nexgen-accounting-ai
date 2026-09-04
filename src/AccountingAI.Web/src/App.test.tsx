@@ -492,6 +492,16 @@ describe('App', () => {
     const comprasRow = screen.getByRole('link', { name: 'COMP 2026 00842' }).closest('tr') as HTMLElement
     expect(within(comprasRow).getByText('nota')).toHaveAttribute('title', expect.stringContaining('30 dias'))
 
+    // Filtro de origem: só restringe as linhas mostradas, o saldo mantém-se.
+    const saldoAtual = screen.getByText('Saldo atual').closest('article') as HTMLElement
+    const saldoBefore = within(saldoAtual).getByText(/€/).textContent
+    fireEvent.change(screen.getByLabelText('Origem'), { target: { value: 'Opening' } })
+    expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
+    expect(screen.getByText('Sem movimentos para esta conta.')).toBeInTheDocument()
+    expect(within(saldoAtual).getByText(/€/).textContent).toEqual(saldoBefore)
+    fireEvent.change(screen.getByLabelText('Origem'), { target: { value: '' } })
+    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+
     fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-09-01' } })
     expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
     expect(screen.getByText('Sem movimentos para esta conta.')).toBeInTheDocument()

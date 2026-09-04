@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-66",
+    phase = "F1-71",
     status = "ready"
 }));
 
@@ -696,7 +696,8 @@ if (app.Environment.IsDevelopment())
         AccountLedgerService ledger,
         CancellationToken cancellationToken,
         string? from,
-        string? to) =>
+        string? to,
+        string? source) =>
     {
         if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
         {
@@ -708,7 +709,7 @@ if (app.Environment.IsDevelopment())
             return dateError!;
         }
 
-        var result = await ledger.AccountLedgerAsync(companyId, code, fromDate, toDate, cancellationToken).ConfigureAwait(false);
+        var result = await ledger.AccountLedgerAsync(companyId, code, fromDate, toDate, cancellationToken, source).ConfigureAwait(false);
         if (result is null)
         {
             return Results.NotFound();
@@ -731,7 +732,8 @@ if (app.Environment.IsDevelopment())
                 entry.Notes,
                 entry.Debit,
                 entry.Credit,
-                entry.RunningBalance
+                entry.RunningBalance,
+                Source = entry.Source.ToString()
             })
         });
     });

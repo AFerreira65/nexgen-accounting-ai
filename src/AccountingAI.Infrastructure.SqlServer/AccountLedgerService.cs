@@ -27,7 +27,8 @@ public sealed record AccountLedgerEntry(
     string? Notes,
     decimal Debit,
     decimal Credit,
-    decimal RunningBalance);
+    decimal RunningBalance,
+    EntrySource Source);
 
 public sealed record AccountLedger(
     string AccountCode,
@@ -41,7 +42,10 @@ public sealed record AccountLedger(
 /// Agregações contabilísticas de leitura — balancete e razão de conta — sempre
 /// filtradas por empresa e excluindo os lançamentos anulados. Aceitam um intervalo
 /// de datas opcional; com data inicial, o balancete e a razão devolvem também o
-/// saldo de abertura de cada conta (movimentos anteriores a essa data).
+/// saldo de abertura de cada conta (movimentos anteriores a essa data). A razão
+/// aceita ainda um filtro de origem (<c>source</c>) que só restringe as linhas
+/// mostradas — o saldo de abertura e o saldo acumulado de cada linha continuam a
+/// somar todas as origens.
 /// </summary>
 public sealed class AccountLedgerService(AccountingDbContext context)
 {
@@ -131,7 +135,8 @@ public sealed class AccountLedgerService(AccountingDbContext context)
         string accountCode,
         DateOnly? fromDate = null,
         DateOnly? toDate = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? source = null)
     {
         var normalizedCode = accountCode.Trim().ToUpperInvariant();
         var account = await context.Accounts
@@ -192,18 +197,27 @@ public sealed class AccountLedgerService(AccountingDbContext context)
                 line.Description,
                 line.JournalEntry.Notes,
                 line.Debit,
-                line.Credit
+                line.Credit,
+                line.JournalEntry.Source
             })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        // O saldo acumulado é sempre calculado sobre todas as origens; o filtro de
+        // origem só restringe as linhas mostradas, para o saldo continuar a bater
+        // certo com a conta mesmo a ver só uma parte dos movimentos.
         var entries = new List<AccountLedgerEntry>(lines.Count);
         decimal running = openingBalance;
         foreach (var line in lines)
         {
             running += line.Debit - line.Credit;
             entries.Add(new AccountLedgerEntry(
-                line.Reference, line.EntryDate, line.JournalCode, line.AccountCode, line.Description, line.Notes, line.Debit, line.Credit, running));
+                line.Reference, line.EntryDate, line.JournalCode, line.AccountCode, line.Description, line.Notes, line.Debit, line.Credit, running, line.Source));
+        }
+
+        if (!string.IsNullOrWhiteSpace(source) && Enum.TryParse<EntrySource>(source.Trim(), ignoreCase: true, out var entrySource))
+        {
+            entries = entries.Where(entry => entry.Source == entrySource).ToList();
         }
 
         return new AccountLedger(account.Code, account.Name, isAggregate, openingBalance, running, entries);
