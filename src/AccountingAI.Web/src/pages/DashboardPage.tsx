@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, Clock3, Database, HandCoins, Landmark, Scale, TrendingUp, Users, Wallet } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Clock3, Database, HandCoins, Landmark, Receipt, Scale, TrendingUp, Users, Wallet } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate } from '../app/demo-data'
@@ -37,12 +37,14 @@ export function DashboardPage() {
     return () => controller.abort()
   }, [activeCompany.companyId, movements, source, user.id])
 
-  const { netResult, totalAssets, cashAndBank, receivables, payables } = useMemo(() => {
+  const { netResult, totalAssets, cashAndBank, receivables, payables, vatPosition } = useMemo(() => {
     let result = 0
     let assets = 0
     let cash = 0
     let toReceive = 0
     let toPay = 0
+    let vatDeductible = 0
+    let vatCollected = 0
     for (const { accountCode, balance } of balances) {
       const klass = accountCode.charAt(0)
       if (klass === '6' || klass === '7') result -= balance
@@ -50,8 +52,10 @@ export function DashboardPage() {
       if (accountCode.startsWith('11') || accountCode.startsWith('12')) cash += balance
       if (accountCode.startsWith('21')) toReceive += balance
       if (accountCode.startsWith('22')) toPay += balance
+      if (accountCode.startsWith('2432')) vatDeductible += balance
+      if (accountCode.startsWith('2433')) vatCollected -= balance
     }
-    return { netResult: result, totalAssets: assets, cashAndBank: cash, receivables: toReceive, payables: toPay }
+    return { netResult: result, totalAssets: assets, cashAndBank: cash, receivables: toReceive, payables: toPay, vatPosition: vatCollected - vatDeductible }
   }, [balances])
 
   return (
@@ -72,6 +76,7 @@ export function DashboardPage() {
         <Link className="metric-card" to="/balancete"><span className="metric-icon navy"><Wallet /></span><div><small>Caixa e bancos</small><strong>{euro.format(cashAndBank)}</strong><span>Contas 11 e 12</span></div></Link>
         <Link className="metric-card" to="/contas-correntes"><span className="metric-icon teal"><Users /></span><div><small>Saldo de clientes</small><strong>{euro.format(receivables)}</strong><span>Classe 21 · a receber</span></div></Link>
         <Link className="metric-card" to="/contas-correntes"><span className="metric-icon amber"><HandCoins /></span><div><small>Saldo de fornecedores</small><strong>{euro.format(payables)}</strong><span>Classe 22 · a pagar</span></div></Link>
+        <Link className="metric-card" to="/iva"><span className="metric-icon navy"><Receipt /></span><div><small>Posição de IVA</small><strong>{euro.format(vatPosition)}</strong><span>{vatPosition > 0 ? 'A entregar ao Estado' : vatPosition < 0 ? 'A recuperar ou a reportar' : 'Nulo'}</span></div></Link>
       </section>
 
       <div className="dashboard-grid">

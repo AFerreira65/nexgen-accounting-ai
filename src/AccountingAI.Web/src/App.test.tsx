@@ -15,6 +15,10 @@ describe('App', () => {
     expect(screen.getByText('Caixa e bancos')).toBeInTheDocument()
     expect(screen.getByText('Saldo de clientes')).toBeInTheDocument()
     expect(screen.getByText('Saldo de fornecedores')).toBeInTheDocument()
+    // Posição de IVA: 575 (24331 liquidado) − 276 (24323 dedutível) = 299, a entregar.
+    const vatCard = screen.getByText('Posição de IVA').closest('a') as HTMLElement
+    expect(vatCard).toHaveTextContent(/299,00/)
+    expect(vatCard).toHaveTextContent('A entregar ao Estado')
 
     fireEvent.click(screen.getAllByRole('link', { name: /COMP 2026 00842/i })[0])
     expect(screen.getByRole('heading', { name: 'COMP 2026 00842' })).toBeInTheDocument()
