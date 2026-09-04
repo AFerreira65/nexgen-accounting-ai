@@ -2,6 +2,7 @@ import { Database, Plus, Search, StickyNote, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
+import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext, type MovementLineInput } from '../app/WorkContext'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -253,6 +254,8 @@ export function MovementsPage() {
   const [search, setSearch] = useState('')
   const [journalFilter, setJournalFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const [closedYears, setClosedYears] = useState<number[]>([])
   const [postingLockDate, setPostingLockDate] = useState<string | null>(null)
 
@@ -288,7 +291,9 @@ export function MovementsPage() {
   const visible = movements.filter((movement) =>
     (!term || `${movement.id} ${movement.description} ${movement.document ?? ''} ${movement.notes ?? ''}`.toLocaleLowerCase('pt-PT').includes(term))
     && (!journalFilter || movement.journalId === journalFilter)
-    && (!statusFilter || movement.status === statusFilter))
+    && (!statusFilter || movement.status === statusFilter)
+    && (!fromDate || movement.date >= fromDate)
+    && (!toDate || movement.date <= toDate))
 
   return <div className="page-stack">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Movimentos contabilísticos</h1><p>Consulte, percorra e registe lançamentos sem perder o contexto.</p></div><span className={`connection-badge ${accountingSource}`}><Database size={15} />{accountingSource === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
@@ -296,6 +301,10 @@ export function MovementsPage() {
       <label><Search size={17} /><input aria-label="Pesquisar movimentos" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar movimento ou descrição…" /></label>
       <label><span className="sr-only">Diário</span><select value={journalFilter} onChange={(event) => setJournalFilter(event.target.value)}><option value="">Todos os diários</option>{accountingSetup.journals.map((journal) => <option key={journal.code} value={journal.code}>{journal.code} · {journal.name}</option>)}</select></label>
       <label><span className="sr-only">Estado</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="">Todos os estados</option><option value="Por conferir">Por conferir</option><option value="Conferido">Conferido</option><option value="Anulado">Anulado</option></select></label>
+      <label><span className="sr-only">Data inicial</span><input type="date" aria-label="Data inicial" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
+      <label><span className="sr-only">Data final</span><input type="date" aria-label="Data final" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
+      <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
+      {(fromDate || toDate) && <button className="button button-secondary" type="button" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>}
       <span className="catalog-count">{visible.length} de {movements.length}</span>
       <button className="button button-primary" type="button" onClick={() => setEditing({ movement: null, duplicate: false })}><Plus size={16} /> Novo lançamento</button>
     </div>

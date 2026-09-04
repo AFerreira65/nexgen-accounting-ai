@@ -209,6 +209,20 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'BANC 2026 00196' })).toBeInTheDocument()
   })
 
+  it('filters the movement list by date range', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    // COMP é de 2026-08-29, VEND de 2026-08-28: um limite superior a 28 exclui o COMP.
+    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Data final'), { target: { value: '2026-08-28' } })
+    expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'VEND 2026 00327' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar datas' }))
+    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+  })
+
   it('numbers a movement by document type in demo mode', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)
