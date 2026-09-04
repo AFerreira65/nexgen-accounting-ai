@@ -296,6 +296,16 @@ describe('App', () => {
     fireEvent.click(screen.getByLabelText('Agrupar por classe'))
     expect(screen.queryByText(/Subtotal classe/)).not.toBeInTheDocument()
 
+    // Agrupar por taxonomia: as contas de demonstração dos movimentos não têm código,
+    // pelo que caem no grupo "Sem taxonomia"; ligar desliga o agrupamento por classe.
+    fireEvent.click(screen.getByLabelText('Agrupar por taxonomia'))
+    expect(screen.getByText('Subtotal Sem taxonomia')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '6221' })).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Agrupar por classe'))
+    expect(screen.getByLabelText('Agrupar por taxonomia')).not.toBeChecked()
+    expect(screen.queryByText('Subtotal Sem taxonomia')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Agrupar por classe'))
+
     fireEvent.click(within(screen.getByRole('group', { name: 'Períodos rápidos' })).getByRole('button', { name: 'Ano' }))
     expect(screen.getByLabelText('Data inicial')).toHaveValue('2026-01-01')
     expect(screen.getByLabelText('Data final')).toHaveValue('2026-12-31')

@@ -1,4 +1,4 @@
-import { Database, Download, GitCompare, Layers, Scale, Search } from 'lucide-react'
+import { Database, Download, GitCompare, Layers, Scale, Search, Tags } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
@@ -9,6 +9,7 @@ import { useWorkContext } from '../app/WorkContext'
 type Row = { accountCode: string; accountName: string; openingBalance: number; debit: number; credit: number; balance: number }
 type TrialBalance = { totalOpeningBalance: number; totalDebit: number; totalCredit: number; rows: Row[] }
 type ClassGroup = { digit: string; name: string; rows: Row[]; openingBalance: number; debit: number; credit: number; balance: number }
+type TaxonomyGroup = { key: string; label: string; rows: Row[]; openingBalance: number; debit: number; credit: number; balance: number }
 
 const CLASS_NAMES: Record<string, string> = {
   '1': 'Meios financeiros líquidos',
@@ -49,6 +50,32 @@ function groupByClass(rows: Row[]): ClassGroup[] {
   return [...groups.values()].sort((a, b) => a.digit.localeCompare(b.digit, 'pt-PT'))
 }
 
+function groupByTaxonomy(rows: Row[], taxonomyOf: Map<string, number | null>, nameOf: (code: number) => string): TaxonomyGroup[] {
+  const groups = new Map<string, TaxonomyGroup>()
+  for (const row of rows) {
+    const code = taxonomyOf.get(row.accountCode) ?? null
+    const key = code === null ? '' : String(code).padStart(6, '0')
+    const label = code === null ? 'Sem taxonomia' : `${code} · ${nameOf(code)}`
+    let group = groups.get(key)
+    if (!group) {
+      group = { key, label, rows: [], openingBalance: 0, debit: 0, credit: 0, balance: 0 }
+      groups.set(key, group)
+    }
+    group.rows.push(row)
+    group.openingBalance += row.openingBalance
+    group.debit += row.debit
+    group.credit += row.credit
+    group.balance += row.balance
+  }
+  // Sem taxonomia (key vazia) fica sempre no fim; as restantes por código crescente.
+  return [...groups.values()].sort((a, b) => {
+    if (a.key === b.key) return 0
+    if (a.key === '') return 1
+    if (b.key === '') return -1
+    return a.key.localeCompare(b.key, 'pt-PT')
+  })
+}
+
 function fromMovements(movements: ReturnType<typeof useWorkContext>['movements'], nameOf: (code: string) => string, from: string, to: string): TrialBalance {
   const map = new Map<string, Row>()
   const rowFor = (code: string) => {
@@ -86,12 +113,18 @@ function fromMovements(movements: ReturnType<typeof useWorkContext>['movements']
 }
 
 export function TrialBalancePage() {
-  const { activeCompany, accountingSetup, movements, source, user } = useWorkContext()
+  const { activeCompany, accountingSetup, taxonomyCatalog, movements, source, user } = useWorkContext()
   const [search, setSearch] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [byClass, setByClass] = useState(false)
+  const [byTaxonomy, setByTaxonomy] = useState(false)
   const [compare, setCompare] = useState(false)
+  const taxonomyOf = useMemo(() => new Map(accountingSetup.accounts.map((account) => [account.code, account.taxonomyCode] as const)), [accountingSetup.accounts])
+  const taxonomyName = useMemo(() => {
+    const names = new Map(taxonomyCatalog.codes.map((entry) => [entry.code, entry.description] as const))
+    return (code: number) => names.get(code) ?? `Código ${code}`
+  }, [taxonomyCatalog])
   const nameOf = useMemo(() => (code: string) => accountingSetup.accounts.find((account) => account.code === code)?.name ?? code, [accountingSetup.accounts])
   const [data, setData] = useState<TrialBalance>(() => fromMovements(movements, nameOf, '', ''))
   const [prior, setPrior] = useState<TrialBalance | null>(null)
@@ -125,6 +158,7 @@ export function TrialBalancePage() {
     return text ? data.rows.filter((row) => `${row.accountCode} ${row.accountName}`.toLocaleLowerCase('pt-PT').includes(text)) : data.rows
   }, [data.rows, search])
   const groups = useMemo(() => groupByClass(rows), [rows])
+  const taxonomyGroups = useMemo(() => groupByTaxonomy(rows, taxonomyOf, taxonomyName), [rows, taxonomyOf, taxonomyName])
   const priorBalanceOf = useMemo(() => new Map((prior?.rows ?? []).map((row) => [row.accountCode, row.balance])), [prior])
   const priorTotalBalance = (prior?.rows ?? []).reduce((sum, row) => sum + row.balance, 0)
   const balanced = Math.round((data.totalDebit - data.totalCredit) * 100) === 0
@@ -145,6 +179,14 @@ export function TrialBalancePage() {
         for (const row of group.rows) body.push(['', ...cells(row).slice(1)])
         const groupPrior = priorOfRows(group.rows)
         body.push([`${group.digit} · ${group.name}`, 'Subtotal', ...(showOpening ? [group.openingBalance] : []), group.debit, group.credit, group.balance,
+          ...(showPrior ? [groupPrior, group.balance - groupPrior] : [])])
+      }
+    } else if (byTaxonomy) {
+      body.push(['Taxonomia', ...head.slice(1)])
+      for (const group of taxonomyGroups) {
+        for (const row of group.rows) body.push(['', ...cells(row).slice(1)])
+        const groupPrior = priorOfRows(group.rows)
+        body.push([group.label, 'Subtotal', ...(showOpening ? [group.openingBalance] : []), group.debit, group.credit, group.balance,
           ...(showPrior ? [groupPrior, group.balance - groupPrior] : [])])
       }
     } else {
@@ -177,7 +219,8 @@ export function TrialBalancePage() {
       <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
-      <label className="toggle-inline"><input type="checkbox" checked={byClass} onChange={(event) => setByClass(event.target.checked)} /><Layers size={15} /> Agrupar por classe</label>
+      <label className="toggle-inline"><input type="checkbox" checked={byClass} onChange={(event) => { setByClass(event.target.checked); if (event.target.checked) setByTaxonomy(false) }} /><Layers size={15} /> Agrupar por classe</label>
+      <label className="toggle-inline"><input type="checkbox" checked={byTaxonomy} onChange={(event) => { setByTaxonomy(event.target.checked); if (event.target.checked) setByClass(false) }} /><Tags size={15} /> Agrupar por taxonomia</label>
       <label className="toggle-inline"><input type="checkbox" checked={compare} onChange={(event) => setCompare(event.target.checked)} /><GitCompare size={15} /> Comparar com período homólogo</label>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={rows.length === 0}><Download size={15} /> Exportar CSV</button>
     </div>
@@ -188,6 +231,12 @@ export function TrialBalancePage() {
           <tr className="group-row"><td colSpan={2}>{group.digit} · {group.name}</td>{emptyNumericCells}</tr>
           {group.rows.map((row) => <tr key={row.accountCode}><td><Link className="primary-cell" to={`/contas/${row.accountCode}`}>{row.accountCode}</Link></td><td>{row.accountName}</td>{numericCells(row, priorBalanceOf.get(row.accountCode) ?? 0)}</tr>)}
           <tr className="subtotal-row"><td colSpan={2}>Subtotal classe {group.digit}</td>{numericCells(group, priorOfRows(group.rows), true)}</tr>
+        </tbody>)
+        : byTaxonomy
+        ? taxonomyGroups.map((group) => <tbody key={group.key || 'sem-taxonomia'}>
+          <tr className="group-row"><td colSpan={2}>{group.label}</td>{emptyNumericCells}</tr>
+          {group.rows.map((row) => <tr key={row.accountCode}><td><Link className="primary-cell" to={`/contas/${row.accountCode}`}>{row.accountCode}</Link></td><td>{row.accountName}</td>{numericCells(row, priorBalanceOf.get(row.accountCode) ?? 0)}</tr>)}
+          <tr className="subtotal-row"><td colSpan={2}>Subtotal {group.label}</td>{numericCells(group, priorOfRows(group.rows), true)}</tr>
         </tbody>)
         : <tbody>
           {rows.map((row) => <tr key={row.accountCode}><td><Link className="primary-cell" to={`/contas/${row.accountCode}`}>{row.accountCode}</Link></td><td>{row.accountName}</td>{numericCells(row, priorBalanceOf.get(row.accountCode) ?? 0, true)}</tr>)}
