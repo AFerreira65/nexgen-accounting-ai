@@ -19,6 +19,9 @@ describe('App', () => {
     // A origem real, não o texto fixo antigo.
     expect(screen.getByText('Origem').closest('span')).toHaveTextContent('Manual')
     expect(screen.getByRole('button', { name: /Copiar ligação/ })).toBeInTheDocument()
+    // Ações de estado no próprio detalhe (COMP está conferido).
+    expect(screen.getByRole('button', { name: 'Reabrir' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Anular' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('link', { name: '6221' }))
     expect(screen.getByRole('heading', { name: /6221 · Material de escritório/ })).toBeInTheDocument()

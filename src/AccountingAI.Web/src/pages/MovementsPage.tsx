@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
+import { useMovementGuards } from '../app/movementGuards'
 import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext, type MovementLineInput } from '../app/WorkContext'
 
@@ -250,7 +251,7 @@ function MovementEditor({ movement, duplicate = false, onClose }: { movement: Mo
 }
 
 export function MovementsPage() {
-  const { accountingLoading, accountingSetup, accountingSource, activeCompany, movements, reopenMovement, reviewMovement, source, user, voidMovement } = useWorkContext()
+  const { accountingLoading, accountingSetup, accountingSource, activeCompany, movements, reopenMovement, reviewMovement, voidMovement } = useWorkContext()
   const [editing, setEditing] = useState<{ movement: Movement | null; duplicate: boolean } | undefined>(undefined)
   const [busy, setBusy] = useState('')
   const [search, setSearch] = useState('')
@@ -259,31 +260,7 @@ export function MovementsPage() {
   const [sourceFilter, setSourceFilter] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
-  const [closedYears, setClosedYears] = useState<number[]>([])
-  const [postingLockDate, setPostingLockDate] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (source !== 'database') { setClosedYears([]); setPostingLockDate(null); return }
-    const controller = new AbortController()
-    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/closed-years`, { signal: controller.signal })
-      .then(async (response) => (response.ok ? (await response.json()) as number[] : []))
-      .then(setClosedYears)
-      .catch(() => { /* aviso opcional */ })
-    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/posting-lock-date`, { signal: controller.signal })
-      .then(async (response) => (response.ok ? (await response.json()) as { lockDate: string | null } : { lockDate: null }))
-      .then((payload) => setPostingLockDate(payload.lockDate))
-      .catch(() => { /* aviso opcional */ })
-    return () => controller.abort()
-  }, [activeCompany.companyId, source, user.id])
-
-  // Motivo pelo qual um movimento com esta data não pode ser corrigido nem anulado.
-  // Os lançamentos de sistema (apuramento e abertura) ficam isentos, tal como na API.
-  function blockedReason(movement: Movement): string | null {
-    if (movement.documentType === 'AP' || movement.documentType === 'AB') return null
-    if (closedYears.includes(Number(movement.date.slice(0, 4)))) return 'Exercício apurado'
-    if (postingLockDate !== null && movement.date <= postingLockDate) return 'Período bloqueado'
-    return null
-  }
+  const blockedReason = useMovementGuards()
 
   async function act(reference: string, action: () => Promise<void>) {
     setBusy(reference)
