@@ -379,6 +379,27 @@ describe('App', () => {
     clickSpy.mockRestore()
   })
 
+  it('shows client and supplier current-account balances', () => {
+    window.history.pushState({}, '', '/contas-correntes')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Contas correntes' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Clientes' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Fornecedores' })).toBeInTheDocument()
+    // Demo: cliente 2111001 com saldo 3075; o fornecedor 2211001 fica a zero (fatura + pagamento).
+    expect(screen.getByRole('link', { name: '2111001' })).toBeInTheDocument()
+    expect(screen.getAllByText(/075,00/).length).toBeGreaterThan(0)
+    expect(screen.getByText('Sem saldos de fornecedores.')).toBeInTheDocument()
+
+    const createObjectURL = vi.fn(() => 'blob:mock')
+    Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true })
+    Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), configurable: true })
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    fireEvent.click(screen.getByRole('button', { name: /Exportar CSV/ }))
+    expect(createObjectURL).toHaveBeenCalledTimes(1)
+    clickSpy.mockRestore()
+  })
+
   it('shows the balance sheet with assets, liabilities and equity in balance', () => {
     window.history.pushState({}, '', '/balanco')
     render(<App />)

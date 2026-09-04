@@ -18,6 +18,7 @@ import {
   Settings,
   Tags,
   TrendingUp,
+  Users,
   WalletCards,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -32,6 +33,7 @@ const links = [
   { to: '/resultados', label: 'Resultados', icon: TrendingUp },
   { to: '/balanco', label: 'Balanço', icon: Scale },
   { to: '/iva', label: 'Resumo de IVA', icon: Receipt },
+  { to: '/contas-correntes', label: 'Contas correntes', icon: Users },
   { to: '/apuramento', label: 'Apuramento', icon: CalendarCheck },
   { to: '/abertura', label: 'Abertura', icon: DoorOpen },
   { to: '/contas', label: 'Plano de contas', icon: BookOpen },
