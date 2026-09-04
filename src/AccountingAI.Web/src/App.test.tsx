@@ -16,6 +16,9 @@ describe('App', () => {
     fireEvent.click(screen.getAllByRole('link', { name: /COMP 2026 00842/i })[0])
     expect(screen.getByRole('heading', { name: 'COMP 2026 00842' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Linhas do movimento' })).toBeInTheDocument()
+    // A origem real, não o texto fixo antigo.
+    expect(screen.getByText('Origem').closest('span')).toHaveTextContent('Manual')
+    expect(screen.getByRole('button', { name: /Copiar ligação/ })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('link', { name: '6221' }))
     expect(screen.getByRole('heading', { name: /6221 · Material de escritório/ })).toBeInTheDocument()

@@ -1,20 +1,31 @@
-import { ArrowLeft, BookOpen, FileText, Landmark, Link2, MoreHorizontal } from 'lucide-react'
+import { ArrowLeft, BookOpen, Check, FileText, Landmark, Link2 } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { euro, formatMovementDate } from '../app/demo-data'
+import { entrySourceLabel } from '../app/entrySources'
 import { useWorkContext } from '../app/WorkContext'
 
 export function MovementPage() {
   const { movementId } = useParams()
   const { movements } = useWorkContext()
+  const [copied, setCopied] = useState(false)
   const movement = movements.find((item) => item.id === movementId)
   if (!movement) return <div className="empty-state"><h1>Movimento não encontrado</h1><Link to="/movimentos">Voltar aos movimentos</Link></div>
 
+  const copyLink = () => {
+    void navigator.clipboard?.writeText(window.location.href).then(() => {
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  const statusBadge = movement.status === 'Conferido' ? 'success' : movement.status === 'Anulado' ? 'neutral' : 'warning'
   const mainAccount = movement.lines[0]
   return <div className="page-stack">
     <Link className="back-link" to="/movimentos"><ArrowLeft size={16} /> Movimentos contabilísticos</Link>
     <header className="page-heading detail-heading">
-      <div><p className="eyebrow">Movimento contabilístico</p><div className="heading-line"><h1>{movement.id.replaceAll('-', ' ')}</h1><span className={`badge ${movement.status === 'Conferido' ? 'success' : 'warning'}`}>{movement.status}</span></div><p>{movement.description}</p></div>
-      <div className="heading-actions"><button className="button button-secondary" type="button"><Link2 size={16} /> Copiar ligação</button><button className="icon-button bordered" type="button" aria-label="Mais opções"><MoreHorizontal /></button></div>
+      <div><p className="eyebrow">Movimento contabilístico</p><div className="heading-line"><h1>{movement.id.replaceAll('-', ' ')}</h1><span className={`badge ${statusBadge}`}>{movement.status}</span>{movement.documentType ? <span className="badge neutral">{movement.documentType}</span> : null}</div><p>{movement.description}</p></div>
+      <div className="heading-actions"><button className="button button-secondary" type="button" onClick={copyLink}>{copied ? <><Check size={16} /> Ligação copiada</> : <><Link2 size={16} /> Copiar ligação</>}</button></div>
     </header>
 
     <section className="context-grid" aria-label="Atalhos contextuais">
@@ -32,6 +43,6 @@ export function MovementPage() {
 
     {movement.notes ? <section className="panel notes-panel"><div className="panel-heading"><div><h2>Observações</h2><p>Nota interna, não sai em documentos oficiais</p></div></div><p className="notes-body">{movement.notes}</p></section> : null}
 
-    <section className="metadata-strip"><span><small>Data</small><strong>{formatMovementDate(movement.date)}</strong></span><span><small>Período</small><strong>{movement.date.slice(0, 7).replace('-', ' / ')}</strong></span><span><small>Origem</small><strong>Dados de teste locais</strong></span><span><small>Referência</small><strong>{movement.document.split(' · ')[0]}</strong></span></section>
+    <section className="metadata-strip"><span><small>Data</small><strong>{formatMovementDate(movement.date)}</strong></span><span><small>Período</small><strong>{movement.date.slice(0, 7).replace('-', ' / ')}</strong></span><span><small>Origem</small><strong>{entrySourceLabel(movement.source)}</strong></span><span><small>Documento</small><strong>{movement.document.split(' · ')[0]}</strong></span></section>
   </div>
 }
