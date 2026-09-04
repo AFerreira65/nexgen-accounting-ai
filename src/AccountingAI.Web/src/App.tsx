@@ -10,9 +10,9 @@ import { JournalReportPage } from './pages/JournalReportPage'
 import { MovementPage } from './pages/MovementPage'
 import { MovementsPage } from './pages/MovementsPage'
 import { OrganizationPage } from './pages/OrganizationPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { TasksPage } from './pages/TasksPage'
 import { TrialBalancePage } from './pages/TrialBalancePage'
 import { PartyBalancesPage } from './pages/PartyBalancesPage'
 import { VatSummaryPage } from './pages/VatSummaryPage'
@@ -47,7 +47,7 @@ export function App() {
             <Route path="/apuramento" element={<YearEndClosingPage />} />
             <Route path="/abertura" element={<YearOpeningPage />} />
             <Route path="/livro-diario" element={<JournalReportPage />} />
-            <Route path="/tarefas" element={<PlaceholderPage title="Tarefas" />} />
+            <Route path="/tarefas" element={<TasksPage />} />
             <Route path="/definicoes" element={<SettingsPage />} />
           </Route>
         </Routes>

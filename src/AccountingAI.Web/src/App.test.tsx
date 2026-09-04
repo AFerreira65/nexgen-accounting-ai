@@ -620,4 +620,15 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: /Aplicar sugestões do referencial/i }))
     expect(await screen.findByText(/2 de 5/)).toBeInTheDocument()
   })
+
+  it('lists pending movements and unclassified accounts on the tasks screen', () => {
+    window.history.pushState({}, '', '/tarefas')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Tarefas' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Movimentos por conferir' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /BANC 2026 00196/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Contas de movimento por classificar' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ir para Taxonomias' })).toBeInTheDocument()
+  })
 })
