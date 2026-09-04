@@ -139,12 +139,24 @@ public sealed class JournalPostingService(AccountingDbContext context)
     public Task<PostedMovement> VoidAsync(Guid companyId, string reference, CancellationToken cancellationToken = default) =>
         TransitionAsync(companyId, reference, entry => entry.Void(), enforceOpenYear: true, cancellationToken);
 
+    /// <summary>
+    /// Reabre um lançamento conferido (volta a "por conferir") para poder ser
+    /// corrigido. Recusado num exercício apurado ou período bloqueado e para os
+    /// lançamentos de apuramento/abertura (têm ecrãs próprios).
+    /// </summary>
+    public Task<PostedMovement> ReopenAsync(Guid companyId, string reference, CancellationToken cancellationToken = default) =>
+        TransitionAsync(companyId, reference, entry => entry.Reopen(), enforceOpenYear: true, cancellationToken,
+            guard: entry => entry.DocumentType?.Code is "AP" or "AB"
+                ? "Os lançamentos de apuramento e abertura reabrem-se pelos respetivos ecrãs."
+                : null);
+
     private async Task<PostedMovement> TransitionAsync(
         Guid companyId,
         string reference,
         Action<JournalEntry> transition,
         bool enforceOpenYear,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<JournalEntry, string?>? guard = null)
     {
         var normalizedReference = Normalize(reference);
         PostedMovement? result = null;
@@ -162,6 +174,11 @@ public sealed class JournalPostingService(AccountingDbContext context)
                     cancellationToken)
                 .ConfigureAwait(false)
                 ?? throw new InvalidOperationException("O lançamento não existe.");
+
+            if (guard?.Invoke(entry) is { } message)
+            {
+                throw new InvalidOperationException(message);
+            }
 
             if (enforceOpenYear)
             {

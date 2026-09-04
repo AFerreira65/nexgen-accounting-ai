@@ -249,7 +249,7 @@ function MovementEditor({ movement, duplicate = false, onClose }: { movement: Mo
 }
 
 export function MovementsPage() {
-  const { accountingLoading, accountingSetup, accountingSource, activeCompany, movements, reviewMovement, source, user, voidMovement } = useWorkContext()
+  const { accountingLoading, accountingSetup, accountingSource, activeCompany, movements, reopenMovement, reviewMovement, source, user, voidMovement } = useWorkContext()
   const [editing, setEditing] = useState<{ movement: Movement | null; duplicate: boolean } | undefined>(undefined)
   const [busy, setBusy] = useState('')
   const [search, setSearch] = useState('')
@@ -332,6 +332,7 @@ export function MovementsPage() {
           return <>
             {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => setEditing({ movement, duplicate: false })}>Corrigir</button>}
             {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => reviewMovement(movement.id))}>Conferir</button>}
+            {movement.status === 'Conferido' && movement.documentType !== 'AP' && movement.documentType !== 'AB' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => act(movement.id, () => reopenMovement(movement.id))}>Reabrir</button>}
             {movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => act(movement.id, () => voidMovement(movement.id))}>Anular</button>}
             {movement.documentType !== 'AP' && movement.documentType !== 'AB' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => setEditing({ movement, duplicate: true })}>Duplicar</button>}
             {blocked !== null && movement.status !== 'Anulado' && <small className="row-actions-note">{blocked}</small>}

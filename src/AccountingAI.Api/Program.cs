@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-56",
+    phase = "F1-60",
     status = "ready"
 }));
 
@@ -406,6 +406,30 @@ if (app.Environment.IsDevelopment())
         try
         {
             var movement = await posting.MarkReviewedAsync(companyId, reference, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(ToMovementResponse(movement));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["movement"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/{reference}/reopen", async (
+        Guid userId,
+        Guid companyId,
+        string reference,
+        AccountingDbContext context,
+        JournalPostingService posting,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var movement = await posting.ReopenAsync(companyId, reference, cancellationToken).ConfigureAwait(false);
             return Results.Ok(ToMovementResponse(movement));
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)

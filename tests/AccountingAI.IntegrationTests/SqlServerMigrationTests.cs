@@ -836,6 +836,25 @@ public sealed class SqlServerMigrationTests
                             new JournalEntryLineInput("2211001", "C", 0m, 10m)
                         ]).ConfigureAwait(false));
 
+                // Reabrir devolve o lançamento a "por conferir" e volta a permitir corrigir.
+                var reopened = await posting
+                    .ReopenAsync(DevelopmentDataSeeder.DemoCompanyId, "GERAL-2026-00001")
+                    .ConfigureAwait(false);
+                Assert.AreEqual("Por conferir", reopened.Status);
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await posting.ReopenAsync(DevelopmentDataSeeder.DemoCompanyId, "GERAL-2026-00001").ConfigureAwait(false));
+                var correctedAfterReopen = await posting
+                    .ReviseAsync(
+                        DevelopmentDataSeeder.DemoCompanyId, "GERAL-2026-00001", "GERAL",
+                        new DateOnly(2026, 3, 15), "OD corrigido", "Corrigido após reabrir", reviewed: true,
+                        [
+                            new JournalEntryLineInput("6221", "D", 100m, 0m),
+                            new JournalEntryLineInput("2211001", "C", 0m, 100m)
+                        ])
+                    .ConfigureAwait(false);
+                Assert.AreEqual("Conferido", correctedAfterReopen.Status);
+                Assert.AreEqual("Corrigido após reabrir", correctedAfterReopen.Description);
+
                 var voidedMovement = await posting
                     .VoidAsync(DevelopmentDataSeeder.DemoCompanyId, "GERAL-2026-00001")
                     .ConfigureAwait(false);

@@ -232,6 +232,20 @@ describe('App', () => {
     clickSpy.mockRestore()
   })
 
+  it('reopens a reviewed movement so it can be corrected', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    const row = () => screen.getByRole('link', { name: 'COMP 2026 00842' }).closest('tr') as HTMLElement
+    expect(within(row()).getByText('Conferido')).toBeInTheDocument()
+    expect(within(row()).queryByRole('button', { name: 'Corrigir' })).not.toBeInTheDocument()
+
+    fireEvent.click(within(row()).getByRole('button', { name: 'Reabrir' }))
+    expect(within(row()).getByText('Por conferir')).toBeInTheDocument()
+    expect(within(row()).getByRole('button', { name: 'Corrigir' })).toBeInTheDocument()
+    expect(within(row()).queryByRole('button', { name: 'Reabrir' })).not.toBeInTheDocument()
+  })
+
   it('numbers a movement by document type in demo mode', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)

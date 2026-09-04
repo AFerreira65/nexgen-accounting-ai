@@ -52,8 +52,13 @@ public sealed class AccountingEntryTests
         Assert.AreEqual(JournalEntryStatus.Reviewed, entry.Status);
         Assert.ThrowsExactly<InvalidOperationException>(() => entry.MarkReviewed());
 
+        entry.Reopen();
+        Assert.AreEqual(JournalEntryStatus.PendingReview, entry.Status);
+        Assert.ThrowsExactly<InvalidOperationException>(() => entry.Reopen());
+
         entry.Void();
         Assert.AreEqual(JournalEntryStatus.Voided, entry.Status);
+        Assert.ThrowsExactly<InvalidOperationException>(() => entry.Reopen());
     }
 
     [TestMethod]

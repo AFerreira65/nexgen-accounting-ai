@@ -167,6 +167,17 @@ public sealed class JournalEntry
         Status = JournalEntryStatus.Reviewed;
     }
 
+    /// <summary>Devolve um lançamento conferido ao estado "por conferir" para poder ser corrigido.</summary>
+    public void Reopen()
+    {
+        if (Status != JournalEntryStatus.Reviewed)
+        {
+            throw new InvalidOperationException("Só um lançamento conferido pode ser reaberto.");
+        }
+
+        Status = JournalEntryStatus.PendingReview;
+    }
+
     public void Void()
     {
         Status = JournalEntryStatus.Voided;

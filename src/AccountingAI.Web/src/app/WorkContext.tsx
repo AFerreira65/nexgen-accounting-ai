@@ -71,6 +71,7 @@ type WorkContextValue = WorkContextData & {
   reviseMovement: (reference: string, input: MovementInput) => Promise<void>
   reviewMovement: (reference: string) => Promise<void>
   voidMovement: (reference: string) => Promise<void>
+  reopenMovement: (reference: string) => Promise<void>
   applyTaxonomySuggestions: () => Promise<number>
   inspectSaft: (file: File) => Promise<SaftInspection>
   previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
@@ -510,6 +511,15 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         return
       }
       setAccountingMovements((current) => current.map((movement) => movement.id === reference ? { ...movement, status: 'Anulado' } : movement))
+    },
+    reopenMovement: async (reference) => {
+      if (accountingSource === 'database') {
+        const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/movements/${encodeURIComponent(reference)}/reopen`, { method: 'POST' })
+        if (!response.ok) throw new Error(await problemMessage(response))
+        setAccountingRevision((revision) => revision + 1)
+        return
+      }
+      setAccountingMovements((current) => current.map((movement) => movement.id === reference ? { ...movement, status: 'Por conferir' } : movement))
     },
     applyTaxonomySuggestions: async () => {
       if (setupSource === 'database') {
