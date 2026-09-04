@@ -1,10 +1,11 @@
-import { ArrowLeft, BookOpen, Check, FileText, Landmark, Link2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, Check, Copy, FileText, Landmark, Link2, PencilLine } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { euro, formatMovementDate } from '../app/demo-data'
 import { entrySourceLabel } from '../app/entrySources'
 import { useMovementGuards } from '../app/movementGuards'
 import { useWorkContext } from '../app/WorkContext'
+import { MovementEditor } from './MovementEditor'
 
 export function MovementPage() {
   const { movementId } = useParams()
@@ -12,6 +13,7 @@ export function MovementPage() {
   const blockedReason = useMovementGuards()
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [editing, setEditing] = useState<'correct' | 'duplicate' | null>(null)
   const movement = movements.find((item) => item.id === movementId)
   if (!movement) return <div className="empty-state"><h1>Movimento não encontrado</h1><Link to="/movimentos">Voltar aos movimentos</Link></div>
 
@@ -37,12 +39,15 @@ export function MovementPage() {
       <div><p className="eyebrow">Movimento contabilístico</p><div className="heading-line"><h1>{movement.id.replaceAll('-', ' ')}</h1><span className={`badge ${statusBadge}`}>{movement.status}</span>{movement.documentType ? <span className="badge neutral">{movement.documentType}</span> : null}</div><p>{movement.description}</p></div>
       <div className="heading-actions">
         {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy} onClick={() => void act(() => reviewMovement(movement.id))}>Conferir</button>}
+        {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy || blocked !== null} title={blocked ?? undefined} onClick={() => setEditing('correct')}><PencilLine size={16} /> Corrigir</button>}
         {movement.status === 'Conferido' && !isSystemEntry && <button className="button button-secondary" type="button" disabled={busy || blocked !== null} title={blocked ?? undefined} onClick={() => void act(() => reopenMovement(movement.id))}>Reabrir</button>}
         {movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy || blocked !== null} title={blocked ?? undefined} onClick={() => void act(() => voidMovement(movement.id))}>Anular</button>}
+        {!isSystemEntry && <button className="button button-secondary" type="button" onClick={() => setEditing('duplicate')}><Copy size={16} /> Duplicar</button>}
         <button className="button button-secondary" type="button" onClick={copyLink}>{copied ? <><Check size={16} /> Ligação copiada</> : <><Link2 size={16} /> Copiar ligação</>}</button>
       </div>
     </header>
     {blocked !== null && movement.status !== 'Anulado' && <p className="save-status"><span className="badge neutral">{blocked}</span> Não é possível reabrir nem anular este lançamento.</p>}
+    {editing !== null && <MovementEditor movement={movement} duplicate={editing === 'duplicate'} onClose={() => setEditing(null)} />}
 
     <section className="context-grid" aria-label="Atalhos contextuais">
       <Link className="context-card" to={`/diarios/${movement.journalId}`}><span className="context-icon navy"><Landmark /></span><span><small>Diário</small><strong>{movement.journalName}</strong><em>Abrir diário e movimentos relacionados</em></span><ArrowLeft className="rotate-180" size={17} /></Link>

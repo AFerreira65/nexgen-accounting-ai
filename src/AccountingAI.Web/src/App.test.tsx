@@ -261,6 +261,18 @@ describe('App', () => {
     expect(within(row()).queryByRole('button', { name: 'Reabrir' })).not.toBeInTheDocument()
   })
 
+  it('opens the movement editor from the detail screen', () => {
+    window.history.pushState({}, '', '/movimentos/BANC-2026-00196')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'BANC 2026 00196' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Duplicar/ }))
+    expect(screen.getByRole('heading', { name: /Novo lançamento a partir de BANC 2026 00196/ })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Corrigir' }))
+    expect(screen.getByRole('heading', { name: /Corrigir BANC 2026 00196/ })).toBeInTheDocument()
+  })
+
   it('numbers a movement by document type in demo mode', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)
