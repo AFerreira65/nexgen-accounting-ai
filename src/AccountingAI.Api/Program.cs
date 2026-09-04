@@ -1296,8 +1296,10 @@ if (app.Environment.IsDevelopment())
         Guid userId,
         Guid companyId,
         HttpRequest request,
+        AccountingDbContext context,
         SaftAccountsImportService import,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken,
+        int? fiscalYear) =>
     {
         var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
         if (maxBodySize is { IsReadOnly: false })
@@ -1313,6 +1315,11 @@ if (app.Environment.IsDevelopment())
             if (result is null)
             {
                 return Results.NotFound();
+            }
+
+            if (fiscalYear.HasValue)
+            {
+                await EnsureDefaultFiscalYearAsync(context, userId, companyId, fiscalYear.Value, cancellationToken).ConfigureAwait(false);
             }
 
             return Results.Ok(new
@@ -1342,6 +1349,7 @@ if (app.Environment.IsDevelopment())
         Guid companyId,
         int fiscalYear,
         HttpRequest request,
+        AccountingDbContext context,
         SaftOpeningBalancesImportService import,
         CancellationToken cancellationToken) =>
     {
@@ -1360,6 +1368,8 @@ if (app.Environment.IsDevelopment())
             {
                 return Results.NotFound();
             }
+
+            await EnsureDefaultFiscalYearAsync(context, userId, companyId, fiscalYear, cancellationToken).ConfigureAwait(false);
 
             return Results.Ok(new
             {
@@ -1482,8 +1492,10 @@ if (app.Environment.IsDevelopment())
         Guid userId,
         Guid companyId,
         HttpRequest request,
+        AccountingDbContext context,
         SaftEntriesImportService import,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken,
+        int? fiscalYear) =>
     {
         var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
         if (maxBodySize is { IsReadOnly: false })
@@ -1499,6 +1511,11 @@ if (app.Environment.IsDevelopment())
             if (result is null)
             {
                 return Results.NotFound();
+            }
+
+            if (fiscalYear.HasValue)
+            {
+                await EnsureDefaultFiscalYearAsync(context, userId, companyId, fiscalYear.Value, cancellationToken).ConfigureAwait(false);
             }
 
             return Results.Ok(new
@@ -1816,6 +1833,37 @@ public partial class Program
                     company.UserMemberships.Any(
                         membership => membership.UserId == userId && membership.IsActive),
                 cancellationToken);
+
+    // Depois de importar um SAF-T, o exercício do ficheiro passa a ser o exercício do
+    // utilizador nesta empresa — sem isto, os filtros de período (Resultados, Balancete,
+    // etc.) caem no ano corrente por não haver nenhum exercício definido, mesmo já
+    // existindo dados do ano importado. Não falha o pedido de importação por causa disto:
+    // é um acerto de preferência, não uma parte essencial da própria importação.
+    private static async Task EnsureDefaultFiscalYearAsync(
+        AccountingDbContext context,
+        Guid userId,
+        Guid companyId,
+        int fiscalYear,
+        CancellationToken cancellationToken)
+    {
+        var membership = await context.CompanyUsers
+            .Include(item => item.Settings)
+            .SingleOrDefaultAsync(item => item.UserId == userId && item.CompanyId == companyId, cancellationToken)
+            .ConfigureAwait(false);
+        if (membership is null)
+        {
+            return;
+        }
+
+        var settings = membership.Settings ?? new UserCompanySettings(companyId, userId);
+        settings.SetDefaultFiscalYear(fiscalYear);
+        if (membership.Settings is null)
+        {
+            context.UserCompanySettings.Add(settings);
+        }
+
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
 
     private static object? ToSettingsResponse(UserCompanySettings? settings) => settings is null
         ? null

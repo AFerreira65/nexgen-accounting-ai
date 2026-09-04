@@ -162,4 +162,29 @@ public sealed class OrganizationTests
         Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => settings.Update(
             "pt-PT", "Europe/Lisbon", 2026, InterfaceTheme.System, false, 50, (InterfaceTextSize)9));
     }
+
+    [TestMethod]
+    public void SetDefaultFiscalYearOnlyTouchesThatField()
+    {
+        var settings = new UserCompanySettings(Guid.NewGuid(), Guid.NewGuid());
+        settings.Update("pt-PT", "Atlantic/Azores", null, InterfaceTheme.Dark, true, 100, InterfaceTextSize.Larger);
+
+        settings.SetDefaultFiscalYear(2025);
+
+        Assert.AreEqual(2025, settings.DefaultFiscalYear);
+        Assert.AreEqual("Atlantic/Azores", settings.TimeZone);
+        Assert.AreEqual(InterfaceTheme.Dark, settings.Theme);
+        Assert.IsTrue(settings.CompactMode);
+        Assert.AreEqual(100, settings.PageSize);
+        Assert.AreEqual(InterfaceTextSize.Larger, settings.TextSize);
+    }
+
+    [TestMethod]
+    public void SetDefaultFiscalYearRejectsOutOfRangeYear()
+    {
+        var settings = new UserCompanySettings(Guid.NewGuid(), Guid.NewGuid());
+
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => settings.SetDefaultFiscalYear(1999));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => settings.SetDefaultFiscalYear(2201));
+    }
 }

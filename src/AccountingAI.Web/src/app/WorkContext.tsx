@@ -75,11 +75,11 @@ type WorkContextValue = WorkContextData & {
   applyTaxonomySuggestions: () => Promise<number>
   inspectSaft: (file: File) => Promise<SaftInspection>
   previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
-  importSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsImport>
+  importSaftAccounts: (companyId: string, file: File, fiscalYear?: number) => Promise<SaftAccountsImport>
   importSaftOpeningBalances: (companyId: string, fiscalYear: number, file: File) => Promise<SaftOpeningBalancesImport>
   previewSaftEntries: (companyId: string, file: File) => Promise<SaftEntriesPreview>
   analyzeSaftEntries: (companyId: string, file: File) => Promise<SaftEntriesAnalysis>
-  importSaftEntries: (companyId: string, file: File) => Promise<SaftEntriesImport>
+  importSaftEntries: (companyId: string, file: File, fiscalYear?: number) => Promise<SaftEntriesImport>
   createSaftCompany: (input: SaftCompanyCreationInput) => Promise<SaftCompanyCreation>
 }
 
@@ -590,14 +590,19 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         accounts,
       }
     },
-    importSaftAccounts: async (companyId, file) => {
-      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/saft/accounts-import`, {
+    importSaftAccounts: async (companyId, file, fiscalYear) => {
+      const params = fiscalYear ? `?fiscalYear=${fiscalYear}` : ''
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/saft/accounts-import${params}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/xml' },
         body: file,
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       setAccountingRevision((revision) => revision + 1)
+      // O exercício do ficheiro pode ter passado a ser o exercício do
+      // utilizador nesta empresa (ver EnsureDefaultFiscalYearAsync na API);
+      // recarrega o contexto para os filtros de período o refletirem já.
+      if (fiscalYear) void loadWorkContext()
       return await response.json() as SaftAccountsImport
     },
     importSaftOpeningBalances: async (companyId, fiscalYear, file) => {
@@ -608,6 +613,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       setAccountingRevision((revision) => revision + 1)
+      void loadWorkContext()
       return await response.json() as SaftOpeningBalancesImport
     },
     previewSaftEntries: async (companyId, file) => {
@@ -628,14 +634,16 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as SaftEntriesAnalysis
     },
-    importSaftEntries: async (companyId, file) => {
-      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/saft/entries-import`, {
+    importSaftEntries: async (companyId, file, fiscalYear) => {
+      const params = fiscalYear ? `?fiscalYear=${fiscalYear}` : ''
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/saft/entries-import${params}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/xml' },
         body: file,
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       setAccountingRevision((revision) => revision + 1)
+      if (fiscalYear) void loadWorkContext()
       return await response.json() as SaftEntriesImport
     },
     createSaftCompany: async (input) => {

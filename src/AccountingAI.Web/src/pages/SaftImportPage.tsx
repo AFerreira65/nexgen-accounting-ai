@@ -105,7 +105,7 @@ function AccountsPreviewPanel({ companyId, file, fiscalYear }: { companyId: stri
     if (!file) return
     setImportState('importing'); setError('')
     try {
-      const result = await importSaftAccounts(companyId, file)
+      const result = await importSaftAccounts(companyId, file, fiscalYear)
       setImported(result)
       setImportState('done')
       setPreview(await previewSaftAccounts(companyId, file))
@@ -136,7 +136,7 @@ function AccountsPreviewPanel({ companyId, file, fiscalYear }: { companyId: stri
       {preview && preview.newCount > 0 && source === 'database' && <button className="button button-primary" type="button" disabled={importState === 'importing'} onClick={() => void importNew()}>{importState === 'importing' ? 'A criar…' : `Criar as ${preview.newCount} contas novas`}</button>}
       {preview && preview.fileAccountCount > 0 && source === 'database' && <button className="button button-secondary" type="button" disabled={openingState === 'importing'} onClick={() => void importOpening()}>{openingState === 'importing' ? 'A importar…' : 'Importar saldos iniciais'}</button>}
     </div>
-    {imported && <p className="save-status success"><CircleCheck size={15} /> {imported.createdCount} contas criadas ({imported.alreadyExistedCount} já existiam).</p>}
+    {imported && <p className="save-status success"><CircleCheck size={15} /> {imported.createdCount} contas criadas ({imported.alreadyExistedCount} já existiam); exercício de {fiscalYear} definido como o seu exercício nesta empresa.</p>}
     {opening && <p className={`save-status ${opening.alreadyImported ? 'warning' : opening.lineCount > 0 ? 'success' : ''}`}>{opening.alreadyImported ? <Info size={15} /> : opening.lineCount > 0 ? <CircleCheck size={15} /> : <Info size={15} />} {opening.alreadyImported
       ? `Já existe abertura para ${fiscalYear}${opening.entryReference ? ` (${opening.entryReference})` : ''}; os saldos iniciais não foram reimportados.`
       : opening.lineCount > 0
@@ -163,7 +163,7 @@ function AccountsPreviewPanel({ companyId, file, fiscalYear }: { companyId: stri
   </section>
 }
 
-function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: File | null }) {
+function EntriesPreviewPanel({ companyId, file, fiscalYear }: { companyId: string; file: File | null; fiscalYear: number }) {
   const { previewSaftEntries, analyzeSaftEntries, importSaftEntries, source } = useWorkContext()
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [preview, setPreview] = useState<SaftEntriesPreview | null>(null)
@@ -205,7 +205,7 @@ function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: Fil
     if (!file) return
     setImportState('importing'); setError('')
     try {
-      const result = await importSaftEntries(companyId, file)
+      const result = await importSaftEntries(companyId, file, fiscalYear)
       setImported(result)
       setAnalysis(null)
       setImportState('done')
@@ -232,7 +232,7 @@ function EntriesPreviewPanel({ companyId, file }: { companyId: string; file: Fil
     {analysis && !imported && analysis.wouldMatchDeclaredTotals !== null && <p className={`save-status ${analysis.wouldMatchDeclaredTotals ? 'success' : 'warning'}`}>{analysis.wouldMatchDeclaredTotals ? <CircleCheck size={15} /> : <CircleAlert size={15} />} {analysis.wouldMatchDeclaredTotals
       ? `Depois de importar, os totais da empresa no período do ficheiro (${euro.format(analysis.projectedPeriodDebit)}) coincidiriam com os declarados no SAF-T.`
       : `Depois de importar, os totais da empresa no período do ficheiro (débito ${euro.format(analysis.projectedPeriodDebit)}, crédito ${euro.format(analysis.projectedPeriodCredit)}) não coincidiriam com os declarados no SAF-T (débito ${euro.format(analysis.declaredTotalDebit ?? 0)}, crédito ${euro.format(analysis.declaredTotalCredit ?? 0)}).`}</p>}
-    {imported && <p className={`save-status ${imported.skippedCount > 0 ? 'warning' : 'success'}`}>{imported.skippedCount > 0 ? <CircleAlert size={15} /> : <CircleCheck size={15} />} {imported.importedCount} {imported.importedCount === 1 ? 'movimento importado' : 'movimentos importados'}{imported.journalsCreated.length > 0 ? `, ${imported.journalsCreated.length} ${imported.journalsCreated.length === 1 ? 'diário criado' : 'diários criados'} (${imported.journalsCreated.join(', ')})` : ''}{imported.skippedCount > 0 ? `, ${imported.skippedCount} ${imported.skippedCount === 1 ? 'saltado' : 'saltados'}` : ''}.</p>}
+    {imported && <p className={`save-status ${imported.skippedCount > 0 ? 'warning' : 'success'}`}>{imported.skippedCount > 0 ? <CircleAlert size={15} /> : <CircleCheck size={15} />} {imported.importedCount} {imported.importedCount === 1 ? 'movimento importado' : 'movimentos importados'}{imported.journalsCreated.length > 0 ? `, ${imported.journalsCreated.length} ${imported.journalsCreated.length === 1 ? 'diário criado' : 'diários criados'} (${imported.journalsCreated.join(', ')})` : ''}{imported.skippedCount > 0 ? `, ${imported.skippedCount} ${imported.skippedCount === 1 ? 'saltado' : 'saltados'}` : ''}; exercício de {fiscalYear} definido como o seu exercício nesta empresa.</p>}
     {imported && imported.matchesDeclaredTotals !== null && <p className={`save-status ${imported.matchesDeclaredTotals ? 'success' : 'warning'}`}>{imported.matchesDeclaredTotals ? <CircleCheck size={15} /> : <CircleAlert size={15} />} {imported.matchesDeclaredTotals
       ? `Os totais da empresa no período do ficheiro (${euro.format(imported.companyPeriodDebit)}) coincidem com os declarados no SAF-T.`
       : `Os totais da empresa no período do ficheiro (débito ${euro.format(imported.companyPeriodDebit)}, crédito ${euro.format(imported.companyPeriodCredit)}) não coincidem com os declarados no SAF-T (débito ${euro.format(imported.declaredTotalDebit ?? 0)}, crédito ${euro.format(imported.declaredTotalCredit ?? 0)}).`}</p>}
@@ -328,7 +328,7 @@ export function SaftImportPage() {
               <p className="save-status"><Info size={15} /> Importe primeiro o plano de contas do ficheiro; só depois os movimentos, para que as contas referidas existam.</p>
             </section>
             {result.match.companyId && <AccountsPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} />}
-            {result.match.companyId && source === 'database' && <EntriesPreviewPanel companyId={result.match.companyId} file={file} />}
+            {result.match.companyId && source === 'database' && <EntriesPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} />}
           </>
         : <CompanyProposal inspection={result} />}
     </>}

@@ -92,4 +92,21 @@ public sealed class UserCompanySettings
         TextSize = textSize;
         UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
+
+    /// <summary>
+    /// Marca <paramref name="fiscalYear"/> como o exercício do utilizador nesta empresa,
+    /// sem tocar nas restantes preferências. Usado depois de importar um SAF-T: o
+    /// exercício do ficheiro passa a existir para os filtros de período, em vez de cair
+    /// no ano corrente por não haver nenhum exercício definido.
+    /// </summary>
+    public void SetDefaultFiscalYear(int fiscalYear)
+    {
+        if (fiscalYear is < 2000 or > 2200)
+        {
+            throw new ArgumentOutOfRangeException(nameof(fiscalYear));
+        }
+
+        DefaultFiscalYear = fiscalYear;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
 }
