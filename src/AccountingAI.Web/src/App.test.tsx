@@ -651,5 +651,10 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: /BANC 2026 00196/ })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Contas de movimento por classificar' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ir para Taxonomias' })).toBeInTheDocument()
+    // IVA a entregar: 575 (24331 liquidado) − 276 (24323 dedutível) = 299.
+    expect(screen.getByRole('heading', { name: 'IVA a entregar' })).toBeInTheDocument()
+    const vatTask = screen.getByRole('link', { name: /Posição de IVA a entregar ao Estado/ })
+    expect(vatTask).toHaveAttribute('href', '/iva')
+    expect(screen.getByText('299,00 €')).toBeInTheDocument()
   })
 })
