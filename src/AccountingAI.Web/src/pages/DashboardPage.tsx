@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, Clock3, Database, Landmark, Scale, TrendingUp, Wallet } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Clock3, Database, HandCoins, Landmark, Scale, TrendingUp, Users, Wallet } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate } from '../app/demo-data'
@@ -37,15 +37,21 @@ export function DashboardPage() {
     return () => controller.abort()
   }, [activeCompany.companyId, movements, source, user.id])
 
-  const { netResult, totalAssets } = useMemo(() => {
+  const { netResult, totalAssets, cashAndBank, receivables, payables } = useMemo(() => {
     let result = 0
     let assets = 0
+    let cash = 0
+    let toReceive = 0
+    let toPay = 0
     for (const { accountCode, balance } of balances) {
       const klass = accountCode.charAt(0)
       if (klass === '6' || klass === '7') result -= balance
       if (klass === '1' || klass === '3' || klass === '4' || (klass === '2' && balance > 0)) assets += balance
+      if (accountCode.startsWith('11') || accountCode.startsWith('12')) cash += balance
+      if (accountCode.startsWith('21')) toReceive += balance
+      if (accountCode.startsWith('22')) toPay += balance
     }
-    return { netResult: result, totalAssets: assets }
+    return { netResult: result, totalAssets: assets, cashAndBank: cash, receivables: toReceive, payables: toPay }
   }, [balances])
 
   return (
@@ -60,6 +66,12 @@ export function DashboardPage() {
         <article className="metric-card"><span className={`metric-icon ${netResult >= 0 ? 'blue' : 'rose'}`}><TrendingUp /></span><div><small>Resultado</small><strong>{euro.format(netResult)}</strong><span>{netResult >= 0 ? 'Lucro acumulado' : 'Prejuízo acumulado'}</span></div></article>
         <article className="metric-card"><span className="metric-icon blue"><Wallet /></span><div><small>Total do ativo</small><strong>{euro.format(totalAssets)}</strong><span>Classes 1, 3, 4 e 2 devedora</span></div></article>
         <article className="metric-card"><span className="metric-icon amber"><Clock3 /></span><div><small>Por conferir</small><strong>{pending.length}</strong><span>Movimentos pendentes de conferência</span></div></article>
+      </section>
+
+      <section className="metric-grid" aria-label="Posição financeira">
+        <Link className="metric-card" to="/balancete"><span className="metric-icon navy"><Wallet /></span><div><small>Caixa e bancos</small><strong>{euro.format(cashAndBank)}</strong><span>Contas 11 e 12</span></div></Link>
+        <Link className="metric-card" to="/contas-correntes"><span className="metric-icon teal"><Users /></span><div><small>Saldo de clientes</small><strong>{euro.format(receivables)}</strong><span>Classe 21 · a receber</span></div></Link>
+        <Link className="metric-card" to="/contas-correntes"><span className="metric-icon amber"><HandCoins /></span><div><small>Saldo de fornecedores</small><strong>{euro.format(payables)}</strong><span>Classe 22 · a pagar</span></div></Link>
       </section>
 
       <div className="dashboard-grid">
