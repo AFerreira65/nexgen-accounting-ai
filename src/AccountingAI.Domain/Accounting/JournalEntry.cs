@@ -51,6 +51,7 @@ public sealed class JournalEntry
         Description = description.Trim();
         Notes = NormalizeNotes(notes);
         Status = JournalEntryStatus.PendingReview;
+        Source = EntrySource.Manual;
     }
 
     /// <summary>Máximo de caracteres das observações internas do lançamento.</summary>
@@ -76,6 +77,9 @@ public sealed class JournalEntry
     public string? Notes { get; private set; }
 
     public JournalEntryStatus Status { get; private set; }
+
+    /// <summary>De onde veio o lançamento; por omissão <see cref="EntrySource.Manual"/>.</summary>
+    public EntrySource Source { get; private set; }
 
     public decimal TotalAmount { get; private set; }
 
@@ -165,6 +169,12 @@ public sealed class JournalEntry
         }
 
         Status = JournalEntryStatus.Reviewed;
+    }
+
+    /// <summary>Marca a origem do lançamento. Só se define uma vez, antes de gravar.</summary>
+    public void SetSource(EntrySource source)
+    {
+        Source = source;
     }
 
     /// <summary>Devolve um lançamento conferido ao estado "por conferir" para poder ser corrigido.</summary>

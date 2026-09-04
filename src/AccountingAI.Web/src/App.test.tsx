@@ -207,6 +207,12 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Estado'), { target: { value: 'Por conferir' } })
     expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'BANC 2026 00196' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Estado'), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText('Origem'), { target: { value: 'Manual' } })
+    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Origem'), { target: { value: 'SaftImport' } })
+    expect(screen.getByText('Nenhum movimento corresponde aos filtros.')).toBeInTheDocument()
   })
 
   it('filters the movement list by date range', () => {

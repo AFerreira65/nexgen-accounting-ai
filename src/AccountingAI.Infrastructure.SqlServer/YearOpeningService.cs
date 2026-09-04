@@ -139,7 +139,8 @@ public sealed class YearOpeningService(AccountingDbContext context, JournalPosti
             reviewed: true,
             inputs,
             cancellationToken,
-            documentTypeCode: OpeningDocumentType).ConfigureAwait(false);
+            documentTypeCode: OpeningDocumentType,
+            source: EntrySource.Opening).ConfigureAwait(false);
     }
 
     /// <summary>Anula o lançamento de abertura para o exercício poder ser reaberto.</summary>

@@ -17,6 +17,7 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
         builder.Property(item => item.Description).HasMaxLength(500).IsRequired();
         builder.Property(item => item.Notes).HasMaxLength(JournalEntry.NotesMaxLength);
         builder.Property(item => item.Status).HasConversion<int>();
+        builder.Property(item => item.Source).HasConversion<int>().HasDefaultValue(EntrySource.Manual);
         builder.Property(item => item.TotalAmount).HasPrecision(18, 2);
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.HasIndex(item => new { item.CompanyId, item.Reference }).IsUnique();

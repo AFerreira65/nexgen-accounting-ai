@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-60",
+    phase = "F1-63",
     status = "ready"
 }));
 
@@ -239,7 +239,8 @@ if (app.Environment.IsDevelopment())
         Guid companyId,
         AccountingDbContext context,
         CancellationToken cancellationToken,
-        string? documentType) =>
+        string? documentType,
+        string? source) =>
     {
         var hasActiveAccess = await context.CompanyUsers
             .AsNoTracking()
@@ -271,6 +272,11 @@ if (app.Environment.IsDevelopment())
             query = query.Where(item => item.DocumentType != null && item.DocumentType.Code == normalizedDocumentType);
         }
 
+        if (!string.IsNullOrWhiteSpace(source) && Enum.TryParse<EntrySource>(source.Trim(), ignoreCase: true, out var entrySource))
+        {
+            query = query.Where(item => item.Source == entrySource);
+        }
+
         var entryEntities = await query
             .OrderByDescending(item => item.EntryDate)
             .ThenByDescending(item => item.Reference)
@@ -294,6 +300,7 @@ if (app.Environment.IsDevelopment())
                 JournalEntryStatus.Voided => "Anulado",
                 _ => "Por conferir"
             },
+            Source = item.Source.ToString(),
             Amount = item.TotalAmount,
             Lines = item.Lines
                 .OrderBy(line => line.Sequence)
@@ -1729,6 +1736,7 @@ public partial class Program
         movement.Description,
         movement.Notes,
         movement.Status,
+        Source = movement.Source.ToString(),
         movement.Amount,
         Lines = movement.Lines.Select(line => new
         {

@@ -92,6 +92,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260903161831_AssociateDemoUserWithMemberlessCompanies");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260904102947_JournalEntrySource");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -657,6 +660,7 @@ public sealed class SqlServerMigrationTests
                     new[] { "T 1", "T 2" },
                     importedEntries.Select(item => item.Reference).ToArray());
                 Assert.IsTrue(importedEntries.All(item => item.Status == JournalEntryStatus.Reviewed));
+                Assert.IsTrue(importedEntries.All(item => item.Source == EntrySource.SaftImport));
                 Assert.IsTrue(importedEntries.All(item =>
                     item.Lines.Sum(line => line.Debit) == item.Lines.Sum(line => line.Credit)));
                 Assert.AreEqual("CX", importedEntries.Single(item => item.Reference == "T 2").Journal.Code);
@@ -1168,6 +1172,7 @@ public sealed class SqlServerMigrationTests
                 Assert.AreEqual("AP-2026-00001", registered.Reference);
                 Assert.AreEqual("APURAMENTO", registered.JournalCode);
                 Assert.AreEqual("AP", registered.DocumentTypeCode);
+                Assert.AreEqual(EntrySource.Closing, registered.Source);
                 Assert.AreEqual(new DateOnly(2026, 12, 31), registered.EntryDate);
 
                 var afterClosing = await closing.PreviewAsync(DevelopmentDataSeeder.DemoCompanyId, 2026).ConfigureAwait(false);
@@ -1208,6 +1213,7 @@ public sealed class SqlServerMigrationTests
 
                 var registered = await opening.RegisterAsync(DevelopmentDataSeeder.DemoCompanyId, 2027).ConfigureAwait(false);
                 Assert.AreEqual("AB-2027-00001", registered.Reference);
+                Assert.AreEqual(EntrySource.Opening, registered.Source);
                 Assert.AreEqual("ABERTURA", registered.JournalCode);
                 Assert.AreEqual("AB", registered.DocumentTypeCode);
                 Assert.AreEqual(new DateOnly(2027, 1, 1), registered.EntryDate);

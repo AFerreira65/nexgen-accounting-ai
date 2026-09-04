@@ -146,7 +146,8 @@ public sealed class YearEndClosingService(AccountingDbContext context, JournalPo
             reviewed: true,
             inputs,
             cancellationToken,
-            documentTypeCode: ClosingDocumentType).ConfigureAwait(false);
+            documentTypeCode: ClosingDocumentType,
+            source: EntrySource.Closing).ConfigureAwait(false);
     }
 
     /// <summary>Anula o lançamento de apuramento para o exercício poder ser reapurado.</summary>

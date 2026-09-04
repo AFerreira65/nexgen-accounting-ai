@@ -29,6 +29,10 @@ public sealed class AccountingEntryTests
         Assert.AreEqual(123m, entry.TotalAmount);
         Assert.AreEqual(JournalEntryStatus.Reviewed, entry.Status);
         Assert.HasCount(3, entry.Lines);
+        Assert.AreEqual(EntrySource.Manual, entry.Source);
+
+        entry.SetSource(EntrySource.SaftImport);
+        Assert.AreEqual(EntrySource.SaftImport, entry.Source);
     }
 
     [TestMethod]

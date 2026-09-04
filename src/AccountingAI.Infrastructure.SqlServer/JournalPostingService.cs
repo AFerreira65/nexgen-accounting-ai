@@ -24,6 +24,7 @@ public sealed record PostedMovement(
     string Description,
     string? Notes,
     string Status,
+    EntrySource Source,
     decimal Amount,
     IReadOnlyList<PostedMovementLine> Lines);
 
@@ -46,7 +47,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
         IReadOnlyList<JournalEntryLineInput> lines,
         CancellationToken cancellationToken = default,
         string? documentTypeCode = null,
-        string? notes = null)
+        string? notes = null,
+        EntrySource source = EntrySource.Manual)
     {
         RequireLines(lines);
         PostedMovement? result = null;
@@ -61,6 +63,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
 
             var entry = new JournalEntry(
                 Guid.NewGuid(), companyId, journal.Id, reference, entryDate, documentReference, description, documentType?.Id, notes);
+            entry.SetSource(source);
             foreach (var line in lines)
             {
                 entry.AddLine(Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit);
@@ -113,12 +116,14 @@ public sealed class JournalPostingService(AccountingDbContext context)
             var (journal, _, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
 
-            // Corrigir é substituir: remove o lançamento e recria-o com a mesma referência.
+            // Corrigir é substituir: remove o lançamento e recria-o com a mesma referência e origem.
+            var originalSource = existing.Source;
             context.JournalEntries.Remove(existing);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             var entry = new JournalEntry(
                 Guid.NewGuid(), companyId, journal.Id, normalizedReference, entryDate, documentReference, description, documentType?.Id, notes);
+            entry.SetSource(originalSource);
             foreach (var line in lines)
             {
                 entry.AddLine(Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit);
@@ -415,6 +420,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
                 JournalEntryStatus.Voided => "Anulado",
                 _ => "Por conferir"
             },
+            entry.Source,
             entry.TotalAmount,
             entry.Lines
                 .OrderBy(line => line.Sequence)

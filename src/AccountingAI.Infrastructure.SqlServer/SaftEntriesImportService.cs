@@ -98,6 +98,7 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
 
                 var entry = new JournalEntry(
                     Guid.NewGuid(), companyId, journal.Id, reference, check.EntryDate, documentReference, description);
+                entry.SetSource(EntrySource.SaftImport);
                 foreach (var line in fileTransaction.Lines)
                 {
                     entry.AddLine(
