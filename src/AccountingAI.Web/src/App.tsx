@@ -14,6 +14,7 @@ import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { TrialBalancePage } from './pages/TrialBalancePage'
+import { VatSummaryPage } from './pages/VatSummaryPage'
 import { YearEndClosingPage } from './pages/YearEndClosingPage'
 import { YearOpeningPage } from './pages/YearOpeningPage'
 import { DocumentNumberSeriesPage } from './pages/DocumentNumberSeriesPage'
@@ -40,6 +41,7 @@ export function App() {
             <Route path="/balancete" element={<TrialBalancePage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />
             <Route path="/balanco" element={<BalanceSheetPage />} />
+            <Route path="/iva" element={<VatSummaryPage />} />
             <Route path="/apuramento" element={<YearEndClosingPage />} />
             <Route path="/abertura" element={<YearOpeningPage />} />
             <Route path="/livro-diario" element={<JournalReportPage />} />

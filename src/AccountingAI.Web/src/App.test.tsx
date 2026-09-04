@@ -357,6 +357,28 @@ describe('App', () => {
     expect(screen.getAllByRole('columnheader', { name: 'Homólogo' }).length).toBeGreaterThan(0)
   })
 
+  it('shows the VAT summary from the IVA accounts', () => {
+    window.history.pushState({}, '', '/iva')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Resumo de IVA' })).toBeInTheDocument()
+    // Demo (empresa do Continente): 24323 dedutível a débito 276; 24331 liquidado a crédito 575.
+    expect(screen.getByRole('link', { name: '24323' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '24331' })).toBeInTheDocument()
+    expect(screen.getAllByText(/575,00/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/276,00/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('A entregar ao Estado').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/299,00/).length).toBeGreaterThan(0)
+
+    const createObjectURL = vi.fn(() => 'blob:mock')
+    Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true })
+    Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), configurable: true })
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    fireEvent.click(screen.getByRole('button', { name: /Exportar CSV/ }))
+    expect(createObjectURL).toHaveBeenCalledTimes(1)
+    clickSpy.mockRestore()
+  })
+
   it('shows the balance sheet with assets, liabilities and equity in balance', () => {
     window.history.pushState({}, '', '/balanco')
     render(<App />)
