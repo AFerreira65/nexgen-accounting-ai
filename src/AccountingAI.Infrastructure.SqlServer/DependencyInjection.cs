@@ -28,6 +28,12 @@ public static class DependencyInjection
                 {
                     sqlOptions.EnableRetryOnFailure();
                     sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "infrastructure");
+                    // O valor por omissão do SqlClient (30s) chega para uma empresa normal, mas
+                    // uma leitura ampla (ex.: lista de movimentos) numa empresa com um histórico
+                    // muito grande — importado de um SAF-T com anos de linhas por liquidar, por
+                    // exemplo — pode ainda não ter as páginas em cache na primeira consulta a
+                    // seguir à importação, e ultrapassar 30s só por causa disso.
+                    sqlOptions.CommandTimeout(120);
                 }));
 
         services.AddScoped<CompanyAccountingProvisioner>();
