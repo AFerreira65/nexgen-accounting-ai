@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-63",
+    phase = "F1-66",
     status = "ready"
 }));
 
@@ -644,7 +644,8 @@ if (app.Environment.IsDevelopment())
         int? year,
         string? from,
         string? to,
-        string? account) =>
+        string? account,
+        string? source) =>
     {
         if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
         {
@@ -657,7 +658,7 @@ if (app.Environment.IsDevelopment())
         }
 
         var report = await reportService
-            .BuildAsync(companyId, journal, documentType, year, fromDate, toDate, cancellationToken, account)
+            .BuildAsync(companyId, journal, documentType, year, fromDate, toDate, cancellationToken, account, source)
             .ConfigureAwait(false);
 
         return Results.Ok(new
@@ -673,6 +674,7 @@ if (app.Environment.IsDevelopment())
                 Document = entry.DocumentReference,
                 entry.Description,
                 entry.Status,
+                Source = entry.Source.ToString(),
                 Amount = entry.Amount,
                 Lines = entry.Lines.Select(line => new
                 {

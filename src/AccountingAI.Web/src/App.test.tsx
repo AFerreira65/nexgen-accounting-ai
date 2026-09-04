@@ -299,6 +299,13 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'VEND 2026 00327' })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Conta'), { target: { value: '' } })
 
+    // Filtro de origem: os movimentos de demonstração são manuais.
+    fireEvent.change(screen.getByLabelText('Origem'), { target: { value: 'Opening' } })
+    expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Origem'), { target: { value: 'Manual' } })
+    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Origem'), { target: { value: '' } })
+
     fireEvent.change(screen.getByLabelText('Data inicial'), { target: { value: '2026-09-01' } })
     expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
     expect(screen.getByText('Sem lançamentos para os filtros escolhidos.')).toBeInTheDocument()

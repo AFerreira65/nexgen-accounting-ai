@@ -19,6 +19,7 @@ public sealed record JournalReportEntry(
     string DocumentReference,
     string Description,
     string Status,
+    EntrySource Source,
     decimal Amount,
     IReadOnlyList<JournalReportLine> Lines);
 
@@ -30,7 +31,7 @@ public sealed record JournalReport(
 /// <summary>
 /// Livro diário: lançamentos de uma empresa por ordem cronológica, com as linhas
 /// e os totais, opcionalmente filtrados por diário, tipo de documento, exercício,
-/// intervalo de datas e conta movimentada. Exclui sempre os lançamentos anulados.
+/// intervalo de datas, conta movimentada e origem. Exclui sempre os anulados.
 /// </summary>
 public sealed class JournalReportService(AccountingDbContext context)
 {
@@ -42,7 +43,8 @@ public sealed class JournalReportService(AccountingDbContext context)
         DateOnly? fromDate = null,
         DateOnly? toDate = null,
         CancellationToken cancellationToken = default,
-        string? accountCode = null)
+        string? accountCode = null,
+        string? source = null)
     {
         var query = context.JournalEntries
             .AsNoTracking()
@@ -86,6 +88,11 @@ public sealed class JournalReportService(AccountingDbContext context)
             query = query.Where(entry => entry.Lines.Any(line => line.Account.Code == normalizedAccount));
         }
 
+        if (!string.IsNullOrWhiteSpace(source) && Enum.TryParse<EntrySource>(source.Trim(), ignoreCase: true, out var entrySource))
+        {
+            query = query.Where(entry => entry.Source == entrySource);
+        }
+
         var entries = await query
             .OrderBy(entry => entry.EntryDate)
             .ThenBy(entry => entry.Reference)
@@ -100,6 +107,7 @@ public sealed class JournalReportService(AccountingDbContext context)
             entry.DocumentReference,
             entry.Description,
             entry.Status == JournalEntryStatus.Reviewed ? "Conferido" : "Por conferir",
+            entry.Source,
             entry.TotalAmount,
             entry.Lines
                 .OrderBy(line => line.Sequence)

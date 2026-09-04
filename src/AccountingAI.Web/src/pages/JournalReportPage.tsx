@@ -3,17 +3,18 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
+import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 
 type ReportEntry = {
   id: string; date: string; journalId: string; documentType: string | null; document: string
-  description: string; status: string; amount: number
+  description: string; status: string; source?: string; amount: number
   lines: { account: string; accountName: string; description: string; debit: number; credit: number }[]
 }
 type Report = { totalDebit: number; totalCredit: number; entries: ReportEntry[] }
 
-function fromMovements(movements: Movement[], journal: string, documentType: string, year: string, from: string, to: string, account: string): Report {
+function fromMovements(movements: Movement[], journal: string, documentType: string, year: string, from: string, to: string, account: string, source: string): Report {
   const normalizedAccount = account.trim().toUpperCase()
   const entries = movements
     .filter((movement) => movement.status !== 'Anulado')
@@ -23,9 +24,10 @@ function fromMovements(movements: Movement[], journal: string, documentType: str
     .filter((movement) => !from || movement.date >= from)
     .filter((movement) => !to || movement.date <= to)
     .filter((movement) => !normalizedAccount || movement.lines.some((line) => line.account.toUpperCase() === normalizedAccount))
+    .filter((movement) => !source || (movement.source ?? 'Manual') === source)
     .map((movement) => ({
       id: movement.id, date: movement.date, journalId: movement.journalId, documentType: movement.documentType ?? null,
-      document: movement.document, description: movement.description, status: movement.status, amount: movement.amount,
+      document: movement.document, description: movement.description, status: movement.status, source: movement.source ?? 'Manual', amount: movement.amount,
       lines: movement.lines,
     }))
     .sort((a, b) => (a.date + a.id).localeCompare(b.date + b.id))
@@ -42,11 +44,12 @@ export function JournalReportPage() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [account, setAccount] = useState('')
-  const [data, setData] = useState<Report>(() => fromMovements(movements, '', '', '', '', '', ''))
+  const [sourceFilter, setSourceFilter] = useState('')
+  const [data, setData] = useState<Report>(() => fromMovements(movements, '', '', '', '', '', '', ''))
 
   useEffect(() => {
     if (source !== 'database') {
-      setData(fromMovements(movements, journal, documentType, year, fromDate, toDate, account))
+      setData(fromMovements(movements, journal, documentType, year, fromDate, toDate, account, sourceFilter))
       return
     }
     const params = new URLSearchParams()
@@ -56,23 +59,24 @@ export function JournalReportPage() {
     if (fromDate) params.set('from', fromDate)
     if (toDate) params.set('to', toDate)
     if (account.trim()) params.set('account', account.trim())
+    if (sourceFilter) params.set('source', sourceFilter)
     const controller = new AbortController()
     void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/journal-report?${params}`, { signal: controller.signal })
       .then(async (response) => response.ok ? await response.json() as Report : Promise.reject(new Error()))
       .then((result) => setData(result))
-      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, journal, documentType, year, fromDate, toDate, account)) })
+      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, journal, documentType, year, fromDate, toDate, account, sourceFilter)) })
     return () => controller.abort()
-  }, [account, activeCompany.companyId, documentType, fromDate, journal, movements, source, toDate, user.id, year])
+  }, [account, activeCompany.companyId, documentType, fromDate, journal, movements, source, sourceFilter, toDate, user.id, year])
 
   const balanced = useMemo(() => Math.round((data.totalDebit - data.totalCredit) * 100) === 0, [data.totalDebit, data.totalCredit])
 
   const exportCsv = () => {
-    const header = ['Referência', 'Data', 'Diário', 'Tipo de documento', 'Documento', 'Descrição', 'Estado', 'Conta', 'Nome da conta', 'Descrição da linha', 'Débito', 'Crédito']
+    const header = ['Referência', 'Data', 'Diário', 'Tipo de documento', 'Documento', 'Origem', 'Descrição', 'Estado', 'Conta', 'Nome da conta', 'Descrição da linha', 'Débito', 'Crédito']
     const lines = data.entries.flatMap((entry) => entry.lines.map((line) => [
-      entry.id, entry.date, entry.journalId, entry.documentType ?? '', entry.document, entry.description, entry.status,
+      entry.id, entry.date, entry.journalId, entry.documentType ?? '', entry.document, entrySourceLabel(entry.source), entry.description, entry.status,
       line.account, line.accountName, line.description, line.debit, line.credit,
     ]))
-    const totals = ['', '', '', '', '', '', '', '', '', 'Totais', data.totalDebit, data.totalCredit]
+    const totals = ['', '', '', '', '', '', '', '', '', '', 'Totais', data.totalDebit, data.totalCredit]
     downloadCsv(csvFilename('livro-diario', activeCompany.legalName), toCsv([header, ...lines, totals]))
   }
 
@@ -88,6 +92,7 @@ export function JournalReportPage() {
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       <label><span className="sr-only">Conta</span><input aria-label="Conta" list="journal-report-accounts" value={account} onChange={(event) => setAccount(event.target.value)} placeholder="Conta" /></label>
       <datalist id="journal-report-accounts">{accountingSetup.accounts.filter((item) => item.allowsPosting).map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</datalist>
+      <label><span className="sr-only">Origem</span><select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="">Todas as origens</option>{ENTRY_SOURCES.map((code) => <option key={code} value={code}>{ENTRY_SOURCE_LABELS[code]}</option>)}</select></label>
       <span className="catalog-count">{data.entries.length} lançamentos</span>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={data.entries.length === 0}><Download size={15} /> Exportar CSV</button>
     </div>

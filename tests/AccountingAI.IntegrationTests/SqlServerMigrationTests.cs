@@ -1125,6 +1125,21 @@ public sealed class SqlServerMigrationTests
                     .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, null)
                     .ConfigureAwait(false);
                 Assert.IsFalse(full.Entries.Any(entry => entry.Reference == "GERAL-2026-00001"));
+                Assert.IsTrue(full.Entries.All(entry => entry.Source == EntrySource.Manual));
+
+                // Filtro de origem: só manuais (todos, aqui) e nenhum importado de SAF-T.
+                var manualOnly = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, null, null, null, default, null, "Manual")
+                    .ConfigureAwait(false);
+                Assert.AreEqual(full.Entries.Count, manualOnly.Entries.Count);
+                var saftOnly = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, null, null, null, default, null, "SaftImport")
+                    .ConfigureAwait(false);
+                Assert.HasCount(0, saftOnly.Entries);
+                var ignoredSource = await report
+                    .BuildAsync(DevelopmentDataSeeder.DemoCompanyId, null, null, null, null, null, default, null, "desconhecida")
+                    .ConfigureAwait(false);
+                Assert.AreEqual(full.Entries.Count, ignoredSource.Entries.Count);
 
                 // Livro diário por intervalo de datas.
                 var august = await report
