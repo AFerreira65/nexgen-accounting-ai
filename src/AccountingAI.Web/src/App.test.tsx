@@ -20,6 +20,17 @@ describe('App', () => {
     expect(vatCard).toHaveTextContent(/299,00/)
     expect(vatCard).toHaveTextContent('A entregar ao Estado')
 
+    // Filtro de período: recuar a data de referência para antes do lançamento
+    // de compras (29/08, IVA dedutível 276) só deixa o de vendas (28/08, IVA
+    // liquidado 575) na posição de IVA.
+    fireEvent.change(screen.getByLabelText('Data de referência'), { target: { value: '2026-08-28' } })
+    expect(vatCard).toHaveTextContent(/575,00/)
+    expect(vatCard).toHaveTextContent(/Até/)
+    expect(vatCard).not.toHaveTextContent('A entregar ao Estado')
+    fireEvent.click(screen.getByRole('button', { name: 'Hoje' }))
+    expect(vatCard).toHaveTextContent(/299,00/)
+    expect(vatCard).toHaveTextContent('A entregar ao Estado')
+
     fireEvent.click(screen.getAllByRole('link', { name: /COMP 2026 00842/i })[0])
     expect(screen.getByRole('heading', { name: 'COMP 2026 00842' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Linhas do movimento' })).toBeInTheDocument()

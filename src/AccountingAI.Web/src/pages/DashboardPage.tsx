@@ -2,14 +2,19 @@ import { AlertTriangle, ArrowRight, Clock3, Database, HandCoins, Landmark, Recei
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate } from '../app/demo-data'
+import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 
 type Balance = { accountCode: string; balance: number }
 
-function balancesFromMovements(movements: ReturnType<typeof useWorkContext>['movements']): Balance[] {
+// O saldo de cada conta é sempre cumulativo até `to` — `from` só existe para
+// os relatórios que separam abertura de movimento do período, o que aqui não
+// interessa: só queremos a posição financeira numa data de referência.
+function balancesFromMovements(movements: ReturnType<typeof useWorkContext>['movements'], to: string): Balance[] {
   const map = new Map<string, number>()
   for (const movement of movements) {
     if (movement.status === 'Anulado') continue
+    if (to && movement.date > to) continue
     for (const line of movement.lines) {
       map.set(line.account, (map.get(line.account) ?? 0) + line.debit - line.credit)
     }
@@ -22,20 +27,23 @@ export function DashboardPage() {
   const active = movements.filter((movement) => movement.status !== 'Anulado')
   const pending = movements.filter((movement) => movement.status === 'Por conferir')
   const firstName = user.displayName.replace(' (Demonstração)', '').split(' ')[0]
-  const [balances, setBalances] = useState<Balance[]>(() => balancesFromMovements(movements))
+  const [toDate, setToDate] = useState('')
+  const [balances, setBalances] = useState<Balance[]>(() => balancesFromMovements(movements, ''))
 
   useEffect(() => {
     if (source !== 'database') {
-      setBalances(balancesFromMovements(movements))
+      setBalances(balancesFromMovements(movements, toDate))
       return
     }
+    const params = new URLSearchParams()
+    if (toDate) params.set('to', toDate)
     const controller = new AbortController()
-    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/trial-balance`, { signal: controller.signal })
+    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/trial-balance?${params}`, { signal: controller.signal })
       .then(async (response) => response.ok ? await response.json() as { rows: Balance[] } : Promise.reject(new Error()))
       .then((result) => setBalances(result.rows.map((row) => ({ accountCode: row.accountCode, balance: row.balance }))))
-      .catch(() => { if (!controller.signal.aborted) setBalances(balancesFromMovements(movements)) })
+      .catch(() => { if (!controller.signal.aborted) setBalances(balancesFromMovements(movements, toDate)) })
     return () => controller.abort()
-  }, [activeCompany.companyId, movements, source, user.id])
+  }, [activeCompany.companyId, movements, source, toDate, user.id])
 
   const { netResult, totalAssets, cashAndBank, receivables, payables, vatPosition } = useMemo(() => {
     let result = 0
@@ -58,6 +66,8 @@ export function DashboardPage() {
     return { netResult: result, totalAssets: assets, cashAndBank: cash, receivables: toReceive, payables: toPay, vatPosition: vatCollected - vatDeductible }
   }, [balances])
 
+  const asOf = toDate ? `Até ${formatMovementDate(toDate)}` : null
+
   return (
     <div className="page-stack">
       <header className="page-heading dashboard-heading">
@@ -65,18 +75,24 @@ export function DashboardPage() {
         <Link className="button button-primary" to="/movimentos"><Database size={17} /> Consultar dados</Link>
       </header>
 
+      <div className="filterbar">
+        <label><span className="sr-only">Data de referência</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
+        <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(_from, to) => setToDate(to)} />
+        {toDate && <button type="button" className="button button-secondary" onClick={() => setToDate('')}>Hoje</button>}
+      </div>
+
       <section className="metric-grid" aria-label="Indicadores do período">
         <article className="metric-card"><span className="metric-icon teal"><Scale /></span><div><small>Movimentos</small><strong>{active.length}</strong><span>{accountingSource === 'database' ? 'Lidos do SQL Server' : 'Fallback visual local'}</span></div></article>
-        <article className="metric-card"><span className={`metric-icon ${netResult >= 0 ? 'blue' : 'rose'}`}><TrendingUp /></span><div><small>Resultado</small><strong>{euro.format(netResult)}</strong><span>{netResult >= 0 ? 'Lucro acumulado' : 'Prejuízo acumulado'}</span></div></article>
-        <article className="metric-card"><span className="metric-icon blue"><Wallet /></span><div><small>Total do ativo</small><strong>{euro.format(totalAssets)}</strong><span>Classes 1, 3, 4 e 2 devedora</span></div></article>
+        <article className="metric-card"><span className={`metric-icon ${netResult >= 0 ? 'blue' : 'rose'}`}><TrendingUp /></span><div><small>Resultado</small><strong>{euro.format(netResult)}</strong><span>{asOf ?? (netResult >= 0 ? 'Lucro acumulado' : 'Prejuízo acumulado')}</span></div></article>
+        <article className="metric-card"><span className="metric-icon blue"><Wallet /></span><div><small>Total do ativo</small><strong>{euro.format(totalAssets)}</strong><span>{asOf ?? 'Classes 1, 3, 4 e 2 devedora'}</span></div></article>
         <article className="metric-card"><span className="metric-icon amber"><Clock3 /></span><div><small>Por conferir</small><strong>{pending.length}</strong><span>Movimentos pendentes de conferência</span></div></article>
       </section>
 
       <section className="metric-grid" aria-label="Posição financeira">
-        <Link className="metric-card" to="/balancete"><span className="metric-icon navy"><Wallet /></span><div><small>Caixa e bancos</small><strong>{euro.format(cashAndBank)}</strong><span>Contas 11 e 12</span></div></Link>
-        <Link className="metric-card" to="/contas-correntes"><span className="metric-icon teal"><Users /></span><div><small>Saldo de clientes</small><strong>{euro.format(receivables)}</strong><span>Classe 21 · a receber</span></div></Link>
-        <Link className="metric-card" to="/contas-correntes"><span className="metric-icon amber"><HandCoins /></span><div><small>Saldo de fornecedores</small><strong>{euro.format(payables)}</strong><span>Classe 22 · a pagar</span></div></Link>
-        <Link className="metric-card" to="/iva"><span className="metric-icon navy"><Receipt /></span><div><small>Posição de IVA</small><strong>{euro.format(vatPosition)}</strong><span>{vatPosition > 0 ? 'A entregar ao Estado' : vatPosition < 0 ? 'A recuperar ou a reportar' : 'Nulo'}</span></div></Link>
+        <Link className="metric-card" to="/balancete"><span className="metric-icon navy"><Wallet /></span><div><small>Caixa e bancos</small><strong>{euro.format(cashAndBank)}</strong><span>{asOf ?? 'Contas 11 e 12'}</span></div></Link>
+        <Link className="metric-card" to="/contas-correntes"><span className="metric-icon teal"><Users /></span><div><small>Saldo de clientes</small><strong>{euro.format(receivables)}</strong><span>{asOf ?? 'Classe 21 · a receber'}</span></div></Link>
+        <Link className="metric-card" to="/contas-correntes"><span className="metric-icon amber"><HandCoins /></span><div><small>Saldo de fornecedores</small><strong>{euro.format(payables)}</strong><span>{asOf ?? 'Classe 22 · a pagar'}</span></div></Link>
+        <Link className="metric-card" to="/iva"><span className="metric-icon navy"><Receipt /></span><div><small>Posição de IVA</small><strong>{euro.format(vatPosition)}</strong><span>{asOf ?? (vatPosition > 0 ? 'A entregar ao Estado' : vatPosition < 0 ? 'A recuperar ou a reportar' : 'Nulo')}</span></div></Link>
       </section>
 
       <div className="dashboard-grid">
