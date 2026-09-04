@@ -1,6 +1,7 @@
-import { Database, Plus, Search, StickyNote, Trash2, X } from 'lucide-react'
+import { Database, Download, Plus, Search, StickyNote, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext, type MovementLineInput } from '../app/WorkContext'
@@ -295,6 +296,15 @@ export function MovementsPage() {
     && (!fromDate || movement.date >= fromDate)
     && (!toDate || movement.date <= toDate))
 
+  const exportCsv = () => {
+    const header = ['Movimento', 'Data', 'Diário', 'Tipo de documento', 'Documento', 'Descrição', 'Notas', 'Estado', 'Conta', 'Nome da conta', 'Descrição da linha', 'Débito', 'Crédito']
+    const rows = visible.flatMap((movement) => movement.lines.map((line) => [
+      movement.id, movement.date, movement.journalId, movement.documentType ?? '', movement.document, movement.description, movement.notes ?? '', movement.status,
+      line.account, line.accountName, line.description, line.debit, line.credit,
+    ]))
+    downloadCsv(csvFilename('movimentos', activeCompany.legalName), toCsv([header, ...rows]))
+  }
+
   return <div className="page-stack">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Movimentos contabilísticos</h1><p>Consulte, percorra e registe lançamentos sem perder o contexto.</p></div><span className={`connection-badge ${accountingSource}`}><Database size={15} />{accountingSource === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
     <div className="filterbar">
@@ -306,6 +316,7 @@ export function MovementsPage() {
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       {(fromDate || toDate) && <button className="button button-secondary" type="button" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>}
       <span className="catalog-count">{visible.length} de {movements.length}</span>
+      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={visible.length === 0}><Download size={15} /> Exportar CSV</button>
       <button className="button button-primary" type="button" onClick={() => setEditing({ movement: null, duplicate: false })}><Plus size={16} /> Novo lançamento</button>
     </div>
     {editing !== undefined && <MovementEditor movement={editing.movement} duplicate={editing.duplicate} onClose={() => setEditing(undefined)} />}

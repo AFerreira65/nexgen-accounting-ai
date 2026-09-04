@@ -221,6 +221,15 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Limpar datas' }))
     expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+
+    const createObjectURL = vi.fn(() => 'blob:mock')
+    Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true })
+    Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), configurable: true })
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    fireEvent.click(screen.getByRole('button', { name: /Exportar CSV/ }))
+    expect(createObjectURL).toHaveBeenCalledTimes(1)
+    expect(clickSpy).toHaveBeenCalledTimes(1)
+    clickSpy.mockRestore()
   })
 
   it('numbers a movement by document type in demo mode', () => {
