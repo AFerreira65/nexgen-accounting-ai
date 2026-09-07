@@ -1,22 +1,58 @@
 import { Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type { Movement } from './demo-data'
 import { useDismiss } from './useDismiss'
 import { useWorkContext } from './WorkContext'
 
 type Hit = { to: string; label: string; hint: string }
 
+const moveHit = (movement: Movement): Hit => ({
+  to: `/movimentos/${movement.id}`,
+  label: movement.id.replaceAll('-', ' '),
+  hint: `Movimento · ${movement.description}`,
+})
+
 // Pesquisa rápida da barra de topo: salta para uma conta, diário ou
-// movimento a partir dos dados já carregados pelo WorkContext. Ctrl/Cmd+K
-// foca o campo; setas percorrem; Enter salta para o resultado ativo.
+// movimento. As contas e os diários vêm dos cadastros já carregados; os
+// movimentos, numa empresa ligada à base de dados, de um pedido de
+// pesquisa (não do array inteiro). Ctrl/Cmd+K foca o campo; setas
+// percorrem; Enter salta para o resultado ativo.
 export function GlobalSearch() {
-  const { accountingSetup, movements } = useWorkContext()
+  const { accountingSetup, accountingSource, activeCompany, movements, user } = useWorkContext()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const wrapRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const onDatabase = accountingSource === 'database'
+
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 250)
+    return () => clearTimeout(timer)
+  }, [query])
+
+  const [serverMoves, setServerMoves] = useState<Hit[]>([])
+  useEffect(() => {
+    const raw = debouncedQuery.trim()
+    if (!onDatabase || raw.length < 2) { setServerMoves([]); return }
+    const controller = new AbortController()
+    const params = new URLSearchParams({ page: '1', pageSize: '5', search: raw })
+    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/movements?${params}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return await response.json() as { items: Movement[] }
+      })
+      .then((body) => setServerMoves(body.items.slice(0, 4).map(moveHit)))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setServerMoves([])
+      })
+    return () => controller.abort()
+  }, [onDatabase, debouncedQuery, activeCompany.companyId, user.id])
 
   useDismiss(open, wrapRef, () => setOpen(false))
 
@@ -44,14 +80,16 @@ export function GlobalSearch() {
       .filter((item) => item.code.toLowerCase().startsWith(q) || item.name.toLocaleLowerCase('pt-PT').includes(q))
       .slice(0, 2)
       .map<Hit>((item) => ({ to: `/diarios/${item.code}`, label: item.code, hint: `Diário · ${item.name}` }))
-    const moves = movements
-      .filter((item) => item.id.toLowerCase().includes(q)
-        || item.description.toLocaleLowerCase('pt-PT').includes(q)
-        || (item.document ?? '').toLocaleLowerCase('pt-PT').includes(q))
-      .slice(0, 4)
-      .map<Hit>((item) => ({ to: `/movimentos/${item.id}`, label: item.id.replaceAll('-', ' '), hint: `Movimento · ${item.description}` }))
+    const moves = onDatabase
+      ? serverMoves
+      : movements
+          .filter((item) => item.id.toLowerCase().includes(q)
+            || item.description.toLocaleLowerCase('pt-PT').includes(q)
+            || (item.document ?? '').toLocaleLowerCase('pt-PT').includes(q))
+          .slice(0, 4)
+          .map(moveHit)
     return [...accounts, ...journals, ...moves].slice(0, 9)
-  }, [query, accountingSetup.accounts, accountingSetup.journals, movements])
+  }, [query, accountingSetup.accounts, accountingSetup.journals, movements, onDatabase, serverMoves])
 
   const go = (hit: Hit | undefined) => {
     if (!hit) return
