@@ -96,6 +96,13 @@ export function BalanceSheetPage() {
     || group.lines.some((line) => `${line.code} ${line.name}`.toLocaleLowerCase('pt-PT').includes(term))
   const priorAmountOf = (groups: SubclassGroup[]) => new Map(groups.map((group) => [group.code, group.amount]))
 
+  // Numa empresa grande, a classe 2 traz milhares de contas de terceiros;
+  // acima do tamanho de página mostram-se só os subtotais por subclasse e
+  // remete-se para o balancete (paginado e pesquisável) para ver as contas.
+  const totalLines = [current.assets.groups, current.liabilities.groups, current.equityGroups.groups]
+    .reduce((sum, groups) => sum + groups.reduce((n, group) => n + group.lines.length, 0), 0)
+  const detailInGroups = totalLines <= (activeCompany.settings.pageSize || 50)
+
   const exportCsv = () => {
     const head = showPrior ? ['Rubrica', 'Descrição', 'Montante', 'Homólogo', 'Variação'] : ['Rubrica', 'Descrição', 'Montante']
     const body: (string | number)[][] = [head]
@@ -128,8 +135,8 @@ export function BalanceSheetPage() {
     return groups.filter(match).map((group) => {
       const p = priorMap.get(group.code) ?? 0
       return <tbody key={group.code}>
-        <tr className="group-row"><td colSpan={2}>{group.code} · {group.name}</td><td />{emptyPrior}</tr>
-        {group.lines.map((line: SubclassLine) => <tr key={line.code}>
+        <tr className="group-row"><td colSpan={2}>{group.code} · {group.name}{!detailInGroups ? ` · ${group.lines.length} contas` : ''}</td><td />{emptyPrior}</tr>
+        {detailInGroups && group.lines.map((line: SubclassLine) => <tr key={line.code}>
           <td><Link className="primary-cell" to={`/contas/${line.code}`}>{line.code}</Link></td>
           <td>{line.name}</td>
           <td className="numeric">{euro.format(line.amount)}</td>
@@ -165,6 +172,8 @@ export function BalanceSheetPage() {
       <label className="toggle-inline"><input type="checkbox" checked={compare} onChange={(event) => setCompare(event.target.checked)} /><GitCompare size={15} /> Comparar com período homólogo</label>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={rows.length === 0}><Download size={15} /> Exportar CSV</button>
     </div>
+
+    {!detailInGroups && <p className="save-status"><Scale size={15} /> A mostrar só os subtotais por subclasse — {totalLines} contas ao todo. Para ver as contas, abra o <Link className="inline-link" to="/balancete">balancete</Link> (paginado e pesquisável). A exportação CSV inclui as contas.</p>}
 
     <section className="panel">
       <div className="panel-heading"><div><h2>Ativo</h2><p>Por subclasse.</p></div></div>
