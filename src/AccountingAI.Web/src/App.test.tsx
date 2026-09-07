@@ -71,6 +71,22 @@ describe('App', () => {
     expect(document.documentElement.dataset.textSize).toBe('larger')
   })
 
+  it('changes the exercise from the top bar and every screen follows it', () => {
+    window.history.pushState({}, '', '/livro-diario')
+    render(<App />)
+
+    // A empresa de demonstração tem o exercício 2026; o livro diário arranca nele.
+    expect(screen.getByRole('button', { name: /Exercício 2026/ })).toBeInTheDocument()
+    expect(screen.getByRole('spinbutton', { name: 'Exercício' })).toHaveValue(2026)
+
+    fireEvent.click(screen.getByRole('button', { name: /Exercício 2026/ }))
+    fireEvent.click(screen.getByRole('menuitem', { name: '2024' }))
+
+    expect(screen.getByRole('button', { name: /Exercício 2024/ })).toBeInTheDocument()
+    // O filtro de exercício do livro diário acompanha a mudança.
+    expect(screen.getByRole('spinbutton', { name: 'Exercício' })).toHaveValue(2024)
+  })
+
   it('switches the accounting fallback together with the active company', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)

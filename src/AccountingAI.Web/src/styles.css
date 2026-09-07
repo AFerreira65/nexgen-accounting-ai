@@ -53,6 +53,11 @@ button { color: inherit; }
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
 .period-selector, .icon-button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid #d8e1e4; background: white; cursor: pointer; }
 .period-selector { gap: 7px; min-height: 38px; padding: 0 12px; border-radius: 9px; font-size: 11px; font-weight: 650; white-space: nowrap; }
+.period-selector-wrap { position: relative; }
+.period-selector[aria-expanded='true'] { border-color: #45a89e; }
+.period-menu { position: absolute; z-index: 20; top: calc(100% + 8px); right: 0; display: grid; min-width: 130px; padding: 6px; border: 1px solid #d8e2e4; border-radius: 11px; background: white; box-shadow: 0 18px 50px #17343f24; }
+.period-menu button { padding: 8px 12px; border: 0; border-radius: 8px; text-align: left; background: transparent; cursor: pointer; font-size: 12px; font-weight: 650; color: #24363e; }
+.period-menu button:hover, .period-menu button.selected { background: #edf8f6; }
 .icon-button { position: relative; width: 38px; height: 38px; border-radius: 9px; }
 .icon-button:not(.bordered) { border-color: transparent; background: #f2f5f6; }
 .notification-dot { position: absolute; top: 8px; right: 8px; width: 6px; height: 6px; border: 2px solid white; border-radius: 50%; background: #e05858; }
@@ -266,7 +271,7 @@ html[data-text-size='larger'] .workspace { zoom: 1.12; }
 
 @media (max-width: 640px) {
   .topbar { gap: 8px; padding: 9px 14px; }
-  .global-search, .period-selector { display: none; }
+  .global-search, .period-selector-wrap { display: none; }
   .company-switcher { margin-right: auto; }
   .company-switcher strong { max-width: 190px; }
   .content-area { padding: 24px 14px 40px; }

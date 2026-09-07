@@ -47,9 +47,20 @@ const links = [
 ]
 
 export function AppLayout() {
-  const { activeCompany, companies, selectCompany, source, user } = useWorkContext()
+  const { activeCompany, companies, saveSettings, selectCompany, source, user } = useWorkContext()
   const [switcherOpen, setSwitcherOpen] = useState(false)
+  const [periodOpen, setPeriodOpen] = useState(false)
   const regionNames = { Mainland: 'Continente', Azores: 'Açores', Madeira: 'Madeira' }
+  // O exercício é a preferência do utilizador nesta empresa; mudá-lo aqui
+  // acerta logo os atalhos de período e os valores por omissão de toda a app.
+  const fiscalYear = activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()
+  const yearOptions = Array.from({ length: 8 }, (_, index) => fiscalYear + 1 - index)
+  const pickYear = (year: number) => {
+    setPeriodOpen(false)
+    if (year !== activeCompany.settings.defaultFiscalYear) {
+      void saveSettings({ ...activeCompany.settings, defaultFiscalYear: year })
+    }
+  }
   const companyMonogram = activeCompany.legalName.split(/\s+/).slice(0, 2).map((word) => word[0]).join('').toUpperCase()
   const userInitials = user.displayName.split(/\s+/).slice(0, 2).map((word) => word[0]).join('').toUpperCase()
 
@@ -96,7 +107,12 @@ export function AppLayout() {
             <kbd>Ctrl K</kbd>
           </label>
           <div className="topbar-actions">
-            <button className="period-selector" type="button">Exercício {activeCompany.settings.defaultFiscalYear ?? 'atual'} <ChevronDown size={15} /></button>
+            <div className="period-selector-wrap">
+              <button className="period-selector" type="button" aria-expanded={periodOpen} onClick={() => setPeriodOpen((open) => !open)}>Exercício {activeCompany.settings.defaultFiscalYear ?? 'atual'} <ChevronDown size={15} /></button>
+              {periodOpen && <div className="period-menu" role="menu" aria-label="Escolher exercício">
+                {yearOptions.map((year) => <button key={year} type="button" role="menuitem" className={year === activeCompany.settings.defaultFiscalYear ? 'selected' : ''} onClick={() => pickYear(year)}>{year}</button>)}
+              </div>}
+            </div>
             <button className="icon-button" type="button" aria-label="Notificações"><Bell size={19} /><span className="notification-dot" /></button>
           </div>
         </header>
