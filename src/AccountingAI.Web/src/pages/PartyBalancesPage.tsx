@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro } from '../app/demo-data'
+import { Pager, usePagedList } from '../app/Pager'
 import { useWorkContext } from '../app/WorkContext'
 
 type Row = { accountCode: string; accountName: string; balance: number }
@@ -53,6 +54,11 @@ export function PartyBalancesPage() {
   const fornecedores = pick('22')
   const totalClientes = clientes.reduce((sum, row) => sum + row.balance, 0)
   const totalFornecedores = fornecedores.reduce((sum, row) => sum + row.balance, 0)
+  // Uma empresa importada de SAF-T tem centenas de contas de terceiros com
+  // saldo; pagina-se cada painel pelo tamanho de página da empresa.
+  const pageSize = activeCompany.settings.pageSize || 50
+  const clientesPage = usePagedList(clientes, `${term}|${cutoff}`, pageSize)
+  const fornecedoresPage = usePagedList(fornecedores, `${term}|${cutoff}`, pageSize)
 
   const exportCsv = () => {
     const body: (string | number)[][] = [['Grupo', 'Conta', 'Nome', 'Saldo']]
@@ -63,17 +69,18 @@ export function PartyBalancesPage() {
     downloadCsv(csvFilename('contas-correntes', activeCompany.legalName), toCsv(body))
   }
 
-  const table = (list: Row[], total: number, emptyText: string) => <>
+  const table = (page: ReturnType<typeof usePagedList<Row>>, total: number, emptyText: string) => <>
     <div className="table-wrap"><table>
       <thead><tr><th>Conta</th><th>Nome</th><th className="numeric">Saldo</th></tr></thead>
-      <tbody>{list.map((row) => <tr key={row.accountCode}>
+      <tbody>{page.paged.map((row) => <tr key={row.accountCode}>
         <td><Link className="primary-cell" to={`/contas/${row.accountCode}`}>{row.accountCode}</Link></td>
         <td>{row.accountName}</td>
         <td className="numeric strong">{euro.format(row.balance)}</td>
       </tr>)}</tbody>
       <tfoot><tr><td colSpan={2}>Total</td><td className="numeric strong">{euro.format(total)}</td></tr></tfoot>
     </table></div>
-    {list.length === 0 && <p className="empty-state"><Info size={15} /> {emptyText}</p>}
+    <Pager currentPage={page.currentPage} totalPages={page.totalPages} onPage={page.setPage} />
+    {page.count === 0 && <p className="empty-state"><Info size={15} /> {emptyText}</p>}
   </>
 
   return <div className="page-stack">
@@ -94,12 +101,12 @@ export function PartyBalancesPage() {
 
     <section className="panel">
       <div className="panel-heading"><div><h2>Clientes</h2><p>Contas de movimento sob a classe 21.</p></div></div>
-      {table(clientes, totalClientes, 'Sem saldos de clientes.')}
+      {table(clientesPage, totalClientes, 'Sem saldos de clientes.')}
     </section>
 
     <section className="panel">
       <div className="panel-heading"><div><h2>Fornecedores</h2><p>Contas de movimento sob a classe 22.</p></div></div>
-      {table(fornecedores, totalFornecedores, 'Sem saldos de fornecedores.')}
+      {table(fornecedoresPage, totalFornecedores, 'Sem saldos de fornecedores.')}
     </section>
   </div>
 }

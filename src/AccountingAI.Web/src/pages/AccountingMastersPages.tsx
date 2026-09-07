@@ -1,8 +1,8 @@
-import { BookOpen, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, FileText, Landmark, Plus, Search, Tags, X } from 'lucide-react'
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { BookOpen, CircleAlert, CircleCheck, FileText, Landmark, Plus, Search, Tags, X } from 'lucide-react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import type { AccountingAccount, AccountingDocumentType, AccountingJournal } from '../app/demo-data'
-import { paginate } from '../app/pagination'
+import { Pager, usePagedList } from '../app/Pager'
 import { useWorkContext } from '../app/WorkContext'
 
 function useFiltered<T>(items: T[], text: string, value: (item: T) => string) {
@@ -10,25 +10,6 @@ function useFiltered<T>(items: T[], text: string, value: (item: T) => string) {
     const normalized = text.trim().toLocaleLowerCase('pt-PT')
     return normalized ? items.filter((item) => value(item).toLocaleLowerCase('pt-PT').includes(normalized)) : items
   }, [items, text, value])
-}
-
-// Paginação para as listas de cadastros que podem ficar enormes (plano de
-// contas e taxonomias de uma empresa importada de SAF-T). Volta à primeira
-// página quando a pesquisa muda.
-function usePagedList<T>(items: T[], search: string, pageSize: number) {
-  const [page, setPage] = useState(1)
-  useEffect(() => setPage(1), [search])
-  const { items: paged, currentPage, totalPages } = paginate(items, pageSize, page)
-  return { paged, currentPage, totalPages, setPage }
-}
-
-function Pager({ currentPage, totalPages, onPage }: { currentPage: number; totalPages: number; onPage: (page: number) => void }) {
-  if (totalPages <= 1) return null
-  return <div className="pager">
-    <button className="button button-secondary" type="button" disabled={currentPage === 1} onClick={() => onPage(currentPage - 1)}><ChevronLeft size={15} /> Anterior</button>
-    <span>Página {currentPage} de {totalPages}</span>
-    <button className="button button-secondary" type="button" disabled={currentPage === totalPages} onClick={() => onPage(currentPage + 1)}>Seguinte <ChevronRight size={15} /></button>
-  </div>
 }
 
 function SourceBadge({ database }: { database: boolean }) {
