@@ -290,6 +290,18 @@ describe('App', () => {
     expect(screen.getByText('Nenhum movimento corresponde aos filtros.')).toBeInTheDocument()
   })
 
+  it('opens the movement list scoped to the company exercise', () => {
+    window.history.pushState({}, '', '/movimentos')
+    render(<App />)
+
+    // A empresa de demonstração tem o exercício 2026.
+    expect(screen.getByLabelText('Data inicial')).toHaveValue('2026-01-01')
+    expect(screen.getByLabelText('Data final')).toHaveValue('2026-12-31')
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar datas' }))
+    expect(screen.getByLabelText('Data inicial')).toHaveValue('')
+    expect(screen.getByLabelText('Data final')).toHaveValue('')
+  })
+
   it('filters the movement list by date range', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)
