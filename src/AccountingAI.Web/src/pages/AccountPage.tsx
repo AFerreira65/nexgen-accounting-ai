@@ -5,7 +5,7 @@ import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { paginate } from '../app/pagination'
-import { PeriodShortcuts, yearRange } from '../app/periods'
+import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 
 type LedgerEntry = {
@@ -53,16 +53,11 @@ export function AccountPage() {
   // livro diário), dando a leitura habitual «abertura → movimentos → fecho»;
   // «Limpar datas» abre a conta inteira. Volta a acertar ao mudar de conta,
   // de empresa ou de exercício.
-  const fiscalYear = activeCompany.settings.defaultFiscalYear
-  const [fromDate, setFromDate] = useState(() => fiscalYear ? yearRange(fiscalYear).from : '')
-  const [toDate, setToDate] = useState(() => fiscalYear ? yearRange(fiscalYear).to : '')
+  const { fromDate, setFromDate, toDate, setToDate } = useExerciseDateRange(
+    activeCompany.settings.defaultFiscalYear, `${accountCode}|${activeCompany.companyId}`,
+  )
   const [sourceFilter, setSourceFilter] = useState('')
   const [page, setPage] = useState(1)
-  useEffect(() => {
-    const range = fiscalYear ? yearRange(fiscalYear) : { from: '', to: '' }
-    setFromDate(range.from)
-    setToDate(range.to)
-  }, [accountCode, activeCompany.companyId, fiscalYear])
   const chartAccount = useMemo(
     () => accountingSetup.accounts.find((account) => account.code === accountCode),
     [accountCode, accountingSetup.accounts],

@@ -461,6 +461,10 @@ describe('App', () => {
     expect(screen.getByText('62 · Fornecimentos e serviços externos')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '7211' })).toBeInTheDocument()
     expect(screen.getAllByText('Resultado líquido do período').length).toBeGreaterThan(0)
+    // Arranca no exercício da empresa (2026); «Limpar datas» abre tudo.
+    expect(screen.getAllByLabelText('Data inicial')[0]).toHaveValue('2026-01-01')
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar datas' }))
+    expect(screen.getAllByLabelText('Data inicial')[0]).toHaveValue('')
 
     expect(screen.queryByRole('columnheader', { name: 'Homólogo' })).not.toBeInTheDocument()
     fireEvent.change(screen.getAllByLabelText('Data inicial')[0], { target: { value: '2026-01-01' } })
@@ -481,6 +485,10 @@ describe('App', () => {
     expect(screen.getAllByText(/276,00/).length).toBeGreaterThan(0)
     expect(screen.getAllByText('A entregar ao Estado').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/299,00/).length).toBeGreaterThan(0)
+    // Arranca no exercício da empresa (2026); «Limpar datas» abre tudo.
+    expect(screen.getAllByLabelText('Data inicial')[0]).toHaveValue('2026-01-01')
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar datas' }))
+    expect(screen.getAllByLabelText('Data inicial')[0]).toHaveValue('')
 
     const createObjectURL = vi.fn(() => 'blob:mock')
     Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true })

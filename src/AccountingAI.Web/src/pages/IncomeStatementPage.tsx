@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { groupBySubclass, type SubclassGroup } from '../app/accountClasses'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro } from '../app/demo-data'
-import { PeriodShortcuts } from '../app/periods'
+import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 
 type Row = { accountCode: string; accountName: string; debit: number; credit: number }
@@ -42,8 +42,9 @@ function fromMovements(movements: ReturnType<typeof useWorkContext>['movements']
 export function IncomeStatementPage() {
   const { activeCompany, accountingSetup, movements, source, user } = useWorkContext()
   const [search, setSearch] = useState('')
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  // A demonstração de resultados é sempre de um período; arranca no exercício
+  // da empresa em vez de somar todos os anos. «Limpar datas» abre tudo.
+  const { fromDate, setFromDate, toDate, setToDate } = useExerciseDateRange(activeCompany.settings.defaultFiscalYear, activeCompany.companyId)
   const [compare, setCompare] = useState(false)
   const nameOf = useMemo(() => (code: string) => accountingSetup.accounts.find((account) => account.code === code)?.name ?? code, [accountingSetup.accounts])
   const [rows, setRows] = useState<Row[]>(() => fromMovements(movements, nameOf, '', ''))
@@ -145,6 +146,7 @@ export function IncomeStatementPage() {
       <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
+      {(fromDate || toDate) && <button type="button" className="button button-secondary" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>}
       <label className="toggle-inline"><input type="checkbox" checked={compare} onChange={(event) => setCompare(event.target.checked)} /><Layers size={15} /> Comparar com período homólogo</label>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={income.groups.length === 0 && expenses.groups.length === 0}><Download size={15} /> Exportar CSV</button>
     </div>

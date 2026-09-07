@@ -6,7 +6,7 @@ import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { useMovementGuards } from '../app/movementGuards'
 import { paginate } from '../app/pagination'
-import { PeriodShortcuts, yearRange } from '../app/periods'
+import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 import { MovementEditor } from './MovementEditor'
 
@@ -18,20 +18,12 @@ export function MovementsPage() {
   const [journalFilter, setJournalFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [sourceFilter, setSourceFilter] = useState('')
-  // A lista arranca no exercício da empresa — como o livro diário — para
-  // não abrir com anos misturados numa empresa importada de SAF-T; «Limpar
-  // datas» abre tudo. Volta a acertar ao trocar de empresa ou de exercício.
-  const fiscalYear = activeCompany.settings.defaultFiscalYear
-  const [fromDate, setFromDate] = useState(() => fiscalYear ? yearRange(fiscalYear).from : '')
-  const [toDate, setToDate] = useState(() => fiscalYear ? yearRange(fiscalYear).to : '')
+  // A lista arranca no exercício da empresa — como o livro diário e a razão —
+  // para não abrir com anos misturados numa empresa importada de SAF-T;
+  // «Limpar datas» abre tudo.
+  const { fromDate, setFromDate, toDate, setToDate } = useExerciseDateRange(activeCompany.settings.defaultFiscalYear, activeCompany.companyId)
   const [page, setPage] = useState(1)
   const blockedReason = useMovementGuards()
-
-  useEffect(() => {
-    const range = fiscalYear ? yearRange(fiscalYear) : { from: '', to: '' }
-    setFromDate(range.from)
-    setToDate(range.to)
-  }, [activeCompany.companyId, fiscalYear])
 
   async function act(reference: string, action: () => Promise<void>) {
     setBusy(reference)

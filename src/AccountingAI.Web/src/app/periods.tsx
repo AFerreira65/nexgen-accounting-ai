@@ -1,6 +1,8 @@
 // Atalhos de período para os relatórios (balancete, DR, balanço, livro diário e
 // razão). As datas são ISO (AAAA-MM-DD), sempre dentro do exercício escolhido.
 
+import { useEffect, useState } from 'react'
+
 const iso = (date: Date) => date.toISOString().slice(0, 10)
 
 /** Data de referência: hoje, mas nunca depois do fim do exercício. */
@@ -23,6 +25,19 @@ export function quarterRange(reference: Date): { from: string; to: string } {
 
 export function yearRange(fiscalYear: number): { from: string; to: string } {
   return { from: `${fiscalYear}-01-01`, to: `${fiscalYear}-12-31` }
+}
+
+// Intervalo de datas de um ecrã que arranca no exercício da empresa: começa no
+// exercício e volta a acertar quando `resetKey` muda (tipicamente a empresa,
+// e a conta na razão). Sem exercício definido, arranca vazio.
+export function useExerciseDateRange(fiscalYear: number | null | undefined, resetKey: string) {
+  const [fromDate, setFromDate] = useState(() => (fiscalYear ? yearRange(fiscalYear).from : ''))
+  const [toDate, setToDate] = useState(() => (fiscalYear ? yearRange(fiscalYear).to : ''))
+  useEffect(() => {
+    setFromDate(fiscalYear ? yearRange(fiscalYear).from : '')
+    setToDate(fiscalYear ? yearRange(fiscalYear).to : '')
+  }, [fiscalYear, resetKey])
+  return { fromDate, setFromDate, toDate, setToDate }
 }
 
 export function PeriodShortcuts({ fiscalYear, onPick }: { fiscalYear: number; onPick: (from: string, to: string) => void }) {
