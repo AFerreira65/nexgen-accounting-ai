@@ -240,7 +240,13 @@ if (app.Environment.IsDevelopment())
         AccountingDbContext context,
         CancellationToken cancellationToken,
         string? documentType,
-        string? source) =>
+        string? source,
+        string? search,
+        string? status,
+        string? from,
+        string? to,
+        int? page,
+        int? pageSize) =>
     {
         var hasActiveAccess = await context.CompanyUsers
             .AsNoTracking()
@@ -255,6 +261,11 @@ if (app.Environment.IsDevelopment())
         if (!hasActiveAccess)
         {
             return Results.NotFound();
+        }
+
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
         }
 
         var query = context.JournalEntries
@@ -277,13 +288,80 @@ if (app.Environment.IsDevelopment())
             query = query.Where(item => item.Source == entrySource);
         }
 
-        var entryEntities = await query
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var wanted = status.Trim() switch
+            {
+                "Conferido" => (JournalEntryStatus?)JournalEntryStatus.Reviewed,
+                "Anulado" => JournalEntryStatus.Voided,
+                "Por conferir" => JournalEntryStatus.PendingReview,
+                _ => null
+            };
+            if (wanted is not null)
+            {
+                query = query.Where(item => item.Status == wanted);
+            }
+        }
+
+        if (fromDate is { } lowerBound)
+        {
+            query = query.Where(item => item.EntryDate >= lowerBound);
+        }
+
+        if (toDate is { } upperBound)
+        {
+            query = query.Where(item => item.EntryDate <= upperBound);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(item =>
+                item.Reference.Contains(term) ||
+                item.DocumentReference.Contains(term) ||
+                item.Description.Contains(term));
+        }
+
+        var ordered = query
             .OrderByDescending(item => item.EntryDate)
-            .ThenByDescending(item => item.Reference)
+            .ThenByDescending(item => item.Reference);
+
+        // Sem `page` a resposta continua a ser o array completo, para o contexto
+        // de trabalho e os relatórios que ainda leem tudo. Com `page`, o SQL
+        // Server pagina — nas empresas grandes (SAF-T) não se transferem 20 MB.
+        if (page is null)
+        {
+            var allEntities = await ordered
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return Results.Ok(allEntities.Select(ToMovementPayload));
+        }
+
+        var size = Math.Clamp(pageSize ?? 50, 1, 200);
+        var totalItems = await ordered.CountAsync(cancellationToken).ConfigureAwait(false);
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)size));
+        var currentPage = Math.Clamp(page.Value, 1, totalPages);
+
+        var pageEntities = await ordered
+            .Skip((currentPage - 1) * size)
+            .Take(size)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var movements = entryEntities.Select(item => new
+        return Results.Ok(new
+        {
+            Items = pageEntities.Select(ToMovementPayload),
+            Page = currentPage,
+            PageSize = size,
+            TotalItems = totalItems,
+            TotalPages = totalPages
+        });
+    });
+
+    static object ToMovementPayload(JournalEntry item)
+    {
+        return new
         {
             Id = item.Reference,
             Date = item.EntryDate,
@@ -312,10 +390,8 @@ if (app.Environment.IsDevelopment())
                     line.Debit,
                     line.Credit
                 })
-        });
-
-        return Results.Ok(movements);
-    });
+        };
+    }
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements", async (
         Guid userId,

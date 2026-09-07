@@ -194,6 +194,57 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task MovementsCanBeRequestedAsAServerSidePage()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string movements = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/accounting/movements";
+
+        using var firstPage = await client.GetAsync($"{movements}?page=1&pageSize=2").ConfigureAwait(false);
+        var firstPayload = await firstPage.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var clampedPage = await client.GetAsync($"{movements}?page=999&pageSize=2").ConfigureAwait(false);
+        var clampedPayload = await clampedPage.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var searched = await client
+            .GetAsync($"{movements}?page=1&pageSize=25&search=COMP-2026-00842")
+            .ConfigureAwait(false);
+        var searchedPayload = await searched.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var badDate = await client.GetAsync($"{movements}?page=1&from=07-2026").ConfigureAwait(false);
+
+        using var wholeArray = await client.GetAsync(movements).ConfigureAwait(false);
+        var wholeArrayPayload = await wholeArray.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, firstPage.StatusCode);
+        StringAssert.Contains(firstPayload, "\"page\":1");
+        StringAssert.Contains(firstPayload, "\"pageSize\":2");
+        StringAssert.Contains(firstPayload, "\"totalItems\":9");
+        StringAssert.Contains(firstPayload, "\"totalPages\":5");
+        StringAssert.Contains(firstPayload, "\"items\":[");
+        // A última página fica travada em 5, não sai fora do intervalo.
+        StringAssert.Contains(clampedPayload, "\"page\":5");
+        // A pesquisa server-side filtra pela referência do lançamento.
+        StringAssert.Contains(searchedPayload, "COMP-2026-00842");
+        StringAssert.Contains(searchedPayload, "\"totalItems\":1");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badDate.StatusCode);
+        // Sem `page`, a resposta continua a ser o array completo (sem envelope).
+        Assert.AreEqual(HttpStatusCode.OK, wholeArray.StatusCode);
+        StringAssert.StartsWith(wholeArrayPayload.TrimStart(), "[");
+        Assert.IsFalse(wholeArrayPayload.Contains("\"totalItems\"", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task TaxonomyReviewIsScopedToTheActiveCompanyAndClassifiesAccounts()
     {
         if (!OperatingSystem.IsWindows())
