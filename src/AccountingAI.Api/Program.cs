@@ -466,6 +466,30 @@ if (app.Environment.IsDevelopment())
         });
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/journal-movement-counts", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        // Contagem de lançamentos por diário, para a coluna «Movimentos» do
+        // ecrã de diários não precisar do array inteiro.
+        var counts = await context.JournalEntries
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId)
+            .GroupBy(item => item.Journal.Code)
+            .Select(group => new { Code = group.Key, Count = group.Count() })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return Results.Ok(counts.ToDictionary(item => item.Code, item => item.Count));
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/{reference}", async (
         Guid userId,
         Guid companyId,

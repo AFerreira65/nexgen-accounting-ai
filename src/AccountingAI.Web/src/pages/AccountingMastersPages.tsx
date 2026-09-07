@@ -1,5 +1,5 @@
 import { BookOpen, CircleAlert, CircleCheck, FileText, Landmark, Plus, Search, Tags, X } from 'lucide-react'
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import type { AccountingAccount, AccountingDocumentType, AccountingJournal } from '../app/demo-data'
 import { Pager, usePagedList } from '../app/Pager'
@@ -155,17 +155,38 @@ function JournalEditor({ journal, onClose }: { journal: AccountingJournal | null
 }
 
 export function JournalsPage() {
-  const { accountingSetup, movements, setupSource } = useWorkContext()
+  const { accountingSetup, activeCompany, movements, setupSource, user } = useWorkContext()
   const [search, setSearch] = useState('')
   const [editor, setEditor] = useState<{ mode: 'create' } | { mode: 'edit'; journal: AccountingJournal } | null>(null)
   const journals = useFiltered(accountingSetup.journals, search, (item) => `${item.code} ${item.name}`)
+
+  // A contagem de movimentos por diário vem de um pedido agregado quando a
+  // empresa está ligada à base de dados; em demonstração conta no array.
+  const onDatabase = setupSource === 'database'
+  const [counts, setCounts] = useState<Record<string, number> | null>(null)
+  useEffect(() => {
+    if (!onDatabase) { setCounts(null); return }
+    const controller = new AbortController()
+    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/journal-movement-counts`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return await response.json() as Record<string, number>
+      })
+      .then((body) => setCounts(body))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setCounts(null)
+      })
+    return () => controller.abort()
+  }, [onDatabase, activeCompany.companyId, user.id])
+  const countFor = (code: string) => counts ? counts[code] ?? 0 : movements.filter((item) => item.journalId === code).length
 
   return <div className="page-stack">
     <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Diários</h1><p>Diários operacionais da empresa e respetiva utilização nos movimentos.</p></div><SourceBadge database={setupSource === 'database'} /></header>
     <div className="filterbar"><label><Search size={17} /><span className="sr-only">Pesquisar diários</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar código ou descrição…" /></label><span className="catalog-count">{journals.length} diários</span><button className="button button-primary" type="button" onClick={() => setEditor({ mode: 'create' })}><Plus size={16} /> Novo diário</button></div>
     {editor?.mode === 'create' && <JournalEditor journal={null} onClose={() => setEditor(null)} />}
     {editor?.mode === 'edit' && <JournalEditor journal={editor.journal} onClose={() => setEditor(null)} />}
-    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Diário</th><th>Descrição</th><th className="numeric">Movimentos</th><th>Origem</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{journals.map((journal) => <tr key={journal.code}><td><Link className="inline-link" to={`/diarios/${journal.code}`}><Landmark size={14} /> {journal.code}</Link></td><td>{journal.name}</td><td className="numeric strong">{movements.filter((item) => item.journalId === journal.code).length}</td><td>{journal.sourceTemplateVersion ? 'Tabela predefinida' : 'Empresa'}</td><td><span className={`badge ${journal.isActive ? 'success' : 'warning'}`}>{journal.isActive ? 'Ativo' : 'Inativo'}</span></td><td><button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', journal })}>Editar</button></td></tr>)}</tbody></table></div></section>
+    <section className="panel"><div className="table-wrap"><table><thead><tr><th>Diário</th><th>Descrição</th><th className="numeric">Movimentos</th><th>Origem</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{journals.map((journal) => <tr key={journal.code}><td><Link className="inline-link" to={`/diarios/${journal.code}`}><Landmark size={14} /> {journal.code}</Link></td><td>{journal.name}</td><td className="numeric strong">{countFor(journal.code)}</td><td>{journal.sourceTemplateVersion ? 'Tabela predefinida' : 'Empresa'}</td><td><span className={`badge ${journal.isActive ? 'success' : 'warning'}`}>{journal.isActive ? 'Ativo' : 'Inativo'}</span></td><td><button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', journal })}>Editar</button></td></tr>)}</tbody></table></div></section>
   </div>
 }
 
