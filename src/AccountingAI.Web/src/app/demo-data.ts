@@ -283,6 +283,7 @@ export type SaftCompanyCreationInput = {
   taxRegion: 'Mainland' | 'Azores' | 'Madeira'
   accountingStandard: string
   baseCurrency: string
+  fiscalYear: number
 }
 
 export type SaftCompanyCreation = {

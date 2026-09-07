@@ -39,6 +39,7 @@ function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
         taxRegion,
         accountingStandard,
         baseCurrency,
+        fiscalYear: inspection.header.fiscalYear,
       }))
       setStatus('idle')
     } catch (submitError) {
@@ -52,6 +53,7 @@ function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
       <div className="panel-heading"><div><h2>Empresa criada</h2><p>{created.legalName} · {accountingStandardName(created.accountingStandard)}</p></div><span className="success"><CircleCheck /></span></div>
       <div className="settings-grid">
         <div className="metadata-strip"><small>NIF</small><strong>{created.taxRegistrationNumber}</strong></div>
+        <div className="metadata-strip"><small>Exercício</small><strong>{inspection.header.fiscalYear}</strong></div>
         <div className="metadata-strip"><small>Versão do plano base</small><strong>{created.accountingSetupVersion ?? '—'}</strong></div>
         <div className="metadata-strip"><small>Contas provisionadas</small><strong>{created.accountCount}</strong></div>
         <div className="metadata-strip"><small>Diários</small><strong>{created.journalCount}</strong></div>

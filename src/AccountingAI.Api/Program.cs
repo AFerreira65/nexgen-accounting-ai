@@ -1589,6 +1589,11 @@ if (app.Environment.IsDevelopment())
                     cancellationToken)
                 .ConfigureAwait(false);
 
+            if (request.FiscalYear.HasValue)
+            {
+                await EnsureDefaultFiscalYearAsync(context, userId, created.CompanyId, request.FiscalYear.Value, cancellationToken).ConfigureAwait(false);
+            }
+
             return Results.Ok(new
             {
                 created.CompanyId,
@@ -1846,6 +1851,13 @@ public partial class Program
         int fiscalYear,
         CancellationToken cancellationToken)
     {
+        // Ano fora do intervalo aceite (um SAF-T real nunca lá chega): ignora-se em
+        // silêncio, é um acerto de preferência e não deve fazer falhar a importação.
+        if (fiscalYear is < 2000 or > 2200)
+        {
+            return;
+        }
+
         var membership = await context.CompanyUsers
             .Include(item => item.Settings)
             .SingleOrDefaultAsync(item => item.UserId == userId && item.CompanyId == companyId, cancellationToken)
@@ -1930,7 +1942,8 @@ public sealed record CreateSaftCompanyRequest(
     string LegalName,
     string TaxRegion,
     string AccountingStandard,
-    string? BaseCurrency);
+    string? BaseCurrency,
+    int? FiscalYear = null);
 
 public sealed record CreateOrganizationCompanyRequest(
     Guid AccountingFirmId,
