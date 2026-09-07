@@ -422,6 +422,9 @@ if (app.Environment.IsDevelopment())
         var pendingReview = await entries
             .CountAsync(item => item.Status == JournalEntryStatus.PendingReview, cancellationToken)
             .ConfigureAwait(false);
+        var voided = await entries
+            .CountAsync(item => item.Status == JournalEntryStatus.Voided, cancellationToken)
+            .ConfigureAwait(false);
 
         var vatLines = context.JournalEntryLines
             .AsNoTracking()
@@ -455,6 +458,7 @@ if (app.Environment.IsDevelopment())
         {
             Total = total,
             PendingReview = pendingReview,
+            Voided = voided,
             VatInput = vatInput,
             VatOutput = vatOutput,
             VatPosition = vatOutput - vatInput,

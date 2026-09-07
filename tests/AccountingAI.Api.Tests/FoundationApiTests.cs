@@ -314,6 +314,7 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, summary.StatusCode);
         StringAssert.Contains(summaryPayload, "\"total\":9");
         StringAssert.Contains(summaryPayload, "\"pendingReview\":1");
+        StringAssert.Contains(summaryPayload, "\"voided\":");
         // Posição de IVA = 2433 liquidado (1150) menos 2432 dedutível (552).
         StringAssert.Contains(summaryPayload, "\"vatPosition\":598");
         // A antevisão traz o lançamento por conferir, sem as linhas.

@@ -11,6 +11,7 @@ export type PendingPreviewItem = { id: string; date: string; description: string
 export type MovementsSummary = {
   total: number
   pendingReview: number
+  voided: number
   vatPosition: number
   pendingPreview: PendingPreviewItem[]
 }
@@ -21,9 +22,10 @@ export type MovementsSummary = {
 function fromMovements(movements: Movement[]): MovementsSummary {
   let dedutivel = 0
   let liquidado = 0
+  let voided = 0
   const pending: Movement[] = []
   for (const movement of movements) {
-    if (movement.status === 'Anulado') continue
+    if (movement.status === 'Anulado') { voided += 1; continue }
     if (movement.status === 'Por conferir') pending.push(movement)
     for (const line of movement.lines) {
       if (line.account.startsWith('2432')) dedutivel += line.debit - line.credit
@@ -34,6 +36,7 @@ function fromMovements(movements: Movement[]): MovementsSummary {
   return {
     total: movements.length,
     pendingReview: pending.length,
+    voided,
     vatPosition: liquidado - dedutivel,
     pendingPreview: pending.slice(0, 7).map((movement) => ({
       id: movement.id,
