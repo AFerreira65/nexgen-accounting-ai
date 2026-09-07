@@ -5,7 +5,7 @@ import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { paginate } from '../app/pagination'
-import { PeriodShortcuts } from '../app/periods'
+import { PeriodShortcuts, yearRange } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 
 type LedgerEntry = {
@@ -49,10 +49,20 @@ function fromMovements(movements: Movement[], accountCode: string, accountName: 
 export function AccountPage() {
   const { accountCode = '' } = useParams()
   const { activeCompany, accountingSetup, movements, source, user } = useWorkContext()
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  // A razão arranca no exercício da empresa (como a lista de movimentos e o
+  // livro diário), dando a leitura habitual «abertura → movimentos → fecho»;
+  // «Limpar datas» abre a conta inteira. Volta a acertar ao mudar de conta,
+  // de empresa ou de exercício.
+  const fiscalYear = activeCompany.settings.defaultFiscalYear
+  const [fromDate, setFromDate] = useState(() => fiscalYear ? yearRange(fiscalYear).from : '')
+  const [toDate, setToDate] = useState(() => fiscalYear ? yearRange(fiscalYear).to : '')
   const [sourceFilter, setSourceFilter] = useState('')
   const [page, setPage] = useState(1)
+  useEffect(() => {
+    const range = fiscalYear ? yearRange(fiscalYear) : { from: '', to: '' }
+    setFromDate(range.from)
+    setToDate(range.to)
+  }, [accountCode, activeCompany.companyId, fiscalYear])
   const chartAccount = useMemo(
     () => accountingSetup.accounts.find((account) => account.code === accountCode),
     [accountCode, accountingSetup.accounts],
@@ -119,7 +129,7 @@ export function AccountPage() {
 
     <section className="metric-grid compact-grid">
       {inPeriod && <article className="metric-card"><div><small>Saldo de abertura</small><strong>{euro.format(data.openingBalance)}</strong><span>Antes de {fromDate || '—'}</span></div></article>}
-      <article className="metric-card"><div><small>Saldo {inPeriod ? 'final' : 'atual'}</small><strong>{euro.format(data.balance)}</strong><span>{sourceFilter ? 'Todas as origens' : inPeriod ? 'No fim do período' : `Exercício de ${activeCompany.settings.defaultFiscalYear ?? 'atual'}`}</span></div></article>
+      <article className="metric-card"><div><small>Saldo {inPeriod ? 'final' : 'atual'}</small><strong>{euro.format(data.balance)}</strong><span>{sourceFilter ? 'Todas as origens' : inPeriod ? 'No fim do período' : 'Todas as datas'}</span></div></article>
       <article className="metric-card"><div><small>Movimentos</small><strong>{data.entries.length}</strong><span>{sourceFilter ? `Só ${ENTRY_SOURCE_LABELS[sourceFilter].toLocaleLowerCase('pt-PT')}` : 'Com ligação direta ao lançamento'}</span></div></article>
     </section>
 
@@ -127,6 +137,7 @@ export function AccountPage() {
       <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
+      {(fromDate || toDate) && <button type="button" className="button button-secondary" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>}
       <label><span className="sr-only">Origem</span><select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="">Todas as origens</option>{ENTRY_SOURCES.map((code) => <option key={code} value={code}>{ENTRY_SOURCE_LABELS[code]}</option>)}</select></label>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={data.entries.length === 0 && !inPeriod}><Download size={15} /> Exportar CSV</button>
     </div>

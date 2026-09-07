@@ -563,11 +563,15 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: /6221 · Material de escritório/ })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Movimentos desta conta' })).toBeInTheDocument()
+    // A razão arranca no exercício da empresa (2026); «Limpar datas» abre tudo.
+    expect(screen.getByLabelText('Data inicial')).toHaveValue('2026-01-01')
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar datas' }))
+    expect(screen.getByLabelText('Data inicial')).toHaveValue('')
     const comprasRow = screen.getByRole('link', { name: 'COMP 2026 00842' }).closest('tr') as HTMLElement
     expect(within(comprasRow).getByText('nota')).toHaveAttribute('title', expect.stringContaining('30 dias'))
 
     // Filtro de origem: só restringe as linhas mostradas, o saldo mantém-se.
-    const saldoAtual = screen.getByText('Saldo atual').closest('article') as HTMLElement
+    const saldoAtual = screen.getByText(/Saldo (atual|final)/).closest('article') as HTMLElement
     const saldoBefore = within(saldoAtual).getByText(/€/).textContent
     fireEvent.change(screen.getByLabelText('Origem'), { target: { value: 'Opening' } })
     expect(screen.queryByRole('link', { name: 'COMP 2026 00842' })).not.toBeInTheDocument()
