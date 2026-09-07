@@ -1,5 +1,5 @@
 import { CircleAlert, CircleCheck, Database, FileUp, Info } from 'lucide-react'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
 import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection, type SaftOpeningBalancesImport } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
@@ -222,6 +222,22 @@ function EntriesPreviewPanel({ companyId, file, fiscalYear }: { companyId: strin
   }
 
   const skippedRows = imported?.skipped ?? analysis?.skipped ?? []
+  // Um ficheiro grande pode ter dezenas de milhares de transações saltadas
+  // (ex.: analisar antes de importar o plano de contas); acima de um limite,
+  // agrupa-se por motivo com a contagem e alguns exemplos em vez de as
+  // desenhar todas.
+  const SKIPPED_DETAIL_LIMIT = 50
+  const skippedByReason = useMemo(() => {
+    if (skippedRows.length <= SKIPPED_DETAIL_LIMIT) return null
+    const map = new Map<string, { count: number; sample: string[] }>()
+    for (const entry of skippedRows) {
+      const group = map.get(entry.reason) ?? { count: 0, sample: [] }
+      group.count += 1
+      if (group.sample.length < 5) group.sample.push(entry.transactionId)
+      map.set(entry.reason, group)
+    }
+    return [...map.entries()].sort((a, b) => b[1].count - a[1].count)
+  }, [skippedRows])
 
   return <section className="panel">
     <div className="panel-heading"><div><h2>Movimentos do ficheiro</h2><p>Resumo do bloco <code>GeneralLedgerEntries</code> — leitura em streaming. A importação usa o <code>TransactionID</code> do ficheiro como referência, cria os diários em falta e não duplica ao reimportar.</p></div></div>
@@ -258,12 +274,20 @@ function EntriesPreviewPanel({ companyId, file, fiscalYear }: { companyId: strin
               <td><span className={`badge ${journal.exists ? 'success' : 'warning'}`}>{journal.exists ? 'Já existe' : 'Novo'}</span></td>
             </tr>)}
           </tbody></table></div>
-          {skippedRows.length > 0 && <div className="table-wrap"><table><thead><tr><th>{imported ? 'Transação saltada' : 'Transação que seria saltada'}</th><th>Motivo</th></tr></thead><tbody>
-            {skippedRows.map((entry) => <tr key={entry.transactionId}>
-              <td className="primary-cell">{entry.transactionId}</td>
-              <td>{entry.reason}</td>
-            </tr>)}
-          </tbody></table></div>}
+          {skippedRows.length > 0 && (skippedByReason
+            ? <div className="table-wrap"><table><thead><tr><th>Motivo</th><th className="numeric">{imported ? 'Saltadas' : 'A saltar'}</th><th>Exemplos de transação</th></tr></thead><tbody>
+                {skippedByReason.map(([reason, group]) => <tr key={reason}>
+                  <td>{reason}</td>
+                  <td className="numeric strong">{group.count}</td>
+                  <td><small>{group.sample.join(', ')}{group.count > group.sample.length ? ' …' : ''}</small></td>
+                </tr>)}
+              </tbody></table></div>
+            : <div className="table-wrap"><table><thead><tr><th>{imported ? 'Transação saltada' : 'Transação que seria saltada'}</th><th>Motivo</th></tr></thead><tbody>
+                {skippedRows.map((entry) => <tr key={entry.transactionId}>
+                  <td className="primary-cell">{entry.transactionId}</td>
+                  <td>{entry.reason}</td>
+                </tr>)}
+              </tbody></table></div>)}
         </>
       : <p className="save-status"><Info size={15} /> O ficheiro não tem movimentos (bloco <code>GeneralLedgerEntries</code>).</p>)}
   </section>
