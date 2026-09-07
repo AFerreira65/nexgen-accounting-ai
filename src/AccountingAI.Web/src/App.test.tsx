@@ -92,6 +92,22 @@ describe('App', () => {
     expect(screen.getByRole('spinbutton', { name: 'Exercício' })).toHaveValue(2024)
   })
 
+  it('jumps to an account from the top-bar search', () => {
+    window.history.pushState({}, '', '/')
+    render(<App />)
+
+    const search = screen.getByRole('combobox', { name: /Pesquisar conta/ })
+    fireEvent.change(search, { target: { value: '6221' } })
+
+    const hit = screen.getByRole('option', { name: /6221.*Material de escritório/ })
+    fireEvent.click(hit)
+
+    expect(screen.getByRole('heading', { name: /6221 · Material de escritório/ })).toBeInTheDocument()
+    // O menu fecha e o campo limpa depois de saltar.
+    expect(screen.queryByRole('option', { name: /Conta ·/ })).not.toBeInTheDocument()
+    expect(search).toHaveValue('')
+  })
+
   it('switches the accounting fallback together with the active company', () => {
     window.history.pushState({}, '', '/movimentos')
     render(<App />)

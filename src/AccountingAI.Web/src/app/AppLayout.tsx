@@ -14,7 +14,6 @@ import {
   ListOrdered,
   Receipt,
   Scale,
-  Search,
   Settings,
   Tags,
   TrendingUp,
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { GlobalSearch } from './GlobalSearch'
 import { useDismiss } from './useDismiss'
 import { useWorkContext } from './WorkContext'
 
@@ -107,12 +107,7 @@ export function AppLayout() {
               </button>)}
             </div>}
           </div>
-          <label className="global-search">
-            <Search size={18} />
-            <span className="sr-only">Pesquisar</span>
-            <input placeholder="Pesquisar conta, movimento ou documento…" />
-            <kbd>Ctrl K</kbd>
-          </label>
+          <GlobalSearch />
           <div className="topbar-actions">
             <div className="period-selector-wrap" ref={periodRef}>
               <button className="period-selector" type="button" aria-expanded={periodOpen} onClick={() => setPeriodOpen((open) => !open)}>Exercício {activeCompany.settings.defaultFiscalYear ?? 'atual'} <ChevronDown size={15} /></button>
