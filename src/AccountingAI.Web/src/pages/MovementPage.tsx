@@ -1,7 +1,7 @@
 import { ArrowLeft, BookOpen, Check, Copy, FileText, Landmark, Link2, PencilLine } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { euro, formatMovementDate } from '../app/demo-data'
+import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { entrySourceLabel } from '../app/entrySources'
 import { useMovementGuards } from '../app/movementGuards'
 import { useWorkContext } from '../app/WorkContext'
@@ -9,12 +9,45 @@ import { MovementEditor } from './MovementEditor'
 
 export function MovementPage() {
   const { movementId } = useParams()
-  const { movements, reopenMovement, reviewMovement, voidMovement } = useWorkContext()
+  const { accountingSource, activeCompany, movements, reopenMovement, reviewMovement, user, voidMovement } = useWorkContext()
   const blockedReason = useMovementGuards()
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
   const [editing, setEditing] = useState<'correct' | 'duplicate' | null>(null)
-  const movement = movements.find((item) => item.id === movementId)
+  const [revision, setRevision] = useState(0)
+
+  // Numa empresa ligada à base de dados, o detalhe vem de um pedido por
+  // referência em vez do array completo; em demonstração — ou se o pedido
+  // falhar — usa o que o contexto já tem.
+  const onDatabase = accountingSource === 'database'
+  const fromContext = movements.find((item) => item.id === movementId)
+  const [fetched, setFetched] = useState<Movement | null | 'loading'>(onDatabase ? 'loading' : null)
+
+  useEffect(() => {
+    if (!onDatabase || !movementId) { setFetched(null); return }
+    const controller = new AbortController()
+    setFetched('loading')
+    void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/movements/${encodeURIComponent(movementId)}`, { signal: controller.signal })
+      .then(async (response) => {
+        if (response.status === 404) return null
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return await response.json() as Movement
+      })
+      .then((body) => setFetched(body))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setFetched(null)
+      })
+    return () => controller.abort()
+  }, [onDatabase, movementId, activeCompany.companyId, user.id, revision])
+
+  const movement = onDatabase
+    ? (fetched === 'loading' ? fromContext : fetched ?? fromContext)
+    : fromContext
+
+  if (onDatabase && fetched === 'loading' && !fromContext) {
+    return <div className="empty-state"><h1>A carregar o movimento…</h1></div>
+  }
   if (!movement) return <div className="empty-state"><h1>Movimento não encontrado</h1><Link to="/movimentos">Voltar aos movimentos</Link></div>
 
   const copyLink = () => {
@@ -26,7 +59,7 @@ export function MovementPage() {
 
   const act = async (action: () => Promise<void>) => {
     setBusy(true)
-    try { await action() } catch { /* a página volta a carregar o estado */ } finally { setBusy(false) }
+    try { await action(); setRevision((value) => value + 1) } catch { /* a página volta a carregar o estado */ } finally { setBusy(false) }
   }
 
   const blocked = blockedReason(movement)
@@ -47,7 +80,7 @@ export function MovementPage() {
       </div>
     </header>
     {blocked !== null && movement.status !== 'Anulado' && <p className="save-status"><span className="badge neutral">{blocked}</span> Não é possível reabrir nem anular este lançamento.</p>}
-    {editing !== null && <MovementEditor movement={movement} duplicate={editing === 'duplicate'} onClose={() => setEditing(null)} />}
+    {editing !== null && <MovementEditor movement={movement} duplicate={editing === 'duplicate'} onClose={() => { setEditing(null); setRevision((value) => value + 1) }} />}
 
     <section className="context-grid" aria-label="Atalhos contextuais">
       <Link className="context-card" to={`/diarios/${movement.journalId}`}><span className="context-icon navy"><Landmark /></span><span><small>Diário</small><strong>{movement.journalName}</strong><em>Abrir diário e movimentos relacionados</em></span><ArrowLeft className="rotate-180" size={17} /></Link>

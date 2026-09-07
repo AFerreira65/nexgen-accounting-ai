@@ -258,6 +258,35 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task ASingleMovementCanBeReadByReference()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string movements = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/" +
+            "companies/22222222-2222-2222-2222-222222222222/accounting/movements";
+
+        using var found = await client.GetAsync($"{movements}/COMP-2026-00842").ConfigureAwait(false);
+        var foundPayload = await found.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var missing = await client.GetAsync($"{movements}/NAO-EXISTE").ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, found.StatusCode);
+        StringAssert.Contains(foundPayload, "\"id\":\"COMP-2026-00842\"");
+        StringAssert.Contains(foundPayload, "\"lines\":[");
+        StringAssert.Contains(foundPayload, "\"status\":\"Conferido\"");
+        Assert.AreEqual(HttpStatusCode.NotFound, missing.StatusCode);
+    }
+
+    [TestMethod]
     public async Task MovementsSummaryAggregatesTheWorkQueueWithoutTheFullList()
     {
         if (!OperatingSystem.IsWindows())

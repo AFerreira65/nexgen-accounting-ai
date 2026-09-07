@@ -462,6 +462,33 @@ if (app.Environment.IsDevelopment())
         });
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/{reference}", async (
+        Guid userId,
+        Guid companyId,
+        string reference,
+        AccountingDbContext context,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        // Um lançamento pela referência, para o ecrã de detalhe não depender do
+        // array completo (`/movements/summary` tem precedência sobre este).
+        var entity = await context.JournalEntries
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId && item.Reference == reference)
+            .Include(item => item.Journal)
+            .Include(item => item.DocumentType)
+            .Include(item => item.Lines)
+                .ThenInclude(item => item.Account)
+            .SingleOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return entity is null ? Results.NotFound() : Results.Ok(ToMovementPayload(entity));
+    });
+
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements", async (
         Guid userId,
         Guid companyId,
