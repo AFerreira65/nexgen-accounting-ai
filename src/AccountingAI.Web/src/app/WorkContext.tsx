@@ -178,15 +178,20 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    // Os ecrãs em modo de base de dados leem os movimentos dos endpoints
+    // dedicados (lista paginada, detalhe por referência, resumo, contagens).
+    // O contexto só guarda uma amostra dos mais recentes, como recurso dos
+    // relatórios se o endpoint agregado falhar — nunca as dezenas de milhar
+    // de linhas de uma empresa de SAF-T.
     const controller = new AbortController()
     setAccountingLoading(true)
-    void fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/movements`, { signal: controller.signal })
+    void fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/movements?page=1&pageSize=500`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        return await response.json() as Movement[]
+        return await response.json() as { items: Movement[] }
       })
-      .then((items) => {
-        setAccountingMovements(items)
+      .then((body) => {
+        setAccountingMovements(body.items)
         setAccountingSource('database')
       })
       .catch((error: unknown) => {
