@@ -1,9 +1,10 @@
-import { BookText, Database, Download, Filter } from 'lucide-react'
+import { BookText, ChevronLeft, ChevronRight, Database, Download, Filter } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
+import { paginate } from '../app/pagination'
 import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -45,7 +46,15 @@ export function JournalReportPage() {
   const [toDate, setToDate] = useState('')
   const [account, setAccount] = useState('')
   const [sourceFilter, setSourceFilter] = useState('')
+  const [page, setPage] = useState(1)
   const [data, setData] = useState<Report>(() => fromMovements(movements, '', '', '', '', '', '', ''))
+
+  // O exercício arranca no da empresa; volta a acertar ao trocar de empresa
+  // ou quando o exercício predefinido muda (ex.: acabou de se importar um
+  // SAF-T de outro ano) — sem isto, o filtro ficava preso ao valor do
+  // primeiro desenho, muitas vezes o ano do sistema.
+  useEffect(() => setYear(String(activeCompany.settings.defaultFiscalYear ?? new Date().getFullYear())),
+    [activeCompany.companyId, activeCompany.settings.defaultFiscalYear])
 
   useEffect(() => {
     if (source !== 'database') {
@@ -69,6 +78,14 @@ export function JournalReportPage() {
   }, [account, activeCompany.companyId, documentType, fromDate, journal, movements, source, sourceFilter, toDate, user.id, year])
 
   const balanced = useMemo(() => Math.round((data.totalDebit - data.totalCredit) * 100) === 0, [data.totalDebit, data.totalCredit])
+
+  // Uma empresa grande (SAF-T com anos de histórico) tem lançamentos a mais
+  // para um só desenho da tabela; pagina-se por lançamento — as linhas de um
+  // lançamento nunca se partem entre páginas — pelo tamanho de página da
+  // empresa, voltando à primeira página quando um filtro muda. Os totais no
+  // rodapé e a contagem continuam a ser do conjunto filtrado inteiro.
+  const { items: pagedEntries, currentPage, totalPages } = paginate(data.entries, activeCompany.settings.pageSize, page)
+  useEffect(() => setPage(1), [journal, documentType, year, fromDate, toDate, account, sourceFilter])
 
   const exportCsv = () => {
     const header = ['Referência', 'Data', 'Diário', 'Tipo de documento', 'Documento', 'Origem', 'Descrição', 'Estado', 'Conta', 'Nome da conta', 'Descrição da linha', 'Débito', 'Crédito']
@@ -103,7 +120,7 @@ export function JournalReportPage() {
     </section>
 
     <section className="panel"><div className="table-wrap"><table><thead><tr><th>Lançamento</th><th>Conta</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th></tr></thead><tbody>
-      {data.entries.map((entry) => entry.lines.map((line, index) => <tr key={`${entry.id}-${index}`}>
+      {pagedEntries.map((entry) => entry.lines.map((line, index) => <tr key={`${entry.id}-${index}`}>
         <td>{index === 0
           ? <><Link className="primary-cell" to={`/movimentos/${entry.id}`}>{entry.id.replaceAll('-', ' ')}</Link><small>{formatMovementDate(entry.date)} · {entry.journalId}{entry.documentType ? ` · ${entry.documentType}` : ''}</small></>
           : <span className="muted-value">·</span>}</td>
@@ -112,6 +129,12 @@ export function JournalReportPage() {
         <td className="numeric">{line.debit ? euro.format(line.debit) : '—'}</td>
         <td className="numeric">{line.credit ? euro.format(line.credit) : '—'}</td>
       </tr>))}
-    </tbody><tfoot><tr><td colSpan={3}>Totais</td><td className="numeric strong">{euro.format(data.totalDebit)}</td><td className="numeric strong">{euro.format(data.totalCredit)}</td></tr></tfoot></table></div>{data.entries.length === 0 && <p className="empty-state">Sem lançamentos para os filtros escolhidos.</p>}</section>
+    </tbody><tfoot><tr><td colSpan={3}>Totais</td><td className="numeric strong">{euro.format(data.totalDebit)}</td><td className="numeric strong">{euro.format(data.totalCredit)}</td></tr></tfoot></table></div>
+    {totalPages > 1 && <div className="pager">
+      <button className="button button-secondary" type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><ChevronLeft size={15} /> Anterior</button>
+      <span>Página {currentPage} de {totalPages}</span>
+      <button className="button button-secondary" type="button" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}>Seguinte <ChevronRight size={15} /></button>
+    </div>}
+    {data.entries.length === 0 && <p className="empty-state">Sem lançamentos para os filtros escolhidos.</p>}</section>
   </div>
 }

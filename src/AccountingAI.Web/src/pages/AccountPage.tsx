@@ -1,9 +1,10 @@
-import { ArrowLeft, BookOpen, Database, Download, Landmark, StickyNote } from 'lucide-react'
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Database, Download, Landmark, StickyNote } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
+import { paginate } from '../app/pagination'
 import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -51,6 +52,7 @@ export function AccountPage() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [sourceFilter, setSourceFilter] = useState('')
+  const [page, setPage] = useState(1)
   const chartAccount = useMemo(
     () => accountingSetup.accounts.find((account) => account.code === accountCode),
     [accountCode, accountingSetup.accounts],
@@ -83,6 +85,14 @@ export function AccountPage() {
   }, [accountCode, activeCompany.companyId, aggregate, fromDate, movements, nameOf, source, sourceFilter, toDate, user.id])
 
   const inPeriod = Boolean(fromDate || toDate)
+
+  // Uma conta de integração numa empresa grande soma milhares de linhas de
+  // subcontas; pagina-se pelo tamanho de página da empresa, voltando à
+  // primeira página quando a conta ou um filtro muda. O saldo acumulado de
+  // cada linha já vem calculado, por isso a página não o afeta; a linha do
+  // saldo de abertura só aparece na primeira página.
+  const { items: pagedEntries, currentPage, totalPages } = paginate(data.entries, activeCompany.settings.pageSize, page)
+  useEffect(() => setPage(1), [accountCode, fromDate, toDate, sourceFilter])
 
   const exportCsv = () => {
     const header = data.isAggregate
@@ -126,8 +136,8 @@ export function AccountPage() {
       <div className="table-wrap"><table>
         <thead><tr><th>Movimento</th><th>Diário</th>{data.isAggregate && <th>Conta</th>}<th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th></tr></thead>
         <tbody>
-          {inPeriod && <tr><td colSpan={data.isAggregate ? 6 : 5}>Saldo de abertura</td><td className="numeric strong">{euro.format(data.openingBalance)}</td></tr>}
-          {data.entries.map((entry, index) => <tr key={`${entry.reference}-${index}`}>
+          {inPeriod && currentPage === 1 && <tr><td colSpan={data.isAggregate ? 6 : 5}>Saldo de abertura</td><td className="numeric strong">{euro.format(data.openingBalance)}</td></tr>}
+          {pagedEntries.map((entry, index) => <tr key={`${entry.reference}-${index}`}>
             <td><Link className="primary-cell" to={`/movimentos/${entry.reference}`}>{entry.reference.replaceAll('-', ' ')}</Link><small>{formatMovementDate(entry.entryDate)}</small></td>
             <td><Link className="inline-link" to={`/diarios/${entry.journalCode}`}><Landmark size={14} /> {entry.journalCode}</Link></td>
             {data.isAggregate && <td><Link className="inline-link" to={`/contas/${entry.accountCode}`}>{entry.accountCode}</Link></td>}
@@ -138,6 +148,11 @@ export function AccountPage() {
           </tr>)}
         </tbody>
       </table></div>
+      {totalPages > 1 && <div className="pager">
+        <button className="button button-secondary" type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><ChevronLeft size={15} /> Anterior</button>
+        <span>Página {currentPage} de {totalPages}</span>
+        <button className="button button-secondary" type="button" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}>Seguinte <ChevronRight size={15} /></button>
+      </div>}
       {data.entries.length === 0 && <p className="empty-state">Sem movimentos para esta conta.</p>}
     </section>
   </div>
