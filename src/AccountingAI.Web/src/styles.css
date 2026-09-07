@@ -118,6 +118,9 @@ button { color: inherit; }
 
 .table-wrap { overflow-x: auto; }
 .pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 14px 20px; border-top: 1px solid #e7edef; color: #849198; font-size: 11px; }
+.group-toggle { margin-left: 8px; font-size: 10px; }
+.group-pager-row td { padding: 0; }
+.group-pager-row .pager { border-top: 0; padding: 8px 20px; }
 table { width: 100%; border-collapse: collapse; font-size: 11px; }
 th { padding: 10px 16px; color: #839097; background: #f8fafb; font-size: 9px; font-weight: 750; letter-spacing: .055em; text-align: left; text-transform: uppercase; white-space: nowrap; }
 td { padding: 13px 16px; border-top: 1px solid #edf1f2; color: #47575f; vertical-align: middle; }

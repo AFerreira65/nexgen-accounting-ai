@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro } from '../app/demo-data'
+import { Pager } from '../app/Pager'
 import { paginate } from '../app/pagination'
 import { PeriodShortcuts } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
@@ -178,7 +179,20 @@ export function TrialBalancePage() {
   const pageSize = activeCompany.settings.pageSize || 50
   const detailInGroups = rows.length <= pageSize
   const { items: pagedRows, currentPage, totalPages } = paginate(rows, pageSize, page)
-  useEffect(() => setPage(1), [search, fromDate, toDate, byClass, byTaxonomy, compare])
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [groupPage, setGroupPage] = useState<Record<string, number>>({})
+  useEffect(() => {
+    setPage(1)
+    setExpanded(new Set())
+    setGroupPage({})
+  }, [search, fromDate, toDate, byClass, byTaxonomy, compare])
+  const toggleGroup = (key: string) => setExpanded((current) => {
+    const next = new Set(current)
+    if (next.has(key)) next.delete(key)
+    else next.add(key)
+    return next
+  })
+  const colCount = 5 + (showOpening ? 1 : 0) + (showPrior ? 2 : 0)
 
   const exportCsv = () => {
     const head = ['Conta', 'Descrição', ...(showOpening ? ['Abertura'] : []), 'Débito', 'Crédito', 'Saldo', ...(showPrior ? ['Saldo homólogo', 'Variação'] : [])]
@@ -222,6 +236,17 @@ export function TrialBalancePage() {
 
   const emptyNumericCells = <>{showOpening && <td />}<td /><td /><td />{showPrior && <><td /><td /></>}</>
 
+  const renderGroup = (key: string, headerLabel: string, subtotalLabel: string, group: { rows: Row[]; openingBalance: number; debit: number; credit: number; balance: number }) => {
+    const open = detailInGroups || expanded.has(key)
+    const gp = paginate(group.rows, pageSize, groupPage[key] ?? 1)
+    return <tbody key={key}>
+      <tr className="group-row"><td colSpan={2}>{headerLabel}{!detailInGroups && <> · {group.rows.length} contas <button type="button" className="text-link group-toggle" onClick={() => toggleGroup(key)}>{expanded.has(key) ? 'ocultar' : 'ver contas'}</button></>}</td>{emptyNumericCells}</tr>
+      {open && gp.items.map((row) => <tr key={row.accountCode}><td><Link className="primary-cell" to={`/contas/${row.accountCode}`}>{row.accountCode}</Link></td><td>{row.accountName}</td>{numericCells(row, priorBalanceOf.get(row.accountCode) ?? 0)}</tr>)}
+      {open && gp.totalPages > 1 && <tr className="group-pager-row"><td colSpan={colCount}><Pager currentPage={gp.currentPage} totalPages={gp.totalPages} onPage={(next) => setGroupPage((current) => ({ ...current, [key]: next }))} /></td></tr>}
+      <tr className="subtotal-row"><td colSpan={2}>{subtotalLabel}</td>{numericCells(group, priorOfRows(group.rows), true)}</tr>
+    </tbody>
+  }
+
   return <div className="page-stack">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Balancete</h1><p>Somas e saldos por conta de movimento, sem os lançamentos anulados.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
     <section className="metric-grid compact-grid">
@@ -238,21 +263,13 @@ export function TrialBalancePage() {
       <label className="toggle-inline"><input type="checkbox" checked={compare} onChange={(event) => setCompare(event.target.checked)} /><GitCompare size={15} /> Comparar com período homólogo</label>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={rows.length === 0}><Download size={15} /> Exportar CSV</button>
     </div>
-    {grouped && !detailInGroups && <p className="save-status"><Layers size={15} /> Agrupamento: a mostrar só os subtotais das {(byClass ? groups.length : taxonomyGroups.length)} {byClass ? 'classes' : 'rubricas'}. Para ver as contas, desligue o agrupamento (a lista fica paginada) ou pesquise.</p>}
+    {grouped && !detailInGroups && <p className="save-status"><Layers size={15} /> Agrupamento: a mostrar os subtotais das {(byClass ? groups.length : taxonomyGroups.length)} {byClass ? 'classes' : 'rubricas'}. Expanda uma para ver as suas contas, ou desligue o agrupamento (a lista fica paginada).</p>}
     <section className="panel"><div className="table-wrap"><table>
       <thead><tr><th>Conta</th><th>Descrição</th>{showOpening && <th className="numeric">Abertura</th>}<th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th>{showPrior && <><th className="numeric">Saldo homólogo</th><th className="numeric">Variação</th></>}</tr></thead>
       {byClass
-        ? groups.map((group) => <tbody key={group.digit}>
-          <tr className="group-row"><td colSpan={2}>{group.digit} · {group.name}{!detailInGroups ? ` · ${group.rows.length} contas` : ''}</td>{emptyNumericCells}</tr>
-          {detailInGroups && group.rows.map((row) => <tr key={row.accountCode}><td><Link className="primary-cell" to={`/contas/${row.accountCode}`}>{row.accountCode}</Link></td><td>{row.accountName}</td>{numericCells(row, priorBalanceOf.get(row.accountCode) ?? 0)}</tr>)}
-          <tr className="subtotal-row"><td colSpan={2}>Subtotal classe {group.digit}</td>{numericCells(group, priorOfRows(group.rows), true)}</tr>
-        </tbody>)
+        ? groups.map((group) => renderGroup(group.digit, `${group.digit} · ${group.name}`, `Subtotal classe ${group.digit}`, group))
         : byTaxonomy
-        ? taxonomyGroups.map((group) => <tbody key={group.key || 'sem-taxonomia'}>
-          <tr className="group-row"><td colSpan={2}>{group.label}{!detailInGroups ? ` · ${group.rows.length} contas` : ''}</td>{emptyNumericCells}</tr>
-          {detailInGroups && group.rows.map((row) => <tr key={row.accountCode}><td><Link className="primary-cell" to={`/contas/${row.accountCode}`}>{row.accountCode}</Link></td><td>{row.accountName}</td>{numericCells(row, priorBalanceOf.get(row.accountCode) ?? 0)}</tr>)}
-          <tr className="subtotal-row"><td colSpan={2}>Subtotal {group.label}</td>{numericCells(group, priorOfRows(group.rows), true)}</tr>
-        </tbody>)
+        ? taxonomyGroups.map((group) => renderGroup(group.key || 'sem-taxonomia', group.label, `Subtotal ${group.label}`, group))
         : <tbody>
           {pagedRows.map((row) => <tr key={row.accountCode}><td><Link className="primary-cell" to={`/contas/${row.accountCode}`}>{row.accountCode}</Link></td><td>{row.accountName}</td>{numericCells(row, priorBalanceOf.get(row.accountCode) ?? 0, true)}</tr>)}
         </tbody>}
