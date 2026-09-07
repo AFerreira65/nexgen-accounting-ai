@@ -221,6 +221,16 @@ public sealed class FoundationApiTests
             .ConfigureAwait(false);
         var searchedPayload = await searched.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+        using var journalMatch = await client
+            .GetAsync($"{movements}?page=1&pageSize=25&journal=COMPRAS")
+            .ConfigureAwait(false);
+        var journalMatchPayload = await journalMatch.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var journalMiss = await client
+            .GetAsync($"{movements}?page=1&pageSize=25&journal=BANCOS")
+            .ConfigureAwait(false);
+        var journalMissPayload = await journalMiss.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         using var badDate = await client.GetAsync($"{movements}?page=1&from=07-2026").ConfigureAwait(false);
 
         using var wholeArray = await client.GetAsync(movements).ConfigureAwait(false);
@@ -237,6 +247,9 @@ public sealed class FoundationApiTests
         // A pesquisa server-side filtra pela referência do lançamento.
         StringAssert.Contains(searchedPayload, "COMP-2026-00842");
         StringAssert.Contains(searchedPayload, "\"totalItems\":1");
+        // O filtro de diário é server-side e distingue os diários entre si.
+        StringAssert.Contains(journalMatchPayload, "COMP-2026-00842");
+        Assert.IsFalse(journalMissPayload.Contains("COMP-2026-00842", StringComparison.Ordinal));
         Assert.AreEqual(HttpStatusCode.BadRequest, badDate.StatusCode);
         // Sem `page`, a resposta continua a ser o array completo (sem envelope).
         Assert.AreEqual(HttpStatusCode.OK, wholeArray.StatusCode);

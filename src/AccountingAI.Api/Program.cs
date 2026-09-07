@@ -241,6 +241,7 @@ if (app.Environment.IsDevelopment())
         CancellationToken cancellationToken,
         string? documentType,
         string? source,
+        string? journal,
         string? search,
         string? status,
         string? from,
@@ -288,6 +289,12 @@ if (app.Environment.IsDevelopment())
             query = query.Where(item => item.Source == entrySource);
         }
 
+        if (!string.IsNullOrWhiteSpace(journal))
+        {
+            var normalizedJournal = journal.Trim().ToUpperInvariant();
+            query = query.Where(item => item.Journal.Code == normalizedJournal);
+        }
+
         if (!string.IsNullOrWhiteSpace(status))
         {
             var wanted = status.Trim() switch
@@ -319,7 +326,8 @@ if (app.Environment.IsDevelopment())
             query = query.Where(item =>
                 item.Reference.Contains(term) ||
                 item.DocumentReference.Contains(term) ||
-                item.Description.Contains(term));
+                item.Description.Contains(term) ||
+                (item.Notes != null && item.Notes.Contains(term)));
         }
 
         var ordered = query
