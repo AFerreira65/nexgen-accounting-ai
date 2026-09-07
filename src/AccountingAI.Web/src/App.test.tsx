@@ -576,6 +576,14 @@ describe('App', () => {
     expect(screen.getByText(/requer a liga/i)).toBeInTheDocument()
   })
 
+  it('opens a journal and lists its movements', () => {
+    window.history.pushState({}, '', '/diarios/COMPRAS')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Diário de Compras' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'COMP 2026 00842' })).toBeInTheDocument()
+  })
+
   it('creates a journal and a document type in demo mode', () => {
     window.history.pushState({}, '', '/diarios')
     render(<App />)
