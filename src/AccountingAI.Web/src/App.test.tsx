@@ -701,6 +701,17 @@ describe('App', () => {
     expect(await screen.findByText(/2 de 5/)).toBeInTheDocument()
   })
 
+  it('opens Tarefas from the top-bar bell', () => {
+    window.history.pushState({}, '', '/')
+    render(<App />)
+
+    // Demonstração: 1 movimento por conferir + contas por classificar => pendente,
+    // por isso o sino tem a contagem no nome acessível (distingue-o do menu lateral).
+    const bell = screen.getByRole('link', { name: /Tarefas — \d+ pendentes/ })
+    fireEvent.click(bell)
+    expect(screen.getByRole('heading', { name: 'Tarefas' })).toBeInTheDocument()
+  })
+
   it('lists pending movements and unclassified accounts on the tasks screen', () => {
     window.history.pushState({}, '', '/tarefas')
     const { unmount } = render(<App />)

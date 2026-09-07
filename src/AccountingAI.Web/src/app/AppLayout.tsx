@@ -48,7 +48,7 @@ const links = [
 ]
 
 export function AppLayout() {
-  const { activeCompany, companies, saveSettings, selectCompany, source, user } = useWorkContext()
+  const { activeCompany, companies, movements, saveSettings, selectCompany, source, taxonomyReview, user } = useWorkContext()
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [periodOpen, setPeriodOpen] = useState(false)
   const switcherRef = useRef<HTMLDivElement>(null)
@@ -70,6 +70,11 @@ export function AppLayout() {
   }
   const companyMonogram = activeCompany.legalName.split(/\s+/).slice(0, 2).map((word) => word[0]).join('').toUpperCase()
   const userInitials = user.displayName.split(/\s+/).slice(0, 2).map((word) => word[0]).join('').toUpperCase()
+  // O sino leva às Tarefas; o ponto acende quando há trabalho pendente na
+  // empresa ativa (movimentos por conferir ou contas de movimento por
+  // classificar) — os mesmos itens acionáveis do ecrã de Tarefas.
+  const pendingTasks = movements.filter((movement) => movement.status === 'Por conferir').length
+    + taxonomyReview.accounts.filter((account) => account.status === 'Unclassified' || account.status === 'SuggestionAvailable').length
 
   return (
     <div className="product-shell">
@@ -115,7 +120,7 @@ export function AppLayout() {
                 {yearOptions.map((year) => <button key={year} type="button" role="menuitem" className={year === activeCompany.settings.defaultFiscalYear ? 'selected' : ''} onClick={() => pickYear(year)}>{year}</button>)}
               </div>}
             </div>
-            <button className="icon-button" type="button" aria-label="Notificações"><Bell size={19} /><span className="notification-dot" /></button>
+            <NavLink className="icon-button" to="/tarefas" title="Tarefas" aria-label={pendingTasks > 0 ? `Tarefas — ${pendingTasks} pendentes` : 'Tarefas'}><Bell size={19} />{pendingTasks > 0 && <span className="notification-dot" />}</NavLink>
           </div>
         </header>
         <main className="content-area"><Outlet /></main>
