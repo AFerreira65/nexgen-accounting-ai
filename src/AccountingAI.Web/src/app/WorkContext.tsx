@@ -58,7 +58,7 @@ type WorkContextValue = WorkContextData & {
   taxonomyCatalog: TaxonomyCatalog
   movements: Movement[]
   refreshAccounting: () => void
-  refreshWorkContext: () => Promise<void>
+  refreshWorkContext: (selectCompanyId?: string) => Promise<void>
   selectCompany: (companyId: string) => void
   saveSettings: (settings: CompanySettings) => Promise<void>
   createAccount: (input: NewAccountInput) => Promise<void>
@@ -130,7 +130,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
   const [accountingRevision, setAccountingRevision] = useState(0)
   const [activeCompanyId, setActiveCompanyId] = useState(storedCompanyId() ?? fallbackContext.companies[0].companyId)
 
-  const loadWorkContext = useCallback((signal?: AbortSignal) => {
+  const loadWorkContext = useCallback((signal?: AbortSignal, selectCompanyId?: string) => {
     if (import.meta.env.MODE === 'test') return Promise.resolve()
     return fetch(`/api/v1/development/work-context/${demoUserId}`, { signal })
       .then(async (response) => {
@@ -146,7 +146,15 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         }))
         setData(context)
         setSource('database')
-        setActiveCompanyId((current) => context.companies.some((company) => company.companyId === current) ? current : context.companies[0].companyId)
+        setActiveCompanyId((current) => {
+          // Depois de criar uma empresa a partir do SAF-T, seleciona-se logo a
+          // nova — o contexto acabou de a trazer, por isso já é uma escolha válida.
+          if (selectCompanyId && context.companies.some((company) => company.companyId === selectCompanyId)) {
+            try { window.localStorage.setItem('accounting-ai.active-company', selectCompanyId) } catch { /* storage is optional */ }
+            return selectCompanyId
+          }
+          return context.companies.some((company) => company.companyId === current) ? current : context.companies[0].companyId
+        })
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return
@@ -286,7 +294,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
     taxonomyCatalog,
     movements: accountingMovements,
     refreshAccounting: () => setAccountingRevision((revision) => revision + 1),
-    refreshWorkContext: () => loadWorkContext() ?? Promise.resolve(),
+    refreshWorkContext: (selectCompanyId?: string) => loadWorkContext(undefined, selectCompanyId) ?? Promise.resolve(),
     selectCompany: (companyId) => {
       if (!data.companies.some((company) => company.companyId === companyId)) return
       setActiveCompanyId(companyId)

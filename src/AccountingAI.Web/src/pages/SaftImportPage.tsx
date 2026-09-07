@@ -10,7 +10,7 @@ const REGIONS: { value: 'Mainland' | 'Azores' | 'Madeira'; label: string }[] = [
   { value: 'Madeira', label: 'Madeira' },
 ]
 
-function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
+function CompanyProposal({ inspection, onCreated }: { inspection: SaftInspection; onCreated: (companyId: string) => void }) {
   const { createSaftCompany, source } = useWorkContext()
   const [legalName, setLegalName] = useState(inspection.header.companyName)
   const [taxRegion, setTaxRegion] = useState<'Mainland' | 'Azores' | 'Madeira'>('Mainland')
@@ -33,15 +33,17 @@ function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
     setStatus('creating')
     setError('')
     try {
-      setCreated(await createSaftCompany({
+      const result = await createSaftCompany({
         taxRegistrationNumber: inspection.header.taxRegistrationNumber,
         legalName,
         taxRegion,
         accountingStandard,
         baseCurrency,
         fiscalYear: inspection.header.fiscalYear,
-      }))
+      })
+      setCreated(result)
       setStatus('idle')
+      onCreated(result.companyId)
     } catch (submitError) {
       setStatus('error')
       setError(submitError instanceof Error ? submitError.message : 'Não foi possível criar a empresa.')
@@ -59,7 +61,7 @@ function CompanyProposal({ inspection }: { inspection: SaftInspection }) {
         <div className="metadata-strip"><small>Diários</small><strong>{created.journalCount}</strong></div>
         <div className="metadata-strip"><small>Tipos de documento</small><strong>{created.documentTypeCount}</strong></div>
       </div>
-      <p className="save-status"><Info size={15} /> A empresa e os cadastros ficam disponíveis no seletor após recarregar. Depois disso, volte a escolher o ficheiro para pré-visualizar e importar o plano de contas e os movimentos.</p>
+      <p className="save-status"><Info size={15} /> Empresa no seletor e selecionada. A abrir o plano de contas e os movimentos do ficheiro para importar…</p>
     </section>
   }
 
@@ -268,7 +270,7 @@ function EntriesPreviewPanel({ companyId, file, fiscalYear }: { companyId: strin
 }
 
 export function SaftImportPage() {
-  const { inspectSaft, source } = useWorkContext()
+  const { inspectSaft, refreshWorkContext, source } = useWorkContext()
   const inputRef = useRef<HTMLInputElement>(null)
   const [state, setState] = useState<'idle' | 'reading' | 'done' | 'error'>('idle')
   const [fileName, setFileName] = useState('')
@@ -290,6 +292,15 @@ export function SaftImportPage() {
       setState('error')
       setError(readError instanceof Error ? readError.message : 'Não foi possível ler o ficheiro SAF-T.')
     }
+  }
+
+  // Empresa criada a partir do ficheiro: traz o contexto de trabalho novo
+  // (a empresa entra no seletor), seleciona-a e volta a ler o cabeçalho —
+  // agora o NIF corresponde e o ecrã segue para importar contas e
+  // movimentos, sem recarregar a página.
+  async function onCompanyCreated(companyId: string) {
+    await refreshWorkContext(companyId)
+    if (file) await onFile(file)
   }
 
   return <div className="page-stack">
@@ -332,7 +343,7 @@ export function SaftImportPage() {
             {result.match.companyId && <AccountsPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} />}
             {result.match.companyId && source === 'database' && <EntriesPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} />}
           </>
-        : <CompanyProposal inspection={result} />}
+        : <CompanyProposal inspection={result} onCreated={(companyId) => void onCompanyCreated(companyId)} />}
     </>}
   </div>
 }
