@@ -2,26 +2,11 @@ import { ArrowRight, CircleCheck, Clock3, Receipt, Tags, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate } from '../app/demo-data'
+import { useMovementsSummary } from '../app/movementsSummary'
 import { useWorkContext } from '../app/WorkContext'
 
 const VISIBLE_PENDING = 6
 const DISMISSED_VAT_KEY_PREFIX = 'accounting-ai.dismissed-vat.'
-
-// Posição de IVA atual, calculada sobre os movimentos já carregados pelo
-// WorkContext (sem pedido adicional) — mesma fórmula do dashboard e do
-// resumo de IVA: 2433 liquidado menos 2432 dedutível.
-function currentVatPosition(movements: ReturnType<typeof useWorkContext>['movements']): number {
-  let dedutivel = 0
-  let liquidado = 0
-  for (const movement of movements) {
-    if (movement.status === 'Anulado') continue
-    for (const line of movement.lines) {
-      if (line.account.startsWith('2432')) dedutivel += line.debit - line.credit
-      if (line.account.startsWith('2433')) liquidado += line.credit - line.debit
-    }
-  }
-  return liquidado - dedutivel
-}
 
 // «Dispensar até à próxima entrega» só vale para o valor exato dispensado
 // (em cêntimos, para não perder por arredondamento): assim que a posição de
@@ -36,14 +21,17 @@ function readDismissedVatCents(companyId: string): number | null {
 }
 
 export function TasksPage() {
-  const { activeCompany, movements, taxonomyReview } = useWorkContext()
-  const pending = [...movements]
-    .filter((movement) => movement.status === 'Por conferir')
-    .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))
+  const { activeCompany, taxonomyReview } = useWorkContext()
+  // Posição de IVA e movimentos por conferir vêm do resumo da fila de
+  // trabalho (`useMovementsSummary`) — agregados no servidor numa empresa
+  // ligada à base de dados, sem carregar o histórico inteiro.
+  const summary = useMovementsSummary()
+  const pending = summary.pendingPreview
+  const pendingCount = summary.pendingReview
   const unclassified = taxonomyReview.accounts.filter((account) => account.status === 'Unclassified')
   const suggested = taxonomyReview.accounts.filter((account) => account.status === 'SuggestionAvailable')
   const taxonomyPending = unclassified.length + suggested.length
-  const vatPosition = currentVatPosition(movements)
+  const vatPosition = summary.vatPosition
   const vatCents = Math.round(vatPosition * 100)
   const [dismissedVatCents, setDismissedVatCents] = useState<number | null>(() => readDismissedVatCents(activeCompany.companyId))
   useEffect(() => setDismissedVatCents(readDismissedVatCents(activeCompany.companyId)), [activeCompany.companyId])
@@ -52,7 +40,7 @@ export function TasksPage() {
     try { window.localStorage.setItem(`${DISMISSED_VAT_KEY_PREFIX}${activeCompany.companyId}`, String(vatCents)) } catch { /* storage é opcional */ }
     setDismissedVatCents(vatCents)
   }
-  const nothingPending = pending.length === 0 && taxonomyPending === 0 && !vatDue
+  const nothingPending = pendingCount === 0 && taxonomyPending === 0 && !vatDue
 
   return <div className="page-stack">
     <header className="page-heading"><div><p className="eyebrow">Accounting AI</p><h1>Tarefas</h1><p>O que precisa da sua atenção na empresa ativa.</p></div></header>
@@ -69,14 +57,14 @@ export function TasksPage() {
       <button type="button" className="text-link" onClick={dismissVat}><X size={15} /> Dispensar até à próxima entrega</button>
     </section>}
 
-    {pending.length > 0 && <section className="panel attention-panel">
-      <div className="panel-heading"><div><h2>Movimentos por conferir</h2><p>Lançamentos que ainda não foram conferidos, dos mais antigos aos mais recentes.</p></div><span className="attention-count">{pending.length}</span></div>
+    {pendingCount > 0 && <section className="panel attention-panel">
+      <div className="panel-heading"><div><h2>Movimentos por conferir</h2><p>Lançamentos que ainda não foram conferidos, dos mais antigos aos mais recentes.</p></div><span className="attention-count">{pendingCount}</span></div>
       {pending.slice(0, VISIBLE_PENDING).map((movement) => <Link className="attention-item" key={movement.id} to={`/movimentos/${movement.id}`}>
         <span className="attention-icon amber"><Clock3 /></span>
         <span><strong>{movement.description}</strong><small>{movement.id.replaceAll('-', ' ')} · {formatMovementDate(movement.date)} · {euro.format(movement.amount)}</small></span>
         <ArrowRight size={16} />
       </Link>)}
-      {pending.length > VISIBLE_PENDING && <Link className="text-link" to="/movimentos">Ver todos os {pending.length} <ArrowRight size={15} /></Link>}
+      {pendingCount > VISIBLE_PENDING && <Link className="text-link" to="/movimentos">Ver todos os {pendingCount} <ArrowRight size={15} /></Link>}
     </section>}
 
     {taxonomyPending > 0 && <section className="panel">

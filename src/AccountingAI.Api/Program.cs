@@ -401,6 +401,67 @@ if (app.Environment.IsDevelopment())
         };
     }
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/summary", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        // Os números do estado da fila de trabalho (barra de topo, Tarefas) sem
+        // o array inteiro de movimentos: contagens e somas agregadas no SQL.
+        var entries = context.JournalEntries
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId);
+
+        var total = await entries.CountAsync(cancellationToken).ConfigureAwait(false);
+        var pendingReview = await entries
+            .CountAsync(item => item.Status == JournalEntryStatus.PendingReview, cancellationToken)
+            .ConfigureAwait(false);
+
+        var vatLines = context.JournalEntryLines
+            .AsNoTracking()
+            .Where(line => line.CompanyId == companyId && line.JournalEntry.Status != JournalEntryStatus.Voided);
+
+        var vatInput = await vatLines
+            .Where(line => line.Account.Code.StartsWith("2432"))
+            .SumAsync(line => (decimal?)(line.Debit - line.Credit), cancellationToken)
+            .ConfigureAwait(false) ?? 0m;
+        var vatOutput = await vatLines
+            .Where(line => line.Account.Code.StartsWith("2433"))
+            .SumAsync(line => (decimal?)(line.Credit - line.Debit), cancellationToken)
+            .ConfigureAwait(false) ?? 0m;
+
+        var pendingPreview = await entries
+            .Where(item => item.Status == JournalEntryStatus.PendingReview)
+            .OrderBy(item => item.EntryDate)
+            .ThenBy(item => item.Reference)
+            .Take(7)
+            .Select(item => new
+            {
+                Id = item.Reference,
+                Date = item.EntryDate,
+                item.Description,
+                Amount = item.TotalAmount
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return Results.Ok(new
+        {
+            Total = total,
+            PendingReview = pendingReview,
+            VatInput = vatInput,
+            VatOutput = vatOutput,
+            VatPosition = vatOutput - vatInput,
+            PendingPreview = pendingPreview
+        });
+    });
+
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements", async (
         Guid userId,
         Guid companyId,

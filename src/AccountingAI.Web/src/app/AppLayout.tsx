@@ -23,6 +23,7 @@ import {
 import { useCallback, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { GlobalSearch } from './GlobalSearch'
+import { useMovementsSummary } from './movementsSummary'
 import { useDismiss } from './useDismiss'
 import { useWorkContext } from './WorkContext'
 
@@ -48,7 +49,8 @@ const links = [
 ]
 
 export function AppLayout() {
-  const { activeCompany, companies, movements, saveSettings, selectCompany, source, taxonomyReview, user } = useWorkContext()
+  const { activeCompany, companies, saveSettings, selectCompany, source, taxonomyReview, user } = useWorkContext()
+  const movementsSummary = useMovementsSummary()
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [periodOpen, setPeriodOpen] = useState(false)
   const switcherRef = useRef<HTMLDivElement>(null)
@@ -73,7 +75,7 @@ export function AppLayout() {
   // O sino leva às Tarefas; o ponto acende quando há trabalho pendente na
   // empresa ativa (movimentos por conferir ou contas de movimento por
   // classificar) — os mesmos itens acionáveis do ecrã de Tarefas.
-  const pendingTasks = movements.filter((movement) => movement.status === 'Por conferir').length
+  const pendingTasks = movementsSummary.pendingReview
     + taxonomyReview.accounts.filter((account) => account.status === 'Unclassified' || account.status === 'SuggestionAvailable').length
 
   return (
