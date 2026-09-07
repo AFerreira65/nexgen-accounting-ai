@@ -80,6 +80,11 @@ describe('App', () => {
     expect(screen.getByRole('spinbutton', { name: 'Exercício' })).toHaveValue(2026)
 
     fireEvent.click(screen.getByRole('button', { name: /Exercício 2026/ }))
+    // Escape fecha o menu sem escolher nada.
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('menuitem', { name: '2024' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Exercício 2026/ }))
     fireEvent.click(screen.getByRole('menuitem', { name: '2024' }))
 
     expect(screen.getByRole('button', { name: /Exercício 2024/ })).toBeInTheDocument()

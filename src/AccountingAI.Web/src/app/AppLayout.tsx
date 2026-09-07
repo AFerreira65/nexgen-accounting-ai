@@ -21,8 +21,9 @@ import {
   Users,
   WalletCards,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { useDismiss } from './useDismiss'
 import { useWorkContext } from './WorkContext'
 
 const links = [
@@ -50,6 +51,12 @@ export function AppLayout() {
   const { activeCompany, companies, saveSettings, selectCompany, source, user } = useWorkContext()
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [periodOpen, setPeriodOpen] = useState(false)
+  const switcherRef = useRef<HTMLDivElement>(null)
+  const periodRef = useRef<HTMLDivElement>(null)
+  const closeSwitcher = useCallback(() => setSwitcherOpen(false), [])
+  const closePeriod = useCallback(() => setPeriodOpen(false), [])
+  useDismiss(switcherOpen, switcherRef, closeSwitcher)
+  useDismiss(periodOpen, periodRef, closePeriod)
   const regionNames = { Mainland: 'Continente', Azores: 'Açores', Madeira: 'Madeira' }
   // O exercício é a preferência do utilizador nesta empresa; mudá-lo aqui
   // acerta logo os atalhos de período e os valores por omissão de toda a app.
@@ -87,7 +94,7 @@ export function AppLayout() {
 
       <div className="workspace">
         <header className="topbar">
-          <div className="company-switcher-wrap">
+          <div className="company-switcher-wrap" ref={switcherRef}>
             <button className="company-switcher" type="button" aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}>
               <span className="company-monogram">{companyMonogram}</span>
               <span><strong>{activeCompany.legalName.replace(' (Demonstração)', '')}</strong><small>{activeCompany.taxRegistrationNumber} · {regionNames[activeCompany.region]} · {source === 'database' ? 'SQL' : 'demo'}</small></span>
@@ -107,7 +114,7 @@ export function AppLayout() {
             <kbd>Ctrl K</kbd>
           </label>
           <div className="topbar-actions">
-            <div className="period-selector-wrap">
+            <div className="period-selector-wrap" ref={periodRef}>
               <button className="period-selector" type="button" aria-expanded={periodOpen} onClick={() => setPeriodOpen((open) => !open)}>Exercício {activeCompany.settings.defaultFiscalYear ?? 'atual'} <ChevronDown size={15} /></button>
               {periodOpen && <div className="period-menu" role="menu" aria-label="Escolher exercício">
                 {yearOptions.map((year) => <button key={year} type="button" role="menuitem" className={year === activeCompany.settings.defaultFiscalYear ? 'selected' : ''} onClick={() => pickYear(year)}>{year}</button>)}
