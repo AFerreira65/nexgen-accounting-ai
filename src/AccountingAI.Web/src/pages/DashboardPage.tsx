@@ -12,6 +12,17 @@ type Balance = { accountCode: string; balance: number }
 // Movimentos.
 const RECENT_MOVEMENTS = 8
 
+// A data de referência dos indicadores fica guardada por empresa no
+// navegador, para não voltar ao presente a cada visita ao painel.
+const REFERENCE_DATE_KEY = 'accounting-ai.dashboard-reference-date.'
+function readReferenceDate(companyId: string): string {
+  try {
+    return window.localStorage.getItem(`${REFERENCE_DATE_KEY}${companyId}`) ?? ''
+  } catch {
+    return ''
+  }
+}
+
 // O saldo de cada conta é sempre cumulativo até `to` — `from` só existe para
 // os relatórios que separam abertura de movimento do período, o que aqui não
 // interessa: só queremos a posição financeira numa data de referência.
@@ -32,8 +43,16 @@ export function DashboardPage() {
   const active = movements.filter((movement) => movement.status !== 'Anulado')
   const pending = movements.filter((movement) => movement.status === 'Por conferir')
   const firstName = user.displayName.replace(' (Demonstração)', '').split(' ')[0]
-  const [toDate, setToDate] = useState('')
+  const [toDate, setToDate] = useState(() => readReferenceDate(activeCompany.companyId))
   const [balances, setBalances] = useState<Balance[]>(() => balancesFromMovements(movements, ''))
+  useEffect(() => setToDate(readReferenceDate(activeCompany.companyId)), [activeCompany.companyId])
+  const pickReferenceDate = (value: string) => {
+    setToDate(value)
+    try {
+      if (value) window.localStorage.setItem(`${REFERENCE_DATE_KEY}${activeCompany.companyId}`, value)
+      else window.localStorage.removeItem(`${REFERENCE_DATE_KEY}${activeCompany.companyId}`)
+    } catch { /* storage é opcional */ }
+  }
 
   useEffect(() => {
     if (source !== 'database') {
@@ -81,9 +100,9 @@ export function DashboardPage() {
       </header>
 
       <div className="filterbar">
-        <label><span className="sr-only">Data de referência</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
-        <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(_from, to) => setToDate(to)} />
-        {toDate && <button type="button" className="button button-secondary" onClick={() => setToDate('')}>Hoje</button>}
+        <label><span className="sr-only">Data de referência</span><input type="date" value={toDate} onChange={(event) => pickReferenceDate(event.target.value)} /></label>
+        <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(_from, to) => pickReferenceDate(to)} />
+        {toDate && <button type="button" className="button button-secondary" onClick={() => pickReferenceDate('')}>Hoje</button>}
       </div>
 
       <section className="metric-grid" aria-label="Indicadores do período">

@@ -45,6 +45,20 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /6221 · Material de escritório/ })).toBeInTheDocument()
   })
 
+  it('keeps the dashboard reference date between visits', () => {
+    window.history.pushState({}, '', '/')
+    const { unmount } = render(<App />)
+
+    fireEvent.change(screen.getByLabelText('Data de referência'), { target: { value: '2026-06-30' } })
+    unmount()
+
+    window.history.pushState({}, '', '/')
+    render(<App />)
+    expect(screen.getByLabelText('Data de referência')).toHaveValue('2026-06-30')
+    fireEvent.click(screen.getByRole('button', { name: 'Hoje' }))
+    expect(screen.getByLabelText('Data de referência')).toHaveValue('')
+  })
+
   it('explains how to start the application when index.html is opened as a file', () => {
     expect(indexHtml).toContain("window.location.protocol === 'file:'")
     expect(indexHtml).toContain('A aplicação precisa do servidor local')
