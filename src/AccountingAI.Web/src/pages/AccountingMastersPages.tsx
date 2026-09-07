@@ -1,7 +1,8 @@
-import { BookOpen, CircleAlert, CircleCheck, FileText, Landmark, Plus, Search, Tags, X } from 'lucide-react'
-import { useMemo, useState, type FormEvent } from 'react'
+import { BookOpen, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, FileText, Landmark, Plus, Search, Tags, X } from 'lucide-react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import type { AccountingAccount, AccountingDocumentType, AccountingJournal } from '../app/demo-data'
+import { paginate } from '../app/pagination'
 import { useWorkContext } from '../app/WorkContext'
 
 function useFiltered<T>(items: T[], text: string, value: (item: T) => string) {
@@ -9,6 +10,25 @@ function useFiltered<T>(items: T[], text: string, value: (item: T) => string) {
     const normalized = text.trim().toLocaleLowerCase('pt-PT')
     return normalized ? items.filter((item) => value(item).toLocaleLowerCase('pt-PT').includes(normalized)) : items
   }, [items, text, value])
+}
+
+// Paginação para as listas de cadastros que podem ficar enormes (plano de
+// contas e taxonomias de uma empresa importada de SAF-T). Volta à primeira
+// página quando a pesquisa muda.
+function usePagedList<T>(items: T[], search: string, pageSize: number) {
+  const [page, setPage] = useState(1)
+  useEffect(() => setPage(1), [search])
+  const { items: paged, currentPage, totalPages } = paginate(items, pageSize, page)
+  return { paged, currentPage, totalPages, setPage }
+}
+
+function Pager({ currentPage, totalPages, onPage }: { currentPage: number; totalPages: number; onPage: (page: number) => void }) {
+  if (totalPages <= 1) return null
+  return <div className="pager">
+    <button className="button button-secondary" type="button" disabled={currentPage === 1} onClick={() => onPage(currentPage - 1)}><ChevronLeft size={15} /> Anterior</button>
+    <span>Página {currentPage} de {totalPages}</span>
+    <button className="button button-secondary" type="button" disabled={currentPage === totalPages} onClick={() => onPage(currentPage + 1)}>Seguinte <ChevronRight size={15} /></button>
+  </div>
 }
 
 function SourceBadge({ database }: { database: boolean }) {
@@ -96,10 +116,11 @@ function AccountEditor({ account, defaultReference, aggregators, onClose }: {
 }
 
 export function AccountsPage() {
-  const { accountingSetup, setupSource, setupLoading } = useWorkContext()
+  const { activeCompany, accountingSetup, setupSource, setupLoading } = useWorkContext()
   const [search, setSearch] = useState('')
   const [editor, setEditor] = useState<{ mode: 'create' } | { mode: 'edit'; account: AccountingAccount } | null>(null)
   const accounts = useFiltered(accountingSetup.accounts, search, (item) => `${item.code} ${item.name} ${item.taxonomyCode ?? ''}`)
+  const { paged, currentPage, totalPages, setPage } = usePagedList(accounts, search, activeCompany.settings.pageSize || 50)
   const posting = accountingSetup.accounts.filter((item) => item.allowsPosting)
   const classified = posting.filter((item) => item.taxonomyCode !== null)
   const aggregators = accountingSetup.accounts.filter((item) => !item.allowsPosting)
@@ -110,7 +131,7 @@ export function AccountsPage() {
     <div className="filterbar"><label><Search size={17} /><span className="sr-only">Pesquisar contas</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar código, descrição ou taxonomia…" /></label><span className="catalog-count">{setupLoading ? 'A carregar…' : `${accounts.length} contas`}</span><button className="button button-primary" type="button" onClick={() => setEditor({ mode: 'create' })}><Plus size={16} /> Nova conta</button></div>
     {editor?.mode === 'create' && <AccountEditor account={null} defaultReference={accountingSetup.template.taxonomyReference} aggregators={aggregators} onClose={() => setEditor(null)} />}
     {editor?.mode === 'edit' && <AccountEditor account={editor.account} defaultReference={accountingSetup.template.taxonomyReference} aggregators={aggregators} onClose={() => setEditor(null)} />}
-    <section className="panel"><div className="panel-heading"><div><h2>Contas da empresa</h2><p>As contas agregadoras não podem receber movimentos nem taxonomia.</p></div></div><div className="table-wrap"><table><thead><tr><th>Conta</th><th>Descrição</th><th>Agregadora</th><th>Tipo</th><th>Taxonomia</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{accounts.map((account) => <tr key={account.code}><td><Link className="primary-cell" to={`/contas/${account.code}`}>{account.code}</Link></td><td>{account.name}<small>{account.sourceTemplateVersion ? 'Plano base' : 'Configuração da empresa'}</small></td><td>{account.parentCode ?? '—'}</td><td>{account.allowsPosting ? 'Movimento' : 'Agregadora'}</td><td>{account.taxonomyCode ? <span className="taxonomy-pill">{account.taxonomyReference} · {account.taxonomyCode}</span> : <span className="muted-value">Por atribuir</span>}</td><td><span className={`badge ${account.isActive ? 'success' : 'warning'}`}>{account.isActive ? 'Ativa' : 'Inativa'}</span></td><td><button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', account })}>Editar</button></td></tr>)}</tbody></table></div></section>
+    <section className="panel"><div className="panel-heading"><div><h2>Contas da empresa</h2><p>As contas agregadoras não podem receber movimentos nem taxonomia.</p></div></div><div className="table-wrap"><table><thead><tr><th>Conta</th><th>Descrição</th><th>Agregadora</th><th>Tipo</th><th>Taxonomia</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{paged.map((account) => <tr key={account.code}><td><Link className="primary-cell" to={`/contas/${account.code}`}>{account.code}</Link></td><td>{account.name}<small>{account.sourceTemplateVersion ? 'Plano base' : 'Configuração da empresa'}</small></td><td>{account.parentCode ?? '—'}</td><td>{account.allowsPosting ? 'Movimento' : 'Agregadora'}</td><td>{account.taxonomyCode ? <span className="taxonomy-pill">{account.taxonomyReference} · {account.taxonomyCode}</span> : <span className="muted-value">Por atribuir</span>}</td><td><span className={`badge ${account.isActive ? 'success' : 'warning'}`}>{account.isActive ? 'Ativa' : 'Inativa'}</span></td><td><button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', account })}>Editar</button></td></tr>)}</tbody></table></div><Pager currentPage={currentPage} totalPages={totalPages} onPage={setPage} /></section>
   </div>
 }
 
@@ -231,11 +252,12 @@ const STATUS_LABELS: Record<string, { label: string; badge: string }> = {
 }
 
 export function TaxonomiesPage() {
-  const { taxonomyReview, taxonomyCatalog, setupSource, updateAccount, applyTaxonomySuggestions } = useWorkContext()
+  const { activeCompany, taxonomyReview, taxonomyCatalog, setupSource, updateAccount, applyTaxonomySuggestions } = useWorkContext()
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
   const accounts = useFiltered(taxonomyReview.accounts, search, (item) => `${item.code} ${item.name} ${item.taxonomyCode ?? ''}`)
+  const { paged, currentPage, totalPages, setPage } = usePagedList(accounts, search, activeCompany.settings.pageSize || 50)
   const missing = taxonomyReview.postingAccountCount - taxonomyReview.classifiedCount
   const suggestions = taxonomyReview.accounts.filter((item) => item.status === 'SuggestionAvailable').length
 
@@ -257,13 +279,13 @@ export function TaxonomiesPage() {
     <p className="metadata-strip"><small>Catálogo {taxonomyCatalog.reference} (Portaria 302/2016)</small> <strong>{taxonomyCatalog.codes.length} códigos</strong> — {taxonomyCatalog.disclaimer}</p>
     <div className="filterbar"><label><Search size={17} /><span className="sr-only">Pesquisar taxonomias</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar conta ou código de taxonomia…" /></label><button className="button button-primary" type="button" disabled={!suggestions || busy === 'apply-all'} onClick={() => run('apply-all', applyTaxonomySuggestions)}>Aplicar sugestões do referencial{suggestions ? ` (${suggestions})` : ''}</button><a className="button button-secondary" href={taxonomyReview.taxonomyLegalSource || undefined} target="_blank" rel="noreferrer">Fonte oficial</a></div>
     {error && <p className="save-status error">{error}</p>}
-    <section className="panel"><div className="panel-heading"><div><h2>Classificação das contas de movimento</h2><p>O código é obrigatório no SAF-T apenas para contas classificadas como movimento.</p></div></div><div className="table-wrap"><table><thead><tr><th>Conta</th><th>Descrição</th><th>Referencial</th><th>Código</th><th>Sugestão</th><th>Validação</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{accounts.map((account) => {
+    <section className="panel"><div className="panel-heading"><div><h2>Classificação das contas de movimento</h2><p>O código é obrigatório no SAF-T apenas para contas classificadas como movimento.</p></div></div><div className="table-wrap"><table><thead><tr><th>Conta</th><th>Descrição</th><th>Referencial</th><th>Código</th><th>Sugestão</th><th>Validação</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{paged.map((account) => {
       const meta = STATUS_LABELS[account.status] ?? STATUS_LABELS.Unclassified
       return <tr key={account.code}><td><Link className="primary-cell" to={`/contas/${account.code}`}>{account.code}</Link></td><td>{account.name}</td><td>{account.taxonomyReference ?? taxonomyReview.reference}</td><td>{account.taxonomyCode ?? '—'}</td><td>{account.suggestedCode ?? '—'}</td><td><span className={`badge ${meta.badge}`}>{meta.label}</span></td><td>{account.suggestedCode && account.taxonomyCode === null
         ? <button className="button button-secondary" type="button" disabled={busy === account.code} onClick={() => run(account.code, () => updateAccount(account.code, { name: account.name, isActive: true, taxonomyReference: taxonomyReview.reference, taxonomyCode: account.suggestedCode }))}>Aplicar {account.suggestedCode}</button>
         : account.taxonomyCode !== null
           ? <button className="button button-secondary" type="button" disabled={busy === account.code} onClick={() => run(account.code, () => updateAccount(account.code, { name: account.name, isActive: true, taxonomyReference: null, taxonomyCode: null }))}>Limpar</button>
           : <span className="muted-value">Sem sugestão</span>}</td></tr>
-    })}</tbody></table></div></section>
+    })}</tbody></table></div><Pager currentPage={currentPage} totalPages={totalPages} onPage={setPage} /></section>
   </div>
 }
