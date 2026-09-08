@@ -2,9 +2,8 @@ import { AlertTriangle, ArrowRight, Clock3, Database, HandCoins, Landmark, Recei
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
-import { useMovementsSummary } from '../app/movementsSummary'
 import { PeriodShortcuts } from '../app/periods'
-import { useWorkContext } from '../app/WorkContext'
+import { useMovementsSummary, useWorkContext } from '../app/WorkContext'
 
 type Balance = { accountCode: string; balance: number }
 

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection, type SaftOpeningBalancesImport, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
 export type AccountEditInput = { name: string; isActive: boolean; taxonomyReference: string | null; taxonomyCode: number | null }
@@ -57,6 +58,7 @@ type WorkContextValue = WorkContextData & {
   taxonomyReview: TaxonomyReview
   taxonomyCatalog: TaxonomyCatalog
   movements: Movement[]
+  movementsSummary: MovementsSummary
   refreshAccounting: () => void
   refreshWorkContext: (selectCompanyId?: string) => Promise<void>
   selectCompany: (companyId: string) => void
@@ -124,6 +126,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
   const [accountingLoading, setAccountingLoading] = useState(false)
   const [setupLoading, setSetupLoading] = useState(false)
   const [accountingMovements, setAccountingMovements] = useState<Movement[]>(fallbackMovements)
+  const [movementsSummary, setMovementsSummary] = useState<MovementsSummary>(EMPTY_MOVEMENTS_SUMMARY)
   const [accountingSetup, setAccountingSetup] = useState<AccountingSetup>(fallbackAccountingSetupsByCompany[fallbackContext.companies[0].companyId])
   const [taxonomyReview, setTaxonomyReview] = useState<TaxonomyReview>(() => buildTaxonomyReview(fallbackAccountingSetupsByCompany[fallbackContext.companies[0].companyId]))
   const [taxonomyCatalog, setTaxonomyCatalog] = useState<TaxonomyCatalog>(demoTaxonomyCatalog)
@@ -201,6 +204,34 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       })
       .finally(() => {
         if (!controller.signal.aborted) setAccountingLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [activeCompany.companyId, data.user.id, source, accountingRevision])
+
+  // O resumo da fila de trabalho (contagens, posição de IVA, antevisão) é
+  // carregado aqui uma vez e partilhado pelo sino, pelas Tarefas e pelo
+  // painel — antes cada um fazia o seu pedido igual. Em demonstração
+  // calcula-se sobre o array; ligado à base de dados vem do endpoint.
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test' || source !== 'database') {
+      setMovementsSummary(summaryFromMovements(accountingMovements))
+    }
+  }, [source, accountingMovements])
+
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test' || source !== 'database') return
+
+    const controller = new AbortController()
+    void fetch(`/api/v1/development/users/${data.user.id}/companies/${activeCompany.companyId}/accounting/movements/summary`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return await response.json() as MovementsSummary
+      })
+      .then((body) => setMovementsSummary(body))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setMovementsSummary(EMPTY_MOVEMENTS_SUMMARY)
       })
 
     return () => controller.abort()
@@ -298,6 +329,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
     taxonomyReview,
     taxonomyCatalog,
     movements: accountingMovements,
+    movementsSummary,
     refreshAccounting: () => setAccountingRevision((revision) => revision + 1),
     refreshWorkContext: (selectCompanyId?: string) => loadWorkContext(undefined, selectCompanyId) ?? Promise.resolve(),
     selectCompany: (companyId) => {
@@ -671,7 +703,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as SaftCompanyCreation
     },
-  }), [accountingLoading, accountingMovements, accountingSetup, accountingSource, activeCompany, data, loadWorkContext, setupLoading, setupSource, source, taxonomyCatalog, taxonomyReview])
+  }), [accountingLoading, accountingMovements, accountingSetup, accountingSource, activeCompany, data, loadWorkContext, movementsSummary, setupLoading, setupSource, source, taxonomyCatalog, taxonomyReview])
 
   return <Context.Provider value={value}>{children}</Context.Provider>
 }
@@ -680,4 +712,10 @@ export function useWorkContext() {
   const value = useContext(Context)
   if (!value) throw new Error('WorkContextProvider em falta.')
   return value
+}
+
+// O resumo da fila de trabalho é carregado uma vez pelo `WorkContext`; este
+// seletor mantém a assinatura antiga para os ecrãs que já o usavam.
+export function useMovementsSummary() {
+  return useWorkContext().movementsSummary
 }

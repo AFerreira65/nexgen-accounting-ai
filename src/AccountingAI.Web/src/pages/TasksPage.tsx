@@ -2,8 +2,7 @@ import { ArrowRight, CircleCheck, Clock3, Receipt, Tags, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate } from '../app/demo-data'
-import { useMovementsSummary } from '../app/movementsSummary'
-import { useWorkContext } from '../app/WorkContext'
+import { useMovementsSummary, useWorkContext } from '../app/WorkContext'
 
 const VISIBLE_PENDING = 6
 const DISMISSED_VAT_KEY_PREFIX = 'accounting-ai.dismissed-vat.'

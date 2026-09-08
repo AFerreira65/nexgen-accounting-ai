@@ -23,9 +23,8 @@ import {
 import { useCallback, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { GlobalSearch } from './GlobalSearch'
-import { useMovementsSummary } from './movementsSummary'
 import { useDismiss } from './useDismiss'
-import { useWorkContext } from './WorkContext'
+import { useMovementsSummary, useWorkContext } from './WorkContext'
 
 const links = [
   { to: '/', label: 'Visão geral', icon: CircleGauge, end: true },
