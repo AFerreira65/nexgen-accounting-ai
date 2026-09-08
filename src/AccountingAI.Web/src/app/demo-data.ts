@@ -466,6 +466,57 @@ export type SaftSalesInvoiceMonth = {
   gross: number
 }
 
+export type AnalysisCatalogField = {
+  key: string
+  label: string
+  type: 'Text' | 'Number' | 'Money' | 'Date'
+  groupable: boolean
+  aggregatable: boolean
+}
+
+export type AnalysisCatalog = {
+  sources: { key: string; fields: AnalysisCatalogField[] }[]
+  operatorsByType: Record<string, string[]>
+}
+
+export type AnalysisFilter = { field: string; operator: string; value: string }
+export type AnalysisSort = { field: string; descending: boolean }
+export type AnalysisAggregate = { field: string; function: 'sum' | 'count' | 'average' | 'min' | 'max' }
+
+export type AnalysisDefinition = {
+  source: string
+  columns: string[]
+  filters: AnalysisFilter[]
+  groupBy: string[]
+  sort: AnalysisSort[]
+  aggregates: AnalysisAggregate[]
+  includeGrandTotal: boolean
+}
+
+export type SavedAnalysisView = {
+  id: string
+  name: string
+  description: string | null
+  definition: AnalysisDefinition
+  createdAtUtc: string | null
+}
+
+export type AnalysisColumn = { key: string; label: string; type: string }
+export type AnalysisGroupKey = { field: string; label: string; value: unknown }
+export type AnalysisGroup = {
+  keys: AnalysisGroupKey[]
+  subtotals: Record<string, number>
+  rowCount: number
+}
+export type AnalysisResult = {
+  columns: AnalysisColumn[]
+  rows: Record<string, unknown>[]
+  groups: AnalysisGroup[]
+  grandTotal: Record<string, number>
+  rowCount: number
+  truncated: boolean
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {

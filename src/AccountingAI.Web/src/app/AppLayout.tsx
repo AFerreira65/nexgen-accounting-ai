@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Bell,
   BookOpen,
   BookText,
@@ -32,6 +33,7 @@ const links = [
   { to: '/', label: 'Visão geral', icon: CircleGauge, end: true },
   { to: '/movimentos', label: 'Movimentos', icon: WalletCards },
   { to: '/livro-diario', label: 'Livro diário', icon: BookText },
+  { to: '/analises', label: 'Análises', icon: BarChart3 },
   { to: '/balancete', label: 'Balancete', icon: Scale },
   { to: '/resultados', label: 'Resultados', icon: TrendingUp },
   { to: '/balanco', label: 'Balanço', icon: Scale },

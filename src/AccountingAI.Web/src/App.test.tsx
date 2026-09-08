@@ -709,6 +709,13 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Dicionário de dados' })).toBeInTheDocument()
   })
 
+  it('shows the analyses screen', () => {
+    window.history.pushState({}, '', '/analises')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Análises', level: 1 })).toBeInTheDocument()
+  })
+
   it('offers an Opções menu on every screen with the two actions', () => {
     window.history.pushState({}, '', '/')
     render(<App />)

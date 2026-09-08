@@ -10,6 +10,7 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/tarefas': null,
   '/movimentos': { schema: 'accounting', name: 'JournalEntries' },
   '/livro-diario': { schema: 'accounting', name: 'JournalEntries' },
+  '/analises': { schema: 'reporting', name: 'SavedAnalysis' },
   '/balancete': { schema: 'accounting', name: 'JournalEntryLines' },
   '/resultados': { schema: 'accounting', name: 'JournalEntryLines' },
   '/balanco': { schema: 'accounting', name: 'JournalEntryLines' },

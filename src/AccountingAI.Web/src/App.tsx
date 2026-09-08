@@ -22,6 +22,7 @@ import { DocumentNumberSeriesPage } from './pages/DocumentNumberSeriesPage'
 import { EFaturaPurchasesPage } from './pages/EFaturaPurchasesPage'
 import { CrossCheckPage } from './pages/CrossCheckPage'
 import { DataDictionaryPage } from './pages/DataDictionaryPage'
+import { AnalysesPage } from './pages/AnalysesPage'
 import { RecordProvider } from './app/RecordContext'
 import { WorkContextProvider } from './app/WorkContext'
 
@@ -46,6 +47,7 @@ export function App() {
             <Route path="/compras-efatura" element={<EFaturaPurchasesPage />} />
             <Route path="/cruzamento" element={<CrossCheckPage />} />
             <Route path="/dicionario-de-dados" element={<DataDictionaryPage />} />
+            <Route path="/analises" element={<AnalysesPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />
             <Route path="/balancete" element={<TrialBalancePage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />

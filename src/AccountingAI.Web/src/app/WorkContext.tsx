@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -85,6 +85,12 @@ type WorkContextValue = WorkContextData & {
   recordInfo: (companyId: string, table: string, id: string) => Promise<RecordInfo>
   dataDictionary: () => Promise<DataDictionaryTableSummary[]>
   dataDictionaryTable: (schema: string, name: string) => Promise<DataDictionaryTable>
+  analysisCatalog: () => Promise<AnalysisCatalog>
+  savedAnalyses: (companyId: string) => Promise<SavedAnalysisView[]>
+  saveAnalysis: (companyId: string, input: { name: string; description?: string; definition: AnalysisDefinition }) => Promise<SavedAnalysisView>
+  updateAnalysis: (companyId: string, id: string, input: { name: string; description?: string; definition: AnalysisDefinition }) => Promise<SavedAnalysisView>
+  deleteAnalysis: (companyId: string, id: string) => Promise<void>
+  runAnalysis: (companyId: string, target: { definition: AnalysisDefinition } | { savedId: string }, period: { from?: string; to?: string }) => Promise<AnalysisResult>
   previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
   importSaftAccounts: (companyId: string, file: File, fiscalYear?: number) => Promise<SaftAccountsImport>
   importSaftOpeningBalances: (companyId: string, fiscalYear: number, file: File) => Promise<SaftOpeningBalancesImport>
@@ -681,6 +687,53 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       const response = await fetch(`/api/v1/development/data-dictionary/${encodeURIComponent(schema)}/${encodeURIComponent(name)}`)
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as DataDictionaryTable
+    },
+    analysisCatalog: async () => {
+      const response = await fetch('/api/v1/development/analyses/catalog')
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as AnalysisCatalog
+    },
+    savedAnalyses: async (companyId) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/analyses`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SavedAnalysisView[]
+    },
+    saveAnalysis: async (companyId, input) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/analyses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SavedAnalysisView
+    },
+    updateAnalysis: async (companyId, id, input) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/analyses/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SavedAnalysisView
+    },
+    deleteAnalysis: async (companyId, id) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/analyses/${id}`, { method: 'DELETE' })
+      if (!response.ok && response.status !== 204) throw new Error(await problemMessage(response))
+    },
+    runAnalysis: async (companyId, target, period) => {
+      const params = new URLSearchParams()
+      if (period.from) params.set('from', period.from)
+      if (period.to) params.set('to', period.to)
+      const query = params.toString() ? `?${params}` : ''
+      const response = 'savedId' in target
+        ? await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/analyses/${target.savedId}/run${query}`)
+        : await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/analyses/run${query}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ definition: target.definition }),
+          })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as AnalysisResult
     },
     previewSaftAccounts: async (companyId, file) => {
       if (source === 'database') {
