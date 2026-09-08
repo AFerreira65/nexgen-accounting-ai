@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<SaftEntriesPreviewService>();
         services.AddScoped<SaftEntriesImportService>();
         services.AddScoped<EFaturaPurchaseImportService>();
+        services.AddScoped<AccountingAI.Application.CrossCheck.ICrossCheckService, CrossCheckService>();
         services.AddScoped<OrganizationAdminService>();
         services.AddScoped<JournalPostingService>();
         services.AddScoped<DocumentNumberSeriesService>();

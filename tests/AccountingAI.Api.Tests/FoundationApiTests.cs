@@ -927,6 +927,45 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task CrossCheckReportIsScopedToTheCompanyAndNeedsAClosedPeriod()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/";
+        const string period = "?from=2026-08-01&to=2026-08-31";
+
+        using var report = await client
+            .GetAsync($"{basePath}22222222-2222-2222-2222-222222222222/cross-check{period}")
+            .ConfigureAwait(false);
+        var reportPayload = await report.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var openPeriod = await client
+            .GetAsync($"{basePath}22222222-2222-2222-2222-222222222222/cross-check")
+            .ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync($"{basePath}99999999-9999-9999-9999-999999999999/cross-check{period}")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, report.StatusCode);
+        StringAssert.Contains(reportPayload, "\"purchases\"");
+        StringAssert.Contains(reportPayload, "\"efaturaWithoutAccounting\"");
+        StringAssert.Contains(reportPayload, "\"sales\"");
+        StringAssert.Contains(reportPayload, "\"totals\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, openPeriod.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task SaftCompanyCreationRejectsDuplicatesAndUnknownUsers()
     {
         if (!OperatingSystem.IsWindows())

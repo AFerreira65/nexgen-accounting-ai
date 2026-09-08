@@ -1,4 +1,5 @@
 using AccountingAI.Api;
+using AccountingAI.Application.CrossCheck;
 using AccountingAI.Application.Efatura;
 using AccountingAI.Application.Saft;
 using AccountingAI.Domain.Accounting;
@@ -1692,6 +1693,35 @@ if (app.Environment.IsDevelopment())
             .ConfigureAwait(false);
 
         return Results.Ok(new { Items = items, Page = currentPage, PageSize = size, TotalItems = totalItems, TotalPages = totalPages });
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/cross-check", async (
+        Guid userId,
+        Guid companyId,
+        ICrossCheckService crossCheck,
+        CancellationToken cancellationToken,
+        string? from,
+        string? to) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        // O cruzamento é sempre sobre um conjunto de meses fechado do exercício.
+        if (fromDate is not { } lowerBound || toDate is not { } upperBound)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["periodo"] = ["Indique as datas de início e de fim do período a cruzar."]
+            });
+        }
+
+        var report = await crossCheck
+            .BuildAsync(userId, companyId, lowerBound, upperBound, cancellationToken)
+            .ConfigureAwait(false);
+
+        return report is null ? Results.NotFound() : Results.Ok(report);
     });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/accounts-preview", async (
