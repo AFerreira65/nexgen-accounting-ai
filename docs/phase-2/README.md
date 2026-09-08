@@ -36,7 +36,7 @@ processo da Modelo 24 descrito em [`../CERTIFICACAO_AT.md`](../CERTIFICACAO_AT.m
 | **F2-03** | Cruzamento vendas SAF-T × compras e-Fatura × contabilidade | **Concluído** — [`F2-03`](F2-03-CROSS-CHECK.md); [`F2-03A`](F2-03A-EFATURA-CSV-INGESTION.md) (ingestão do CSV), [`F2-03B`](F2-03B-EFATURA-PWA-SCREEN.md) (ecrã de compras), [`F2-03C`](F2-03C-CROSS-CHECK-REPORT.md) (serviço e endpoint do relatório), [`F2-03D`](F2-03D-CROSS-CHECK-SCREEN.md) (ecrã «Cruzamento» + sinal nas Tarefas) e [`F2-03E`](F2-03E-SALES-INVOICES-READER.md) (leitor do `SalesInvoices`). Em aberto só a afinação da tolerância `DocumentReference` ↔ `InvoiceNo` |
 | F2-04 | Adaptador PHC: modos de agrupamento, conta corrente, stocks, contabilidade, recebimentos | Por especificar |
 | F2-05 | Relatórios de gestão assistidos por IA sobre dados reconciliados | Por especificar |
-| F2-06 | Dicionário de dados por tabela (ver/imprimir/PDF) e menu «Opções» em todos os ecrãs — «Dicionário de dados» e «Sobre o Registo» (quem criou / quem alterou o registo em foco) | Por especificar — pedido do utilizador, a seguir a F2-03 |
+| **F2-06** | Dicionário de dados por tabela (ver/imprimir/PDF) e menu «Opções» em todos os ecrãs — «Dicionário de dados» e «Sobre o Registo» (quem criou / quem alterou o registo em foco) | **Especificado** — [`F2-06`](F2-06-DATA-DICTIONARY-AND-RECORD-INFO.md); sub-incrementos F2-06A (colunas de auditoria) … F2-06E (impressão/PDF) |
 
 A ordem reflete dependências: F2-03 e F2-05 assentam na confiança que F2-01
 dá aos dados; F2-02 é independente mas partilha o cuidado com segredos e
