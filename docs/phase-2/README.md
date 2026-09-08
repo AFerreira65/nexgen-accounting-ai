@@ -31,7 +31,7 @@ processo da Modelo 24 descrito em [`../CERTIFICACAO_AT.md`](../CERTIFICACAO_AT.m
 
 | Épico | Título | Estado |
 |-------|--------|--------|
-| **F2-01** | Validação XSD e analítica do SAF-T (base para SVAT) | **Em curso** — [`F2-01`](F2-01-SAFT-XSD-VALIDATION.md); feito [`F2-01A`](F2-01A-XSD-STREAMING-VALIDATOR.md) (validador de esquema) |
+| **F2-01** | Validação XSD e analítica do SAF-T (base para SVAT) | **Em curso** — [`F2-01`](F2-01-SAFT-XSD-VALIDATION.md); feitos [`F2-01A`](F2-01A-XSD-STREAMING-VALIDATOR.md) (validador de esquema) e [`F2-01B`](F2-01B-SAFT-VALIDATE-ENDPOINT.md) (endpoint `saft/validate`) |
 | F2-02 | Consulta à AT validada em testes e produção (certificado de produtor, e-Fatura) | Por especificar |
 | F2-03 | Cruzamento vendas SAF-T × compras e-Fatura × contabilidade | Por especificar |
 | F2-04 | Adaptador PHC: modos de agrupamento, conta corrente, stocks, contabilidade, recebimentos | Por especificar |
@@ -72,5 +72,5 @@ ambientes de teste; F2-04 é isolado e pode correr em paralelo.
 4. **F2-04** — quando houver uma instalação PHC de testes disponível.
 5. **F2-05** — última, sobre o produto dos anteriores.
 
-A fase do `/foundation` na API passa a `F2-01` no primeiro sub-incremento que
-altere comportamento de backend (hoje está fixa em `F1-71`).
+A fase do `/foundation` na API passou a `F2-01` em F2-01B (estava fixa em
+`F1-71` desde F1-71).

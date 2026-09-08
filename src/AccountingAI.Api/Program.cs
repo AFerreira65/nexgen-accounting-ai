@@ -62,7 +62,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
-    phase = "F1-71",
+    phase = "F2-01",
     status = "ready"
 }));
 
@@ -1435,6 +1435,65 @@ if (app.Environment.IsDevelopment())
                     result.Match.AccountingStandard,
                     result.Match.AccountingSetupVersion
                 }
+            });
+        }
+        catch (SaftFileFormatException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["saft"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/saft/validate", async (
+        Guid userId,
+        HttpRequest request,
+        AccountingDbContext context,
+        ISaftSchemaValidator validator,
+        CancellationToken cancellationToken) =>
+    {
+        var userExists = await context.UserAccounts
+            .AsNoTracking()
+            .AnyAsync(item => item.Id == userId && item.IsActive, cancellationToken)
+            .ConfigureAwait(false);
+        if (!userExists)
+        {
+            return Results.NotFound();
+        }
+
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = null;
+        }
+
+        try
+        {
+            var report = await validator.ValidateAsync(request.Body, cancellationToken).ConfigureAwait(false);
+
+            return Results.Ok(new
+            {
+                report.Version,
+                report.SchemaAvailable,
+                report.SchemaValid,
+                Counts = new
+                {
+                    Error = report.ErrorCount,
+                    Warning = report.WarningCount,
+                    Information = report.InformationCount
+                },
+                Issues = report.Issues.Select(issue => new
+                {
+                    issue.RuleId,
+                    Severity = issue.Severity.ToString(),
+                    issue.Scope,
+                    issue.Message,
+                    issue.Line,
+                    issue.Position,
+                    issue.Path
+                }),
+                report.Truncated
             });
         }
         catch (SaftFileFormatException exception)

@@ -34,7 +34,7 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "F1-71");
+        StringAssert.Contains(payload, "F2-01");
         StringAssert.Contains(payload, "ready");
     }
 
@@ -772,6 +772,48 @@ public sealed class FoundationApiTests
         StringAssert.Contains(proposePayload, "\"includesAccounting\":false");
         Assert.AreEqual(HttpStatusCode.BadRequest, malformedResponse.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unknownUserResponse.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task SaftSchemaValidationEndpointReportsConformance()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string userPath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/saft/validate";
+
+        using var wellFormed = await client
+            .PostAsync(userPath, new StringContent(SaftDocument("500000000", "I"), Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+        var wellFormedPayload = await wellFormed.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var malformed = await client
+            .PostAsync(userPath, new StringContent("<AuditFile><Header>", Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+
+        using var unknownUser = await client
+            .PostAsync(
+                "/api/v1/development/users/00000000-0000-0000-0000-000000000000/saft/validate",
+                new StringContent(SaftDocument("500000000", "I"), Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, wellFormed.StatusCode);
+        StringAssert.Contains(wellFormedPayload, "\"version\":\"1.04_01\"");
+        // Sem o XSD oficial colocado (drop-in), valida-se só a boa formação.
+        StringAssert.Contains(wellFormedPayload, "\"schemaAvailable\":false");
+        StringAssert.Contains(wellFormedPayload, "\"schemaValid\":false");
+        StringAssert.Contains(wellFormedPayload, "\"severity\":\"Warning\"");
+        // XML mal formado é 400; XML válido mas não conforme seria 200.
+        Assert.AreEqual(HttpStatusCode.BadRequest, malformed.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unknownUser.StatusCode);
     }
 
     [TestMethod]
