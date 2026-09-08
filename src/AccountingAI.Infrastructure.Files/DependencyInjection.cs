@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddSingleton<ISaftAccountsReader, SaftAccountsReader>();
         services.AddSingleton<ISaftEntriesReader, SaftEntriesReader>();
         services.AddSingleton<ISaftSchemaValidator, SaftSchemaValidator>();
+        services.AddSingleton<ISaftValidationModelReader, SaftValidationModelReader>();
 
         return services;
     }

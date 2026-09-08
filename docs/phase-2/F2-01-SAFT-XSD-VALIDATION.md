@@ -92,7 +92,7 @@ mesmo quando o XSD falha.
 
 ### 3. Orientada a SVAT
 
-Um documento-inventário (`F2-01F`) que mapeia os critérios publicados do
+Um documento-inventário (`F2-01G`) que mapeia os critérios publicados do
 SVAT para: (a) já verificado pelas camadas 1–2, (b) verificável mas ainda
 não implementado, (c) dependente de a plataforma **produzir** o SAF-T de
 contabilidade. Não há aqui código de produção nesta fase — é o registo do
@@ -161,7 +161,7 @@ Application/Saft/
 - Rótulos pt-PT para `severity` e `scope` num módulo partilhado, como
   `entrySources`/`accountClasses`.
 
-### Persistência (F2-01E)
+### Persistência (F2-01F)
 
 - Tabela `accounting.SaftValidationReport` — `Id`, `CompanyId?` (nulo quando
   a validação corre antes de haver empresa), `UserId`, `FileName`,
@@ -190,24 +190,36 @@ Application/Saft/
 ### F2-01B — Endpoint `saft/validate`
 
 - **Regras:** `POST .../saft/validate` devolve o `SaftValidationReport` só
-  com a camada XSD; `saft/inspect` ganha `schemaValid`/`issueCounts`. Fase
-  do `/foundation` passa a `F2-01`.
+  com a camada XSD. Fase do `/foundation` passa a `F2-01`. (O campo
+  `schemaValid` no `saft/inspect` foi adiado para F2-01F — evita
+  transformar o `inspect` numa leitura do ficheiro inteiro; liga-se à
+  decisão em aberto n.º 3.)
 - **Validação prevista:** testes de API de leitura com um ficheiro conforme e
   um não conforme dos exemplos; `4xx` só para XML ilegível, não para XML
   válido mas não conforme (esse é `200` com `schemaValid:false`).
 - **Fora:** regras analíticas, PWA, persistência.
 
-### F2-01C — Motor de regras analíticas
+### F2-01C — Leitor do modelo de validação
 
-- **Regras:** `ISaftAnalyticalRule` + as regras da tabela acima; NIF mod-11
-  no `Domain` (reutilizável); o endpoint passa a devolver as ocorrências das
-  duas camadas.
+- **Regras:** `ISaftValidationModelReader` + `SaftValidationModelReader` —
+  uma passagem em streaming que produz `SaftValidationModel` (cabeçalho,
+  `AccountID` do plano, contagens/totais do bloco de movimentos, e listas
+  limitadas das transações desequilibradas, com contas por resolver ou fora
+  do período). Sem regras nem endpoint.
+- **Validação prevista:** testes em `Infrastructure.Files.Tests` — modelo
+  lido de um ficheiro sintético, e cada lista de problemas assinalada.
+- **Fora:** as regras e a sua composição no endpoint.
+
+### F2-01D — Motor de regras analíticas
+
+- **Regras:** `ISaftAnalyticalRule` + as regras da tabela acima, sobre o
+  `SaftValidationModel`; NIF mod-11 no `Domain` (reutilizável); o endpoint
+  `saft/validate` passa a devolver as ocorrências das duas camadas.
 - **Validação prevista:** um teste por regra (caso passa / caso falha), com
-  ficheiros mínimos construídos nos testes; um teste de ponta a ponta sobre
-  um exemplo real.
+  modelos mínimos; um teste de ponta a ponta sobre um exemplo real.
 - **Fora:** PWA, persistência, SVAT.
 
-### F2-01D — Passo de validação na PWA
+### F2-01E — Passo de validação na PWA
 
 - **Regras:** passo «Validar ficheiro» no `SaftImportPage`; relatório
   agrupado; bloqueio da importação com `Error` e opção «Importar mesmo
@@ -217,18 +229,19 @@ Application/Saft/
   seguir direto.
 - **Fora:** persistência, SVAT.
 
-### F2-01E — Histórico de validações
+### F2-01F — Histórico de validações
 
 - **Regras:** tabela `SaftValidationReport` (+ filha), migração EF Core,
   gravação no endpoint, endpoint de histórico por empresa, vista no ecrã da
-  empresa.
+  empresa. Inclui o `schemaValid` no `saft/inspect`, decidido pelo que o
+  fluxo da PWA precisar.
 - **Validação prevista:** testes de escrita na suíte de integração; teste de
   API de leitura do histórico.
 - **Fora:** SVAT.
 
-### F2-01F — Inventário SVAT
+### F2-01G — Inventário SVAT
 
-- **Regras:** documento `docs/phase-2/F2-01F-SVAT-GAP-ANALYSIS.md` que mapeia
+- **Regras:** documento `docs/phase-2/F2-01G-SVAT-GAP-ANALYSIS.md` que mapeia
   os critérios do SVAT para coberto / verificável não implementado /
   dependente de exportação; sem código de produção.
 - **Validação prevista:** revisão do documento; nenhuma alteração de gates.
@@ -240,7 +253,7 @@ Application/Saft/
   passo de obtenção-e-cache local documentado, com verificação de hash.
 - **Bloqueio vs. aviso.** A opção «Importar mesmo assim» dá liberdade ao
   contabilista mas abre a porta a importar lixo; confirmar se se quer
-  registar a decisão (F2-01E) como obrigatório antes de a oferecer.
+  registar a decisão (F2-01F) como obrigatório antes de a oferecer.
 - **`schemaValid` no `inspect`.** Fazer duas passagens ao ficheiro (uma no
   `inspect`, outra no `validate`) ou só expor o campo quando o `validate`
   já correu para aquele ficheiro na sessão.
