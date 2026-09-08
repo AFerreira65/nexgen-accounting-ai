@@ -1,6 +1,7 @@
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Efatura;
 using AccountingAI.Domain.Organizations;
+using AccountingAI.Domain.Reporting;
 using AccountingAI.Domain.Saft;
 using AccountingAI.Infrastructure.SqlServer.Persistence.Configurations;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +37,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<EFaturaPurchase> EFaturaPurchases => Set<EFaturaPurchase>();
 
+    public DbSet<SavedAnalysis> SavedAnalyses => Set<SavedAnalysis>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -55,6 +58,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new DocumentNumberSeriesConfiguration());
         modelBuilder.ApplyConfiguration(new SaftValidationRunConfiguration());
         modelBuilder.ApplyConfiguration(new EFaturaPurchaseConfiguration());
+        modelBuilder.ApplyConfiguration(new SavedAnalysisConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

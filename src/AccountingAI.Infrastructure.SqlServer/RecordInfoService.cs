@@ -36,6 +36,8 @@ public sealed class RecordInfoService(AccountingDbContext context)
                 (c, _, id, ct) => ById(id, key => Audited(c.Companies.Where(x => x.Id == key), ct))),
             ["utilizadores"] = (new("identity", "UserAccounts", false),
                 (c, _, id, ct) => ById(id, key => Audited(c.UserAccounts.Where(x => x.Id == key), ct))),
+            ["analises"] = (new("reporting", "SavedAnalysis", true),
+                (c, company, id, ct) => ById(id, key => Audited(c.SavedAnalyses.Where(x => x.CompanyId == company && x.Id == key), ct))),
             ["compras-efatura"] = (new("accounting", "EFaturaPurchase", true),
                 (c, company, id, ct) => ById(id, key => CreatedOnly(
                     c.EFaturaPurchases.Where(x => x.CompanyId == company && x.Id == key).Select(x => (DateTimeOffset?)x.CreatedAtUtc), ct))),

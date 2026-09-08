@@ -31,6 +31,7 @@ internal static class DataDictionaryText
         ["DocumentNumberSeries"] = "Séries de numeração de documentos, por exercício.",
         ["SaftValidationRun"] = "Registo de uma validação de ficheiro SAF-T (esquema + regras analíticas).",
         ["EFaturaPurchase"] = "Fatura de compra conhecida pelo Portal e-Fatura, importada de um CSV, para o cruzamento.",
+        ["SavedAnalysis"] = "Definição de uma análise configurável guardada por uma empresa (origem, colunas, filtros, agrupamentos, totais).",
         ["FoundationState"] = "Estado interno da fundação da plataforma; não é de uso contabilístico.",
     };
 
@@ -141,5 +142,9 @@ internal static class DataDictionaryText
         ["EFaturaPurchase.DocumentKey"] = "Chave de idempotência por empresa (NIF|nº|data).",
 
         ["FoundationState.SchemaVersion"] = "Versão do esquema registada na fundação.",
+
+        ["SavedAnalysis.Name"] = "Nome da análise (único por empresa).",
+        ["SavedAnalysis.Description"] = "Descrição livre da análise.",
+        ["SavedAnalysis.DefinitionJson"] = "A definição da análise (origem, colunas, filtros, agrupamentos, ordenação, agregados) em JSON.",
     };
 }

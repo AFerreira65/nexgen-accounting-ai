@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<AccountingAI.Application.CrossCheck.ICrossCheckService, CrossCheckService>();
         services.AddScoped<RecordInfoService>();
         services.AddScoped<DataDictionaryService>();
+        services.AddScoped<SavedAnalysisService>();
         services.AddScoped<OrganizationAdminService>();
         services.AddScoped<JournalPostingService>();
         services.AddScoped<DocumentNumberSeriesService>();

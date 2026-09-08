@@ -1,5 +1,6 @@
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
+using AccountingAI.Domain.Reporting;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingAI.Infrastructure.SqlServer.Persistence;
@@ -28,6 +29,7 @@ internal static class AuditShadowProperties
         typeof(UserAccount),
         typeof(CompanyUser),
         typeof(UserCompanySettings),
+        typeof(SavedAnalysis),
     ];
 
     public static void Apply(ModelBuilder modelBuilder)

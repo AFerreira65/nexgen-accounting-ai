@@ -1009,6 +1009,43 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task AnalysisCatalogAndListAreAvailable()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        using var catalog = await client
+            .GetAsync("/api/v1/development/analyses/catalog")
+            .ConfigureAwait(false);
+        var catalogPayload = await catalog.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var list = await client
+            .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222/analyses")
+            .ConfigureAwait(false);
+        var listPayload = await list.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/analyses")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, catalog.StatusCode);
+        StringAssert.Contains(catalogPayload, "\"key\":\"Movimentos\"");
+        StringAssert.Contains(catalogPayload, "\"key\":\"accountCode\"");
+        StringAssert.Contains(catalogPayload, "\"operatorsByType\"");
+        Assert.AreEqual(HttpStatusCode.OK, list.StatusCode);
+        StringAssert.StartsWith(listPayload.TrimStart(), "[");
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task DataDictionaryListsTablesAndDetailsColumns()
     {
         if (!OperatingSystem.IsWindows())

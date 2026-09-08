@@ -1,6 +1,7 @@
 using AccountingAI.Api;
 using AccountingAI.Application.CrossCheck;
 using AccountingAI.Application.Efatura;
+using AccountingAI.Application.Reporting;
 using AccountingAI.Application.Saft;
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
@@ -1252,6 +1253,74 @@ if (app.Environment.IsDevelopment())
         return detail is null ? Results.NotFound() : Results.Ok(detail);
     });
 
+    app.MapGet("/api/v1/development/analyses/catalog", () =>
+        Results.Json(new
+        {
+            Sources = AnalysisFieldCatalog.Sources.Select(source => new
+            {
+                Key = source.ToString(),
+                Fields = AnalysisFieldCatalog.Fields(source).Select(field => new
+                {
+                    field.Key,
+                    field.Label,
+                    Type = field.Type.ToString(),
+                    field.Groupable,
+                    field.Aggregatable,
+                }),
+            }),
+            OperatorsByType = AnalysisFieldCatalog.OperatorsByType,
+        }, AnalysisJson.Options));
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/analyses", async (
+        Guid userId, Guid companyId, SavedAnalysisService analyses, CancellationToken cancellationToken) =>
+    {
+        var list = await analyses.ListAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Json(list, AnalysisJson.Options);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/analyses", async (
+        Guid userId, Guid companyId, HttpRequest request, SavedAnalysisService analyses, CancellationToken cancellationToken) =>
+    {
+        var body = await ReadAnalysisRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        if (body?.Definition is null || string.IsNullOrWhiteSpace(body.Name))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["analise"] = ["Indique o nome e a definição da análise."]
+            });
+        }
+
+        var result = await analyses
+            .CreateAsync(userId, companyId, body.Name, body.Description, body.Definition, cancellationToken)
+            .ConfigureAwait(false);
+        return AnalysisWriteResult(result);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/analyses/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, HttpRequest request, SavedAnalysisService analyses, CancellationToken cancellationToken) =>
+    {
+        var body = await ReadAnalysisRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        if (body?.Definition is null || string.IsNullOrWhiteSpace(body.Name))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["analise"] = ["Indique o nome e a definição da análise."]
+            });
+        }
+
+        var result = await analyses
+            .UpdateAsync(userId, companyId, id, body.Name, body.Description, body.Definition, cancellationToken)
+            .ConfigureAwait(false);
+        return AnalysisWriteResult(result);
+    });
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/analyses/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, SavedAnalysisService analyses, CancellationToken cancellationToken) =>
+    {
+        var deleted = await analyses.DeleteAsync(userId, companyId, id, cancellationToken).ConfigureAwait(false);
+        return deleted ? Results.NoContent() : Results.NotFound();
+    });
+
     app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
     {
         var normalized = reference.Trim().ToUpperInvariant();
@@ -2443,6 +2512,37 @@ public partial class Program
                         membership => membership.UserId == userId && membership.IsActive),
                 cancellationToken);
 
+    private static async Task<SaveAnalysisRequest?> ReadAnalysisRequestAsync(
+        HttpRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await request
+                .ReadFromJsonAsync<SaveAnalysisRequest>(
+                    AccountingAI.Application.Reporting.AnalysisJson.Options, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static IResult AnalysisWriteResult(SavedAnalysisWriteResult result)
+    {
+        if (result.NotFound)
+        {
+            return Results.NotFound();
+        }
+
+        if (result.Errors.Count > 0)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["analise"] = [.. result.Errors] });
+        }
+
+        return Results.Json(result.Saved, AccountingAI.Application.Reporting.AnalysisJson.Options);
+    }
+
     // Depois de importar um SAF-T, o exercício do ficheiro passa a ser o exercício do
     // utilizador nesta empresa — sem isto, os filtros de período (Resultados, Balancete,
     // etc.) caem no ano corrente por não haver nenhum exercício definido, mesmo já
@@ -2540,6 +2640,11 @@ public sealed record CreateDocumentTypeRequest(string Code, string Name, string 
 public sealed record UpdateDocumentTypeRequest(string Name, string DefaultJournalCode, bool IsActive);
 
 public sealed record UpdateDocumentNumberSeriesRequest(int NextNumber, int? Width = null);
+
+public sealed record SaveAnalysisRequest(
+    string? Name,
+    string? Description,
+    AccountingAI.Application.Reporting.AnalysisDefinition? Definition);
 
 public sealed record CreateSaftCompanyRequest(
     string TaxRegistrationNumber,
