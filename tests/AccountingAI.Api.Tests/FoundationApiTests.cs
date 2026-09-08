@@ -1009,6 +1009,53 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task ReportTemplateReturnsADefaultAndAcceptsAnUpdate()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string path = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222/report-templates/balancete";
+
+        using var initial = await client.GetAsync(path).ConfigureAwait(false);
+        var initialPayload = await initial.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var saved = await client
+            .PutAsync(path, new StringContent(
+                "{\"headerLines\":[\"Documento de trabalho\"],\"showFirmName\":true,\"showCompanyIdentity\":true,\"orientation\":\"Landscape\"}",
+                Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+        var savedPayload = await saved.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unknownKey = await client
+            .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222/report-templates/inexistente")
+            .ConfigureAwait(false);
+
+        // Repõe o default para não deixar estado no accountingAI.
+        using var restore = await client
+            .PutAsync(path, new StringContent(
+                "{\"headerLines\":[],\"showFirmName\":true,\"showCompanyIdentity\":true,\"orientation\":\"Portrait\"}",
+                Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, initial.StatusCode);
+        StringAssert.Contains(initialPayload, "\"reportKey\":\"balancete\"");
+        StringAssert.Contains(initialPayload, "\"companyName\"");
+        Assert.AreEqual(HttpStatusCode.OK, saved.StatusCode);
+        StringAssert.Contains(savedPayload, "Documento de trabalho");
+        StringAssert.Contains(savedPayload, "\"orientation\":\"Landscape\"");
+        Assert.AreEqual(HttpStatusCode.NotFound, unknownKey.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, restore.StatusCode);
+    }
+
+    [TestMethod]
     public async Task AnalysisRunReturnsGroupedRowsAndTotals()
     {
         if (!OperatingSystem.IsWindows())

@@ -1343,6 +1343,29 @@ if (app.Environment.IsDevelopment())
             .ConfigureAwait(false);
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/report-templates/{reportKey}", async (
+        Guid userId, Guid companyId, string reportKey, ReportTemplateService templates, CancellationToken cancellationToken) =>
+    {
+        var view = await templates.GetAsync(userId, companyId, reportKey, cancellationToken).ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/report-templates/{reportKey}", async (
+        Guid userId, Guid companyId, string reportKey, PutReportTemplateRequest request,
+        ReportTemplateService templates, CancellationToken cancellationToken) =>
+    {
+        var view = await templates
+            .SaveAsync(
+                userId, companyId, reportKey,
+                request.HeaderLines ?? [],
+                request.ShowFirmName,
+                request.ShowCompanyIdentity,
+                request.Orientation,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/analyses/{id:guid}/run", async (
         Guid userId, Guid companyId, Guid id, SavedAnalysisService analyses, IAnalysisRunner runner,
         CancellationToken cancellationToken, string? from, string? to) =>
@@ -2710,6 +2733,12 @@ public sealed record SaveAnalysisRequest(
     string? Name,
     string? Description,
     AccountingAI.Application.Reporting.AnalysisDefinition? Definition);
+
+public sealed record PutReportTemplateRequest(
+    string[]? HeaderLines,
+    bool ShowFirmName,
+    bool ShowCompanyIdentity,
+    string? Orientation);
 
 public sealed record CreateSaftCompanyRequest(
     string TaxRegistrationNumber,

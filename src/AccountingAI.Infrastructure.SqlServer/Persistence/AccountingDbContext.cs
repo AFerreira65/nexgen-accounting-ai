@@ -39,6 +39,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<SavedAnalysis> SavedAnalyses => Set<SavedAnalysis>();
 
+    public DbSet<ReportTemplate> ReportTemplates => Set<ReportTemplate>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -59,6 +61,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new SaftValidationRunConfiguration());
         modelBuilder.ApplyConfiguration(new EFaturaPurchaseConfiguration());
         modelBuilder.ApplyConfiguration(new SavedAnalysisConfiguration());
+        modelBuilder.ApplyConfiguration(new ReportTemplateConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

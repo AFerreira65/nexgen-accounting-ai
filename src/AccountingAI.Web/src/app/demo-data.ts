@@ -517,6 +517,17 @@ export type AnalysisResult = {
   truncated: boolean
 }
 
+export type ReportTemplate = {
+  reportKey: string
+  headerLines: string[]
+  showFirmName: boolean
+  showCompanyIdentity: boolean
+  orientation: 'Portrait' | 'Landscape'
+  companyName: string
+  companyTaxId: string
+  firmName: string
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {

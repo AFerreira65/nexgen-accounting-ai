@@ -732,6 +732,61 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.ToTable("UserCompanySettings", "identity");
                 });
 
+            modelBuilder.Entity("AccountingAI.Domain.Reporting.ReportTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HeaderLinesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Orientation")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReportKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<bool>("ShowCompanyIdentity")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowFirmName")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "ReportKey")
+                        .IsUnique();
+
+                    b.ToTable("ReportTemplate", "reporting");
+                });
+
             modelBuilder.Entity("AccountingAI.Domain.Reporting.SavedAnalysis", b =>
                 {
                     b.Property<Guid>("Id")

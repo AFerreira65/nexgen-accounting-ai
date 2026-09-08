@@ -32,6 +32,7 @@ internal static class DataDictionaryText
         ["SaftValidationRun"] = "Registo de uma validação de ficheiro SAF-T (esquema + regras analíticas).",
         ["EFaturaPurchase"] = "Fatura de compra conhecida pelo Portal e-Fatura, importada de um CSV, para o cruzamento.",
         ["SavedAnalysis"] = "Definição de uma análise configurável guardada por uma empresa (origem, colunas, filtros, agrupamentos, totais).",
+        ["ReportTemplate"] = "Configuração de impressão de um relatório fixo numa empresa (linhas de cabeçalho, identificação, orientação).",
         ["FoundationState"] = "Estado interno da fundação da plataforma; não é de uso contabilístico.",
     };
 
@@ -146,5 +147,11 @@ internal static class DataDictionaryText
         ["SavedAnalysis.Name"] = "Nome da análise (único por empresa).",
         ["SavedAnalysis.Description"] = "Descrição livre da análise.",
         ["SavedAnalysis.DefinitionJson"] = "A definição da análise (origem, colunas, filtros, agrupamentos, ordenação, agregados) em JSON.",
+
+        ["ReportTemplate.ReportKey"] = "Chave do relatório a que o modelo se aplica (balancete, razao, …).",
+        ["ReportTemplate.HeaderLinesJson"] = "Linhas de cabeçalho livres, em JSON (lista de texto).",
+        ["ReportTemplate.ShowFirmName"] = "Se a folha impressa mostra o nome do gabinete.",
+        ["ReportTemplate.ShowCompanyIdentity"] = "Se a folha impressa mostra a identificação da empresa (nome e NIF).",
+        ["ReportTemplate.Orientation"] = "Orientação da folha: retrato ou paisagem.",
     };
 }

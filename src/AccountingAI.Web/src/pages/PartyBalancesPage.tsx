@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro } from '../app/demo-data'
 import { Pager, usePagedList } from '../app/Pager'
+import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
 
 type Row = { accountCode: string; accountName: string; balance: number }
@@ -83,8 +84,9 @@ export function PartyBalancesPage() {
     {page.count === 0 && <p className="empty-state"><Info size={15} /> {emptyText}</p>}
   </>
 
-  return <div className="page-stack">
+  return <div className="page-stack report-page">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Contas correntes</h1><p>Saldos das contas de movimento de clientes (21) e fornecedores (22), sem os lançamentos anulados. Saldo positivo = a receber; negativo = a pagar.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
+    <ReportChrome reportKey="contas-correntes" title="Contas correntes" to={cutoff || undefined} />
 
     <section className="metric-grid compact-grid series-metrics">
       <article className="metric-card"><span className="metric-icon teal"><Users /></span><div><small>Total de clientes</small><strong>{euro.format(totalClientes)}</strong><span>{clientes.length} contas com saldo</span></div></article>

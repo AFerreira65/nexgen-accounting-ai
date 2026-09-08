@@ -7,6 +7,7 @@ import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/ent
 import { paginate } from '../app/pagination'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
+import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
 
 type LedgerEntry = {
@@ -113,7 +114,7 @@ export function AccountPage() {
     downloadCsv(csvFilename(`razao-${data.accountCode || accountCode}`, activeCompany.legalName), toCsv([header, ...opening, ...body]))
   }
 
-  return <div className="page-stack">
+  return <div className="page-stack report-page">
     <Link className="back-link" to="/movimentos"><ArrowLeft size={16} /> Movimentos contabilísticos</Link>
     <header className="page-heading detail-heading">
       <div>
@@ -123,6 +124,7 @@ export function AccountPage() {
       </div>
       <span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span>
     </header>
+    <ReportChrome reportKey="razao" title={`Razão · ${data.accountCode || accountCode}`} from={fromDate} to={toDate} />
 
     <section className="metric-grid compact-grid">
       {inPeriod && <article className="metric-card"><div><small>Saldo de abertura</small><strong>{euro.format(data.openingBalance)}</strong><span>Antes de {fromDate || '—'}</span></div></article>}

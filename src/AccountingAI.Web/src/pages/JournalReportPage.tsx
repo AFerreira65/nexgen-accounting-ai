@@ -6,6 +6,7 @@ import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { paginate } from '../app/pagination'
 import { PeriodShortcuts } from '../app/periods'
+import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
 
 type ReportEntry = {
@@ -97,8 +98,9 @@ export function JournalReportPage() {
     downloadCsv(csvFilename('livro-diario', activeCompany.legalName), toCsv([header, ...lines, totals]))
   }
 
-  return <div className="page-stack">
+  return <div className="page-stack report-page">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Livro diário</h1><p>Lançamentos por ordem cronológica, com as linhas e os totais. Sem os anulados.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
+    <ReportChrome reportKey="livro-diario" title="Livro diário" from={fromDate} to={toDate} />
 
     <div className="filterbar">
       <label><Filter size={16} /><span className="sr-only">Diário</span><select value={journal} onChange={(event) => setJournal(event.target.value)}><option value="">Todos os diários</option>{accountingSetup.journals.map((item) => <option key={item.code} value={item.code}>{item.code} · {item.name}</option>)}</select></label>

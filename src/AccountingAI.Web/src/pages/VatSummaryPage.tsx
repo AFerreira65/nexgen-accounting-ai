@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
+import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
 
 type Row = { accountCode: string; accountName: string; debit: number; credit: number }
@@ -76,8 +77,9 @@ export function VatSummaryPage() {
     downloadCsv(csvFilename('resumo-iva', activeCompany.legalName), toCsv(body))
   }
 
-  return <div className="page-stack">
+  return <div className="page-stack report-page">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Resumo de IVA</h1><p>Movimento das contas de IVA (24.3) no período, sem os lançamentos anulados. É um apoio de leitura, não substitui a declaração periódica.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
+    <ReportChrome reportKey="iva" title="Resumo de IVA" from={fromDate} to={toDate} />
 
     <section className="metric-grid compact-grid series-metrics">
       <article className="metric-card"><span className="metric-icon amber"><Receipt /></span><div><small>IVA liquidado</small><strong>{euro.format(liquidado)}</strong><span>Contas 2433</span></div></article>

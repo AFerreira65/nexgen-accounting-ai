@@ -6,6 +6,7 @@ import { euro } from '../app/demo-data'
 import { Pager } from '../app/Pager'
 import { paginate } from '../app/pagination'
 import { PeriodShortcuts } from '../app/periods'
+import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
 
 type Row = { accountCode: string; accountName: string; openingBalance: number; debit: number; credit: number; balance: number }
@@ -247,8 +248,9 @@ export function TrialBalancePage() {
     </tbody>
   }
 
-  return <div className="page-stack">
+  return <div className="page-stack report-page">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Balancete</h1><p>Somas e saldos por conta de movimento, sem os lançamentos anulados.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
+    <ReportChrome reportKey="balancete" title="Balancete" from={fromDate} to={toDate} />
     <section className="metric-grid compact-grid">
       <article className="metric-card"><span className="metric-icon teal"><Scale /></span><div><small>Total de débito</small><strong>{euro.format(data.totalDebit)}</strong><span>{data.rows.length} contas</span></div></article>
       <article className="metric-card"><span className={`metric-icon ${balanced ? 'blue' : 'rose'}`}><Scale /></span><div><small>Total de crédito</small><strong>{euro.format(data.totalCredit)}</strong><span>{balanced ? 'Balancete equilibrado' : 'Débito e crédito diferentes'}</span></div></article>

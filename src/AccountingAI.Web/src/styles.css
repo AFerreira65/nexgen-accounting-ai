@@ -145,6 +145,33 @@ html[data-theme='dark'] .analyses-grand td { background: #1a3a37; color: #a9ded4
   .analyses-result tr { break-inside: avoid; }
 }
 
+.report-chrome-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+.report-chrome-panel { display: grid; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e0e8ea; }
+.report-chrome-panel textarea { width: 100%; padding: 9px 11px; border: 1px solid #d4dfe2; border-radius: 9px; background: #fbfcfc; font-size: 12px; resize: vertical; }
+.report-chrome-toggles { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 11px; font-weight: 650; color: #3f515a; }
+.report-chrome-toggles label { display: inline-flex; align-items: center; gap: 6px; }
+.report-chrome-toggles select { min-height: 34px; padding: 0 8px; border: 1px solid #d4dfe2; border-radius: 8px; background: #fbfcfc; }
+.report-print-head { display: none; }
+.report-print-head .report-print-title { margin: 4px 0; font-size: 17px; font-weight: 750; color: #24363e; }
+.report-print-head p { margin: 1px 0; font-size: 11px; color: #3f515a; }
+.report-print-head .report-firm { font-weight: 750; color: #24363e; }
+.report-print-head .report-meta, .report-print-head .report-period { color: #7a8c93; }
+@media print {
+  .report-print-head { display: block; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #b8c6cb; }
+  .report-page > .page-heading,
+  .report-page .metric-grid,
+  .report-page .compact-grid,
+  .report-page .filterbar,
+  .report-page .report-chrome,
+  .report-page > .save-status,
+  .report-page .period-shortcuts { display: none !important; }
+  .report-page .panel { border: 0; box-shadow: none; padding: 0; }
+  .report-page table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .report-page th, .report-page td { border: 1px solid #ccd6d9; padding: 3px 6px; }
+  .report-page thead { display: table-header-group; }
+}
+html[data-theme='dark'] .report-chrome-panel { border-color: #29414a; }
+
 .record-about-print { display: none; }
 .record-about-print h1 { margin: 0 0 6px; font-size: 16px; }
 .record-about-print p { margin: 3px 0; font-size: 12px; }

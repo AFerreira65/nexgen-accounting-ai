@@ -5,6 +5,7 @@ import { groupBySubclass, type SubclassGroup, type SubclassLine } from '../app/a
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro } from '../app/demo-data'
 import { PeriodShortcuts } from '../app/periods'
+import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
 
 type Row = { accountCode: string; accountName: string; balance: number }
@@ -154,8 +155,9 @@ export function BalanceSheetPage() {
 
   const columns = <thead><tr><th>Rubrica</th><th>Descrição</th><th className="numeric">Montante</th>{showPrior && <><th className="numeric">Homólogo</th><th className="numeric">Variação</th></>}</tr></thead>
 
-  return <div className="page-stack">
+  return <div className="page-stack report-page">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Balanço</h1><p>Síntese patrimonial: ativo (classes 1, 3, 4 e saldos devedores da 2), passivo (saldos credores da 2) e capital próprio (classe 5) com o resultado do período.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
+    <ReportChrome reportKey="balanco" title="Balanço" from={fromDate} to={toDate} />
 
     <section className="metric-grid compact-grid series-metrics">
       <article className="metric-card"><span className="metric-icon teal"><Scale /></span><div><small>Total do ativo</small><strong>{euro.format(current.totalAssets)}</strong><span>{showPrior ? `Homólogo ${euro.format(prior.totalAssets)}` : 'Classes 1, 3, 4 e 2 devedora'}</span></div></article>

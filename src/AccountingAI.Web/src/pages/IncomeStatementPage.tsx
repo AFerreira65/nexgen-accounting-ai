@@ -5,6 +5,7 @@ import { groupBySubclass, type SubclassGroup } from '../app/accountClasses'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
+import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
 
 type Row = { accountCode: string; accountName: string; debit: number; credit: number }
@@ -132,8 +133,9 @@ export function IncomeStatementPage() {
     {showPrior && <><td className="numeric">{euro.format(prior)}</td><td className="numeric strong">{euro.format(current - prior)}</td></>}
   </tr>
 
-  return <div className="page-stack">
+  return <div className="page-stack report-page">
     <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Demonstração de resultados</h1><p>Síntese por naturezas: rendimentos (classe 7) e gastos (classe 6) do período, sem os lançamentos anulados.</p></div><span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Dados da BD' : 'Fallback de demonstração'}</span></header>
+    <ReportChrome reportKey="resultados" title="Demonstração de resultados" from={fromDate} to={toDate} />
 
     <section className="metric-grid compact-grid series-metrics">
       <article className="metric-card"><span className="metric-icon teal"><TrendingUp /></span><div><small>Rendimentos</small><strong>{euro.format(income.total)}</strong><span>{showPrior ? `Homólogo ${euro.format(priorIncome.total)}` : 'Classe 7'}</span></div></article>
