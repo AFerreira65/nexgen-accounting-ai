@@ -1,4 +1,5 @@
 using AccountingAI.Application.Saft;
+using AccountingAI.Application.Saft.Rules;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AccountingAI.Infrastructure.Files;
@@ -14,6 +15,18 @@ public static class DependencyInjection
         services.AddSingleton<ISaftEntriesReader, SaftEntriesReader>();
         services.AddSingleton<ISaftSchemaValidator, SaftSchemaValidator>();
         services.AddSingleton<ISaftValidationModelReader, SaftValidationModelReader>();
+
+        services.AddSingleton<ISaftAnalyticalRule, NifCheckDigitRule>();
+        services.AddSingleton<ISaftAnalyticalRule, AccountingBasisRule>();
+        services.AddSingleton<ISaftAnalyticalRule, PeriodRangeRule>();
+        services.AddSingleton<ISaftAnalyticalRule, ProductIdentificationRule>();
+        services.AddSingleton<ISaftAnalyticalRule, EntryCountRule>();
+        services.AddSingleton<ISaftAnalyticalRule, FileTotalsRule>();
+        services.AddSingleton<ISaftAnalyticalRule, TransactionBalancedRule>();
+        services.AddSingleton<ISaftAnalyticalRule, AccountReferenceRule>();
+        services.AddSingleton<ISaftAnalyticalRule, EntryDatesInPeriodRule>();
+        services.AddSingleton<ISaftAnalyticalRule, AccountingHasJournalsRule>();
+        services.AddSingleton<ISaftAnalyticalValidator, SaftAnalyticalValidator>();
 
         return services;
     }

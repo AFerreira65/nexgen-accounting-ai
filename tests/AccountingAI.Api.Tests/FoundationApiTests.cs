@@ -817,6 +817,35 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task SaftValidationEndpointRunsTheAnalyticalRules()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string userPath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/saft/validate";
+
+        using var response = await client
+            .PostAsync(userPath, new StringContent(SaftDocumentWithEntries(), Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+        var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        // Cabeçalho sem NIF nem base contabilística, contas usadas fora do plano.
+        StringAssert.Contains(payload, "\"ruleId\":\"NIF-CHECKDIGIT\"");
+        StringAssert.Contains(payload, "\"ruleId\":\"BASIS-KNOWN\"");
+        StringAssert.Contains(payload, "\"ruleId\":\"ACCOUNT-REF-RESOLVES\"");
+        StringAssert.Contains(payload, "\"severity\":\"Error\"");
+    }
+
+    [TestMethod]
     public async Task SaftCompanyCreationRejectsDuplicatesAndUnknownUsers()
     {
         if (!OperatingSystem.IsWindows())

@@ -2,6 +2,7 @@ using AccountingAI.Api;
 using AccountingAI.Application.Saft;
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
+using AccountingAI.Domain.Saft;
 using AccountingAI.Infrastructure.Files;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
@@ -1450,7 +1451,9 @@ if (app.Environment.IsDevelopment())
         Guid userId,
         HttpRequest request,
         AccountingDbContext context,
-        ISaftSchemaValidator validator,
+        ISaftSchemaValidator schemaValidator,
+        ISaftValidationModelReader modelReader,
+        ISaftAnalyticalValidator analyticalValidator,
         CancellationToken cancellationToken) =>
     {
         var userExists = await context.UserAccounts
@@ -1468,10 +1471,30 @@ if (app.Environment.IsDevelopment())
             maxBodySize.MaxRequestBodySize = null;
         }
 
+        // O corpo do pedido não é reposicionável e vão lê-lo duas camadas
+        // (esquema e analítica); grava-se num ficheiro temporário uma vez.
+        var tempPath = Path.Combine(Path.GetTempPath(), $"saft-validate-endpoint-{Guid.NewGuid():N}.xml");
         try
         {
-            var report = await validator.ValidateAsync(request.Body, cancellationToken).ConfigureAwait(false);
+            await using (var temp = File.Create(tempPath))
+            {
+                await request.Body.CopyToAsync(temp, cancellationToken).ConfigureAwait(false);
+            }
 
+            SaftValidationReport report;
+            await using (var schemaStream = File.OpenRead(tempPath))
+            {
+                report = await schemaValidator.ValidateAsync(schemaStream, cancellationToken).ConfigureAwait(false);
+            }
+
+            IReadOnlyList<SaftValidationIssue> analyticalIssues;
+            await using (var modelStream = File.OpenRead(tempPath))
+            {
+                var model = await modelReader.ReadAsync(modelStream, cancellationToken).ConfigureAwait(false);
+                analyticalIssues = analyticalValidator.Validate(model);
+            }
+
+            var allIssues = report.Issues.Concat(analyticalIssues).ToList();
             return Results.Ok(new
             {
                 report.Version,
@@ -1479,11 +1502,11 @@ if (app.Environment.IsDevelopment())
                 report.SchemaValid,
                 Counts = new
                 {
-                    Error = report.ErrorCount,
-                    Warning = report.WarningCount,
-                    Information = report.InformationCount
+                    Error = allIssues.Count(issue => issue.Severity == SaftValidationSeverity.Error),
+                    Warning = allIssues.Count(issue => issue.Severity == SaftValidationSeverity.Warning),
+                    Information = allIssues.Count(issue => issue.Severity == SaftValidationSeverity.Information)
                 },
-                Issues = report.Issues.Select(issue => new
+                Issues = allIssues.Select(issue => new
                 {
                     issue.RuleId,
                     Severity = issue.Severity.ToString(),
@@ -1502,6 +1525,17 @@ if (app.Environment.IsDevelopment())
             {
                 ["saft"] = [exception.Message]
             });
+        }
+        finally
+        {
+            try
+            {
+                File.Delete(tempPath);
+            }
+            catch
+            {
+                // limpeza best-effort
+            }
         }
     });
 
