@@ -33,13 +33,16 @@ processo da Modelo 24 descrito em [`../CERTIFICACAO_AT.md`](../CERTIFICACAO_AT.m
 |-------|--------|--------|
 | **F2-01** | Validação XSD e analítica do SAF-T (base para SVAT) | **Concluído** — [`F2-01`](F2-01-SAFT-XSD-VALIDATION.md); [`F2-01A`](F2-01A-XSD-STREAMING-VALIDATOR.md)–[`F2-01F`](F2-01F-VALIDATION-REPORT-PERSISTENCE.md) e o [`F2-01G`](F2-01G-SVAT-GAP-ANALYSIS.md) (inventário SVAT). Pendente só o drop-in do XSD oficial |
 | F2-02 | Consulta à AT validada em testes e produção (certificado de produtor, e-Fatura) | Por especificar |
-| F2-03 | Cruzamento vendas SAF-T × compras e-Fatura × contabilidade | Por especificar |
+| **F2-03** | Cruzamento vendas SAF-T × compras e-Fatura × contabilidade | **Especificado** — [`F2-03-CROSS-CHECK.md`](F2-03-CROSS-CHECK.md); a seguir F2-03A (ingestão do CSV do e-Fatura) |
 | F2-04 | Adaptador PHC: modos de agrupamento, conta corrente, stocks, contabilidade, recebimentos | Por especificar |
 | F2-05 | Relatórios de gestão assistidos por IA sobre dados reconciliados | Por especificar |
+| F2-06 | Dicionário de dados por tabela (ver/imprimir/PDF) e menu «Opções» em todos os ecrãs — «Dicionário de dados» e «Sobre o Registo» (quem criou / quem alterou o registo em foco) | Por especificar — pedido do utilizador, a seguir a F2-03 |
 
 A ordem reflete dependências: F2-03 e F2-05 assentam na confiança que F2-01
 dá aos dados; F2-02 é independente mas partilha o cuidado com segredos e
-ambientes de teste; F2-04 é isolado e pode correr em paralelo.
+ambientes de teste; F2-04 é isolado e pode correr em paralelo. F2-06
+(dicionário de dados + «Opções») é transversal aos ecrãs e independente
+dos restantes; entra a seguir a F2-03 por indicação do utilizador.
 
 ## Princípios herdados da Fase 1
 
