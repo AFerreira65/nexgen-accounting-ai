@@ -21,12 +21,15 @@ import { YearOpeningPage } from './pages/YearOpeningPage'
 import { DocumentNumberSeriesPage } from './pages/DocumentNumberSeriesPage'
 import { EFaturaPurchasesPage } from './pages/EFaturaPurchasesPage'
 import { CrossCheckPage } from './pages/CrossCheckPage'
+import { DataDictionaryPage } from './pages/DataDictionaryPage'
+import { RecordProvider } from './app/RecordContext'
 import { WorkContextProvider } from './app/WorkContext'
 
 export function App() {
   return (
     <WorkContextProvider>
       <BrowserRouter>
+        <RecordProvider>
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<DashboardPage />} />
@@ -42,6 +45,7 @@ export function App() {
             <Route path="/importar" element={<SaftImportPage />} />
             <Route path="/compras-efatura" element={<EFaturaPurchasesPage />} />
             <Route path="/cruzamento" element={<CrossCheckPage />} />
+            <Route path="/dicionario-de-dados" element={<DataDictionaryPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />
             <Route path="/balancete" element={<TrialBalancePage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />
@@ -55,6 +59,7 @@ export function App() {
             <Route path="/definicoes" element={<SettingsPage />} />
           </Route>
         </Routes>
+        </RecordProvider>
       </BrowserRouter>
     </WorkContextProvider>
   )

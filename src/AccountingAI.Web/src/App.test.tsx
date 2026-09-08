@@ -702,6 +702,26 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the data dictionary screen', () => {
+    window.history.pushState({}, '', '/dicionario-de-dados')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Dicionário de dados' })).toBeInTheDocument()
+  })
+
+  it('offers an Opções menu on every screen with the two actions', () => {
+    window.history.pushState({}, '', '/')
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Opções/ }))
+    expect(screen.getByRole('menuitem', { name: /Dicionário de dados/ })).toBeInTheDocument()
+    // Sem ligação à base de dados, «Sobre o Registo» fica desativado.
+    expect(screen.getByRole('menuitem', { name: /Sobre o Registo/ })).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('menuitem', { name: /Dicionário de dados/ }))
+    expect(screen.getByRole('heading', { name: 'Dicionário de dados' })).toBeInTheDocument()
+  })
+
   it('proposes creating a company when the SAF-T tax number is unknown', async () => {
     window.history.pushState({}, '', '/importar')
     render(<App />)

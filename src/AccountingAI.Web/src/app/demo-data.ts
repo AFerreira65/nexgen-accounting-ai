@@ -466,6 +466,48 @@ export type SaftSalesInvoiceMonth = {
   gross: number
 }
 
+export type RecordInfoParty = { id: string; name: string | null }
+
+export type RecordInfo = {
+  table: string
+  id: string
+  createdBy: RecordInfoParty | null
+  createdAtUtc: string | null
+  modifiedBy: RecordInfoParty | null
+  modifiedAtUtc: string | null
+}
+
+export type DataDictionaryColumn = {
+  name: string
+  clrType: string
+  sqlType: string
+  nullable: boolean
+  maxLength: number | null
+  precision: number | null
+  scale: number | null
+  primaryKey: boolean
+  foreignKey: boolean
+  references: string | null
+  unique: boolean
+  indexed: boolean
+  description: string
+}
+
+export type DataDictionaryTableSummary = {
+  schema: string
+  name: string
+  purpose: string
+  columnCount: number
+}
+
+export type DataDictionaryTable = {
+  schema: string
+  name: string
+  purpose: string
+  columnCount: number
+  columns: DataDictionaryColumn[]
+}
+
 export type SaftSalesInvoicesSummary = {
   hasSalesInvoices: boolean
   declaredNumberOfEntries: number | null

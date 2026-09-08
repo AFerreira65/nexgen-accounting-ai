@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { Pager, usePagedList } from '../app/Pager'
+import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 
 export function JournalPage() {
   const { journalId } = useParams()
+  usePublishRecord('diarios', journalId, journalId ? `Diário ${journalId}` : undefined)
   const { accountingSetup, accountingSource, activeCompany, movements, user } = useWorkContext()
   const pageSize = activeCompany.settings.pageSize || 50
 

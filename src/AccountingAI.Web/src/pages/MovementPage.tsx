@@ -4,11 +4,13 @@ import { Link, useParams } from 'react-router-dom'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { entrySourceLabel } from '../app/entrySources'
 import { useMovementGuards } from '../app/movementGuards'
+import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 import { MovementEditor } from './MovementEditor'
 
 export function MovementPage() {
   const { movementId } = useParams()
+  usePublishRecord('movimentos', movementId, movementId?.replaceAll('-', ' '))
   const { accountingSource, activeCompany, movements, reopenMovement, reviewMovement, user, voidMovement } = useWorkContext()
   const blockedReason = useMovementGuards()
   const [copied, setCopied] = useState(false)

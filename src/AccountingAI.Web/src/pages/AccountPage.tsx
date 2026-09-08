@@ -6,6 +6,7 @@ import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { paginate } from '../app/pagination'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
+import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 
 type LedgerEntry = {
@@ -48,6 +49,7 @@ function fromMovements(movements: Movement[], accountCode: string, accountName: 
 
 export function AccountPage() {
   const { accountCode = '' } = useParams()
+  usePublishRecord('contas', accountCode || undefined, accountCode ? `Conta ${accountCode}` : undefined)
   const { activeCompany, accountingSetup, movements, source, user } = useWorkContext()
   // A razão arranca no exercício da empresa (como a lista de movimentos e o
   // livro diário), dando a leitura habitual «abertura → movimentos → fecho»;

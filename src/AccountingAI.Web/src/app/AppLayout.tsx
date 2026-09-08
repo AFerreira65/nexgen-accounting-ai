@@ -24,6 +24,7 @@ import {
 import { useCallback, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { GlobalSearch } from './GlobalSearch'
+import { OptionsMenu } from './OptionsMenu'
 import { useDismiss } from './useDismiss'
 import { useMovementsSummary, useWorkContext } from './WorkContext'
 
@@ -124,6 +125,7 @@ export function AppLayout() {
                 {yearOptions.map((year) => <button key={year} type="button" role="menuitem" className={year === activeCompany.settings.defaultFiscalYear ? 'selected' : ''} onClick={() => pickYear(year)}>{year}</button>)}
               </div>}
             </div>
+            <OptionsMenu />
             <NavLink className="icon-button" to="/tarefas" title="Tarefas" aria-label={pendingTasks > 0 ? `Tarefas — ${pendingTasks} pendentes` : 'Tarefas'}><Bell size={19} />{pendingTasks > 0 && <span className="notification-dot" />}</NavLink>
           </div>
         </header>

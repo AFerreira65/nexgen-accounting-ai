@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type CrossCheckReport, type EFaturaImportResult, type EFaturaPurchasesPage, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -82,6 +82,9 @@ type WorkContextValue = WorkContextData & {
   eFaturaPurchases: (companyId: string, params: { from?: string; to?: string; page: number; pageSize: number }) => Promise<EFaturaPurchasesPage>
   crossCheck: (companyId: string, params: { from: string; to: string }) => Promise<CrossCheckReport>
   saftSalesInvoicesSummary: (companyId: string, file: File) => Promise<SaftSalesInvoicesSummary>
+  recordInfo: (companyId: string, table: string, id: string) => Promise<RecordInfo>
+  dataDictionary: () => Promise<DataDictionaryTableSummary[]>
+  dataDictionaryTable: (schema: string, name: string) => Promise<DataDictionaryTable>
   previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
   importSaftAccounts: (companyId: string, file: File, fiscalYear?: number) => Promise<SaftAccountsImport>
   importSaftOpeningBalances: (companyId: string, fiscalYear: number, file: File) => Promise<SaftOpeningBalancesImport>
@@ -662,6 +665,22 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as SaftSalesInvoicesSummary
+    },
+    recordInfo: async (companyId, table, id) => {
+      const params = new URLSearchParams({ table, id })
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/record-info?${params}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as RecordInfo
+    },
+    dataDictionary: async () => {
+      const response = await fetch('/api/v1/development/data-dictionary')
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return (await response.json() as { tables: DataDictionaryTableSummary[] }).tables
+    },
+    dataDictionaryTable: async (schema, name) => {
+      const response = await fetch(`/api/v1/development/data-dictionary/${encodeURIComponent(schema)}/${encodeURIComponent(name)}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as DataDictionaryTable
     },
     previewSaftAccounts: async (companyId, file) => {
       if (source === 'database') {
