@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type EFaturaImportResult, type EFaturaPurchasesPage, type SaftInspection, type SaftOpeningBalancesImport, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type CrossCheckReport, type EFaturaImportResult, type EFaturaPurchasesPage, type SaftInspection, type SaftOpeningBalancesImport, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -80,6 +80,7 @@ type WorkContextValue = WorkContextData & {
   saftValidationReports: (companyId: string) => Promise<SaftValidationRunSummary[]>
   importEFaturaCsv: (companyId: string, file: File, dryRun: boolean) => Promise<EFaturaImportResult>
   eFaturaPurchases: (companyId: string, params: { from?: string; to?: string; page: number; pageSize: number }) => Promise<EFaturaPurchasesPage>
+  crossCheck: (companyId: string, params: { from: string; to: string }) => Promise<CrossCheckReport>
   previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
   importSaftAccounts: (companyId: string, file: File, fiscalYear?: number) => Promise<SaftAccountsImport>
   importSaftOpeningBalances: (companyId: string, fiscalYear: number, file: File) => Promise<SaftOpeningBalancesImport>
@@ -645,6 +646,12 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/efatura/purchases?${params}`)
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as EFaturaPurchasesPage
+    },
+    crossCheck: async (companyId, { from, to }) => {
+      const params = new URLSearchParams({ from, to })
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/cross-check?${params}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as CrossCheckReport
     },
     previewSaftAccounts: async (companyId, file) => {
       if (source === 'database') {

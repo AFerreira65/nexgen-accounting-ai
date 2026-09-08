@@ -20,6 +20,7 @@ import { YearEndClosingPage } from './pages/YearEndClosingPage'
 import { YearOpeningPage } from './pages/YearOpeningPage'
 import { DocumentNumberSeriesPage } from './pages/DocumentNumberSeriesPage'
 import { EFaturaPurchasesPage } from './pages/EFaturaPurchasesPage'
+import { CrossCheckPage } from './pages/CrossCheckPage'
 import { WorkContextProvider } from './app/WorkContext'
 
 export function App() {
@@ -40,6 +41,7 @@ export function App() {
             <Route path="/taxonomias" element={<TaxonomiesPage />} />
             <Route path="/importar" element={<SaftImportPage />} />
             <Route path="/compras-efatura" element={<EFaturaPurchasesPage />} />
+            <Route path="/cruzamento" element={<CrossCheckPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />
             <Route path="/balancete" element={<TrialBalancePage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />

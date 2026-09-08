@@ -1,7 +1,8 @@
-import { ArrowRight, CircleCheck, Clock3, Receipt, Tags, X } from 'lucide-react'
+import { ArrowLeftRight, ArrowRight, CircleCheck, Clock3, Receipt, Tags, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate } from '../app/demo-data'
+import { yearRange } from '../app/periods'
 import { useMovementsSummary, useWorkContext } from '../app/WorkContext'
 
 const VISIBLE_PENDING = 6
@@ -20,7 +21,7 @@ function readDismissedVatCents(companyId: string): number | null {
 }
 
 export function TasksPage() {
-  const { activeCompany, taxonomyReview } = useWorkContext()
+  const { activeCompany, crossCheck, source, taxonomyReview } = useWorkContext()
   // Posição de IVA e movimentos por conferir vêm do resumo da fila de
   // trabalho (`useMovementsSummary`) — agregados no servidor numa empresa
   // ligada à base de dados, sem carregar o histórico inteiro.
@@ -39,7 +40,21 @@ export function TasksPage() {
     try { window.localStorage.setItem(`${DISMISSED_VAT_KEY_PREFIX}${activeCompany.companyId}`, String(vatCents)) } catch { /* storage é opcional */ }
     setDismissedVatCents(vatCents)
   }
-  const nothingPending = pendingCount === 0 && taxonomyPending === 0 && !vatDue
+  // Faturas do e-Fatura por lançar no exercício da empresa — só numa empresa
+  // ligada à base de dados; um cruzamento indisponível não deve partir as Tarefas.
+  const fiscalYear = activeCompany.settings.defaultFiscalYear
+  const [unbooked, setUnbooked] = useState(0)
+  useEffect(() => {
+    if (source !== 'database' || !fiscalYear) { setUnbooked(0); return }
+    const controller = new AbortController()
+    const { from, to } = yearRange(fiscalYear)
+    void crossCheck(activeCompany.companyId, { from, to })
+      .then((report) => setUnbooked(report.purchases.unbookedCount))
+      .catch(() => setUnbooked(0))
+    return () => controller.abort()
+  }, [activeCompany.companyId, crossCheck, fiscalYear, source])
+
+  const nothingPending = pendingCount === 0 && taxonomyPending === 0 && !vatDue && unbooked === 0
 
   return <div className="page-stack">
     <header className="page-heading"><div><p className="eyebrow">Accounting AI</p><h1>Tarefas</h1><p>O que precisa da sua atenção na empresa ativa.</p></div></header>
@@ -64,6 +79,15 @@ export function TasksPage() {
         <ArrowRight size={16} />
       </Link>)}
       {pendingCount > VISIBLE_PENDING && <Link className="text-link" to="/movimentos">Ver todos os {pendingCount} <ArrowRight size={15} /></Link>}
+    </section>}
+
+    {unbooked > 0 && <section className="panel attention-panel">
+      <div className="panel-heading"><div><h2>Faturas do e-Fatura sem correspondência</h2><p>Faturas de compra que o Portal e-Fatura conhece e não se encontraram lançadas na contabilidade, no exercício.</p></div><span className="attention-count">{unbooked}</span></div>
+      <Link className="attention-item" to="/cruzamento">
+        <span className="attention-icon amber"><ArrowLeftRight /></span>
+        <span><strong>Rever o cruzamento de compras</strong><small>e-Fatura × contabilidade, por mês e por documento</small></span>
+        <ArrowRight size={16} />
+      </Link>
     </section>}
 
     {taxonomyPending > 0 && <section className="panel">

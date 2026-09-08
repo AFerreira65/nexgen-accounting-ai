@@ -6,6 +6,7 @@ import {
   CalendarCheck,
   ChevronDown,
   CircleGauge,
+  ArrowLeftRight,
   ClipboardCheck,
   DoorOpen,
   FileText,
@@ -44,6 +45,7 @@ const links = [
   { to: '/taxonomias', label: 'Taxonomias', icon: Tags },
   { to: '/importar', label: 'Importar SAF-T', icon: FileUp },
   { to: '/compras-efatura', label: 'Compras e-Fatura', icon: Receipt },
+  { to: '/cruzamento', label: 'Cruzamento', icon: ArrowLeftRight },
   { to: '/organizacao', label: 'Organização', icon: Building2 },
   { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
 ]

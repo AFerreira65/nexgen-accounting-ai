@@ -369,6 +369,94 @@ export type EFaturaPurchasesPage = {
   totalPages: number
 }
 
+export type CrossCheckPurchaseMonth = {
+  year: number
+  month: number
+  efaturaBase: number
+  efaturaVat: number
+  efaturaCount: number
+  accountingBase: number
+  accountingVat: number
+  accountingEntryCount: number
+  efaturaTotal: number
+  accountingTotal: number
+  baseDelta: number
+  vatDelta: number
+  totalDelta: number
+  balanced: boolean
+}
+
+export type CrossCheckUnbookedInvoice = {
+  id: string
+  supplierTaxId: string
+  supplierName: string
+  invoiceNo: string
+  atcud: string | null
+  invoiceDate: string
+  taxBase: number
+  taxAmount: number
+  grossTotal: number
+}
+
+export type CrossCheckUnmatchedEntry = {
+  reference: string
+  entryDate: string
+  documentReference: string
+  description: string
+  purchaseBase: number
+  deductibleVat: number
+  total: number
+}
+
+export type CrossCheckPurchases = {
+  efaturaBase: number
+  efaturaVat: number
+  efaturaCount: number
+  accountingBase: number
+  accountingVat: number
+  accountingEntryCount: number
+  matchedCount: number
+  months: CrossCheckPurchaseMonth[]
+  efaturaWithoutAccounting: CrossCheckUnbookedInvoice[]
+  accountingWithoutEfatura: CrossCheckUnmatchedEntry[]
+  efaturaTotal: number
+  accountingTotal: number
+  baseDelta: number
+  vatDelta: number
+  totalDelta: number
+  balanced: boolean
+  unbookedCount: number
+}
+
+export type CrossCheckSalesMonth = {
+  year: number
+  month: number
+  income: number
+  outputVat: number
+  total: number
+}
+
+export type CrossCheckSales = {
+  income: number
+  outputVat: number
+  months: CrossCheckSalesMonth[]
+  total: number
+}
+
+export type CrossCheckTotals = {
+  periodDebit: number
+  periodCredit: number
+  balanced: boolean
+}
+
+export type CrossCheckReport = {
+  from: string
+  to: string
+  purchases: CrossCheckPurchases
+  sales: CrossCheckSales
+  totals: CrossCheckTotals
+}
+
 // Extração do cabeçalho no cliente, usada apenas no modo de demonstração quando a
 // API local não está ligada. Namespace-agnóstica, como o leitor do servidor.
 export function parseSaftHeaderFromXml(text: string): SaftInspectionHeader {

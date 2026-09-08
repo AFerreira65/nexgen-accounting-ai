@@ -694,6 +694,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the cross-check screen (requires the database)', () => {
+    window.history.pushState({}, '', '/cruzamento')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Cruzamento' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('proposes creating a company when the SAF-T tax number is unknown', async () => {
     window.history.pushState({}, '', '/importar')
     render(<App />)

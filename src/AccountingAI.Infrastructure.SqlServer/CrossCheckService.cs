@@ -53,11 +53,15 @@ public sealed class CrossCheckService(AccountingDbContext context) : ICrossCheck
 
         // Um lançamento é «de compra» quando tem pelo menos uma linha numa conta
         // de gasto (classe 6) ou de IVA dedutível (2432*). Trazem-se as linhas
-        // para somar a base e o IVA em memória.
+        // para somar a base e o IVA em memória. A abertura e o apuramento
+        // contra-movimentam as classes 6 e 7 sem serem operações reais, por isso
+        // ficam de fora das três perspetivas.
         var purchaseEntryRows = await context.JournalEntries
             .AsNoTracking()
             .Where(entry => entry.CompanyId == companyId &&
                 entry.Status != JournalEntryStatus.Voided &&
+                entry.Source != EntrySource.Opening &&
+                entry.Source != EntrySource.Closing &&
                 entry.EntryDate >= from &&
                 entry.EntryDate <= to &&
                 entry.Lines.Any(line =>
@@ -92,6 +96,8 @@ public sealed class CrossCheckService(AccountingDbContext context) : ICrossCheck
             .AsNoTracking()
             .Where(line => line.CompanyId == companyId &&
                 line.JournalEntry.Status != JournalEntryStatus.Voided &&
+                line.JournalEntry.Source != EntrySource.Opening &&
+                line.JournalEntry.Source != EntrySource.Closing &&
                 line.JournalEntry.EntryDate >= from &&
                 line.JournalEntry.EntryDate <= to);
 
