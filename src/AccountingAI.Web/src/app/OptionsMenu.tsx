@@ -1,5 +1,6 @@
-import { ChevronDown, Database, Info, SlidersHorizontal } from 'lucide-react'
+import { ChevronDown, Database, Info, Printer, SlidersHorizontal } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { RecordInfo } from './demo-data'
 import { useFocusedRecord } from './RecordContext'
@@ -44,6 +45,15 @@ export function OptionsMenu() {
     close()
   }
 
+  function printAbout() {
+    document.body.classList.add('printing-record')
+    const cleanup = () => document.body.classList.remove('printing-record')
+    window.addEventListener('afterprint', cleanup, { once: true })
+    window.print()
+    // Alguns navegadores não disparam `afterprint`; limpa à mesma pouco depois.
+    window.setTimeout(cleanup, 1000)
+  }
+
   function toggleAbout() {
     if (!canAbout || !record) return
     const next = !aboutOpen
@@ -86,8 +96,22 @@ export function OptionsMenu() {
               ? <><strong>Última alteração</strong> por {who(info.modifiedBy)}<br /><small>{when(info.modifiedAtUtc)}</small></>
               : <><strong>Sem alterações</strong> registadas desde a criação.</>}
           </p>
+          <button type="button" className="text-link" onClick={printAbout}><Printer size={13} /> Imprimir / PDF</button>
         </>}
       </div>}
     </div>}
+
+    {info && record && createPortal(
+      <div className="record-about-print" aria-hidden="true">
+        <h1>Sobre o Registo</h1>
+        <p><strong>{record.label}</strong> · {record.table}</p>
+        <p>Criado por {who(info.createdBy)} — {when(info.createdAtUtc)}</p>
+        <p>{info.modifiedAtUtc
+          ? `Última alteração por ${who(info.modifiedBy)} — ${when(info.modifiedAtUtc)}`
+          : 'Sem alterações registadas desde a criação.'}</p>
+        <p className="record-about-print-meta">Impresso em {when(new Date().toISOString())}</p>
+      </div>,
+      document.body,
+    )}
   </div>
 }

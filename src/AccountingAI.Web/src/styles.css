@@ -87,12 +87,35 @@ html[data-theme='dark'] .record-about { background: #14262e; }
 .data-dictionary code { padding: 1px 5px; border-radius: 5px; background: #eef3f4; font-size: 11px; }
 .dictionary-detail td small { display: block; color: #7a8c93; font-size: 9px; }
 .dictionary-detail .muted { color: #9fb0b6; }
+.print-only { display: none; }
+.dictionary-print-head h1 { margin: 0 0 4px; font-size: 17px; }
+.dictionary-print-head p { margin: 2px 0; font-size: 11px; color: #3f515a; }
+.dictionary-print-head .print-meta { color: #7a8c93; }
+
 @media print {
   .sidebar, .topbar, .no-print { display: none !important; }
+  .print-only { display: block; }
   .content-area { width: 100%; margin: 0; padding: 0; }
-  .panel { border: 0; box-shadow: none; }
-  .dictionary-detail { break-inside: auto; }
+  .page-stack { gap: 12px; }
+  .panel { padding: 0; border: 0; box-shadow: none; background: none; }
+  .dictionary-detail .panel-heading { display: none; }
+  .dictionary-print-head { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #b8c6cb; }
+  .dictionary-detail .table-wrap { overflow: visible; }
+  .dictionary-detail table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .dictionary-detail thead { display: table-header-group; }
+  .dictionary-detail th, .dictionary-detail td { padding: 4px 6px; border: 1px solid #ccd6d9; text-align: left; vertical-align: top; }
   .dictionary-detail tr { break-inside: avoid; }
+  .dictionary-detail code { background: none; padding: 0; }
+  a[href]::after { content: none !important; }
+}
+
+.record-about-print { display: none; }
+.record-about-print h1 { margin: 0 0 6px; font-size: 16px; }
+.record-about-print p { margin: 3px 0; font-size: 12px; }
+.record-about-print .record-about-print-meta { color: #7a8c93; }
+@media print {
+  body.printing-record > *:not(.record-about-print) { display: none !important; }
+  body.printing-record .record-about-print { display: block; padding: 8px; }
 }
 
 .content-area { width: min(1480px, 100%); margin: 0 auto; padding: 32px clamp(20px, 3vw, 42px) 48px; }

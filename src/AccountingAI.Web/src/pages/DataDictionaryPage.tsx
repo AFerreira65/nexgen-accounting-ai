@@ -67,8 +67,16 @@ export function DataDictionaryPage() {
     downloadCsv(csvFilename('dicionario', `${detail.schema}-${detail.name}`), toCsv(rows))
   }
 
+  const printedOn = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long', timeStyle: 'short' }).format(new Date())
+
   return <div className="page-stack data-dictionary">
-    <header className="page-heading"><div><p className="eyebrow">Opções</p><h1>Dicionário de dados</h1><p>A estrutura das tabelas da base de dados, com o significado de cada coluna. Semelhante ao Dicionário de Dados do PHC CS.</p></div><span className="connection-badge database"><Database size={15} /> Estrutura do modelo</span></header>
+    <header className="page-heading no-print"><div><p className="eyebrow">Opções</p><h1>Dicionário de dados</h1><p>A estrutura das tabelas da base de dados, com o significado de cada coluna. Semelhante ao Dicionário de Dados do PHC CS.</p></div><span className="connection-badge database"><Database size={15} /> Estrutura do modelo</span></header>
+
+    {detail && <div className="print-only dictionary-print-head">
+      <h1>Dicionário de dados — {detail.schema}.{detail.name}</h1>
+      <p>{detail.purpose || 'Sem descrição.'}</p>
+      <p className="print-meta">{detail.columnCount} colunas · Impresso em {printedOn}</p>
+    </div>}
 
     <section className="panel no-print">
       <div className="filterbar">
