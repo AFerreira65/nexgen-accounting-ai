@@ -1,3 +1,4 @@
+using AccountingAI.Application.Efatura;
 using AccountingAI.Application.Saft;
 using AccountingAI.Application.Saft.Rules;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.AddSingleton<ISaftEntriesReader, SaftEntriesReader>();
         services.AddSingleton<ISaftSchemaValidator, SaftSchemaValidator>();
         services.AddSingleton<ISaftValidationModelReader, SaftValidationModelReader>();
+        services.AddSingleton<IEFaturaCsvReader, EFaturaCsvReader>();
 
         services.AddSingleton<ISaftAnalyticalRule, NifCheckDigitRule>();
         services.AddSingleton<ISaftAnalyticalRule, AccountingBasisRule>();

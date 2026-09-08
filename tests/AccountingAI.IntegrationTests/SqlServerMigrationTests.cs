@@ -1,5 +1,6 @@
 using AccountingAI.Application.Saft;
 using AccountingAI.Domain.Accounting;
+using AccountingAI.Domain.Efatura;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Domain.Saft;
 using AccountingAI.Infrastructure.SqlServer;
@@ -99,6 +100,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260908092224_SaftValidationRun");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260908120313_EFaturaPurchase");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -159,6 +163,19 @@ public sealed class SqlServerMigrationTests
             Assert.AreEqual(companyId, storedRun.CompanyId);
             StringAssert.Contains(storedRun.IssuesJson, "ENTRY-COUNT");
             Assert.AreNotEqual(default, storedRun.CreatedAtUtc);
+
+            var purchase = EFaturaPurchase.Create(
+                companyId, Guid.NewGuid(), "500000001", "Fornecedor A", "FT A/1", null,
+                new DateOnly(2026, 7, 1), "FT", "Registada", "Outros", 100m, 23m, 123m, "efatura.csv");
+            context.EFaturaPurchases.Add(purchase);
+            await context.SaveChangesAsync().ConfigureAwait(false);
+            // A chave (NIF|nº|data) é única por empresa.
+            context.EFaturaPurchases.Add(EFaturaPurchase.Create(
+                companyId, Guid.NewGuid(), "500000001", "Fornecedor A", "FT A/1", null,
+                new DateOnly(2026, 7, 1), "FT", "Registada", "Outros", 100m, 23m, 123m, "outro.csv"));
+            await Assert.ThrowsAsync<DbUpdateException>(async () =>
+                await context.SaveChangesAsync().ConfigureAwait(false));
+            context.ChangeTracker.Clear();
 
             context.Add(new UserCompanySettings(secondCompanyId, userId));
             await Assert.ThrowsAsync<DbUpdateException>(async () =>

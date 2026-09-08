@@ -846,6 +846,57 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task EFaturaPurchasesCanBePreviewedAndListed()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/";
+        const string csv =
+            "Setor;Fornecedor;Tipo;Situação;Número da fatura;Data de emissão;Valor tributável;Valor IVA;Valor total;NIF\n" +
+            "Outros;Fornecedor A;FT;Registada;FT A/1;2026-07-01;100,00;23,00;123,00;500000001\n" +
+            "Outros;Fornecedor B;FS;Registada;FS B/2;2026-07-02;50,00;11,50;61,50;500000002\n";
+
+        using var preview = await client
+            .PostAsync(
+                $"{basePath}22222222-2222-2222-2222-222222222222/efatura/purchases-import?dryRun=true&fileName=t.csv",
+                new StringContent(csv, Encoding.UTF8, "text/csv"))
+            .ConfigureAwait(false);
+        var previewPayload = await preview.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var badCsv = await client
+            .PostAsync(
+                $"{basePath}22222222-2222-2222-2222-222222222222/efatura/purchases-import?dryRun=true",
+                new StringContent(string.Empty, Encoding.UTF8, "text/csv"))
+            .ConfigureAwait(false);
+
+        using var list = await client
+            .GetAsync($"{basePath}22222222-2222-2222-2222-222222222222/efatura/purchases")
+            .ConfigureAwait(false);
+        var listPayload = await list.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync($"{basePath}99999999-9999-9999-9999-999999999999/efatura/purchases")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, preview.StatusCode);
+        StringAssert.Contains(previewPayload, "\"imported\":2");
+        StringAssert.Contains(previewPayload, "\"invalid\":0");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badCsv.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, list.StatusCode);
+        StringAssert.Contains(listPayload, "\"totalItems\"");
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task SaftValidationHistoryIsScopedToTheCompany()
     {
         if (!OperatingSystem.IsWindows())

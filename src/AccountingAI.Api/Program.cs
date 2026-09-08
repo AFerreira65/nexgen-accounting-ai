@@ -1,4 +1,5 @@
 using AccountingAI.Api;
+using AccountingAI.Application.Efatura;
 using AccountingAI.Application.Saft;
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
@@ -1588,6 +1589,109 @@ if (app.Environment.IsDevelopment())
             run.CreatedAtUtc,
             Issues = JsonSerializer.Deserialize<JsonElement>(run.IssuesJson)
         }));
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/efatura/purchases-import", async (
+        Guid userId,
+        Guid companyId,
+        HttpRequest request,
+        EFaturaPurchaseImportService importService,
+        CancellationToken cancellationToken,
+        bool? dryRun,
+        string? fileName) =>
+    {
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = null;
+        }
+
+        try
+        {
+            var result = await importService
+                .ImportAsync(userId, companyId, request.Body,
+                    string.IsNullOrWhiteSpace(fileName) ? "(sem nome)" : fileName,
+                    dryRun ?? false, cancellationToken)
+                .ConfigureAwait(false);
+
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }
+        catch (EFaturaCsvFormatException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["efatura"] = [exception.Message]
+            });
+        }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/efatura/purchases", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        CancellationToken cancellationToken,
+        string? from,
+        string? to,
+        int? page,
+        int? pageSize) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        var query = context.EFaturaPurchases
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId);
+
+        if (fromDate is { } lowerBound)
+        {
+            query = query.Where(item => item.InvoiceDate >= lowerBound);
+        }
+
+        if (toDate is { } upperBound)
+        {
+            query = query.Where(item => item.InvoiceDate <= upperBound);
+        }
+
+        var ordered = query
+            .OrderByDescending(item => item.InvoiceDate)
+            .ThenBy(item => item.SupplierName);
+
+        var size = Math.Clamp(pageSize ?? 50, 1, 200);
+        var totalItems = await ordered.CountAsync(cancellationToken).ConfigureAwait(false);
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)size));
+        var currentPage = Math.Clamp(page ?? 1, 1, totalPages);
+
+        var items = await ordered
+            .Skip((currentPage - 1) * size)
+            .Take(size)
+            .Select(item => new
+            {
+                item.Id,
+                item.SupplierTaxId,
+                item.SupplierName,
+                item.InvoiceNo,
+                item.Atcud,
+                item.InvoiceDate,
+                item.InvoiceType,
+                item.Status,
+                item.Sector,
+                item.TaxBase,
+                item.TaxAmount,
+                item.GrossTotal,
+                item.SourceFileName,
+                item.CreatedAtUtc
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return Results.Ok(new { Items = items, Page = currentPage, PageSize = size, TotalItems = totalItems, TotalPages = totalPages });
     });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/accounts-preview", async (
