@@ -1,7 +1,9 @@
-import { CircleAlert, CircleCheck, Database, FileUp, Info } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { CircleAlert, CircleCheck, Database, Download, FileUp, Info, ShieldCheck } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
-import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection, type SaftOpeningBalancesImport } from '../app/demo-data'
+import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection, type SaftOpeningBalancesImport, type SaftValidation } from '../app/demo-data'
+import { issuesBySeverity, SAFT_SEVERITY_LABELS, saftScopeLabel, saftValidationBlocksImport } from '../app/saftValidation'
 import { useWorkContext } from '../app/WorkContext'
 
 const REGIONS: { value: 'Mainland' | 'Azores' | 'Madeira'; label: string }[] = [
@@ -81,7 +83,79 @@ function CompanyProposal({ inspection, onCreated }: { inspection: SaftInspection
   </section>
 }
 
-function AccountsPreviewPanel({ companyId, file, fiscalYear }: { companyId: string; file: File | null; fiscalYear: number }) {
+function SaftValidationPanel({ file, companyName, validation, onResult }: {
+  file: File | null
+  companyName: string
+  validation: SaftValidation | null
+  onResult: (validation: SaftValidation | null) => void
+}) {
+  const { validateSaft } = useWorkContext()
+  const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [error, setError] = useState('')
+
+  useEffect(() => { setState('idle'); setError(''); onResult(null) }, [file, onResult])
+
+  async function run() {
+    if (!file) return
+    setState('loading'); setError('')
+    try {
+      onResult(await validateSaft(file))
+      setState('idle')
+    } catch (runError) {
+      setState('error')
+      setError(runError instanceof Error ? runError.message : 'Não foi possível validar o ficheiro.')
+    }
+  }
+
+  const groups = validation ? issuesBySeverity(validation) : []
+  const blocks = saftValidationBlocksImport(validation)
+
+  function exportCsv() {
+    if (!validation) return
+    const header = ['Severidade', 'Âmbito', 'Regra', 'Linha', 'Coluna', 'Mensagem']
+    const rows = validation.issues.map((issue) => [
+      SAFT_SEVERITY_LABELS[issue.severity], saftScopeLabel(issue.scope), issue.ruleId ?? 'XSD',
+      issue.line ?? '', issue.position ?? '', issue.message,
+    ])
+    downloadCsv(csvFilename('validacao-saft', companyName), toCsv([header, ...rows]))
+  }
+
+  return <section className="panel">
+    <div className="panel-heading"><div><h2>Validação do ficheiro</h2><p>Conformidade com o esquema oficial da AT e verificações analíticas (contagens, totais, equilíbrio, contas, datas). É um apoio; não substitui a validação oficial.</p></div><span className={validation ? (blocks ? 'warning' : 'success') : ''}><ShieldCheck /></span></div>
+    <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
+      <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A validar…' : 'Validar ficheiro'}</button>
+      {validation && validation.issues.length > 0 && <button className="button button-secondary" type="button" onClick={exportCsv}><Download size={15} /> Exportar relatório</button>}
+    </div>
+    {state === 'error' && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
+    {validation && <>
+      <div className="settings-grid">
+        <div className="metadata-strip"><small>Versão SAF-T</small><strong>{validation.version ?? '—'}</strong></div>
+        <div className="metadata-strip"><small>Esquema oficial</small><strong>{validation.schemaAvailable ? (validation.schemaValid ? 'Conforme' : 'Não conforme') : 'Não carregado'}</strong></div>
+        <div className="metadata-strip"><small>Erros</small><strong>{validation.counts.error}</strong></div>
+        <div className="metadata-strip"><small>Avisos</small><strong>{validation.counts.warning}</strong></div>
+      </div>
+      <p className={`save-status ${blocks ? 'error' : 'success'}`}>{blocks ? <CircleAlert size={15} /> : <CircleCheck size={15} />} {blocks
+        ? `${validation.counts.error} ${validation.counts.error === 1 ? 'erro impede' : 'erros impedem'} a importação. Reveja o ficheiro ou importe mesmo assim (abaixo).`
+        : validation.counts.warning > 0
+          ? 'Sem erros. Há avisos a rever, mas a importação pode seguir.'
+          : 'Sem erros nem avisos.'}</p>
+      {validation.truncated && <p className="save-status"><Info size={15} /> Há mais ocorrências do que as listadas.</p>}
+      {groups.map((group) => <div className="table-wrap" key={group.severity}>
+        <table><thead><tr><th>{SAFT_SEVERITY_LABELS[group.severity]}</th><th>Âmbito</th><th>Regra</th><th>Local</th><th>Mensagem</th></tr></thead><tbody>
+          {group.issues.map((issue, index) => <tr key={`${group.severity}-${index}`}>
+            <td><span className={`badge ${group.severity === 'Error' ? 'warning' : group.severity === 'Warning' ? 'neutral' : 'success'}`}>{SAFT_SEVERITY_LABELS[group.severity]}</span></td>
+            <td>{saftScopeLabel(issue.scope)}</td>
+            <td>{issue.ruleId ?? 'XSD'}</td>
+            <td><small>{issue.line ? `linha ${issue.line}${issue.position ? `, col. ${issue.position}` : ''}` : '—'}</small></td>
+            <td>{issue.message}</td>
+          </tr>)}
+        </tbody></table>
+      </div>)}
+    </>}
+  </section>
+}
+
+function AccountsPreviewPanel({ companyId, file, fiscalYear, importBlocked }: { companyId: string; file: File | null; fiscalYear: number; importBlocked: boolean }) {
   const { previewSaftAccounts, importSaftAccounts, importSaftOpeningBalances, source } = useWorkContext()
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [preview, setPreview] = useState<SaftAccountsPreview | null>(null)
@@ -137,8 +211,8 @@ function AccountsPreviewPanel({ companyId, file, fiscalYear }: { companyId: stri
     <div className="panel-heading"><div><h2>Plano de contas do ficheiro</h2><p>Compara os códigos do <code>GeneralLedgerAccounts</code> com o plano da empresa. Os saldos de abertura das contas de movimento podem entrar como um lançamento de abertura ({fiscalYear}).</p></div></div>
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
       <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A ler…' : 'Pré-visualizar plano de contas'}</button>
-      {preview && preview.newCount > 0 && source === 'database' && <button className="button button-primary" type="button" disabled={importState === 'importing'} onClick={() => void importNew()}>{importState === 'importing' ? 'A criar…' : `Criar as ${preview.newCount} contas novas`}</button>}
-      {preview && preview.fileAccountCount > 0 && source === 'database' && <button className="button button-secondary" type="button" disabled={openingState === 'importing'} onClick={() => void importOpening()}>{openingState === 'importing' ? 'A importar…' : 'Importar saldos iniciais'}</button>}
+      {preview && preview.newCount > 0 && source === 'database' && <button className="button button-primary" type="button" disabled={importState === 'importing' || importBlocked} onClick={() => void importNew()}>{importState === 'importing' ? 'A criar…' : `Criar as ${preview.newCount} contas novas`}</button>}
+      {preview && preview.fileAccountCount > 0 && source === 'database' && <button className="button button-secondary" type="button" disabled={openingState === 'importing' || importBlocked} onClick={() => void importOpening()}>{openingState === 'importing' ? 'A importar…' : 'Importar saldos iniciais'}</button>}
     </div>
     {imported && <p className="save-status success"><CircleCheck size={15} /> {imported.createdCount} contas criadas ({imported.alreadyExistedCount} já existiam); exercício de {fiscalYear} definido como o seu exercício nesta empresa.</p>}
     {opening && <p className={`save-status ${opening.alreadyImported ? 'warning' : opening.lineCount > 0 ? 'success' : ''}`}>{opening.alreadyImported ? <Info size={15} /> : opening.lineCount > 0 ? <CircleCheck size={15} /> : <Info size={15} />} {opening.alreadyImported
@@ -167,7 +241,7 @@ function AccountsPreviewPanel({ companyId, file, fiscalYear }: { companyId: stri
   </section>
 }
 
-function EntriesPreviewPanel({ companyId, file, fiscalYear }: { companyId: string; file: File | null; fiscalYear: number }) {
+function EntriesPreviewPanel({ companyId, file, fiscalYear, importBlocked }: { companyId: string; file: File | null; fiscalYear: number; importBlocked: boolean }) {
   const { previewSaftEntries, analyzeSaftEntries, importSaftEntries, source } = useWorkContext()
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [preview, setPreview] = useState<SaftEntriesPreview | null>(null)
@@ -245,7 +319,7 @@ function EntriesPreviewPanel({ companyId, file, fiscalYear }: { companyId: strin
       <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A ler…' : 'Pré-visualizar movimentos'}</button>
       {preview && preview.hasEntries && preview.transactionCount > 0 && source === 'database' && <>
         <button className="button button-secondary" type="button" disabled={analyzeState === 'analyzing' || importState === 'importing'} onClick={() => void analyzeEntries()}>{analyzeState === 'analyzing' ? 'A analisar…' : 'Analisar importação'}</button>
-        <button className="button button-primary" type="button" disabled={importState === 'importing'} onClick={() => void importEntries()}>{importState === 'importing' ? 'A importar…' : `Importar os ${preview.transactionCount} movimentos`}</button>
+        <button className="button button-primary" type="button" disabled={importState === 'importing' || importBlocked} onClick={() => void importEntries()}>{importState === 'importing' ? 'A importar…' : `Importar os ${preview.transactionCount} movimentos`}</button>
       </>}
     </div>
     {analysis && !imported && <p className={`save-status ${analysis.wouldSkipCount > 0 ? 'warning' : 'success'}`}>{analysis.wouldSkipCount > 0 ? <CircleAlert size={15} /> : <CircleCheck size={15} />} Seriam importados {analysis.wouldImportCount} {analysis.wouldImportCount === 1 ? 'movimento' : 'movimentos'}{analysis.journalsToCreate.length > 0 ? `, ${analysis.journalsToCreate.length} ${analysis.journalsToCreate.length === 1 ? 'diário a criar' : 'diários a criar'} (${analysis.journalsToCreate.join(', ')})` : ''}{analysis.wouldSkipCount > 0 ? `, ${analysis.wouldSkipCount} ${analysis.wouldSkipCount === 1 ? 'saltado' : 'saltados'}` : ''}.</p>}
@@ -301,6 +375,16 @@ export function SaftImportPage() {
   const [file, setFile] = useState<File | null>(null)
   const [result, setResult] = useState<SaftInspection | null>(null)
   const [error, setError] = useState('')
+  const [validation, setValidation] = useState<SaftValidation | null>(null)
+  const [override, setOverride] = useState(false)
+
+  const validationBlocks = source === 'database' && saftValidationBlocksImport(validation)
+  const importBlocked = validationBlocks && !override
+
+  const onValidationResult = useCallback((next: SaftValidation | null) => {
+    setValidation(next)
+    setOverride(false)
+  }, [])
 
   async function onFile(picked: File | undefined) {
     if (!picked) return
@@ -357,6 +441,16 @@ export function SaftImportPage() {
         </div>
       </section>
 
+      {source === 'database' && <>
+        <SaftValidationPanel file={file} companyName={result.header.companyName} validation={validation} onResult={onValidationResult} />
+        {validationBlocks && <section className="panel">
+          <label className="save-status" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input type="checkbox" checked={override} onChange={(event) => setOverride(event.target.checked)} />
+            <span>Importar mesmo assim — assumo a responsabilidade de importar um ficheiro com erros de validação.</span>
+          </label>
+        </section>}
+      </>}
+
       {result.match.outcome === 'ExistingCompany'
         ? <>
             <section className="panel">
@@ -364,8 +458,8 @@ export function SaftImportPage() {
               <p>Empresa encontrada: <strong>{result.match.legalName}</strong>{result.match.accountingStandard ? ` · ${accountingStandardName(result.match.accountingStandard)}` : ''}{result.match.accountingSetupVersion ? ` · ${result.match.accountingSetupVersion}` : ''}.</p>
               <p className="save-status"><Info size={15} /> Importe primeiro o plano de contas do ficheiro; só depois os movimentos, para que as contas referidas existam.</p>
             </section>
-            {result.match.companyId && <AccountsPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} />}
-            {result.match.companyId && source === 'database' && <EntriesPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} />}
+            {result.match.companyId && <AccountsPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} importBlocked={importBlocked} />}
+            {result.match.companyId && source === 'database' && <EntriesPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} importBlocked={importBlocked} />}
           </>
         : <CompanyProposal inspection={result} onCreated={(companyId) => void onCompanyCreated(companyId)} />}
     </>}

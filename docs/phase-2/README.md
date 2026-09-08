@@ -31,7 +31,7 @@ processo da Modelo 24 descrito em [`../CERTIFICACAO_AT.md`](../CERTIFICACAO_AT.m
 
 | Épico | Título | Estado |
 |-------|--------|--------|
-| **F2-01** | Validação XSD e analítica do SAF-T (base para SVAT) | **Em curso** — [`F2-01`](F2-01-SAFT-XSD-VALIDATION.md); feitos [`F2-01A`](F2-01A-XSD-STREAMING-VALIDATOR.md), [`F2-01B`](F2-01B-SAFT-VALIDATE-ENDPOINT.md), [`F2-01C`](F2-01C-VALIDATION-MODEL-READER.md), [`F2-01D`](F2-01D-ANALYTICAL-RULE-ENGINE.md); a seguir F2-01E (passo na PWA) |
+| **F2-01** | Validação XSD e analítica do SAF-T (base para SVAT) | **Em curso** — [`F2-01`](F2-01-SAFT-XSD-VALIDATION.md); feitos [`F2-01A`](F2-01A-XSD-STREAMING-VALIDATOR.md), [`F2-01B`](F2-01B-SAFT-VALIDATE-ENDPOINT.md), [`F2-01C`](F2-01C-VALIDATION-MODEL-READER.md), [`F2-01D`](F2-01D-ANALYTICAL-RULE-ENGINE.md), [`F2-01E`](F2-01E-PWA-VALIDATION-STEP.md); a seguir F2-01F (histórico) |
 | F2-02 | Consulta à AT validada em testes e produção (certificado de produtor, e-Fatura) | Por especificar |
 | F2-03 | Cruzamento vendas SAF-T × compras e-Fatura × contabilidade | Por especificar |
 | F2-04 | Adaptador PHC: modos de agrupamento, conta corrente, stocks, contabilidade, recebimentos | Por especificar |

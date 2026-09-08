@@ -308,6 +308,27 @@ export type SaftInspection = {
   }
 }
 
+export type SaftValidationSeverity = 'Error' | 'Warning' | 'Information'
+
+export type SaftValidationIssue = {
+  ruleId: string | null
+  severity: SaftValidationSeverity
+  scope: string
+  message: string
+  line: number | null
+  position: number | null
+  path: string | null
+}
+
+export type SaftValidation = {
+  version: string | null
+  schemaAvailable: boolean
+  schemaValid: boolean
+  counts: { error: number; warning: number; information: number }
+  issues: SaftValidationIssue[]
+  truncated: boolean
+}
+
 // Extração do cabeçalho no cliente, usada apenas no modo de demonstração quando a
 // API local não está ligada. Namespace-agnóstica, como o leitor do servidor.
 export function parseSaftHeaderFromXml(text: string): SaftInspectionHeader {
