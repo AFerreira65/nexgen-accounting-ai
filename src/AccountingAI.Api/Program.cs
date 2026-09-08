@@ -1725,6 +1725,63 @@ if (app.Environment.IsDevelopment())
         return report is null ? Results.NotFound() : Results.Ok(report);
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/record-info", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        RecordInfoService recordInfo,
+        CancellationToken cancellationToken,
+        string? table,
+        string? id) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(table) || string.IsNullOrWhiteSpace(id))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["parametros"] = ["Indique a tabela (table) e o identificador do registo (id)."]
+            });
+        }
+
+        var info = await recordInfo
+            .FindAsync(table.Trim(), companyId, id.Trim(), cancellationToken)
+            .ConfigureAwait(false);
+        if (info is null)
+        {
+            return Results.NotFound();
+        }
+
+        var authorIds = new[] { info.CreatedBy, info.ModifiedBy }
+            .Where(value => value is not null)
+            .Select(value => value!.Value)
+            .Distinct()
+            .ToList();
+        var names = authorIds.Count == 0
+            ? []
+            : await context.UserAccounts
+                .AsNoTracking()
+                .Where(account => authorIds.Contains(account.Id))
+                .ToDictionaryAsync(account => account.Id, account => account.DisplayName, cancellationToken)
+                .ConfigureAwait(false);
+
+        object? Party(Guid? authorId) =>
+            authorId is { } value ? new { id = value, name = names.GetValueOrDefault(value) } : null;
+
+        return Results.Ok(new
+        {
+            table = table.Trim(),
+            id = id.Trim(),
+            createdBy = Party(info.CreatedBy),
+            createdAtUtc = info.CreatedAtUtc,
+            modifiedBy = Party(info.ModifiedBy),
+            modifiedAtUtc = info.ModifiedAtUtc
+        });
+    });
+
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/sales-invoices-summary", async (
         Guid userId,
         Guid companyId,

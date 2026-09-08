@@ -1,5 +1,6 @@
 using AccountingAI.Application.Auditing;
 using AccountingAI.Domain.Organizations;
+using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -72,6 +73,23 @@ public sealed class AuditStampingTests
                 "Uma alteração não pode mexer no carimbo de criação.");
             Assert.AreEqual(currentUser.UserId, afterUpdate.Property("ModifiedBy").CurrentValue);
             Assert.IsNotNull(afterUpdate.Property("ModifiedAtUtc").CurrentValue);
+
+            // F2-06B: o RecordInfoService lê os mesmos carimbos por nome lógico de tabela.
+            context.ChangeTracker.Clear();
+            var recordInfo = new RecordInfoService(context);
+            var info = await recordInfo
+                .FindAsync("empresas", companyId, companyId.ToString(), CancellationToken.None)
+                .ConfigureAwait(false);
+            Assert.IsNotNull(info);
+            Assert.AreEqual(currentUser.UserId, info!.CreatedBy);
+            Assert.AreEqual(currentUser.UserId, info.ModifiedBy);
+            Assert.IsNotNull(info.CreatedAtUtc);
+            Assert.IsNotNull(info.ModifiedAtUtc);
+
+            Assert.IsNull(
+                await recordInfo.FindAsync("inexistente", companyId, "x", CancellationToken.None).ConfigureAwait(false));
+            Assert.IsNull(
+                await recordInfo.FindAsync("contas", companyId, "SEM-CODIGO", CancellationToken.None).ConfigureAwait(false));
         }
         finally
         {

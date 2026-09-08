@@ -1009,6 +1009,53 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task RecordInfoReportsAuditStampsAndGuardsTheTable()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/";
+        const string company = "22222222-2222-2222-2222-222222222222";
+
+        using var account = await client
+            .GetAsync($"{basePath}{company}/record-info?table=contas&id=6221")
+            .ConfigureAwait(false);
+        var accountPayload = await account.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unknownTable = await client
+            .GetAsync($"{basePath}{company}/record-info?table=inexistente&id=6221")
+            .ConfigureAwait(false);
+
+        using var unknownRecord = await client
+            .GetAsync($"{basePath}{company}/record-info?table=contas&id=ZZZZZZ")
+            .ConfigureAwait(false);
+
+        using var missingParams = await client
+            .GetAsync($"{basePath}{company}/record-info")
+            .ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync($"{basePath}99999999-9999-9999-9999-999999999999/record-info?table=contas&id=6221")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, account.StatusCode);
+        StringAssert.Contains(accountPayload, "\"createdAtUtc\"");
+        StringAssert.Contains(accountPayload, "\"table\":\"contas\"");
+        Assert.AreEqual(HttpStatusCode.NotFound, unknownTable.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unknownRecord.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, missingParams.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task SaftSalesInvoicesSummaryReadsTheFaturacaoBlock()
     {
         if (!OperatingSystem.IsWindows())
