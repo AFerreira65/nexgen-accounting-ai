@@ -56,6 +56,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new SaftValidationRunConfiguration());
         modelBuilder.ApplyConfiguration(new EFaturaPurchaseConfiguration());
 
+        AuditShadowProperties.Apply(modelBuilder);
+
         modelBuilder.Entity<FoundationState>(entity =>
         {
             entity.ToTable("FoundationState", "infrastructure");

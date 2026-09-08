@@ -1,3 +1,4 @@
+using AccountingAI.Application.Auditing;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -21,8 +22,13 @@ public static class DependencyInjection
                 "A connection string 'ConnectionStrings:Accounting' is required.");
         }
 
-        services.AddDbContext<AccountingDbContext>(options =>
-            options.UseSqlServer(
+        services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
+        services.AddScoped<AuditStampingInterceptor>();
+
+        services.AddDbContext<AccountingDbContext>((serviceProvider, options) =>
+            options
+                .AddInterceptors(serviceProvider.GetRequiredService<AuditStampingInterceptor>())
+                .UseSqlServer(
                 connectionString,
                 sqlOptions =>
                 {
