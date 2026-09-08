@@ -1321,6 +1321,47 @@ if (app.Environment.IsDevelopment())
         return deleted ? Results.NoContent() : Results.NotFound();
     });
 
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/analyses/run", async (
+        Guid userId, Guid companyId, HttpRequest request, IAnalysisRunner runner,
+        CancellationToken cancellationToken, string? from, string? to) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        var body = await ReadAnalysisRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        if (body?.Definition is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["analise"] = ["Indique a definição da análise a correr."]
+            });
+        }
+
+        return await RunAnalysisAsync(runner, userId, companyId, body.Definition, fromDate, toDate, cancellationToken)
+            .ConfigureAwait(false);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/analyses/{id:guid}/run", async (
+        Guid userId, Guid companyId, Guid id, SavedAnalysisService analyses, IAnalysisRunner runner,
+        CancellationToken cancellationToken, string? from, string? to) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        var saved = await analyses.GetAsync(userId, companyId, id, cancellationToken).ConfigureAwait(false);
+        if (saved is null)
+        {
+            return Results.NotFound();
+        }
+
+        return await RunAnalysisAsync(runner, userId, companyId, saved.Definition, fromDate, toDate, cancellationToken)
+            .ConfigureAwait(false);
+    });
+
     app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
     {
         var normalized = reference.Trim().ToUpperInvariant();
@@ -2525,6 +2566,30 @@ public partial class Program
         catch (System.Text.Json.JsonException)
         {
             return null;
+        }
+    }
+
+    private static async Task<IResult> RunAnalysisAsync(
+        IAnalysisRunner runner,
+        Guid userId,
+        Guid companyId,
+        AccountingAI.Application.Reporting.AnalysisDefinition definition,
+        DateOnly? from,
+        DateOnly? to,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await runner
+                .RunAsync(userId, companyId, definition, from, to, cancellationToken)
+                .ConfigureAwait(false);
+            return result is null
+                ? Results.NotFound()
+                : Results.Json(result, AccountingAI.Application.Reporting.AnalysisJson.Options);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["analise"] = [exception.Message] });
         }
     }
 

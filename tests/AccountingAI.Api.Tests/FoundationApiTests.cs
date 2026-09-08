@@ -1009,6 +1009,55 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task AnalysisRunReturnsGroupedRowsAndTotals()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/";
+        const string body =
+            "{\"definition\":{\"source\":\"movimentos\",\"columns\":[\"accountCode\",\"accountName\",\"debit\",\"credit\"]," +
+            "\"filters\":[],\"groupBy\":[\"journalCode\"],\"sort\":[]," +
+            "\"aggregates\":[{\"field\":\"debit\",\"function\":\"sum\"},{\"field\":\"credit\",\"function\":\"sum\"}]," +
+            "\"includeGrandTotal\":true}}";
+
+        using var run = await client
+            .PostAsync(
+                $"{basePath}22222222-2222-2222-2222-222222222222/analyses/run?from=2026-01-01&to=2026-12-31",
+                new StringContent(body, Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+        var runPayload = await run.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var badDefinition = await client
+            .PostAsync(
+                $"{basePath}22222222-2222-2222-2222-222222222222/analyses/run",
+                new StringContent("{\"definition\":{\"source\":\"movimentos\",\"columns\":[\"naoExiste\"],\"filters\":[],\"groupBy\":[],\"sort\":[],\"aggregates\":[],\"includeGrandTotal\":true}}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .PostAsync(
+                $"{basePath}99999999-9999-9999-9999-999999999999/analyses/run",
+                new StringContent(body, Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, run.StatusCode);
+        StringAssert.Contains(runPayload, "\"columns\"");
+        StringAssert.Contains(runPayload, "\"groups\"");
+        StringAssert.Contains(runPayload, "\"grandTotal\"");
+        StringAssert.Contains(runPayload, "\"debit:sum\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badDefinition.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task AnalysisCatalogAndListAreAvailable()
     {
         if (!OperatingSystem.IsWindows())
