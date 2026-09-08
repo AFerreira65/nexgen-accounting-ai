@@ -69,7 +69,7 @@ public sealed class AnalysisRunnerTests
             await context.SaveChangesAsync().ConfigureAwait(false);
             context.ChangeTracker.Clear();
 
-            var runner = new AnalysisRunner(context);
+            var runner = new AnalysisRunner(context, new AccountLedgerService(context));
 
             var definition = new AnalysisDefinition(
                 AnalysisSource.Movimentos,
@@ -106,6 +106,27 @@ public sealed class AnalysisRunnerTests
                 .ConfigureAwait(false);
             Assert.AreEqual(2, march!.RowCount);
             Assert.AreEqual(350m, march.GrandTotal["debit:sum"]);
+
+            // Origem SaldosDeConta: agrupar por classe, somar o saldo.
+            var balances = new AnalysisDefinition(
+                AnalysisSource.SaldosDeConta,
+                ["accountCode", "accountName", "class", "balance"],
+                [],
+                ["class"],
+                [],
+                [new AnalysisAggregate("balance", AnalysisAggregateFunction.Sum)],
+                IncludeGrandTotal: true);
+
+            var byClass = await runner
+                .RunAsync(userId, companyId, balances, new DateOnly(2026, 1, 1), new DateOnly(2026, 12, 31), CancellationToken.None)
+                .ConfigureAwait(false);
+            Assert.IsNotNull(byClass);
+            Assert.AreEqual(3, byClass!.RowCount, "Três contas de movimento com saldo.");
+            var class6 = byClass.Groups.Single(g => (string)g.Keys[0].Value! == "6");
+            Assert.AreEqual(390m, class6.Subtotals["balance:sum"]);
+            var class2 = byClass.Groups.Single(g => (string)g.Keys[0].Value! == "2");
+            Assert.AreEqual(-390m, class2.Subtotals["balance:sum"]);
+            Assert.AreEqual(0m, byClass.GrandTotal["balance:sum"]);
 
             // Definição inválida → ArgumentException.
             await Assert.ThrowsExactlyAsync<ArgumentException>(() => runner.RunAsync(

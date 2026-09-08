@@ -7,13 +7,14 @@ using Microsoft.EntityFrameworkCore;
 namespace AccountingAI.Infrastructure.SqlServer;
 
 /// <summary>
-/// Corre análises da origem <see cref="AnalysisSource.Movimentos"/>: o SQL faz o
-/// filtro de período e a projeção das linhas; a memória aplica os filtros da
-/// definição (com paragem no limite de <see cref="AnalysisResult.RowLimit"/>+1),
-/// a ordenação, os agrupamentos com subtotais em todos os níveis e o total
-/// geral. Só lê. Exclui os lançamentos anulados, como os restantes relatórios.
+/// Corre análises. Para os <c>Movimentos</c>, o SQL faz o filtro de período e a
+/// projeção das linhas; para os <c>SaldosDeConta</c> reaproveita o balancete
+/// (<see cref="AccountLedgerService.TrialBalanceAsync"/>). Em ambos, a memória
+/// aplica os filtros da definição (com paragem no limite de
+/// <see cref="AnalysisResult.RowLimit"/>), a ordenação, os agrupamentos com
+/// subtotais em todos os níveis e o total geral. Só lê; exclui os anulados.
 /// </summary>
-public sealed class AnalysisRunner(AccountingDbContext context) : IAnalysisRunner
+public sealed class AnalysisRunner(AccountingDbContext context, AccountLedgerService ledger) : IAnalysisRunner
 {
     public async Task<AnalysisResult?> RunAsync(
         Guid userId,
@@ -31,11 +32,6 @@ public sealed class AnalysisRunner(AccountingDbContext context) : IAnalysisRunne
             throw new ArgumentException(string.Join(" ", errors), nameof(definition));
         }
 
-        if (definition.Source != AnalysisSource.Movimentos)
-        {
-            throw new ArgumentException($"Origem ainda não suportada pelo runner: {definition.Source}.", nameof(definition));
-        }
-
         var hasAccess = await context.Companies
             .AsNoTracking()
             .AnyAsync(
@@ -49,6 +45,28 @@ public sealed class AnalysisRunner(AccountingDbContext context) : IAnalysisRunne
             return null;
         }
 
+        var (rows, truncated) = definition.Source switch
+        {
+            AnalysisSource.Movimentos => await CollectMovementsAsync(companyId, definition, from, to, cancellationToken).ConfigureAwait(false),
+            AnalysisSource.SaldosDeConta => CollectAccountBalances(await ledger.TrialBalanceAsync(companyId, from, to, cancellationToken).ConfigureAwait(false), definition),
+            _ => throw new ArgumentException($"Origem ainda não suportada pelo runner: {definition.Source}.", nameof(definition)),
+        };
+
+        var sorted = Sort(rows, definition);
+        var columns = definition.Columns
+            .Select(key => AnalysisFieldCatalog.Field(definition.Source, key)!)
+            .Select(field => new AnalysisColumn(field.Key, field.Label, field.Type.ToString()))
+            .ToList();
+
+        var groups = BuildGroups(sorted, definition);
+        var grandTotal = Aggregate(sorted, definition.Aggregates);
+
+        return new AnalysisResult(columns, sorted, groups, grandTotal, sorted.Count, truncated);
+    }
+
+    private async Task<(List<IReadOnlyDictionary<string, object?>> Rows, bool Truncated)> CollectMovementsAsync(
+        Guid companyId, AnalysisDefinition definition, DateOnly? from, DateOnly? to, CancellationToken cancellationToken)
+    {
         var query = context.JournalEntryLines
             .AsNoTracking()
             .Where(line => line.CompanyId == companyId && line.JournalEntry.Status != JournalEntryStatus.Voided);
@@ -104,16 +122,42 @@ public sealed class AnalysisRunner(AccountingDbContext context) : IAnalysisRunne
             rows.Add(values);
         }
 
-        var sorted = Sort(rows, definition);
-        var columns = definition.Columns
-            .Select(key => AnalysisFieldCatalog.Field(AnalysisSource.Movimentos, key)!)
-            .Select(field => new AnalysisColumn(field.Key, field.Label, field.Type.ToString()))
-            .ToList();
+        return (rows, truncated);
+    }
 
-        var groups = BuildGroups(sorted, definition);
-        var grandTotal = Aggregate(sorted, definition.Aggregates);
+    private static (List<IReadOnlyDictionary<string, object?>> Rows, bool Truncated) CollectAccountBalances(
+        TrialBalance balance, AnalysisDefinition definition)
+    {
+        var rows = new List<IReadOnlyDictionary<string, object?>>();
+        var truncated = false;
+        foreach (var row in balance.Rows)
+        {
+            var values = new Dictionary<string, object?>
+            {
+                ["accountCode"] = row.AccountCode,
+                ["accountName"] = row.AccountName,
+                ["class"] = row.AccountCode.Length > 0 ? row.AccountCode[..1] : string.Empty,
+                ["openingBalance"] = decimal.Round(row.OpeningBalance, 2),
+                ["debit"] = decimal.Round(row.Debit, 2),
+                ["credit"] = decimal.Round(row.Credit, 2),
+                ["balance"] = decimal.Round(row.Balance, 2),
+            };
 
-        return new AnalysisResult(columns, sorted, groups, grandTotal, sorted.Count, truncated);
+            if (!definition.Filters.All(filter => Matches(values, filter)))
+            {
+                continue;
+            }
+
+            if (rows.Count >= AnalysisResult.RowLimit)
+            {
+                truncated = true;
+                break;
+            }
+
+            rows.Add(values);
+        }
+
+        return (rows, truncated);
     }
 
     private static IReadOnlyDictionary<string, object?> ToValues(Flat flat) => new Dictionary<string, object?>
@@ -280,7 +324,7 @@ public sealed class AnalysisRunner(AccountingDbContext context) : IAnalysisRunne
 
                 var keyParts = fields
                     .Zip(currentKey, (field, value) => new AnalysisGroupKey(
-                        field, AnalysisFieldCatalog.Field(AnalysisSource.Movimentos, field)!.Label, value))
+                        field, AnalysisFieldCatalog.Field(definition.Source, field)!.Label, value))
                     .ToList();
                 groups.Add(new AnalysisGroup(keyParts, Aggregate(bucket, definition.Aggregates), bucket.Count));
             }

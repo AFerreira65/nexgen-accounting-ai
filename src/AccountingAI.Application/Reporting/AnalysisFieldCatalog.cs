@@ -7,7 +7,7 @@ namespace AccountingAI.Application.Reporting;
 /// </summary>
 public static class AnalysisFieldCatalog
 {
-    public static readonly IReadOnlyList<AnalysisSource> Sources = [AnalysisSource.Movimentos];
+    public static readonly IReadOnlyList<AnalysisSource> Sources = [AnalysisSource.Movimentos, AnalysisSource.SaldosDeConta];
 
     private static readonly IReadOnlyList<AnalysisField> MovementFields =
     [
@@ -30,6 +30,17 @@ public static class AnalysisFieldCatalog
         new("amount", "Valor (débito − crédito)", AnalysisFieldType.Money, Groupable: false, Aggregatable: true),
     ];
 
+    private static readonly IReadOnlyList<AnalysisField> AccountBalanceFields =
+    [
+        new("accountCode", "Conta", AnalysisFieldType.Text, Groupable: true, Aggregatable: false),
+        new("accountName", "Nome da conta", AnalysisFieldType.Text, Groupable: true, Aggregatable: false),
+        new("class", "Classe", AnalysisFieldType.Text, Groupable: true, Aggregatable: false),
+        new("openingBalance", "Saldo de abertura", AnalysisFieldType.Money, Groupable: false, Aggregatable: true),
+        new("debit", "Débito", AnalysisFieldType.Money, Groupable: false, Aggregatable: true),
+        new("credit", "Crédito", AnalysisFieldType.Money, Groupable: false, Aggregatable: true),
+        new("balance", "Saldo", AnalysisFieldType.Money, Groupable: false, Aggregatable: true),
+    ];
+
     public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> OperatorsByType =
         new Dictionary<string, IReadOnlyList<string>>
         {
@@ -42,6 +53,7 @@ public static class AnalysisFieldCatalog
     public static IReadOnlyList<AnalysisField> Fields(AnalysisSource source) => source switch
     {
         AnalysisSource.Movimentos => MovementFields,
+        AnalysisSource.SaldosDeConta => AccountBalanceFields,
         _ => [],
     };
 

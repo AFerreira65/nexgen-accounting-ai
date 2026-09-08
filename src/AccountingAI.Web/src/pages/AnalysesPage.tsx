@@ -19,9 +19,12 @@ const OP_LABELS: Record<string, string> = {
   gt: 'maior que', gte: 'maior ou igual', lt: 'menor que', lte: 'menor ou igual',
 }
 
-function emptyDefinition(): AnalysisDefinition {
-  return { source: 'movimentos', columns: [], filters: [], groupBy: [], sort: [], aggregates: [], includeGrandTotal: true }
+function emptyDefinition(source = 'movimentos'): AnalysisDefinition {
+  return { source, columns: [], filters: [], groupBy: [], sort: [], aggregates: [], includeGrandTotal: true }
 }
+
+const sourceKey = (key: string) => key.charAt(0).toLowerCase() + key.slice(1)
+const SOURCE_LABELS: Record<string, string> = { Movimentos: 'Movimentos', SaldosDeConta: 'Saldos de conta' }
 
 export function AnalysesPage() {
   const { activeCompany, analysisCatalog, savedAnalyses, saveAnalysis, updateAnalysis, deleteAnalysis, runAnalysis, source } = useWorkContext()
@@ -53,7 +56,7 @@ export function AnalysesPage() {
     void savedAnalyses(companyId).then(setSaved).catch(() => setSaved([]))
   }, [companyId, savedAnalyses, onDatabase, reload])
 
-  const fields: AnalysisCatalogField[] = catalog?.sources[0]?.fields ?? []
+  const fields: AnalysisCatalogField[] = catalog?.sources.find((s) => sourceKey(s.key) === def.source)?.fields ?? catalog?.sources[0]?.fields ?? []
   const fieldByKey = useMemo(() => new Map(fields.map((field) => [field.key, field])), [fields])
   const operatorsFor = (key: string) => {
     const type = fieldByKey.get(key)?.type
@@ -181,9 +184,14 @@ export function AnalysesPage() {
       </section>
 
       <section className="panel analyses-builder">
-        <div className="panel-heading"><div><h2>{loadedId ? 'Editar análise' : 'Nova análise'}</h2><p>Origem: movimentos da contabilidade.</p></div></div>
+        <div className="panel-heading"><div><h2>{loadedId ? 'Editar análise' : 'Nova análise'}</h2><p>Escolha a origem, as colunas, os filtros, os agrupamentos e os totais.</p></div></div>
 
         <div className="builder-grid">
+          <label className="field-block"><span>Origem</span>
+            <select value={def.source} onChange={(event) => { setDef(emptyDefinition(event.target.value)); setResult(null); setLoadedId(null) }}>
+              {(catalog?.sources ?? []).map((s) => <option key={s.key} value={sourceKey(s.key)}>{SOURCE_LABELS[s.key] ?? s.key}</option>)}
+            </select>
+          </label>
           <label className="field-block"><span>Nome</span><input value={name} maxLength={120} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Gastos por conta e mês" /></label>
           <label className="field-block"><span>Descrição <small>(opcional)</small></span><input value={description} maxLength={500} onChange={(event) => setDescription(event.target.value)} /></label>
         </div>
