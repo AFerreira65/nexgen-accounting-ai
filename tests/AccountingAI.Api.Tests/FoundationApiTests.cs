@@ -1009,6 +1009,62 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task SaftSalesInvoicesSummaryReadsTheFaturacaoBlock()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/";
+        const string xml =
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+            "<AuditFile xmlns=\"urn:OECD:StandardAuditFile-Tax:PT_1.04_01\"><Header><AuditFileVersion>1.04_01</AuditFileVersion></Header>" +
+            "<SourceDocuments><SalesInvoices><NumberOfEntries>2</NumberOfEntries><TotalDebit>0.00</TotalDebit><TotalCredit>300.00</TotalCredit>" +
+            "<Invoice><DocumentNumber>FT A/1</DocumentNumber><DocumentStatus><InvoiceStatus>N</InvoiceStatus></DocumentStatus>" +
+            "<InvoiceDate>2026-08-04</InvoiceDate><InvoiceType>FT</InvoiceType>" +
+            "<DocumentTotals><TaxPayable>23.00</TaxPayable><NetTotal>100.00</NetTotal><GrossTotal>123.00</GrossTotal></DocumentTotals></Invoice>" +
+            "<Invoice><DocumentNumber>FT A/2</DocumentNumber><DocumentStatus><InvoiceStatus>N</InvoiceStatus></DocumentStatus>" +
+            "<InvoiceDate>2026-09-11</InvoiceDate><InvoiceType>FT</InvoiceType>" +
+            "<DocumentTotals><TaxPayable>46.00</TaxPayable><NetTotal>200.00</NetTotal><GrossTotal>246.00</GrossTotal></DocumentTotals></Invoice>" +
+            "</SalesInvoices></SourceDocuments></AuditFile>";
+
+        using var summary = await client
+            .PostAsync(
+                $"{basePath}22222222-2222-2222-2222-222222222222/saft/sales-invoices-summary",
+                new StringContent(xml, Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+        var summaryPayload = await summary.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var malformed = await client
+            .PostAsync(
+                $"{basePath}22222222-2222-2222-2222-222222222222/saft/sales-invoices-summary",
+                new StringContent("<AuditFile><SourceDocuments><SalesInvoices><Invoice></SalesInvoices>", Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .PostAsync(
+                $"{basePath}99999999-9999-9999-9999-999999999999/saft/sales-invoices-summary",
+                new StringContent(xml, Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, summary.StatusCode);
+        StringAssert.Contains(summaryPayload, "\"hasSalesInvoices\":true");
+        StringAssert.Contains(summaryPayload, "\"invoiceCount\":2");
+        StringAssert.Contains(summaryPayload, "\"net\":300");
+        StringAssert.Contains(summaryPayload, "\"month\":8");
+        StringAssert.Contains(summaryPayload, "\"month\":9");
+        Assert.AreEqual(HttpStatusCode.BadRequest, malformed.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task SaftAccountsPreviewClassifiesTheFileAccountsAgainstTheCompanyChart()
     {
         if (!OperatingSystem.IsWindows())

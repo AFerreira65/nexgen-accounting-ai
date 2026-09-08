@@ -1,8 +1,8 @@
-import { ArrowLeftRight, CircleAlert, CircleCheck, Database, Download } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ArrowLeftRight, CircleAlert, CircleCheck, Database, Download, FileUp } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
-import { euro, formatMovementDate, type CrossCheckReport } from '../app/demo-data'
+import { euro, formatMovementDate, type CrossCheckReport, type SaftSalesInvoicesSummary } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -17,13 +17,32 @@ function signed(value: number): string {
   return `${value > 0 ? '+' : ''}${euro.format(value)}`
 }
 
+type SalesInvoicesState = { summary: SaftSalesInvoicesSummary; fileName: string }
+
 export function CrossCheckPage() {
-  const { activeCompany, crossCheck, source } = useWorkContext()
+  const { activeCompany, crossCheck, saftSalesInvoicesSummary, source } = useWorkContext()
   const companyId = activeCompany.companyId
   const { fromDate, setFromDate, toDate, setToDate } = useExerciseDateRange(activeCompany.settings.defaultFiscalYear, companyId)
   const [report, setReport] = useState<CrossCheckReport | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const salesInvoicesInput = useRef<HTMLInputElement>(null)
+  const [salesInvoices, setSalesInvoices] = useState<SalesInvoicesState | null>(null)
+  const [salesInvoicesError, setSalesInvoicesError] = useState('')
+
+  useEffect(() => { setSalesInvoices(null); setSalesInvoicesError('') }, [companyId])
+
+  async function onSalesInvoicesFile(file: File | undefined) {
+    if (!file) return
+    setSalesInvoicesError('')
+    try {
+      const summary = await saftSalesInvoicesSummary(companyId, file)
+      setSalesInvoices({ summary, fileName: file.name })
+    } catch (problem) {
+      setSalesInvoices(null)
+      setSalesInvoicesError(problem instanceof Error ? problem.message : 'Não foi possível ler o SAF-T de faturação.')
+    }
+  }
 
   useEffect(() => {
     if (source !== 'database') { setReport(null); return }
@@ -164,6 +183,46 @@ export function CrossCheckPage() {
           </tr>)}
           {report.sales.months.length === 0 && <tr><td colSpan={4} className="empty-state">Sem vendas lançadas no período.</td></tr>}
         </tbody></table></div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-heading"><div><h2>SAF-T de faturação (opcional)</h2><p>Carregue o SAF-T de faturação do período para comparar as vendas ao nível do documento com o que está lançado.</p></div>
+          <input ref={salesInvoicesInput} type="file" accept=".xml,text/xml,application/xml" className="sr-only" aria-label="Escolher SAF-T de faturação" onChange={(event) => void onSalesInvoicesFile(event.target.files?.[0])} />
+          <button className="button button-secondary" type="button" onClick={() => salesInvoicesInput.current?.click()}><FileUp size={15} /> Escolher ficheiro</button>
+        </div>
+        {salesInvoicesError && <p className="save-status error"><CircleAlert size={15} /> {salesInvoicesError}</p>}
+        {salesInvoices && !salesInvoices.summary.hasSalesInvoices && <p className="save-status"><CircleAlert size={15} /> {salesInvoices.fileName}: sem bloco de faturas de venda.</p>}
+        {salesInvoices?.summary.hasSalesInvoices && (() => {
+          const saft = salesInvoices.summary
+          const keys = Array.from(new Set([
+            ...saft.months.map((month) => month.year * 12 + (month.month - 1)),
+            ...report.sales.months.map((month) => month.year * 12 + (month.month - 1)),
+          ])).sort((a, b) => a - b)
+          const overlaps = saft.months.some((s) => report.sales.months.some((a) => a.year === s.year && a.month === s.month))
+          return <>
+            {!overlaps && <p className="save-status"><CircleAlert size={15} /> O SAF-T de faturação não cobre nenhum mês do período escolhido.</p>}
+            <p className="save-status"><CircleCheck size={15} /> {salesInvoices.fileName}: {saft.invoiceCount} {saft.invoiceCount === 1 ? 'fatura' : 'faturas'}{saft.voidedCount > 0 ? ` (${saft.voidedCount} anuladas)` : ''} · base {euro.format(saft.net)} · IVA {euro.format(saft.tax)}{saft.declaredTotalCredit != null ? ` · TotalCredit declarado ${euro.format(saft.declaredTotalCredit)}` : ''}</p>
+            <div className="table-wrap"><table><thead><tr><th>Mês</th><th className="numeric">SAF-T base</th><th className="numeric">Contab. rendimentos</th><th className="numeric">Δ base</th><th className="numeric">SAF-T IVA</th><th className="numeric">Contab. IVA liq.</th><th className="numeric">Δ IVA</th></tr></thead><tbody>
+              {keys.map((key) => {
+                const year = Math.floor(key / 12)
+                const month = (key % 12) + 1
+                const s = saft.months.find((entry) => entry.year === year && entry.month === month)
+                const a = report.sales.months.find((entry) => entry.year === year && entry.month === month)
+                const baseDelta = Number(((a?.income ?? 0) - (s?.net ?? 0)).toFixed(2))
+                const vatDelta = Number(((a?.outputVat ?? 0) - (s?.tax ?? 0)).toFixed(2))
+                return <tr key={key}>
+                  <td>{monthLabel(year, month)}</td>
+                  <td className="numeric">{euro.format(s?.net ?? 0)}</td>
+                  <td className="numeric">{euro.format(a?.income ?? 0)}</td>
+                  <td className={`numeric${baseDelta === 0 ? '' : ' strong'}`}>{signed(baseDelta)}</td>
+                  <td className="numeric">{euro.format(s?.tax ?? 0)}</td>
+                  <td className="numeric">{euro.format(a?.outputVat ?? 0)}</td>
+                  <td className={`numeric${vatDelta === 0 ? '' : ' strong'}`}>{signed(vatDelta)}</td>
+                </tr>
+              })}
+            </tbody></table></div>
+          </>
+        })()}
       </section>
 
       <section className="panel">

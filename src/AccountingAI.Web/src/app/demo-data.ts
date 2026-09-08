@@ -457,6 +457,30 @@ export type CrossCheckReport = {
   totals: CrossCheckTotals
 }
 
+export type SaftSalesInvoiceMonth = {
+  year: number
+  month: number
+  count: number
+  net: number
+  tax: number
+  gross: number
+}
+
+export type SaftSalesInvoicesSummary = {
+  hasSalesInvoices: boolean
+  declaredNumberOfEntries: number | null
+  declaredTotalDebit: number | null
+  declaredTotalCredit: number | null
+  invoiceCount: number
+  voidedCount: number
+  net: number
+  tax: number
+  gross: number
+  fromDate: string | null
+  toDate: string | null
+  months: SaftSalesInvoiceMonth[]
+}
+
 // Extração do cabeçalho no cliente, usada apenas no modo de demonstração quando a
 // API local não está ligada. Namespace-agnóstica, como o leitor do servidor.
 export function parseSaftHeaderFromXml(text: string): SaftInspectionHeader {

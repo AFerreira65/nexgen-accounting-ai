@@ -1724,6 +1724,64 @@ if (app.Environment.IsDevelopment())
         return report is null ? Results.NotFound() : Results.Ok(report);
     });
 
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/sales-invoices-summary", async (
+        Guid userId,
+        Guid companyId,
+        HttpRequest request,
+        AccountingDbContext context,
+        ISaftSalesInvoicesReader reader,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = null;
+        }
+
+        try
+        {
+            var summary = await reader
+                .ReadSummaryAsync(request.Body, cancellationToken)
+                .ConfigureAwait(false);
+
+            return Results.Ok(new
+            {
+                summary.HasSalesInvoices,
+                summary.DeclaredNumberOfEntries,
+                summary.DeclaredTotalDebit,
+                summary.DeclaredTotalCredit,
+                summary.InvoiceCount,
+                summary.VoidedCount,
+                summary.Net,
+                summary.Tax,
+                summary.Gross,
+                summary.FromDate,
+                summary.ToDate,
+                Months = summary.Months.Select(month => new
+                {
+                    month.Year,
+                    month.Month,
+                    month.Count,
+                    month.Net,
+                    month.Tax,
+                    month.Gross
+                })
+            });
+        }
+        catch (SaftFileFormatException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["saft"] = [exception.Message]
+            });
+        }
+    });
+
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/accounts-preview", async (
         Guid userId,
         Guid companyId,
