@@ -335,6 +335,40 @@ export type SaftValidationRunSummary = SaftValidation & {
   createdAtUtc: string
 }
 
+export type EFaturaImportResult = {
+  batchId: string | null
+  imported: number
+  alreadyExisted: number
+  invalid: number
+  invalidRows: { lineNumber: number; reason: string }[]
+  warnings: string[]
+}
+
+export type EFaturaPurchaseRow = {
+  id: string
+  supplierTaxId: string
+  supplierName: string
+  invoiceNo: string
+  atcud: string | null
+  invoiceDate: string
+  invoiceType: string
+  status: string | null
+  sector: string | null
+  taxBase: number
+  taxAmount: number
+  grossTotal: number
+  sourceFileName: string
+  createdAtUtc: string
+}
+
+export type EFaturaPurchasesPage = {
+  items: EFaturaPurchaseRow[]
+  page: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
+}
+
 // Extração do cabeçalho no cliente, usada apenas no modo de demonstração quando a
 // API local não está ligada. Namespace-agnóstica, como o leitor do servidor.
 export function parseSaftHeaderFromXml(text: string): SaftInspectionHeader {

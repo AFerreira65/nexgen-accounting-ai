@@ -143,7 +143,7 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('link', { name: 'Diários' }))
     expect(screen.getByRole('heading', { name: 'Diários' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /COMPRAS/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'COMPRAS' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('link', { name: 'Documentos' }))
     expect(screen.getByRole('heading', { name: 'Documentos contabilísticos' })).toBeInTheDocument()
@@ -684,6 +684,14 @@ describe('App', () => {
     const newRow = await screen.findByText('99999999')
     expect(within(newRow.closest('tr') as HTMLElement).getByText('Nova')).toBeInTheDocument()
     expect(within(screen.getByText('11').closest('tr') as HTMLElement).getByText('Já existe')).toBeInTheDocument()
+  })
+
+  it('shows the e-Fatura purchases screen (requires the database)', () => {
+    window.history.pushState({}, '', '/compras-efatura')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Compras e-Fatura' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
   it('proposes creating a company when the SAF-T tax number is unknown', async () => {

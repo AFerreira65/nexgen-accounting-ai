@@ -43,6 +43,7 @@ const links = [
   { to: '/series', label: 'Séries', icon: ListOrdered },
   { to: '/taxonomias', label: 'Taxonomias', icon: Tags },
   { to: '/importar', label: 'Importar SAF-T', icon: FileUp },
+  { to: '/compras-efatura', label: 'Compras e-Fatura', icon: Receipt },
   { to: '/organizacao', label: 'Organização', icon: Building2 },
   { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
 ]

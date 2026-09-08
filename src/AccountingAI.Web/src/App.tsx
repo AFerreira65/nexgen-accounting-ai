@@ -19,6 +19,7 @@ import { VatSummaryPage } from './pages/VatSummaryPage'
 import { YearEndClosingPage } from './pages/YearEndClosingPage'
 import { YearOpeningPage } from './pages/YearOpeningPage'
 import { DocumentNumberSeriesPage } from './pages/DocumentNumberSeriesPage'
+import { EFaturaPurchasesPage } from './pages/EFaturaPurchasesPage'
 import { WorkContextProvider } from './app/WorkContext'
 
 export function App() {
@@ -38,6 +39,7 @@ export function App() {
             <Route path="/series" element={<DocumentNumberSeriesPage />} />
             <Route path="/taxonomias" element={<TaxonomiesPage />} />
             <Route path="/importar" element={<SaftImportPage />} />
+            <Route path="/compras-efatura" element={<EFaturaPurchasesPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />
             <Route path="/balancete" element={<TrialBalancePage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />
