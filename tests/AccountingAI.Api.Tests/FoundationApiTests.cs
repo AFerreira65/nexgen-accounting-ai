@@ -846,6 +846,36 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task SaftValidationHistoryIsScopedToTheCompany()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/";
+
+        using var reports = await client
+            .GetAsync($"{basePath}22222222-2222-2222-2222-222222222222/saft/validation-reports")
+            .ConfigureAwait(false);
+        var reportsPayload = await reports.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync($"{basePath}99999999-9999-9999-9999-999999999999/saft/validation-reports")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, reports.StatusCode);
+        StringAssert.StartsWith(reportsPayload.TrimStart(), "[");
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task SaftCompanyCreationRejectsDuplicatesAndUnknownUsers()
     {
         if (!OperatingSystem.IsWindows())

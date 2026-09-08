@@ -1,5 +1,6 @@
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
+using AccountingAI.Domain.Saft;
 using AccountingAI.Infrastructure.SqlServer.Persistence.Configurations;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +31,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<DocumentNumberSeries> DocumentNumberSeries => Set<DocumentNumberSeries>();
 
+    public DbSet<SaftValidationRun> SaftValidationRuns => Set<SaftValidationRun>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -47,6 +50,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new JournalEntryLineConfiguration());
         modelBuilder.ApplyConfiguration(new AccountingDocumentTypeConfiguration());
         modelBuilder.ApplyConfiguration(new DocumentNumberSeriesConfiguration());
+        modelBuilder.ApplyConfiguration(new SaftValidationRunConfiguration());
 
         modelBuilder.Entity<FoundationState>(entity =>
         {

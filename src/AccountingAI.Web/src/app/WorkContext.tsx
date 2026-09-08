@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection, type SaftOpeningBalancesImport, type SaftValidation, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection, type SaftOpeningBalancesImport, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -76,7 +76,8 @@ type WorkContextValue = WorkContextData & {
   reopenMovement: (reference: string) => Promise<void>
   applyTaxonomySuggestions: () => Promise<number>
   inspectSaft: (file: File) => Promise<SaftInspection>
-  validateSaft: (file: File) => Promise<SaftValidation>
+  validateSaft: (file: File, companyId?: string | null) => Promise<SaftValidation>
+  saftValidationReports: (companyId: string) => Promise<SaftValidationRunSummary[]>
   previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
   importSaftAccounts: (companyId: string, file: File, fiscalYear?: number) => Promise<SaftAccountsImport>
   importSaftOpeningBalances: (companyId: string, fiscalYear: number, file: File) => Promise<SaftOpeningBalancesImport>
@@ -608,14 +609,21 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
           : { outcome: 'NewCompanyProposed', companyId: null, legalName: null, accountingStandard: null, accountingSetupVersion: null },
       }
     },
-    validateSaft: async (file) => {
-      const response = await fetch(`/api/v1/development/users/${data.user.id}/saft/validate`, {
+    validateSaft: async (file, companyId) => {
+      const params = new URLSearchParams({ fileName: file.name })
+      if (companyId) params.set('companyId', companyId)
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/saft/validate?${params}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/xml' },
         body: file,
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as SaftValidation
+    },
+    saftValidationReports: async (companyId) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/saft/validation-reports`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SaftValidationRunSummary[]
     },
     previewSaftAccounts: async (companyId, file) => {
       if (source === 'database') {

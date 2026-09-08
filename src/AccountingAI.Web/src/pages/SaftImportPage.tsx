@@ -2,7 +2,7 @@ import { CircleAlert, CircleCheck, Database, Download, FileUp, Info, ShieldCheck
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
-import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection, type SaftOpeningBalancesImport, type SaftValidation } from '../app/demo-data'
+import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection, type SaftOpeningBalancesImport, type SaftValidation, type SaftValidationRunSummary } from '../app/demo-data'
 import { issuesBySeverity, SAFT_SEVERITY_LABELS, saftScopeLabel, saftValidationBlocksImport } from '../app/saftValidation'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -83,24 +83,33 @@ function CompanyProposal({ inspection, onCreated }: { inspection: SaftInspection
   </section>
 }
 
-function SaftValidationPanel({ file, companyName, validation, onResult }: {
+function SaftValidationPanel({ file, companyId, companyName, validation, onResult }: {
   file: File | null
+  companyId: string | null
   companyName: string
   validation: SaftValidation | null
   onResult: (validation: SaftValidation | null) => void
 }) {
-  const { validateSaft } = useWorkContext()
+  const { validateSaft, saftValidationReports } = useWorkContext()
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [error, setError] = useState('')
+  const [history, setHistory] = useState<SaftValidationRunSummary[]>([])
+
+  const loadHistory = useCallback(() => {
+    if (!companyId) { setHistory([]); return }
+    void saftValidationReports(companyId).then(setHistory).catch(() => setHistory([]))
+  }, [companyId, saftValidationReports])
 
   useEffect(() => { setState('idle'); setError(''); onResult(null) }, [file, onResult])
+  useEffect(() => { loadHistory() }, [loadHistory])
 
   async function run() {
     if (!file) return
     setState('loading'); setError('')
     try {
-      onResult(await validateSaft(file))
+      onResult(await validateSaft(file, companyId))
       setState('idle')
+      loadHistory()
     } catch (runError) {
       setState('error')
       setError(runError instanceof Error ? runError.message : 'Não foi possível validar o ficheiro.')
@@ -151,6 +160,18 @@ function SaftValidationPanel({ file, companyName, validation, onResult }: {
           </tr>)}
         </tbody></table>
       </div>)}
+    </>}
+    {history.length > 0 && <>
+      <h3>Validações anteriores</h3>
+      <div className="table-wrap"><table><thead><tr><th>Ficheiro</th><th>Data</th><th className="numeric">Erros</th><th className="numeric">Avisos</th><th>Esquema</th></tr></thead><tbody>
+        {history.map((run) => <tr key={run.id}>
+          <td className="primary-cell">{run.fileName}</td>
+          <td><small>{new Date(run.createdAtUtc).toLocaleString('pt-PT')}</small></td>
+          <td className="numeric strong">{run.counts.error}</td>
+          <td className="numeric">{run.counts.warning}</td>
+          <td><small>{run.schemaAvailable ? (run.schemaValid ? 'conforme' : 'não conforme') : 'não carregado'}</small></td>
+        </tr>)}
+      </tbody></table></div>
     </>}
   </section>
 }
@@ -442,7 +463,7 @@ export function SaftImportPage() {
       </section>
 
       {source === 'database' && <>
-        <SaftValidationPanel file={file} companyName={result.header.companyName} validation={validation} onResult={onValidationResult} />
+        <SaftValidationPanel file={file} companyId={result.match.companyId} companyName={result.header.companyName} validation={validation} onResult={onValidationResult} />
         {validationBlocks && <section className="panel">
           <label className="save-status" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <input type="checkbox" checked={override} onChange={(event) => setOverride(event.target.checked)} />

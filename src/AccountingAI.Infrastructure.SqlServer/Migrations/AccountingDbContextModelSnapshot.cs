@@ -537,6 +537,61 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.ToTable("UserCompanySettings", "identity");
                 });
 
+            modelBuilder.Entity("AccountingAI.Domain.Saft.SaftValidationRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AuditFileVersion")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<int>("ErrorCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<int>("InformationCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IssuesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("SchemaAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("SchemaValid")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("Truncated")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("WarningCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "CreatedAtUtc");
+
+                    b.ToTable("SaftValidationRun", "accounting");
+                });
+
             modelBuilder.Entity("AccountingAI.Infrastructure.SqlServer.Persistence.FoundationState", b =>
                 {
                     b.Property<int>("Id")

@@ -329,6 +329,12 @@ export type SaftValidation = {
   truncated: boolean
 }
 
+export type SaftValidationRunSummary = SaftValidation & {
+  id: string
+  fileName: string
+  createdAtUtc: string
+}
+
 // Extração do cabeçalho no cliente, usada apenas no modo de demonstração quando a
 // API local não está ligada. Namespace-agnóstica, como o leitor do servidor.
 export function parseSaftHeaderFromXml(text: string): SaftInspectionHeader {

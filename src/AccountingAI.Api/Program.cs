@@ -7,6 +7,7 @@ using AccountingAI.Infrastructure.Files;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
 using System.Globalization;
+using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
@@ -1454,7 +1455,9 @@ if (app.Environment.IsDevelopment())
         ISaftSchemaValidator schemaValidator,
         ISaftValidationModelReader modelReader,
         ISaftAnalyticalValidator analyticalValidator,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken,
+        Guid? companyId,
+        string? fileName) =>
     {
         var userExists = await context.UserAccounts
             .AsNoTracking()
@@ -1463,6 +1466,13 @@ if (app.Environment.IsDevelopment())
         if (!userExists)
         {
             return Results.NotFound();
+        }
+
+        Guid? scopedCompanyId = null;
+        if (companyId is { } company &&
+            await HasCompanyAccessAsync(context, userId, company, cancellationToken).ConfigureAwait(false))
+        {
+            scopedCompanyId = company;
         }
 
         var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
@@ -1495,27 +1505,35 @@ if (app.Environment.IsDevelopment())
             }
 
             var allIssues = report.Issues.Concat(analyticalIssues).ToList();
+            var errorCount = allIssues.Count(issue => issue.Severity == SaftValidationSeverity.Error);
+            var warningCount = allIssues.Count(issue => issue.Severity == SaftValidationSeverity.Warning);
+            var informationCount = allIssues.Count(issue => issue.Severity == SaftValidationSeverity.Information);
+            var issuePayload = allIssues.Select(issue => new
+            {
+                issue.RuleId,
+                Severity = issue.Severity.ToString(),
+                issue.Scope,
+                issue.Message,
+                issue.Line,
+                issue.Position,
+                issue.Path
+            }).ToList();
+            var issuesJson = JsonSerializer.Serialize(issuePayload);
+
+            context.SaftValidationRuns.Add(SaftValidationRun.Create(
+                scopedCompanyId, userId,
+                string.IsNullOrWhiteSpace(fileName) ? "(sem nome)" : fileName,
+                report.Version, report.SchemaAvailable, report.SchemaValid,
+                errorCount, warningCount, informationCount, report.Truncated, issuesJson));
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
             return Results.Ok(new
             {
                 report.Version,
                 report.SchemaAvailable,
                 report.SchemaValid,
-                Counts = new
-                {
-                    Error = allIssues.Count(issue => issue.Severity == SaftValidationSeverity.Error),
-                    Warning = allIssues.Count(issue => issue.Severity == SaftValidationSeverity.Warning),
-                    Information = allIssues.Count(issue => issue.Severity == SaftValidationSeverity.Information)
-                },
-                Issues = allIssues.Select(issue => new
-                {
-                    issue.RuleId,
-                    Severity = issue.Severity.ToString(),
-                    issue.Scope,
-                    issue.Message,
-                    issue.Line,
-                    issue.Position,
-                    issue.Path
-                }),
+                Counts = new { Error = errorCount, Warning = warningCount, Information = informationCount },
+                Issues = issuePayload,
                 report.Truncated
             });
         }
@@ -1537,6 +1555,39 @@ if (app.Environment.IsDevelopment())
                 // limpeza best-effort
             }
         }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/validation-reports", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        CancellationToken cancellationToken) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        var runs = await context.SaftValidationRuns
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId)
+            .OrderByDescending(item => item.CreatedAtUtc)
+            .Take(20)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return Results.Ok(runs.Select(run => new
+        {
+            run.Id,
+            run.FileName,
+            Version = run.AuditFileVersion,
+            run.SchemaAvailable,
+            run.SchemaValid,
+            Counts = new { Error = run.ErrorCount, Warning = run.WarningCount, Information = run.InformationCount },
+            run.Truncated,
+            run.CreatedAtUtc,
+            Issues = JsonSerializer.Deserialize<JsonElement>(run.IssuesJson)
+        }));
     });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/accounts-preview", async (

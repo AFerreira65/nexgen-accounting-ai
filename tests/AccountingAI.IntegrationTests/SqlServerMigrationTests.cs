@@ -1,6 +1,7 @@
 using AccountingAI.Application.Saft;
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
+using AccountingAI.Domain.Saft;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
 using Microsoft.Data.SqlClient;
@@ -95,6 +96,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260904102947_JournalEntrySource");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260908092224_SaftValidationRun");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -135,6 +139,26 @@ public sealed class SqlServerMigrationTests
             Assert.AreEqual("EUR", storedCompany.BaseCurrency);
             Assert.AreEqual(100, storedSettings.PageSize);
             Assert.AreEqual(InterfaceTextSize.Larger, storedSettings.TextSize);
+
+            var validationRun = SaftValidationRun.Create(
+                companyId, userId, "saft.xml", "1.04_01",
+                schemaAvailable: true, schemaValid: false,
+                errorCount: 2, warningCount: 1, informationCount: 0, truncated: false,
+                issuesJson: "[{\"ruleId\":\"ENTRY-COUNT\"}]");
+            context.Add(validationRun);
+            await context.SaveChangesAsync().ConfigureAwait(false);
+            context.ChangeTracker.Clear();
+
+            var storedRun = await context.SaftValidationRuns
+                .AsNoTracking()
+                .SingleAsync(item => item.Id == validationRun.Id)
+                .ConfigureAwait(false);
+            Assert.AreEqual("saft.xml", storedRun.FileName);
+            Assert.AreEqual(2, storedRun.ErrorCount);
+            Assert.IsFalse(storedRun.SchemaValid);
+            Assert.AreEqual(companyId, storedRun.CompanyId);
+            StringAssert.Contains(storedRun.IssuesJson, "ENTRY-COUNT");
+            Assert.AreNotEqual(default, storedRun.CreatedAtUtc);
 
             context.Add(new UserCompanySettings(secondCompanyId, userId));
             await Assert.ThrowsAsync<DbUpdateException>(async () =>
