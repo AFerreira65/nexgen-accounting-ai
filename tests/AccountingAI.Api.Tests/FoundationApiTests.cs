@@ -1009,6 +1009,44 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task DataDictionaryListsTablesAndDetailsColumns()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        using var list = await client
+            .GetAsync("/api/v1/development/data-dictionary")
+            .ConfigureAwait(false);
+        var listPayload = await list.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var detail = await client
+            .GetAsync("/api/v1/development/data-dictionary/accounting/Accounts")
+            .ConfigureAwait(false);
+        var detailPayload = await detail.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unknown = await client
+            .GetAsync("/api/v1/development/data-dictionary/accounting/NaoExiste")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, list.StatusCode);
+        StringAssert.Contains(listPayload, "\"name\":\"Accounts\"");
+        StringAssert.Contains(listPayload, "\"schema\":\"organization\"");
+        Assert.AreEqual(HttpStatusCode.OK, detail.StatusCode);
+        StringAssert.Contains(detailPayload, "\"columns\"");
+        StringAssert.Contains(detailPayload, "\"primaryKey\":true");
+        StringAssert.Contains(detailPayload, "organization.Companies");
+        Assert.AreEqual(HttpStatusCode.NotFound, unknown.StatusCode);
+    }
+
+    [TestMethod]
     public async Task RecordInfoReportsAuditStampsAndGuardsTheTable()
     {
         if (!OperatingSystem.IsWindows())

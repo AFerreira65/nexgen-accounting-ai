@@ -1242,6 +1242,16 @@ if (app.Environment.IsDevelopment())
         return Results.Ok(new { applied });
     });
 
+    app.MapGet("/api/v1/development/data-dictionary", (DataDictionaryService dictionary) =>
+        Results.Ok(new { Tables = dictionary.ListTables() }));
+
+    app.MapGet("/api/v1/development/data-dictionary/{schema}/{table}", (
+        string schema, string table, DataDictionaryService dictionary) =>
+    {
+        var detail = dictionary.GetTable(schema, table);
+        return detail is null ? Results.NotFound() : Results.Ok(detail);
+    });
+
     app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
     {
         var normalized = reference.Trim().ToUpperInvariant();
