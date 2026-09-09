@@ -1142,6 +1142,53 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task ManagementReportCatalogAndDossierAreAvailable()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/";
+        const string company = "22222222-2222-2222-2222-222222222222";
+
+        using var catalog = await client
+            .GetAsync("/api/v1/development/management-reports/catalog")
+            .ConfigureAwait(false);
+        var catalogPayload = await catalog.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var dossier = await client
+            .GetAsync($"{basePath}{company}/management-reports/dossier?kind=sintese-mensal&from=2026-01-01&to=2026-12-31")
+            .ConfigureAwait(false);
+        var dossierPayload = await dossier.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var missingDates = await client
+            .GetAsync($"{basePath}{company}/management-reports/dossier?kind=sintese-mensal")
+            .ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync($"{basePath}99999999-9999-9999-9999-999999999999/management-reports/dossier?from=2026-01-01&to=2026-12-31")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, catalog.StatusCode);
+        StringAssert.Contains(catalogPayload, "\"key\":\"sintese-mensal\"");
+        StringAssert.Contains(catalogPayload, "\"sections\"");
+        Assert.AreEqual(HttpStatusCode.OK, dossier.StatusCode);
+        StringAssert.Contains(dossierPayload, "\"companyName\"");
+        StringAssert.Contains(dossierPayload, "\"incomeSummary\"");
+        StringAssert.Contains(dossierPayload, "\"ratios\"");
+        StringAssert.Contains(dossierPayload, "\"crossCheck\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, missingDates.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task DataDictionaryListsTablesAndDetailsColumns()
     {
         if (!OperatingSystem.IsWindows())

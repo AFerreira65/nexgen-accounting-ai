@@ -1,6 +1,7 @@
 using AccountingAI.Api;
 using AccountingAI.Application.CrossCheck;
 using AccountingAI.Application.Efatura;
+using AccountingAI.Application.ManagementReports;
 using AccountingAI.Application.Reporting;
 using AccountingAI.Application.Saft;
 using AccountingAI.Domain.Accounting;
@@ -1383,6 +1384,43 @@ if (app.Environment.IsDevelopment())
 
         return await RunAnalysisAsync(runner, userId, companyId, saved.Definition, fromDate, toDate, cancellationToken)
             .ConfigureAwait(false);
+    });
+
+    app.MapGet("/api/v1/development/management-reports/catalog", () =>
+        Results.Ok(new
+        {
+            Kinds = ManagementReportCatalog.Entries.Select(entry => new
+            {
+                entry.Key,
+                entry.Label,
+                entry.Description,
+                entry.Sections,
+            }),
+        }));
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management-reports/dossier", async (
+        Guid userId, Guid companyId, string? kind, string? from, string? to,
+        IManagementReportDataService data, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        if (fromDate is not { } periodFrom || toDate is not { } periodTo)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["periodo"] = ["Indique a data inicial e a data final do período."]
+            });
+        }
+
+        var request = new ManagementReportRequest(
+            ManagementReportCatalog.Parse(kind), null, periodFrom, periodTo);
+        var dossier = await data
+            .BuildDossierAsync(userId, companyId, request, cancellationToken)
+            .ConfigureAwait(false);
+        return dossier is null ? Results.NotFound() : Results.Ok(dossier);
     });
 
     app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
