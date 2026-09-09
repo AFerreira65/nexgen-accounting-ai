@@ -40,6 +40,7 @@ const links = [
   { to: '/resultados', label: 'Resultados', icon: TrendingUp },
   { to: '/balanco', label: 'Balanço', icon: Scale },
   { to: '/iva', label: 'Resumo de IVA', icon: Receipt },
+  { to: '/apuramento-iva', label: 'Apuramento de IVA', icon: Receipt },
   { to: '/contas-correntes', label: 'Contas correntes', icon: Users },
   { to: '/apuramento', label: 'Apuramento', icon: CalendarCheck },
   { to: '/abertura', label: 'Abertura', icon: DoorOpen },

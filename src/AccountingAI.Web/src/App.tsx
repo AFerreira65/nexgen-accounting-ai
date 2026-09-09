@@ -24,6 +24,7 @@ import { CrossCheckPage } from './pages/CrossCheckPage'
 import { DataDictionaryPage } from './pages/DataDictionaryPage'
 import { AnalysesPage } from './pages/AnalysesPage'
 import { ManagementReportsPage } from './pages/ManagementReportsPage'
+import { VatSettlementPage } from './pages/VatSettlementPage'
 import { RecordProvider } from './app/RecordContext'
 import { WorkContextProvider } from './app/WorkContext'
 
@@ -55,6 +56,7 @@ export function App() {
             <Route path="/resultados" element={<IncomeStatementPage />} />
             <Route path="/balanco" element={<BalanceSheetPage />} />
             <Route path="/iva" element={<VatSummaryPage />} />
+            <Route path="/apuramento-iva" element={<VatSettlementPage />} />
             <Route path="/contas-correntes" element={<PartyBalancesPage />} />
             <Route path="/apuramento" element={<YearEndClosingPage />} />
             <Route path="/abertura" element={<YearOpeningPage />} />

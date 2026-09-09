@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -99,6 +99,7 @@ type WorkContextValue = WorkContextData & {
   generateManagementReport: (companyId: string, target: { kind?: string; question?: string }, period: { from: string; to: string }) => Promise<ManagementReportView>
   managementReports: (companyId: string) => Promise<ManagementReportView[]>
   managementReport: (companyId: string, id: string) => Promise<ManagementReportView>
+  vatReturn: (companyId: string, params: { from: string; to: string }) => Promise<VatReturn>
   previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
   importSaftAccounts: (companyId: string, file: File, fiscalYear?: number) => Promise<SaftAccountsImport>
   importSaftOpeningBalances: (companyId: string, fiscalYear: number, file: File) => Promise<SaftOpeningBalancesImport>
@@ -796,6 +797,12 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/management-reports/${id}`)
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as ManagementReportView
+    },
+    vatReturn: async (companyId, { from, to }) => {
+      const params = new URLSearchParams({ from, to })
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/vat-return?${params}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as VatReturn
     },
     previewSaftAccounts: async (companyId, file) => {
       if (source === 'database') {

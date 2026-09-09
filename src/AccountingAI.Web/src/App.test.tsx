@@ -724,6 +724,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the VAT settlement screen (requires the database)', () => {
+    window.history.pushState({}, '', '/apuramento-iva')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Apuramento de IVA', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('offers an Opções menu on every screen with the two actions', () => {
     window.history.pushState({}, '', '/')
     render(<App />)

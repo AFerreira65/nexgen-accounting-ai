@@ -574,6 +574,30 @@ export type ManagementReportView = {
   dossier: unknown
 }
 
+export type VatReturnAccountLine = {
+  accountCode: string
+  accountName: string
+  role: 'liquidado' | 'dedutivel' | 'regularizacoes' | 'reporte' | 'outras'
+  debit: number
+  credit: number
+  net: number
+}
+
+export type VatReturn = {
+  from: string
+  to: string
+  outputVat: number
+  inputVat: number
+  regularisationsForState: number
+  regularisationsForTaxpayer: number
+  priorPeriodCredit: number
+  periodResult: number
+  netPayable: number
+  creditToCarryForward: number
+  priorCreditAssumed: boolean
+  lines: VatReturnAccountLine[]
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {
