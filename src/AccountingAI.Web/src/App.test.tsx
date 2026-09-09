@@ -732,6 +732,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the AT communication screen (requires the database)', () => {
+    window.history.pushState({}, '', '/comunicacao-at')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Comunicação com a AT', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('offers an Opções menu on every screen with the two actions', () => {
     window.history.pushState({}, '', '/')
     render(<App />)

@@ -1,0 +1,66 @@
+# F2-02A — Configuração e estado do certificado
+
+Primeiro sub-incremento do [F2-02](F2-02-AT-COMMUNICATION.md). Configura o
+certificado de transporte da AT e mostra o seu estado, sem nunca expor a senha
+nem a chave ([`ADR-0008`](../architecture-decisions/ADR-0008-AT-COMMUNICATION.md)).
+
+## Regras
+
+- **`Application/At/`** — `AtCertificateStatus` (`Configured`, `Valid`,
+  `Subject`, `Issuer`, `SerialNumber`, `Thumbprint`, `NotBeforeUtc`,
+  `NotAfterUtc`, `HasPrivateKey`, `Environment`, `Problem`) e
+  `IAtCertificateProvider.Describe()`.
+- **Projeto novo `AccountingAI.Infrastructure.At`** — só referencia
+  `Application`. `AtOptions` (secção `At`): `Certificate:Directory`,
+  `Certificate:FileName`, `Certificate:Path` (absoluto, com prioridade),
+  `Certificate:Password`, `Environment`. `AtCertificateProvider`:
+  - sem caminho → `Configured = false`;
+  - ficheiro inexistente → `Problem` «… não existe em «…»»;
+  - senha errada / formato inválido (`CryptographicException`) → `Problem`
+    «Confirme a senha e o formato do ficheiro (PFX/P12)»;
+  - carrega com `X509CertificateLoader.LoadPkcs12FromFile(...,
+    EphemeralKeySet)` e devolve os metadados; fora do período de validade →
+    `Valid = false` com `Problem`.
+  `EphemeralKeySet` — a chave nunca é escrita em disco. `Environment` é
+  normalizado para `Testes` / `Producao`.
+- **`AddAccountingAt(configuration)`** — liga `AtOptions` e completa a senha com
+  `AT_CERTIFICATE_PASSWORD` quando a secção não a traz; regista o *provider*.
+  Chamado no `Program.cs`. `appsettings.json` ganha a secção `At` (ambiente +
+  local, **sem senha**).
+- **`.slnx`, referência da API e `ModuleDependencyTests`** atualizados
+  (`Infrastructure.At` → `Application`; a API passa a poder referenciá-lo).
+- **API:** `GET /api/v1/development/at/certificate` → o `AtCertificateStatus`
+  (nunca a senha).
+- **PWA:** ecrã **«Comunicação com a AT»** (`/comunicacao-at`) — em modo demo
+  «Requer ligação ao SQL Server»; ligado, mostra o estado do certificado
+  (ambiente, badge configurado/válido/com problema, assunto, emissor, série,
+  impressão digital, validade, chave privada) e um painel «Onde se configura»
+  (as chaves da secção `At`, a senha em *user-secrets* / `AT_CERTIFICATE_PASSWORD`,
+  e a nota de que as chamadas SOAP aguardam a adesão à AT).
+
+Sem alteração de esquema.
+
+## Validação efetuada
+
+- `AccountingAI.Infrastructure.Files.Tests`: `AtCertificateProviderTests` — sem
+  caminho → não configurado; PFX auto-assinado gerado no teste → configurado,
+  válido, com chave privada, ambiente normalizado, assunto correto, sem a senha
+  em lado nenhum; senha errada → `Problem` com «senha»; ficheiro inexistente →
+  `Problem` com «não existe».
+- `AccountingAI.Api.Tests`: `AtCertificateStatusIsReportedWithoutSecrets` — o
+  *endpoint* devolve `configured:false`, `environment:"Testes"`,
+  `hasPrivateKey:false`, e o corpo não contém «password».
+- `AccountingAI.ArchitectureTests` verde com o módulo novo.
+- `AccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
+  `eslint` e os oitenta e um testes de interface verdes.
+- `dotnet build`/`dotnet test` na solução; `scripts/build.ps1 -SyntheticOnly` e
+  `scripts/verify-security.ps1` (inventário e auditoria NuGet) sem ocorrências.
+- Verificação em direto contra `accountingAI` (sem certificado configurado no
+  servidor de desenvolvimento): o ecrã mostra «Não configurado» e o painel de
+  configuração — a degradação sem certificado funciona.
+
+## Fora deste incremento
+
+- as chamadas SOAP à AT (consulta e-Fatura, submissão) — dependem da adesão e
+  dos elementos de teste da AT (F2-02B+);
+- as credenciais por sujeito passivo (subutilizador + perfil WFA).

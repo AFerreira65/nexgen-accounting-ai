@@ -1269,6 +1269,30 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task AtCertificateStatusIsReportedWithoutSecrets()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync("/api/v1/development/at/certificate").ConfigureAwait(false);
+        var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        StringAssert.Contains(payload, "\"configured\":false");
+        StringAssert.Contains(payload, "\"environment\":\"Testes\"");
+        StringAssert.Contains(payload, "\"hasPrivateKey\":false");
+        Assert.IsFalse(payload.Contains("password", StringComparison.OrdinalIgnoreCase), "A senha nunca é devolvida.");
+    }
+
+    [TestMethod]
     public async Task VatReturnIsComputedForTheClosedPeriod()
     {
         if (!OperatingSystem.IsWindows())

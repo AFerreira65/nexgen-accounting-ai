@@ -8,6 +8,7 @@ using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Domain.Saft;
 using AccountingAI.Infrastructure.Ai;
+using AccountingAI.Infrastructure.At;
 using AccountingAI.Infrastructure.Files;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
@@ -26,6 +27,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddAccountingSqlServer(builder.Configuration);
 builder.Services.AddSaftFileReading();
 builder.Services.AddAccountingAi(builder.Configuration);
+builder.Services.AddAccountingAt(builder.Configuration);
 
 var app = builder.Build();
 
@@ -1387,6 +1389,9 @@ if (app.Environment.IsDevelopment())
         return await RunAnalysisAsync(runner, userId, companyId, saved.Definition, fromDate, toDate, cancellationToken)
             .ConfigureAwait(false);
     });
+
+    app.MapGet("/api/v1/development/at/certificate", (AccountingAI.Application.At.IAtCertificateProvider certificates) =>
+        Results.Ok(certificates.Describe()));
 
     app.MapGet("/api/v1/development/management-reports/catalog", () =>
         Results.Ok(new

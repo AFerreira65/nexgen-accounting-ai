@@ -17,6 +17,7 @@ import {
   Receipt,
   Scale,
   Settings,
+  ShieldCheck,
   Sparkles,
   Tags,
   TrendingUp,
@@ -52,6 +53,7 @@ const links = [
   { to: '/importar', label: 'Importar SAF-T', icon: FileUp },
   { to: '/compras-efatura', label: 'Compras e-Fatura', icon: Receipt },
   { to: '/cruzamento', label: 'Cruzamento', icon: ArrowLeftRight },
+  { to: '/comunicacao-at', label: 'Comunicação com a AT', icon: ShieldCheck },
   { to: '/organizacao', label: 'Organização', icon: Building2 },
   { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
 ]

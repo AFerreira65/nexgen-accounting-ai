@@ -28,6 +28,7 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/importar': { schema: 'accounting', name: 'SaftValidationRun' },
   '/compras-efatura': { schema: 'accounting', name: 'EFaturaPurchase' },
   '/cruzamento': { schema: 'accounting', name: 'EFaturaPurchase' },
+  '/comunicacao-at': null,
   '/organizacao': { schema: 'organization', name: 'Companies' },
   '/definicoes': { schema: 'identity', name: 'UserCompanySettings' },
 }

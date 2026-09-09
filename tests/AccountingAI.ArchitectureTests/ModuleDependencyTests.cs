@@ -11,12 +11,13 @@ public sealed class ModuleDependencyTests
             ["AccountingAI.Domain"] = [],
             ["AccountingAI.Application"] = ["AccountingAI.Domain"],
             ["AccountingAI.Infrastructure.Ai"] = ["AccountingAI.Application"],
+            ["AccountingAI.Infrastructure.At"] = ["AccountingAI.Application"],
             ["AccountingAI.Infrastructure.Files"] =
                 ["AccountingAI.Application", "AccountingAI.Domain"],
             ["AccountingAI.Infrastructure.SqlServer"] =
                 ["AccountingAI.Application", "AccountingAI.Domain"],
             ["AccountingAI.Api"] =
-                ["AccountingAI.Application", "AccountingAI.Infrastructure.Ai", "AccountingAI.Infrastructure.Files", "AccountingAI.Infrastructure.SqlServer"],
+                ["AccountingAI.Application", "AccountingAI.Infrastructure.Ai", "AccountingAI.Infrastructure.At", "AccountingAI.Infrastructure.Files", "AccountingAI.Infrastructure.SqlServer"],
             ["AccountingAI.Worker"] =
                 ["AccountingAI.Application", "AccountingAI.Infrastructure.SqlServer"]
         };

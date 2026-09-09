@@ -616,6 +616,20 @@ export type VatReturnFilingSummary = {
   savedAtUtc: string | null
 }
 
+export type AtCertificateStatus = {
+  configured: boolean
+  valid: boolean
+  subject: string | null
+  issuer: string | null
+  serialNumber: string | null
+  thumbprint: string | null
+  notBeforeUtc: string | null
+  notAfterUtc: string | null
+  hasPrivateKey: boolean
+  environment: string
+  problem: string | null
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {

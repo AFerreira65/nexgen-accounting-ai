@@ -175,6 +175,10 @@ html[data-theme='dark'] .report-chrome-panel { border-color: #29414a; }
 .builder-row textarea { flex: 1 1 100%; min-height: 52px; padding: 8px 10px; border: 1px solid #d4dfe2; border-radius: 8px; background: #fbfcfc; font-size: 12px; resize: vertical; }
 .mr-grow { flex: 1 1 100%; }
 .mr-hint { margin: 6px 0 0; color: #78888f; font-size: 10px; line-height: 1.5; }
+.config-hints { margin: 12px 20px; padding: 0; list-style: none; display: grid; gap: 8px; }
+.config-hints li { font-size: 11px; color: #40525a; line-height: 1.6; }
+.config-hints code { padding: 1px 5px; border-radius: 5px; background: #eef3f4; font-size: 10px; }
+html[data-theme='dark'] .config-hints code { background: #1b2b31; }
 .mr-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .button-small { padding: 4px 10px; font-size: 10px; }
 .management-report { padding: 18px 20px; }

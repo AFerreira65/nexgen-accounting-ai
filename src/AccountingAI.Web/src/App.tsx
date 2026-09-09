@@ -25,6 +25,7 @@ import { DataDictionaryPage } from './pages/DataDictionaryPage'
 import { AnalysesPage } from './pages/AnalysesPage'
 import { ManagementReportsPage } from './pages/ManagementReportsPage'
 import { VatSettlementPage } from './pages/VatSettlementPage'
+import { AtCommunicationPage } from './pages/AtCommunicationPage'
 import { RecordProvider } from './app/RecordContext'
 import { WorkContextProvider } from './app/WorkContext'
 
@@ -48,6 +49,7 @@ export function App() {
             <Route path="/importar" element={<SaftImportPage />} />
             <Route path="/compras-efatura" element={<EFaturaPurchasesPage />} />
             <Route path="/cruzamento" element={<CrossCheckPage />} />
+            <Route path="/comunicacao-at" element={<AtCommunicationPage />} />
             <Route path="/dicionario-de-dados" element={<DataDictionaryPage />} />
             <Route path="/analises" element={<AnalysesPage />} />
             <Route path="/relatorios-gestao" element={<ManagementReportsPage />} />
