@@ -1425,6 +1425,81 @@ if (app.Environment.IsDevelopment())
         return dossier is null ? Results.NotFound() : Results.Ok(dossier);
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/ai-settings", async (
+        Guid userId, Guid companyId, CompanyAiSettingsService settings, CancellationToken cancellationToken) =>
+    {
+        var view = await settings.GetAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/ai-settings", async (
+        Guid userId, Guid companyId, PutAiSettingsRequest request,
+        CompanyAiSettingsService settings, CancellationToken cancellationToken) =>
+    {
+        var view = await settings
+            .SaveAsync(userId, companyId, request.Enabled, request.AutoMonthly, cancellationToken)
+            .ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management-reports/generate", async (
+        Guid userId, Guid companyId, string? from, string? to, GenerateManagementReportRequest? request,
+        ManagementReportService reports, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        if (fromDate is not { } periodFrom || toDate is not { } periodTo)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["periodo"] = ["Indique a data inicial e a data final do período."]
+            });
+        }
+
+        var kind = ManagementReportCatalog.Parse(request?.Kind);
+        var question = request?.Question?.Trim();
+        if (kind is null && string.IsNullOrWhiteSpace(question))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["pedido"] = ["Indique um tipo de relatório pré-definido ou uma pergunta."]
+            });
+        }
+
+        var outcome = await reports
+            .GenerateAsync(
+                userId, companyId,
+                new ManagementReportRequest(kind, question, periodFrom, periodTo),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (outcome.NotFound)
+        {
+            return Results.NotFound();
+        }
+
+        return outcome.Disabled
+            ? Results.Problem(outcome.DisabledReason, statusCode: StatusCodes.Status409Conflict)
+            : Results.Ok(outcome.View);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management-reports", async (
+        Guid userId, Guid companyId, ManagementReportService reports, CancellationToken cancellationToken) =>
+    {
+        var list = await reports.ListAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management-reports/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, ManagementReportService reports, CancellationToken cancellationToken) =>
+    {
+        var view = await reports.GetAsync(userId, companyId, id, cancellationToken).ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
     app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
     {
         var normalized = reference.Trim().ToUpperInvariant();
@@ -2779,6 +2854,10 @@ public sealed record PutReportTemplateRequest(
     bool ShowFirmName,
     bool ShowCompanyIdentity,
     string? Orientation);
+
+public sealed record PutAiSettingsRequest(bool Enabled, bool AutoMonthly);
+
+public sealed record GenerateManagementReportRequest(string? Kind, string? Question);
 
 public sealed record CreateSaftCompanyRequest(
     string TaxRegistrationNumber,

@@ -33,6 +33,8 @@ internal static class DataDictionaryText
         ["EFaturaPurchase"] = "Fatura de compra conhecida pelo Portal e-Fatura, importada de um CSV, para o cruzamento.",
         ["SavedAnalysis"] = "Definição de uma análise configurável guardada por uma empresa (origem, colunas, filtros, agrupamentos, totais).",
         ["ReportTemplate"] = "Configuração de impressão de um relatório fixo numa empresa (linhas de cabeçalho, identificação, orientação).",
+        ["ManagementReport"] = "Relatório de gestão gerado por IA: o tipo, o período, o modelo, e o dossiê e o resultado guardados.",
+        ["CompanyAiSettings"] = "Interruptor dos relatórios de gestão com IA de uma empresa (ativo, geração mensal automática).",
         ["FoundationState"] = "Estado interno da fundação da plataforma; não é de uso contabilístico.",
     };
 
@@ -153,5 +155,18 @@ internal static class DataDictionaryText
         ["ReportTemplate.ShowFirmName"] = "Se a folha impressa mostra o nome do gabinete.",
         ["ReportTemplate.ShowCompanyIdentity"] = "Se a folha impressa mostra a identificação da empresa (nome e NIF).",
         ["ReportTemplate.Orientation"] = "Orientação da folha: retrato ou paisagem.",
+
+        ["ManagementReport.Kind"] = "O tipo pré-definido (sintese-mensal, …) ou «pergunta» quando é uma pergunta livre.",
+        ["ManagementReport.Question"] = "A pergunta livre do utilizador, quando aplicável.",
+        ["ManagementReport.PeriodFrom"] = "Data inicial do período do relatório.",
+        ["ManagementReport.PeriodTo"] = "Data final do período do relatório.",
+        ["ManagementReport.Model"] = "O modelo de IA usado na geração.",
+        ["ManagementReport.DossierJson"] = "O dossiê de dados (retrato determinístico do período) em JSON, guardado para reproduzir o relatório.",
+        ["ManagementReport.ResultJson"] = "O resultado redigido (resumo, secções, alertas, indicadores) em JSON.",
+        ["ManagementReport.PromptTokens"] = "Tokens de entrada consumidos na chamada ao modelo.",
+        ["ManagementReport.OutputTokens"] = "Tokens de saída produzidos pelo modelo.",
+
+        ["CompanyAiSettings.Enabled"] = "Se os relatórios de gestão com IA estão disponíveis para a empresa.",
+        ["CompanyAiSettings.AutoMonthly"] = "Se a síntese mensal é gerada automaticamente.",
     };
 }

@@ -1189,6 +1189,86 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task ManagementReportSettingsGuardGenerationAndHistoryIsReadable()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/";
+        const string company = "22222222-2222-2222-2222-222222222222";
+        var settingsPath = $"{basePath}{company}/ai-settings";
+
+        using var settings = await client.GetAsync(settingsPath).ConfigureAwait(false);
+        var settingsPayload = await settings.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var disabledGenerate = await client
+            .PostAsync(
+                $"{basePath}{company}/management-reports/generate?from=2026-01-01&to=2026-12-31",
+                new StringContent("{\"kind\":\"sintese-mensal\"}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        using var enable = await client
+            .PutAsync(settingsPath, new StringContent(
+                "{\"enabled\":true,\"autoMonthly\":false}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+        var enablePayload = await enable.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        // Ligado mas sem chave no servidor de teste → continua 409.
+        using var noKeyGenerate = await client
+            .PostAsync(
+                $"{basePath}{company}/management-reports/generate?from=2026-01-01&to=2026-12-31",
+                new StringContent("{\"kind\":\"sintese-mensal\"}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        // Repõe o default para não deixar estado no accountingAI.
+        using var restore = await client
+            .PutAsync(settingsPath, new StringContent(
+                "{\"enabled\":false,\"autoMonthly\":false}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        using var missingDates = await client
+            .PostAsync(
+                $"{basePath}{company}/management-reports/generate",
+                new StringContent("{\"kind\":\"sintese-mensal\"}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        using var emptyRequest = await client
+            .PostAsync(
+                $"{basePath}{company}/management-reports/generate?from=2026-01-01&to=2026-12-31",
+                new StringContent("{}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        using var history = await client.GetAsync($"{basePath}{company}/management-reports").ConfigureAwait(false);
+        var historyPayload = await history.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync($"{basePath}99999999-9999-9999-9999-999999999999/ai-settings")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, settings.StatusCode);
+        StringAssert.Contains(settingsPayload, "\"enabled\":false");
+        StringAssert.Contains(settingsPayload, "\"narratorConfigured\":false");
+        Assert.AreEqual(HttpStatusCode.Conflict, disabledGenerate.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, enable.StatusCode);
+        StringAssert.Contains(enablePayload, "\"enabled\":true");
+        Assert.AreEqual(HttpStatusCode.Conflict, noKeyGenerate.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, restore.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, missingDates.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, emptyRequest.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, history.StatusCode);
+        StringAssert.StartsWith(historyPayload.TrimStart(), "[");
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task DataDictionaryListsTablesAndDetailsColumns()
     {
         if (!OperatingSystem.IsWindows())

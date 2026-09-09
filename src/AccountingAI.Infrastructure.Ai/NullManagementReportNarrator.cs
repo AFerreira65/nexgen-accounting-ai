@@ -25,6 +25,8 @@ public sealed class NullManagementReportNarrator : IManagementReportNarrator
 
     public bool IsConfigured => false;
 
+    public string Model => "—";
+
     public Task<ManagementReportNarration> GenerateAsync(
         ManagementReportRequest request,
         ManagementReportDossier dossier,

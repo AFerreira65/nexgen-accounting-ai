@@ -23,6 +23,9 @@ public interface IManagementReportNarrator
     /// <summary>`true` quando há uma chave de API configurada.</summary>
     bool IsConfigured { get; }
 
+    /// <summary>O nome do modelo configurado (ou <c>"—"</c> quando não há).</summary>
+    string Model { get; }
+
     Task<ManagementReportNarration> GenerateAsync(
         ManagementReportRequest request,
         ManagementReportDossier dossier,

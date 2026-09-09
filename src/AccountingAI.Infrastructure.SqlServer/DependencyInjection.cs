@@ -60,6 +60,8 @@ public static class DependencyInjection
         services.AddScoped<AccountingAI.Application.Reporting.IAnalysisRunner, AnalysisRunner>();
         services.AddScoped<ReportTemplateService>();
         services.AddScoped<AccountingAI.Application.ManagementReports.IManagementReportDataService, ManagementReportDataService>();
+        services.AddScoped<CompanyAiSettingsService>();
+        services.AddScoped<ManagementReportService>();
         services.AddScoped<OrganizationAdminService>();
         services.AddScoped<JournalPostingService>();
         services.AddScoped<DocumentNumberSeriesService>();

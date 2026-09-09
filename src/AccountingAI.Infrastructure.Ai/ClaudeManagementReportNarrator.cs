@@ -32,6 +32,8 @@ public sealed class ClaudeManagementReportNarrator : IManagementReportNarrator
 
     public bool IsConfigured => client is not null;
 
+    public string Model => options.Model;
+
     public async Task<ManagementReportNarration> GenerateAsync(
         ManagementReportRequest request,
         ManagementReportDossier dossier,

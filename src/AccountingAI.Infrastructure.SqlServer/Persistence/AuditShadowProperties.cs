@@ -31,6 +31,8 @@ internal static class AuditShadowProperties
         typeof(UserCompanySettings),
         typeof(SavedAnalysis),
         typeof(ReportTemplate),
+        typeof(ManagementReport),
+        typeof(CompanyAiSettings),
     ];
 
     public static void Apply(ModelBuilder modelBuilder)
