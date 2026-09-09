@@ -7,6 +7,7 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/AccountingAI.Infrastructure.Ai/AccountingAI.Infrastructure.Ai.csproj" />
     <ProjectReference Include="../../src/AccountingAI.Infrastructure.Files/AccountingAI.Infrastructure.Files.csproj" />
   </ItemGroup>
   <ItemGroup>

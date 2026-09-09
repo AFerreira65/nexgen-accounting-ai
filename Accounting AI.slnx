@@ -3,6 +3,7 @@
   <Project Path="src/AccountingAI.Application/AccountingAI.Application.csproj" />
   <Project Path="src/AccountingAI.Core/AccountingAI.Core.csproj" />
   <Project Path="src/AccountingAI.Domain/AccountingAI.Domain.csproj" />
+  <Project Path="src/AccountingAI.Infrastructure.Ai/AccountingAI.Infrastructure.Ai.csproj" />
   <Project Path="src/AccountingAI.Infrastructure.Files/AccountingAI.Infrastructure.Files.csproj" />
   <Project Path="src/AccountingAI.Infrastructure.SqlServer/AccountingAI.Infrastructure.SqlServer.csproj" />
   <Project Path="src/AccountingAI.WinForms/AccountingAI.WinForms.csproj" />

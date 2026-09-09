@@ -7,6 +7,7 @@ using AccountingAI.Application.Saft;
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Domain.Saft;
+using AccountingAI.Infrastructure.Ai;
 using AccountingAI.Infrastructure.Files;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
@@ -24,6 +25,7 @@ builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
 builder.Services.AddProblemDetails();
 builder.Services.AddAccountingSqlServer(builder.Configuration);
 builder.Services.AddSaftFileReading();
+builder.Services.AddAccountingAi(builder.Configuration);
 
 var app = builder.Build();
 
