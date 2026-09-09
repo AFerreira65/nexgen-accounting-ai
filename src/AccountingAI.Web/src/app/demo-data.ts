@@ -598,6 +598,24 @@ export type VatReturn = {
   lines: VatReturnAccountLine[]
 }
 
+export type VatReturnFilingView = {
+  saved: boolean
+  savedAtUtc: string | null
+  priorPeriodCredit: number
+  suggestedPriorCredit: number
+  priorFromPreviousFiling: boolean
+  return: VatReturn
+}
+
+export type VatReturnFilingSummary = {
+  id: string
+  periodFrom: string
+  periodTo: string
+  netPayable: number
+  creditToCarryForward: number
+  savedAtUtc: string | null
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {

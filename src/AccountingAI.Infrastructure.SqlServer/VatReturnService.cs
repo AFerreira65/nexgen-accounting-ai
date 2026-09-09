@@ -23,6 +23,7 @@ public sealed class VatReturnService(AccountingDbContext context) : IVatReturnSe
         Guid companyId,
         DateOnly from,
         DateOnly to,
+        decimal? priorPeriodCredit = null,
         CancellationToken cancellationToken = default)
     {
         var hasAccess = await context.Companies
@@ -56,14 +57,26 @@ public sealed class VatReturnService(AccountingDbContext context) : IVatReturnSe
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var priorCarryForward = await context.JournalEntryLines
-            .AsNoTracking()
-            .Where(line => line.CompanyId == companyId &&
-                line.JournalEntry.Status != JournalEntryStatus.Voided &&
-                line.JournalEntry.EntryDate < from &&
-                line.Account.Code.StartsWith(CarryForwardPrefix))
-            .SumAsync(line => line.Debit - line.Credit, cancellationToken)
-            .ConfigureAwait(false);
+        decimal priorCredit;
+        bool priorCreditAssumed;
+        if (priorPeriodCredit is { } provided)
+        {
+            priorCredit = decimal.Round(provided, 2);
+            priorCreditAssumed = false;
+        }
+        else
+        {
+            var priorCarryForward = await context.JournalEntryLines
+                .AsNoTracking()
+                .Where(line => line.CompanyId == companyId &&
+                    line.JournalEntry.Status != JournalEntryStatus.Voided &&
+                    line.JournalEntry.EntryDate < from &&
+                    line.Account.Code.StartsWith(CarryForwardPrefix))
+                .SumAsync(line => line.Debit - line.Credit, cancellationToken)
+                .ConfigureAwait(false);
+            priorCredit = priorCarryForward > 0m ? decimal.Round(priorCarryForward, 2) : 0m;
+            priorCreditAssumed = true;
+        }
 
         var lines = grouped
             .Select(row => new VatReturnAccountLine(
@@ -84,10 +97,9 @@ public sealed class VatReturnService(AccountingDbContext context) : IVatReturnSe
         var regularisationsForState = Sum("regularizacoes", line => line.Credit);
         var regularisationsForTaxpayer = Sum("regularizacoes", line => line.Debit);
 
-        var priorPeriodCredit = priorCarryForward > 0m ? decimal.Round(priorCarryForward, 2) : 0m;
         var periodResult = decimal.Round(
             (outputVat + regularisationsForState) - (inputVat + regularisationsForTaxpayer), 2);
-        var afterCarry = decimal.Round(periodResult - priorPeriodCredit, 2);
+        var afterCarry = decimal.Round(periodResult - priorCredit, 2);
 
         return new VatReturn(
             from,
@@ -96,11 +108,11 @@ public sealed class VatReturnService(AccountingDbContext context) : IVatReturnSe
             inputVat,
             regularisationsForState,
             regularisationsForTaxpayer,
-            priorPeriodCredit,
+            priorCredit,
             periodResult,
             afterCarry > 0m ? afterCarry : 0m,
             afterCarry < 0m ? -afterCarry : 0m,
-            PriorCreditAssumed: true,
+            priorCreditAssumed,
             lines);
     }
 

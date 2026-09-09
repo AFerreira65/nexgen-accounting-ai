@@ -1518,9 +1518,60 @@ if (app.Environment.IsDevelopment())
         }
 
         var result = await vat
-            .BuildAsync(userId, companyId, periodFrom, periodTo, cancellationToken)
+            .BuildAsync(userId, companyId, periodFrom, periodTo, null, cancellationToken)
             .ConfigureAwait(false);
         return result is null ? Results.NotFound() : Results.Ok(result);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-return/saved", async (
+        Guid userId, Guid companyId, string? from, string? to,
+        VatReturnFilingService filings, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        if (fromDate is not { } periodFrom || toDate is not { } periodTo)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["periodo"] = ["Indique a data inicial e a data final do período."]
+            });
+        }
+
+        var view = await filings.GetAsync(userId, companyId, periodFrom, periodTo, cancellationToken).ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-return/saved", async (
+        Guid userId, Guid companyId, string? from, string? to, SaveVatReturnRequest request,
+        VatReturnFilingService filings, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        if (fromDate is not { } periodFrom || toDate is not { } periodTo)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["periodo"] = ["Indique a data inicial e a data final do período."]
+            });
+        }
+
+        var view = await filings
+            .SaveAsync(userId, companyId, periodFrom, periodTo, request?.PriorPeriodCredit ?? 0m, cancellationToken)
+            .ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-return/history", async (
+        Guid userId, Guid companyId, VatReturnFilingService filings, CancellationToken cancellationToken) =>
+    {
+        var list = await filings.ListAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
     });
 
     app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
@@ -2881,6 +2932,8 @@ public sealed record PutReportTemplateRequest(
 public sealed record PutAiSettingsRequest(bool Enabled, bool AutoMonthly);
 
 public sealed record GenerateManagementReportRequest(string? Kind, string? Question);
+
+public sealed record SaveVatReturnRequest(decimal PriorPeriodCredit);
 
 public sealed record CreateSaftCompanyRequest(
     string TaxRegistrationNumber,

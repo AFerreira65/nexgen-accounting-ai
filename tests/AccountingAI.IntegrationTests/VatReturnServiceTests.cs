@@ -81,7 +81,7 @@ public sealed class VatReturnServiceTests
             var service = new VatReturnService(context);
 
             var q1 = await service
-                .BuildAsync(userId, companyId, new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), CancellationToken.None)
+                .BuildAsync(userId, companyId, new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), null, CancellationToken.None)
                 .ConfigureAwait(false);
 
             Assert.IsNotNull(q1);
@@ -101,14 +101,14 @@ public sealed class VatReturnServiceTests
 
             // Um período só com IVA dedutível → excesso a reportar, nada a entregar.
             var deductibleOnly = await service
-                .BuildAsync(userId, companyId, new DateOnly(2026, 2, 12), new DateOnly(2026, 2, 12), CancellationToken.None)
+                .BuildAsync(userId, companyId, new DateOnly(2026, 2, 12), new DateOnly(2026, 2, 12), null, CancellationToken.None)
                 .ConfigureAwait(false);
             Assert.AreEqual(0m, deductibleOnly!.NetPayable);
             Assert.AreEqual(150m, deductibleOnly.CreditToCarryForward, "0 − 100 − 50 de excesso anterior.");
 
             // Sem acesso → null.
             Assert.IsNull(await service
-                .BuildAsync(Guid.NewGuid(), companyId, new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), CancellationToken.None)
+                .BuildAsync(Guid.NewGuid(), companyId, new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), null, CancellationToken.None)
                 .ConfigureAwait(false));
         }
         finally

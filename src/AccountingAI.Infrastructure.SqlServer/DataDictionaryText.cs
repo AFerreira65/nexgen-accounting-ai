@@ -35,6 +35,7 @@ internal static class DataDictionaryText
         ["ReportTemplate"] = "Configuração de impressão de um relatório fixo numa empresa (linhas de cabeçalho, identificação, orientação).",
         ["ManagementReport"] = "Relatório de gestão gerado por IA: o tipo, o período, o modelo, e o dossiê e o resultado guardados.",
         ["CompanyAiSettings"] = "Interruptor dos relatórios de gestão com IA de uma empresa (ativo, geração mensal automática).",
+        ["VatReturnFiling"] = "Apuramento periódico de IVA guardado por uma empresa (período, excesso reportado do período anterior, fotografia do cálculo).",
         ["FoundationState"] = "Estado interno da fundação da plataforma; não é de uso contabilístico.",
     };
 
@@ -168,5 +169,10 @@ internal static class DataDictionaryText
 
         ["CompanyAiSettings.Enabled"] = "Se os relatórios de gestão com IA estão disponíveis para a empresa.",
         ["CompanyAiSettings.AutoMonthly"] = "Se a síntese mensal é gerada automaticamente.",
+
+        ["VatReturnFiling.PeriodFrom"] = "Data inicial do período do apuramento.",
+        ["VatReturnFiling.PeriodTo"] = "Data final do período do apuramento.",
+        ["VatReturnFiling.PriorPeriodCredit"] = "Excesso a reportar do período anterior, indicado pelo utilizador.",
+        ["VatReturnFiling.SnapshotJson"] = "A fotografia do apuramento calculado (liquidado, dedutível, regularizações, posição) em JSON.",
     };
 }

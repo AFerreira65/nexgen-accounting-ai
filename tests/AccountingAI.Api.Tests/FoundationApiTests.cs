@@ -1298,6 +1298,16 @@ public sealed class FoundationApiTests
             .GetAsync($"{basePath}99999999-9999-9999-9999-999999999999/vat-return?from=2026-01-01&to=2026-12-31")
             .ConfigureAwait(false);
 
+        using var saved = await client
+            .GetAsync($"{basePath}{company}/vat-return/saved?from=2026-01-01&to=2026-03-31")
+            .ConfigureAwait(false);
+        var savedPayload = await saved.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var history = await client
+            .GetAsync($"{basePath}{company}/vat-return/history")
+            .ConfigureAwait(false);
+        var historyPayload = await history.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.OK, vat.StatusCode);
         StringAssert.Contains(vatPayload, "\"outputVat\"");
         StringAssert.Contains(vatPayload, "\"inputVat\"");
@@ -1306,6 +1316,12 @@ public sealed class FoundationApiTests
         StringAssert.Contains(vatPayload, "\"lines\"");
         Assert.AreEqual(HttpStatusCode.BadRequest, missingDates.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, saved.StatusCode);
+        StringAssert.Contains(savedPayload, "\"saved\":false");
+        StringAssert.Contains(savedPayload, "\"suggestedPriorCredit\"");
+        StringAssert.Contains(savedPayload, "\"return\"");
+        Assert.AreEqual(HttpStatusCode.OK, history.StatusCode);
+        StringAssert.StartsWith(historyPayload.TrimStart(), "[");
     }
 
     [TestMethod]

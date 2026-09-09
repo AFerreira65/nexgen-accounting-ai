@@ -33,6 +33,7 @@ internal static class AuditShadowProperties
         typeof(ReportTemplate),
         typeof(ManagementReport),
         typeof(CompanyAiSettings),
+        typeof(VatReturnFiling),
     ];
 
     public static void Apply(ModelBuilder modelBuilder)

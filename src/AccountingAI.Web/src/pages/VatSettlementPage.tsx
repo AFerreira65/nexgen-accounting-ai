@@ -1,8 +1,8 @@
-import { Database, Download, Info, Receipt } from 'lucide-react'
+import { Database, Download, Info, Receipt, Save } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
-import { euro, type VatReturn } from '../app/demo-data'
+import { euro, formatMovementDate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView } from '../app/demo-data'
 import { PeriodShortcuts, periodReference, quarterRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
 import { ReportChrome } from '../app/ReportChrome'
@@ -16,6 +16,8 @@ const ROLE_LABELS: Record<VatReturn['lines'][number]['role'], string> = {
   outras: 'Outras contas de IVA',
 }
 
+const round2 = (value: number) => Math.round(value * 100) / 100
+
 // O apuramento é sempre de um período de declaração (mês ou trimestre) — arranca
 // no trimestre da data de referência, não no exercício inteiro.
 function defaultQuarter(fiscalYear: number | null | undefined) {
@@ -24,7 +26,7 @@ function defaultQuarter(fiscalYear: number | null | undefined) {
 }
 
 export function VatSettlementPage() {
-  const { activeCompany, source, vatReturn } = useWorkContext()
+  const { activeCompany, source, savedVatReturn, saveVatReturn, vatReturnHistory } = useWorkContext()
   const companyId = activeCompany.companyId
   const fiscalYear = activeCompany.settings.defaultFiscalYear
   const onDatabase = source === 'database'
@@ -32,8 +34,13 @@ export function VatSettlementPage() {
 
   const [fromDate, setFromDate] = useState(() => defaultQuarter(fiscalYear).from)
   const [toDate, setToDate] = useState(() => defaultQuarter(fiscalYear).to)
-  const [result, setResult] = useState<VatReturn | null>(null)
+  const [view, setView] = useState<VatReturnFilingView | null>(null)
+  const [prior, setPrior] = useState('0')
+  const [history, setHistory] = useState<VatReturnFilingSummary[]>([])
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [status, setStatus] = useState('')
+  const [reload, setReload] = useState(0)
 
   useEffect(() => {
     const range = defaultQuarter(fiscalYear)
@@ -42,34 +49,60 @@ export function VatSettlementPage() {
   }, [fiscalYear, companyId])
 
   useEffect(() => {
-    if (!onDatabase || !fromDate || !toDate) { setResult(null); return }
+    if (!onDatabase || !fromDate || !toDate) { setView(null); return }
     const controller = new AbortController()
     setError('')
-    void vatReturn(companyId, { from: fromDate, to: toDate })
-      .then((value) => { if (!controller.signal.aborted) setResult(value) })
+    setStatus('')
+    void savedVatReturn(companyId, { from: fromDate, to: toDate })
+      .then((value) => { if (!controller.signal.aborted) { setView(value); setPrior(String(value.priorPeriodCredit)) } })
       .catch((problem: unknown) => { if (!controller.signal.aborted) setError(problem instanceof Error ? problem.message : 'Não foi possível calcular o apuramento.') })
     return () => controller.abort()
-  }, [companyId, onDatabase, fromDate, toDate, vatReturn])
+  }, [companyId, onDatabase, fromDate, toDate, savedVatReturn, reload])
 
-  // Cada linha do mapa mostra o valor da rubrica e o operador com que entra no
-  // apuramento (à imagem de uma declaração). O IVA dedutível pode vir negativo
-  // num período em que as regularizações o superam — o operador «−» mantém-se.
+  useEffect(() => {
+    if (!onDatabase) { setHistory([]); return }
+    void vatReturnHistory(companyId).then(setHistory).catch(() => setHistory([]))
+  }, [companyId, onDatabase, vatReturnHistory, reload])
+
+  const result = view?.return ?? null
+  const priorValue = Number(prior.replace(',', '.')) || 0
+  const afterCarry = result ? round2(result.periodResult - priorValue) : 0
+  const netPayable = afterCarry > 0 ? afterCarry : 0
+  const carryForward = afterCarry < 0 ? -afterCarry : 0
+
   const map = useMemo(() => result ? [
     { op: '+', label: 'IVA liquidado (2433)', value: result.outputVat },
     { op: '−', label: 'IVA dedutível (2432)', value: result.inputVat },
     { op: '+', label: 'Regularizações a favor do Estado (2434)', value: result.regularisationsForState },
     { op: '−', label: 'Regularizações a favor do sujeito passivo (2434)', value: result.regularisationsForTaxpayer },
     { op: '=', label: 'Resultado do período', value: result.periodResult, strong: true },
-    { op: '−', label: 'Excesso a reportar do período anterior (2437)', value: result.priorPeriodCredit },
-  ] : [], [result])
+    { op: '−', label: 'Excesso a reportar do período anterior (2437)', value: priorValue },
+  ] : [], [result, priorValue])
 
   const finalRow = result
-    ? result.netPayable > 0
-      ? { label: 'IVA a entregar ao Estado', value: result.netPayable }
-      : result.creditToCarryForward > 0
-        ? { label: 'Excesso a reportar para o período seguinte', value: result.creditToCarryForward }
+    ? netPayable > 0
+      ? { label: 'IVA a entregar ao Estado', value: netPayable }
+      : carryForward > 0
+        ? { label: 'Excesso a reportar para o período seguinte', value: carryForward }
         : { label: 'Nada a entregar nem a reportar', value: 0 }
     : null
+
+  const save = async () => {
+    if (!result) return
+    setBusy(true)
+    setError('')
+    try {
+      const updated = await saveVatReturn(companyId, { from: fromDate, to: toDate }, priorValue)
+      setView(updated)
+      setPrior(String(updated.priorPeriodCredit))
+      setStatus('Apuramento guardado.')
+      setReload((value) => value + 1)
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Não foi possível guardar o apuramento.')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const exportCsv = () => {
     if (!result) return
@@ -96,14 +129,19 @@ export function VatSettlementPage() {
     <div className="filterbar no-print">
       <label><span className="sr-only">Data inicial</span><input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
-      <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
+      <PeriodShortcuts fiscalYear={fiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
+      <label className="mr-hint">Excesso do período anterior
+        <input type="number" step="0.01" value={prior} onChange={(event) => setPrior(event.target.value)} style={{ width: '9rem' }} />
+      </label>
+      <button type="button" className="button button-primary" onClick={() => void save()} disabled={!result || busy}><Save size={15} /> {busy ? 'A guardar…' : 'Guardar apuramento'}</button>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={!result}><Download size={15} /> Exportar CSV</button>
     </div>
 
     {error && <p className="save-status error">{error}</p>}
+    {status && !error && <p className="save-status success">{status}</p>}
 
-    {result && <section className="panel">
-      <div className="panel-heading"><div><h2>Apuramento do período</h2><p>{fromDate} a {toDate}.</p></div></div>
+    {view && result && <section className="panel">
+      <div className="panel-heading"><div><h2>Apuramento do período</h2><p>{fromDate} a {toDate}. {view.saved && view.savedAtUtc ? `Guardado em ${formatMovementDate(view.savedAtUtc.slice(0, 10))}.` : 'Ainda não guardado.'}</p></div></div>
       <div className="table-wrap"><table>
         <tbody>{map.map((row) => <tr key={row.label} className={row.strong ? 'subtotal-row' : undefined}>
           <td className="numeric" aria-hidden="true">{row.op === '=' ? '' : row.op}</td>
@@ -112,7 +150,11 @@ export function VatSettlementPage() {
         </tr>)}</tbody>
         {finalRow && <tfoot><tr className="analyses-grand"><td /><td>{finalRow.label}</td><td className="numeric strong">{euro.format(finalRow.value)}</td></tr></tfoot>}
       </table></div>
-      {result.priorCreditAssumed && result.priorPeriodCredit > 0 && <p className="mr-hint"><Info size={13} /> O excesso a reportar do período anterior foi assumido do saldo devedor das contas 2437; confirme-o contra a última declaração.</p>}
+      {view.priorFromPreviousFiling
+        ? <p className="mr-hint"><Info size={13} /> O excesso a reportar do período anterior ({euro.format(view.suggestedPriorCredit)}) foi proposto a partir do apuramento guardado do período anterior.</p>
+        : result.priorCreditAssumed && priorValue > 0
+          ? <p className="mr-hint"><Info size={13} /> O excesso a reportar do período anterior foi assumido do saldo devedor das contas 2437; confirme-o contra a última declaração.</p>
+          : null}
     </section>}
 
     {result && result.lines.length > 0 && <section className="panel">
@@ -131,5 +173,21 @@ export function VatSettlementPage() {
     </section>}
 
     {result && result.lines.length === 0 && <section className="panel"><p className="empty-state"><Info size={15} /> Sem movimento em contas de IVA (24.3) no período.</p></section>}
+
+    <section className="panel no-print">
+      <div className="panel-heading"><div><h2>Apuramentos guardados</h2><p>Os últimos apuramentos desta empresa.</p></div></div>
+      {history.length === 0
+        ? <p className="empty-state">Ainda não há apuramentos guardados.</p>
+        : <div className="table-wrap"><table>
+            <thead><tr><th>Período</th><th className="numeric">A entregar</th><th className="numeric">Excesso a reportar</th><th>Guardado</th><th /></tr></thead>
+            <tbody>{history.map((item) => <tr key={item.id}>
+              <td>{formatMovementDate(item.periodFrom)} … {formatMovementDate(item.periodTo)}</td>
+              <td className="numeric">{euro.format(item.netPayable)}</td>
+              <td className="numeric">{euro.format(item.creditToCarryForward)}</td>
+              <td>{item.savedAtUtc ? formatMovementDate(item.savedAtUtc.slice(0, 10)) : '—'}</td>
+              <td><button type="button" className="button button-secondary button-small" onClick={() => { setFromDate(item.periodFrom); setToDate(item.periodTo) }}>Abrir</button></td>
+            </tr>)}</tbody>
+          </table></div>}
+    </section>
   </div>
 }

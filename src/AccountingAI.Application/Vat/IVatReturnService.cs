@@ -8,10 +8,16 @@ namespace AccountingAI.Application.Vat;
 /// </summary>
 public interface IVatReturnService
 {
+    /// <param name="priorPeriodCredit">
+    /// Quando indicado, é o excesso a reportar do período anterior a usar (e
+    /// <see cref="VatReturn.PriorCreditAssumed"/> fica <c>false</c>); quando
+    /// <c>null</c>, é assumido do saldo devedor das contas <c>2437*</c>.
+    /// </param>
     Task<VatReturn?> BuildAsync(
         Guid userId,
         Guid companyId,
         DateOnly from,
         DateOnly to,
+        decimal? priorPeriodCredit = null,
         CancellationToken cancellationToken = default);
 }
