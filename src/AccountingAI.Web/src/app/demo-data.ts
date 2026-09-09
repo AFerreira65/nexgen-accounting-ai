@@ -528,6 +528,52 @@ export type ReportTemplate = {
   firmName: string
 }
 
+export type ManagementReportCatalogEntry = {
+  key: string
+  label: string
+  description: string
+  sections: string[]
+}
+
+export type AiSettings = {
+  enabled: boolean
+  autoMonthly: boolean
+  narratorConfigured: boolean
+  model: string
+}
+
+export type ManagementReportReference = { type: string; code: string }
+
+export type ManagementReportSection = {
+  title: string
+  body: string
+  references: ManagementReportReference[]
+}
+
+export type ManagementReportIndicator = { name: string; value: string; comment: string | null }
+
+export type ManagementReportResult = {
+  summary: string
+  sections: ManagementReportSection[]
+  alerts: string[]
+  indicators: ManagementReportIndicator[]
+  aiNotice: string
+}
+
+export type ManagementReportView = {
+  id: string
+  kind: string
+  question: string | null
+  periodFrom: string
+  periodTo: string
+  model: string
+  promptTokens: number
+  outputTokens: number
+  createdAtUtc: string | null
+  result: ManagementReportResult | null
+  dossier: unknown
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {

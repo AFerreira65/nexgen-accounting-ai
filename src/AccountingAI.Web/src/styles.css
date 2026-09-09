@@ -172,6 +172,32 @@ html[data-theme='dark'] .analyses-grand td { background: #1a3a37; color: #a9ded4
 }
 html[data-theme='dark'] .report-chrome-panel { border-color: #29414a; }
 
+.builder-row textarea { flex: 1 1 100%; min-height: 52px; padding: 8px 10px; border: 1px solid #d4dfe2; border-radius: 8px; background: #fbfcfc; font-size: 12px; resize: vertical; }
+.mr-grow { flex: 1 1 100%; }
+.mr-hint { margin: 6px 0 0; color: #78888f; font-size: 10px; line-height: 1.5; }
+.mr-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.button-small { padding: 4px 10px; font-size: 10px; }
+.management-report { padding: 18px 20px; }
+.management-report-summary { margin: 4px 0 14px; font-size: 13px; font-weight: 600; color: #24363e; line-height: 1.6; }
+.management-report-section { margin: 0 0 12px; }
+.management-report-section h3 { margin: 0 0 3px; font-size: 12px; color: #21323a; }
+.management-report-section p { margin: 0; font-size: 12px; color: #40525a; line-height: 1.6; }
+.management-report-refs { margin-top: 4px !important; font-size: 10px !important; color: #7a8c93 !important; }
+.management-report-refs a { color: #0b7c73; }
+.management-report-alerts { margin: 10px 0; padding: 10px 12px; border-radius: 8px; background: #fff4e8; }
+.management-report-alerts h3 { margin: 0 0 4px; font-size: 11px; color: #8a5a1e; }
+.management-report-alerts ul { margin: 0; padding-left: 18px; font-size: 11px; color: #6f4a1c; line-height: 1.55; }
+.management-report-notice { margin: 14px 0 0; padding-top: 10px; border-top: 1px solid #e7edef; font-size: 10px; font-style: italic; color: #8b989e; }
+html[data-theme='dark'] .management-report-alerts { background: #37260f; }
+html[data-theme='dark'] .management-report-alerts h3 { color: #e0b483; }
+html[data-theme='dark'] .management-report-alerts ul { color: #d3b58f; }
+@media print {
+  .management-report .table-wrap { overflow: visible; }
+  .management-report table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .management-report th, .management-report td { border: 1px solid #ccd6d9; padding: 3px 6px; }
+  .management-report-section, .management-report-alerts { break-inside: avoid; }
+}
+
 .record-about-print { display: none; }
 .record-about-print h1 { margin: 0 0 6px; font-size: 16px; }
 .record-about-print p { margin: 3px 0; font-size: 12px; }

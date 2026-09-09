@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ReportTemplate, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -93,6 +93,12 @@ type WorkContextValue = WorkContextData & {
   runAnalysis: (companyId: string, target: { definition: AnalysisDefinition } | { savedId: string }, period: { from?: string; to?: string }) => Promise<AnalysisResult>
   reportTemplate: (companyId: string, reportKey: string) => Promise<ReportTemplate>
   saveReportTemplate: (companyId: string, reportKey: string, input: { headerLines: string[]; showFirmName: boolean; showCompanyIdentity: boolean; orientation: 'Portrait' | 'Landscape' }) => Promise<ReportTemplate>
+  managementReportCatalog: () => Promise<ManagementReportCatalogEntry[]>
+  aiSettings: (companyId: string) => Promise<AiSettings>
+  saveAiSettings: (companyId: string, input: { enabled: boolean; autoMonthly: boolean }) => Promise<AiSettings>
+  generateManagementReport: (companyId: string, target: { kind?: string; question?: string }, period: { from: string; to: string }) => Promise<ManagementReportView>
+  managementReports: (companyId: string) => Promise<ManagementReportView[]>
+  managementReport: (companyId: string, id: string) => Promise<ManagementReportView>
   previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
   importSaftAccounts: (companyId: string, file: File, fiscalYear?: number) => Promise<SaftAccountsImport>
   importSaftOpeningBalances: (companyId: string, fiscalYear: number, file: File) => Promise<SaftOpeningBalancesImport>
@@ -750,6 +756,46 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as ReportTemplate
+    },
+    managementReportCatalog: async () => {
+      const response = await fetch('/api/v1/development/management-reports/catalog')
+      if (!response.ok) throw new Error(await problemMessage(response))
+      const body = await response.json() as { kinds: ManagementReportCatalogEntry[] }
+      return body.kinds
+    },
+    aiSettings: async (companyId) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/ai-settings`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as AiSettings
+    },
+    saveAiSettings: async (companyId, input) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/ai-settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as AiSettings
+    },
+    generateManagementReport: async (companyId, target, period) => {
+      const params = new URLSearchParams({ from: period.from, to: period.to })
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/management-reports/generate?${params}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: target.kind ?? null, question: target.question ?? null }),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as ManagementReportView
+    },
+    managementReports: async (companyId) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/management-reports`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as ManagementReportView[]
+    },
+    managementReport: async (companyId, id) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/management-reports/${id}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as ManagementReportView
     },
     previewSaftAccounts: async (companyId, file) => {
       if (source === 'database') {
