@@ -35,7 +35,7 @@ processo da Modelo 24 descrito em [`../CERTIFICACAO_AT.md`](../CERTIFICACAO_AT.m
 | F2-02 | Consulta à AT validada em testes e produção (certificado de produtor, e-Fatura) | Por especificar |
 | **F2-03** | Cruzamento vendas SAF-T × compras e-Fatura × contabilidade | **Concluído** — [`F2-03`](F2-03-CROSS-CHECK.md); [`F2-03A`](F2-03A-EFATURA-CSV-INGESTION.md) (ingestão do CSV), [`F2-03B`](F2-03B-EFATURA-PWA-SCREEN.md) (ecrã de compras), [`F2-03C`](F2-03C-CROSS-CHECK-REPORT.md) (serviço e endpoint do relatório), [`F2-03D`](F2-03D-CROSS-CHECK-SCREEN.md) (ecrã «Cruzamento» + sinal nas Tarefas) e [`F2-03E`](F2-03E-SALES-INVOICES-READER.md) (leitor do `SalesInvoices`). Em aberto só a afinação da tolerância `DocumentReference` ↔ `InvoiceNo` |
 | F2-04 | Adaptador PHC: modos de agrupamento, conta corrente, stocks, contabilidade, recebimentos | Por especificar |
-| F2-05 | Relatórios de gestão assistidos por IA sobre dados reconciliados | Por especificar |
+| **F2-05** | Relatórios de gestão assistidos por IA sobre dados reconciliados | **Especificado** — [`F2-05`](F2-05-AI-MANAGEMENT-REPORTS.md) ([`ADR-0006`](../architecture-decisions/ADR-0006-AI-REPORT-PROVIDER.md)); sub-incrementos F2-05A (dossiê) … F2-05E (geração mensal). Fornecedor: **Claude** |
 | **F2-06** | Dicionário de dados por tabela (ver/imprimir/PDF) e menu «Opções» em todos os ecrãs — «Dicionário de dados» e «Sobre o Registo» (quem criou / quem alterou o registo em foco) | **Concluído** — [`F2-06`](F2-06-DATA-DICTIONARY-AND-RECORD-INFO.md); [`F2-06A`](F2-06A-AUDIT-COLUMNS.md) (colunas de auditoria), [`F2-06B`](F2-06B-RECORD-INFO-ENDPOINT.md) (`record-info`), [`F2-06C`](F2-06C-DATA-DICTIONARY-SERVICE.md) (serviço e endpoints), [`F2-06D`](F2-06D-OPTIONS-MENU-AND-SCREENS.md) (menu «Opções» e ecrãs), [`F2-06E`](F2-06E-PRINT-AND-PDF.md) (impressão/PDF) |
 | **F2-07** | Motor de mapas e análises configuráveis (à imagem dos IDU e das Análises Avançadas do PHC) | **Concluído** — [`F2-07`](F2-07-CONFIGURABLE-REPORTS.md) ([`ADR-0005`](../architecture-decisions/ADR-0005-REPORT-ENGINE.md)); [`F2-07A`](F2-07A-SAVED-ANALYSES.md)–[`F2-07E`](F2-07E-SECOND-SOURCE-AND-DELIVERY.md) |
 
@@ -74,7 +74,9 @@ dos restantes; entra a seguir a F2-03 por indicação do utilizador.
 3. **F2-02** — em paralelo com F2-03, gerido pela disponibilidade dos
    elementos de teste da AT.
 4. **F2-04** — quando houver uma instalação PHC de testes disponível.
-5. **F2-05** — última, sobre o produto dos anteriores.
+5. **F2-05** — sobre o produto dos anteriores (assenta na F2-01, na F2-03 e na
+   F2-07); especificada em 2026-09-09, fornecedor Claude
+   ([`ADR-0006`](../architecture-decisions/ADR-0006-AI-REPORT-PROVIDER.md)).
 
 A fase do `/foundation` na API passou a `F2-01` em F2-01B (estava fixa em
 `F1-71` desde F1-71).
