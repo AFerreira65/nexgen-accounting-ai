@@ -21,6 +21,7 @@ export function OrganizationPage() {
   const database = source === 'database'
   const [firms, setFirms] = useState<OrgFirm[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [revision, setRevision] = useState(0)
   const [editor, setEditor] = useState<
     | { kind: 'company'; company: OrgCompany | null; firmId: string }
@@ -37,10 +38,15 @@ export function OrganizationPage() {
     if (!database) { setLoading(false); return }
     const controller = new AbortController()
     setLoading(true)
+    setLoadError('')
     void fetch('/api/v1/development/organization', { signal: controller.signal })
-      .then(async (response) => response.ok ? await response.json() as OrgFirm[] : Promise.reject(new Error()))
-      .then((data) => setFirms(data))
-      .catch(() => { if (!controller.signal.aborted) setFirms([]) })
+      .then(async (response) => response.ok ? await response.json() as OrgFirm[] : Promise.reject(new Error(await problem(response))))
+      .then((data) => { setFirms(data); setLoadError('') })
+      .catch((fetchError: unknown) => {
+        if (controller.signal.aborted) return
+        setFirms([])
+        setLoadError(fetchError instanceof Error && fetchError.message ? fetchError.message : 'Não foi possível carregar o cadastro. Confirme que a API local está a correr.')
+      })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
   }, [database, revision])
@@ -65,24 +71,31 @@ export function OrganizationPage() {
 
     {!database && <p className="save-status">A gestão do cadastro organizacional requer a ligação à API local.</p>}
 
+    {database && loadError && <section className="panel">
+      <p className="save-status error">{loadError}</p>
+      <button className="button button-secondary" type="button" onClick={reload}>Tentar novamente</button>
+    </section>}
+
     {editor?.kind === 'company' && <CompanyEditor company={editor.company} firmId={editor.firmId} onDone={() => { setEditor(null); reload() }} onCancel={() => setEditor(null)} />}
     {editor?.kind === 'user' && <UserEditor user={editor.user} onDone={() => { setEditor(null); reload() }} onCancel={() => setEditor(null)} />}
 
-    <section className="panel">
-      <div className="panel-heading"><div><h2><Building2 size={17} /> Empresas</h2><p>{loading ? 'A carregar…' : `${companies.length} empresas`}</p></div>
+    {!loadError && <section className="panel">
+      <div className="panel-heading"><div><h2><Building2 size={17} /> Empresas</h2><p>{loading ? 'A carregar…' : `${companies.length} ${companies.length === 1 ? 'empresa' : 'empresas'}`}</p></div>
         {database && firms[0] && <button className="button button-primary" type="button" onClick={() => setEditor({ kind: 'company', company: null, firmId: firms[0].id })}><Plus size={16} /> Nova empresa</button>}</div>
       <div className="table-wrap"><table><thead><tr><th>Empresa</th><th>NIF</th><th>Região</th><th>Moeda</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
         {companies.map((company) => <tr key={company.id}><td>{company.legalName}</td><td>{company.taxRegistrationNumber}</td><td>{REGION_LABELS[company.region] ?? company.region}</td><td>{company.baseCurrency}</td><td><span className={`badge ${company.isActive ? 'success' : 'warning'}`}>{company.isActive ? 'Ativa' : 'Inativa'}</span></td><td>{database && <button className="button button-secondary" type="button" onClick={() => setEditor({ kind: 'company', company, firmId: company.firmId })}>Editar</button>}</td></tr>)}
+        {!loading && companies.length === 0 && <tr><td colSpan={6} className="empty-state">Ainda não há empresas. Use «Nova empresa» ou importe um SAF-T.</td></tr>}
       </tbody></table></div>
-    </section>
+    </section>}
 
-    <section className="panel">
-      <div className="panel-heading"><div><h2><Users size={17} /> Utilizadores</h2><p>{users.length} utilizadores</p></div>
+    {!loadError && <section className="panel">
+      <div className="panel-heading"><div><h2><Users size={17} /> Utilizadores</h2><p>{users.length} {users.length === 1 ? 'utilizador' : 'utilizadores'}</p></div>
         {database && <button className="button button-primary" type="button" onClick={() => setEditor({ kind: 'user', user: null })}><Plus size={16} /> Novo utilizador</button>}</div>
       <div className="table-wrap"><table><thead><tr><th>Utilizador</th><th>Email</th><th className="numeric">Empresas</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
         {users.map((user) => <tr key={user.userId}><td>{user.displayName}</td><td>{user.email}</td><td className="numeric strong">{user.companies}</td><td><span className={`badge ${user.isActive ? 'success' : 'warning'}`}>{user.isActive ? 'Ativo' : 'Inativo'}</span></td><td>{database && <button className="button button-secondary" type="button" onClick={() => setEditor({ kind: 'user', user: { userId: user.userId, displayName: user.displayName, email: user.email, isActive: user.isActive } })}>Editar</button>}</td></tr>)}
+        {!loading && users.length === 0 && <tr><td colSpan={5} className="empty-state">Ainda não há utilizadores.</td></tr>}
       </tbody></table></div>
-    </section>
+    </section>}
   </div>
 }
 
