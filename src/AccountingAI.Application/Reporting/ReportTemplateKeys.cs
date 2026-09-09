@@ -11,6 +11,7 @@ public static class ReportTemplateKeys
         "resultados",
         "balanco",
         "iva",
+        "apuramento-iva",
         "contas-correntes",
         "analises",
     };
