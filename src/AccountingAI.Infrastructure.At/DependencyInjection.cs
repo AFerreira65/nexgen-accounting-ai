@@ -24,6 +24,8 @@ public static class DependencyInjection
                 ? Environment.GetEnvironmentVariable("AT_CERTIFICATE_PASSWORD")
                 : options.Certificate.Password);
 
+        var keyRingPath = configuration.GetSection(AtOptions.SectionName)["KeyRingPath"];
+        services.AddSingleton(_ => AtSecretProtector.Create(keyRingPath));
         services.AddSingleton<IAtCertificateProvider, AtCertificateProvider>();
         return services;
     }

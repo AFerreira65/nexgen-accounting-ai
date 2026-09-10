@@ -8,10 +8,29 @@ namespace AccountingAI.Infrastructure.Files.Tests;
 [TestClass]
 public sealed class AtCertificateProviderTests
 {
+    private string keyRing = string.Empty;
+    private AtSecretProtector protector = null!;
+
+    [TestInitialize]
+    public void SetUp()
+    {
+        keyRing = Path.Combine(Path.GetTempPath(), $"at-keys-{Guid.NewGuid():N}");
+        protector = AtSecretProtector.Create(keyRing);
+    }
+
+    [TestCleanup]
+    public void TearDown()
+    {
+        if (Directory.Exists(keyRing))
+        {
+            Directory.Delete(keyRing, recursive: true);
+        }
+    }
+
     [TestMethod]
     public void ReportsNotConfiguredWhenThereIsNoCertificatePath()
     {
-        var provider = new AtCertificateProvider(Options.Create(new AtOptions()));
+        var provider = new AtCertificateProvider(Options.Create(new AtOptions()), protector);
 
         var status = provider.Describe();
 
@@ -31,7 +50,7 @@ public sealed class AtCertificateProviderTests
             {
                 Environment = "producao",
                 Certificate = { Path = path, Password = password },
-            }));
+            }), protector);
 
             var status = provider.Describe();
 
@@ -50,6 +69,37 @@ public sealed class AtCertificateProviderTests
     }
 
     [TestMethod]
+    public void LoadsTheCertificateWhenThePasswordIsEncryptedInTheConfiguration()
+    {
+        var (path, password) = WriteSelfSignedPfx();
+        try
+        {
+            var encrypted = protector.Protect(password);
+            Assert.IsTrue(protector.IsProtected(encrypted));
+            Assert.AreNotEqual(password, encrypted);
+
+            var provider = new AtCertificateProvider(Options.Create(new AtOptions
+            {
+                Certificate =
+                {
+                    Directory = protector.Protect(Path.GetDirectoryName(path)!),
+                    FileName = Path.GetFileName(path),
+                    Password = encrypted,
+                },
+            }), protector);
+
+            var status = provider.Describe();
+
+            Assert.IsTrue(status.Valid, status.Problem);
+            Assert.IsTrue(status.HasPrivateKey);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [TestMethod]
     public void ReportsAProblemForAWrongPasswordAndForAMissingFile()
     {
         var (path, _) = WriteSelfSignedPfx();
@@ -58,7 +108,7 @@ public sealed class AtCertificateProviderTests
             var wrongPassword = new AtCertificateProvider(Options.Create(new AtOptions
             {
                 Certificate = { Path = path, Password = "senha-errada" },
-            })).Describe();
+            }), protector).Describe();
             Assert.IsTrue(wrongPassword.Configured);
             Assert.IsFalse(wrongPassword.Valid);
             StringAssert.Contains(wrongPassword.Problem!, "senha");
@@ -70,7 +120,7 @@ public sealed class AtCertificateProviderTests
                     Directory = Path.GetTempPath(),
                     FileName = $"nao-existe-{Guid.NewGuid():N}.pfx",
                 },
-            })).Describe();
+            }), protector).Describe();
             Assert.IsTrue(missing.Configured);
             Assert.IsFalse(missing.Valid);
             StringAssert.Contains(missing.Problem!, "não existe");

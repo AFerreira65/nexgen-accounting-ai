@@ -11,14 +11,14 @@ namespace AccountingAI.Infrastructure.At;
 /// descreve-o sem expor a senha nem a chave. É a única classe que toca no
 /// ficheiro e na senha.
 /// </summary>
-public sealed class AtCertificateProvider(IOptions<AtOptions> options) : IAtCertificateProvider
+public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSecretProtector protector) : IAtCertificateProvider
 {
     private readonly AtOptions options = options.Value;
 
     public AtCertificateStatus Describe()
     {
         var environment = NormalizeEnvironment(options.Environment);
-        var path = options.Certificate.ResolvedPath;
+        var path = ResolvePath();
 
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -32,7 +32,7 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options) : IAtCert
 
         try
         {
-            using var certificate = Load(path, options.Certificate.Password);
+            using var certificate = Load(path, protector.Unprotect(options.Certificate.Password));
             var now = DateTimeOffset.UtcNow;
             var notBefore = new DateTimeOffset(certificate.NotBefore.ToUniversalTime());
             var notAfter = new DateTimeOffset(certificate.NotAfter.ToUniversalTime());
@@ -66,7 +66,7 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options) : IAtCert
     internal bool TryGetCertificate([NotNullWhen(true)] out X509Certificate2? certificate)
     {
         certificate = null;
-        var path = options.Certificate.ResolvedPath;
+        var path = ResolvePath();
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
         {
             return false;
@@ -74,13 +74,29 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options) : IAtCert
 
         try
         {
-            certificate = Load(path, options.Certificate.Password);
+            certificate = Load(path, protector.Unprotect(options.Certificate.Password));
             return true;
         }
         catch (CryptographicException)
         {
             return false;
         }
+    }
+
+    /// <summary>O caminho do ficheiro, decifrando os valores <c>enc:v1:…</c> se os houver.</summary>
+    private string? ResolvePath()
+    {
+        var explicitPath = protector.Unprotect(options.Certificate.Path);
+        if (!string.IsNullOrWhiteSpace(explicitPath))
+        {
+            return explicitPath;
+        }
+
+        var directory = protector.Unprotect(options.Certificate.Directory);
+        var fileName = protector.Unprotect(options.Certificate.FileName);
+        return !string.IsNullOrWhiteSpace(directory) && !string.IsNullOrWhiteSpace(fileName)
+            ? Path.Combine(directory, fileName)
+            : null;
     }
 
     private static X509Certificate2 Load(string path, string? password) =>

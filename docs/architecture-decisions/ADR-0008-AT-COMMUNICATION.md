@@ -27,11 +27,19 @@ precisar de `System.ServiceModel.*` quando as chamadas SOAP entrarem).
   - `At:Certificate:Directory` e `At:Certificate:FileName` — o **local e o nome**
     do ficheiro PFX/P12. (Um `At:Certificate:Path` absoluto, se presente,
     tem prioridade.)
-  - `At:Certificate:Password` — **só** de *user-secrets* ou da variável de
-    ambiente `AT_CERTIFICATE_PASSWORD`. Nunca em `appsettings*.json`, nunca em
-    log, nunca devolvida por um *endpoint*.
+  - `At:Certificate:Password` — nunca em log nem devolvida por um *endpoint*.
+    Guardada **cifrada** (ver abaixo); em alternativa, `AT_CERTIFICATE_PASSWORD`.
   - `At:Environment` — `Testes` (por omissão) ou `Producao`.
   - Os ficheiros `*.pfx`/`*.p12` já estão no `.gitignore`.
+- **Valores de configuração cifrados** — qualquer valor de `At:Certificate:*`
+  pode ir cifrado, com o prefixo `enc:v1:…`; o `AtSecretProtector` decifra-o ao
+  ler (um valor sem prefixo é usado tal como está, para a migração ser gradual).
+  A cifra é a Data Protection do ASP.NET Core (sem pacote novo — vem do
+  *framework*), com o chaveiro em `%LOCALAPPDATA%\AccountingAI\dp-keys`
+  protegido pelo DPAPI do Windows: os valores só se decifram na mesma máquina e
+  conta. Uma ferramenta de linha de comandos
+  (`... -- protect-at-secret "<valor>"`) produz o valor cifrado. Assim, mesmo o
+  que fica num ficheiro de configuração ou em *user-secrets* não está em texto.
 - **`IAtCertificateProvider`** (fronteira em `Application`) — carrega o
   `X509Certificate2` do local configurado com a senha e devolve o
   `AtCertificateStatus`: `Configured`, `Valid`, `Subject`, `Issuer`,

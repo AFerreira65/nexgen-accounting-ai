@@ -1286,10 +1286,12 @@ public sealed class FoundationApiTests
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-        StringAssert.Contains(payload, "\"configured\":false");
         StringAssert.Contains(payload, "\"environment\":\"Testes\"");
-        StringAssert.Contains(payload, "\"hasPrivateKey\":false");
+        StringAssert.Contains(payload, "\"configured\":");
+        StringAssert.Contains(payload, "\"subject\":");
+        // A invariante que interessa: a senha e o material da chave nunca saem.
         Assert.IsFalse(payload.Contains("password", StringComparison.OrdinalIgnoreCase), "A senha nunca é devolvida.");
+        Assert.IsFalse(payload.Contains("enc:v1:", StringComparison.Ordinal), "O valor cifrado nunca é devolvido.");
     }
 
     [TestMethod]

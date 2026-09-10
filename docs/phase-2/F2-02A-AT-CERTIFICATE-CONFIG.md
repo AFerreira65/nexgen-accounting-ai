@@ -23,10 +23,20 @@ nem a chave ([`ADR-0008`](../architecture-decisions/ADR-0008-AT-COMMUNICATION.md
     `Valid = false` com `Problem`.
   `EphemeralKeySet` — a chave nunca é escrita em disco. `Environment` é
   normalizado para `Testes` / `Producao`.
-- **`AddAccountingAt(configuration)`** — liga `AtOptions` e completa a senha com
-  `AT_CERTIFICATE_PASSWORD` quando a secção não a traz; regista o *provider*.
-  Chamado no `Program.cs`. `appsettings.json` ganha a secção `At` (ambiente +
-  local, **sem senha**).
+- **`AddAccountingAt(configuration)`** — liga `AtOptions`, completa a senha com
+  `AT_CERTIFICATE_PASSWORD` quando a secção não a traz, e regista o *provider* e
+  o `AtSecretProtector`. Chamado no `Program.cs`. `appsettings.json` tem a secção
+  `At` (ambiente + local vazio); `appsettings.Development.json` aponta para
+  `C:\PHC_Loc\certifphc.pfx`.
+- **Configuração cifrada** — os valores de `At:Certificate:*` podem ir cifrados
+  (prefixo `enc:v1:…`); o `AtSecretProtector` decifra-os ao ler (um valor sem
+  prefixo é usado tal como está). A cifra é a **Data Protection do ASP.NET
+  Core**, com o chaveiro em `%LOCALAPPDATA%\AccountingAI\dp-keys` protegido pelo
+  DPAPI do Windows — os valores só se decifram na mesma máquina e conta.
+  - **Ferramenta de linha de comandos:**
+    `dotnet run --project src/AccountingAI.Api --no-launch-profile -- protect-at-secret "<valor>"`
+    imprime o valor `enc:v1:…` a colar na configuração (a senha e/ou o local do
+    ficheiro).
 - **`.slnx`, referência da API e `ModuleDependencyTests`** atualizados
   (`Infrastructure.At` → `Application`; a API passa a poder referenciá-lo).
 - **API:** `GET /api/v1/development/at/certificate` → o `AtCertificateStatus`
@@ -45,8 +55,11 @@ Sem alteração de esquema.
 - `AccountingAI.Infrastructure.Files.Tests`: `AtCertificateProviderTests` — sem
   caminho → não configurado; PFX auto-assinado gerado no teste → configurado,
   válido, com chave privada, ambiente normalizado, assunto correto, sem a senha
-  em lado nenhum; senha errada → `Problem` com «senha»; ficheiro inexistente →
-  `Problem` com «não existe».
+  em lado nenhum; **senha cifrada (`enc:v1:…`) na configuração → o certificado
+  carrega na mesma**; senha errada → `Problem` com «senha»; ficheiro inexistente
+  → `Problem` com «não existe». `AtSecretProtectorTests` — ida e volta com o
+  prefixo `enc:v1:`, texto simples inalterado, e um chaveiro diferente não
+  decifra.
 - `AccountingAI.Api.Tests`: `AtCertificateStatusIsReportedWithoutSecrets` — o
   *endpoint* devolve `configured:false`, `environment:"Testes"`,
   `hasPrivateKey:false`, e o corpo não contém «password».

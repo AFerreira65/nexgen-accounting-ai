@@ -58,12 +58,13 @@ export function AtCommunicationPage() {
     <section className="panel">
       <div className="panel-heading"><div><h2>Onde se configura</h2><p>No servidor, não pela interface.</p></div></div>
       <ul className="config-hints">
-        <li>Local e nome do ficheiro: <code>At:Certificate:Directory</code> e <code>At:Certificate:FileName</code> (ou <code>At:Certificate:Path</code> absoluto) no <code>appsettings</code>.</li>
-        <li>Senha do certificado: só em <em>user-secrets</em> (<code>At:Certificate:Password</code>) ou na variável de ambiente <code>AT_CERTIFICATE_PASSWORD</code> — nunca em <code>appsettings</code>.</li>
+        <li>Local e nome do ficheiro: <code>At:Certificate:Directory</code> e <code>At:Certificate:FileName</code> (ou <code>At:Certificate:Path</code> absoluto).</li>
+        <li>Senha do certificado: <code>At:Certificate:Password</code>, guardada <strong>cifrada</strong> (valor <code>enc:v1:…</code>), nunca em texto.</li>
+        <li>Para cifrar um valor: <code>dotnet run --project src/AccountingAI.Api --no-launch-profile -- protect-at-secret "&lt;valor&gt;"</code> — cola o resultado na configuração. O local do ficheiro também pode ser cifrado da mesma forma.</li>
         <li>Ambiente: <code>At:Environment</code> = <code>Testes</code> ou <code>Producao</code>.</li>
         <li>Para os testes, aponta-se para o certificado do PHC.</li>
       </ul>
-      <p className="mr-hint">As chamadas SOAP à AT (consulta e-Fatura, submissão de declarações) ficam a aguardar os elementos de teste e a aceitação da adesão pela AT.</p>
+      <p className="mr-hint">A cifra usa a Data Protection do ASP.NET Core, com o chaveiro em <code>%LOCALAPPDATA%\AccountingAI\dp-keys</code> protegido pelo DPAPI do Windows — os valores cifrados só se decifram nesta máquina e conta. As chamadas SOAP à AT ficam a aguardar os elementos de teste e a aceitação da adesão.</p>
     </section>
   </div>
 }

@@ -18,6 +18,25 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 
+// Ferramenta de linha de comandos: cifra um valor da configuração da AT.
+//   dotnet run --project src/AccountingAI.Api -- protect-at-secret "<valor>"
+//   (ou passa o valor por stdin). A saída é o valor cifrado a colar em
+//   At:Certificate:Password (ou no local do ficheiro).
+if (args is ["protect-at-secret", ..])
+{
+    var plaintext = args.Length >= 2 ? args[1] : (await Console.In.ReadToEndAsync().ConfigureAwait(false)).Trim();
+    if (string.IsNullOrEmpty(plaintext))
+    {
+        await Console.Error
+            .WriteLineAsync("Uso: dotnet run --project src/AccountingAI.Api -- protect-at-secret \"<valor>\"")
+            .ConfigureAwait(false);
+        return;
+    }
+
+    Console.WriteLine(AtSecretProtector.Create().Protect(plaintext));
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
