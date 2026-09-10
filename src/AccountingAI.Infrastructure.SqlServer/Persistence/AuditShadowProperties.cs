@@ -35,6 +35,7 @@ internal static class AuditShadowProperties
         typeof(CompanyAiSettings),
         typeof(VatReturnFiling),
         typeof(CompanyAtCredentials),
+        typeof(AccountVatClassification),
     ];
 
     public static void Apply(ModelBuilder modelBuilder)

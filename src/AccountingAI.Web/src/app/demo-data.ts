@@ -636,6 +636,16 @@ export type AtCredentials = {
   updatedAtUtc: string | null
 }
 
+export type VatClassificationRow = {
+  accountCode: string
+  accountName: string
+  class: string
+  rate: string
+  nature: string
+  region: string
+  classified: boolean
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {

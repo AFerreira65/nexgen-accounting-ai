@@ -1632,6 +1632,48 @@ if (app.Environment.IsDevelopment())
         return list is null ? Results.NotFound() : Results.Ok(list);
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-classification", async (
+        Guid userId, Guid companyId, AccountVatClassificationService classifications, CancellationToken cancellationToken) =>
+    {
+        var list = await classifications.ListAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-classification/{accountCode}", async (
+        Guid userId, Guid companyId, string accountCode, PutVatClassificationRequest request,
+        AccountVatClassificationService classifications, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseVatClassification(request?.Rate, request?.Nature, request?.Region, out var rate, out var nature, out var region, out var error))
+        {
+            return error!;
+        }
+
+        var ok = await classifications
+            .SetAsync(userId, companyId, accountCode, rate, nature, region, cancellationToken)
+            .ConfigureAwait(false);
+        return ok ? Results.NoContent() : Results.NotFound();
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-classification/bulk", async (
+        Guid userId, Guid companyId, BulkVatClassificationRequest request,
+        AccountVatClassificationService classifications, CancellationToken cancellationToken) =>
+    {
+        if (string.IsNullOrWhiteSpace(request?.Prefix))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["prefixo"] = ["Indique um prefixo de conta."] });
+        }
+
+        if (!TryParseVatClassification(request.Rate, request.Nature, request.Region, out var rate, out var nature, out var region, out var error))
+        {
+            return error!;
+        }
+
+        var count = await classifications
+            .BulkSetAsync(userId, companyId, request.Prefix, rate, nature, region, cancellationToken)
+            .ConfigureAwait(false);
+        return count < 0 ? Results.NotFound() : Results.Ok(new { updated = count });
+    });
+
     app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
     {
         var normalized = reference.Trim().ToUpperInvariant();
@@ -2809,6 +2851,39 @@ public partial class Program
         return true;
     }
 
+    private static bool TryParseVatClassification(
+        string? rate, string? nature, string? region,
+        out AccountingAI.Domain.Accounting.VatRate parsedRate,
+        out AccountingAI.Domain.Accounting.VatOperationNature parsedNature,
+        out AccountingAI.Domain.Accounting.VatRegion parsedRegion,
+        out IResult? error)
+    {
+        parsedRate = AccountingAI.Domain.Accounting.VatRate.Nenhuma;
+        parsedNature = AccountingAI.Domain.Accounting.VatOperationNature.Nenhuma;
+        parsedRegion = AccountingAI.Domain.Accounting.VatRegion.Continente;
+        error = null;
+
+        if (!string.IsNullOrWhiteSpace(rate) && !Enum.TryParse(rate.Trim(), ignoreCase: true, out parsedRate))
+        {
+            error = Results.ValidationProblem(new Dictionary<string, string[]> { ["taxa"] = ["Taxa de IVA inválida."] });
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(nature) && !Enum.TryParse(nature.Trim(), ignoreCase: true, out parsedNature))
+        {
+            error = Results.ValidationProblem(new Dictionary<string, string[]> { ["natureza"] = ["Natureza da operação inválida."] });
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(region) && !Enum.TryParse(region.Trim(), ignoreCase: true, out parsedRegion))
+        {
+            error = Results.ValidationProblem(new Dictionary<string, string[]> { ["regiao"] = ["Região inválida."] });
+            return false;
+        }
+
+        return true;
+    }
+
     private static Task<bool> HasCompanyAccessAsync(
         AccountingDbContext context,
         Guid userId,
@@ -2994,6 +3069,10 @@ public sealed record GenerateManagementReportRequest(string? Kind, string? Quest
 public sealed record SaveVatReturnRequest(decimal PriorPeriodCredit);
 
 public sealed record PutAtCredentialsRequest(string? SubUser, string? Password);
+
+public sealed record PutVatClassificationRequest(string? Rate, string? Nature, string? Region);
+
+public sealed record BulkVatClassificationRequest(string? Prefix, string? Rate, string? Nature, string? Region);
 
 public sealed record CreateSaftCompanyRequest(
     string TaxRegistrationNumber,

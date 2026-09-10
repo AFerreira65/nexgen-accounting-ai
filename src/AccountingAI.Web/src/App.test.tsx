@@ -740,6 +740,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the VAT classification screen (requires the database)', () => {
+    window.history.pushState({}, '', '/config-iva')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Configuração de IVA', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('offers an Opções menu on every screen with the two actions', () => {
     window.history.pushState({}, '', '/')
     render(<App />)

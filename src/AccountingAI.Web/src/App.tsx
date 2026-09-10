@@ -26,6 +26,7 @@ import { AnalysesPage } from './pages/AnalysesPage'
 import { ManagementReportsPage } from './pages/ManagementReportsPage'
 import { VatSettlementPage } from './pages/VatSettlementPage'
 import { AtCommunicationPage } from './pages/AtCommunicationPage'
+import { VatClassificationPage } from './pages/VatClassificationPage'
 import { RecordProvider } from './app/RecordContext'
 import { WorkContextProvider } from './app/WorkContext'
 
@@ -59,6 +60,7 @@ export function App() {
             <Route path="/balanco" element={<BalanceSheetPage />} />
             <Route path="/iva" element={<VatSummaryPage />} />
             <Route path="/apuramento-iva" element={<VatSettlementPage />} />
+            <Route path="/config-iva" element={<VatClassificationPage />} />
             <Route path="/contas-correntes" element={<PartyBalancesPage />} />
             <Route path="/apuramento" element={<YearEndClosingPage />} />
             <Route path="/abertura" element={<YearOpeningPage />} />

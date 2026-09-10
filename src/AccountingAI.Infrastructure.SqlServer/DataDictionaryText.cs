@@ -37,6 +37,7 @@ internal static class DataDictionaryText
         ["CompanyAiSettings"] = "Interruptor dos relatórios de gestão com IA de uma empresa (ativo, geração mensal automática).",
         ["VatReturnFiling"] = "Apuramento periódico de IVA guardado por uma empresa (período, excesso reportado do período anterior, fotografia do cálculo).",
         ["CompanyAtCredentials"] = "Credenciais da AT de uma empresa: o subutilizador e a senha (cifrada) do perfil e-Fatura.",
+        ["AccountVatClassification"] = "Classificação de IVA de uma conta (taxa, natureza da operação, região) para a desagregação da declaração periódica.",
         ["FoundationState"] = "Estado interno da fundação da plataforma; não é de uso contabilístico.",
     };
 
@@ -178,5 +179,10 @@ internal static class DataDictionaryText
 
         ["CompanyAtCredentials.SubUser"] = "O subutilizador da AT no formato NIF/n (ex.: 500584095/1).",
         ["CompanyAtCredentials.EncryptedPassword"] = "A senha do subutilizador, guardada cifrada (valor enc:v1:…).",
+
+        ["AccountVatClassification.AccountId"] = "A conta a que a classificação se aplica.",
+        ["AccountVatClassification.Rate"] = "A taxa de IVA (isento / reduzida / intermédia / normal).",
+        ["AccountVatClassification.Nature"] = "A natureza da operação de IVA (transmissões internas, prestações de serviços, aquisições intracomunitárias, …).",
+        ["AccountVatClassification.Region"] = "A região (Continente / Açores / Madeira).",
     };
 }
