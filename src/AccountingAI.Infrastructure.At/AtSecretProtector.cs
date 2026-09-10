@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using AccountingAI.Application.At;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace AccountingAI.Infrastructure.At;
@@ -10,7 +11,7 @@ namespace AccountingAI.Infrastructure.At;
 /// configuração pode ir sendo migrada. A cifra é a Data Protection do ASP.NET
 /// Core, com o chaveiro protegido pelo DPAPI do Windows em disco.
 /// </summary>
-public sealed class AtSecretProtector
+public sealed class AtSecretProtector : IAtSecretProtector
 {
     private const string Prefix = "enc:v1:";
     private const string Purpose = "AccountingAI.At.Certificate.v1";

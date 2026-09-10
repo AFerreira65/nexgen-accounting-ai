@@ -1,6 +1,6 @@
 import { Database, ShieldCheck } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { formatMovementDate, type AtCertificateStatus } from '../app/demo-data'
+import { useEffect, useState, type FormEvent } from 'react'
+import { formatMovementDate, type AtCertificateStatus, type AtCredentials } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -9,12 +9,21 @@ function formatDate(value: string | null) {
 }
 
 export function AtCommunicationPage() {
-  const { source, atCertificateStatus } = useWorkContext()
+  const { activeCompany, source, atCertificateStatus, atCredentials, saveAtCredentials, deleteAtCredentials } = useWorkContext()
+  const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   usePublishRecord(undefined, undefined)
 
   const [status, setStatus] = useState<AtCertificateStatus | null>(null)
   const [error, setError] = useState('')
+
+  const [credentials, setCredentials] = useState<AtCredentials | null>(null)
+  const [subUser, setSubUser] = useState('')
+  const [password, setPassword] = useState('')
+  const [credError, setCredError] = useState('')
+  const [credStatus, setCredStatus] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [reload, setReload] = useState(0)
 
   useEffect(() => {
     if (!onDatabase) { setStatus(null); return }
@@ -26,6 +35,47 @@ export function AtCommunicationPage() {
     return () => controller.abort()
   }, [onDatabase, atCertificateStatus])
 
+  useEffect(() => {
+    if (!onDatabase) { setCredentials(null); return }
+    const controller = new AbortController()
+    void atCredentials(companyId)
+      .then((value) => { if (controller.signal.aborted) return; setCredentials(value); setSubUser(value.subUser ?? '') })
+      .catch(() => { if (!controller.signal.aborted) setCredentials(null) })
+    return () => controller.abort()
+  }, [onDatabase, companyId, atCredentials, reload])
+
+  const submitCredentials = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!subUser.trim() || !password) { setCredError('Indique o subutilizador e a senha.'); return }
+    setBusy(true); setCredError(''); setCredStatus('')
+    try {
+      const next = await saveAtCredentials(companyId, { subUser: subUser.trim(), password })
+      setCredentials(next)
+      setPassword('')
+      setCredStatus('Credenciais guardadas (a senha fica cifrada).')
+      setReload((value) => value + 1)
+    } catch (problem) {
+      setCredError(problem instanceof Error ? problem.message : 'Não foi possível guardar as credenciais.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const removeCredentials = async () => {
+    setBusy(true); setCredError(''); setCredStatus('')
+    try {
+      await deleteAtCredentials(companyId)
+      setCredentials({ configured: false, subUser: null, updatedAtUtc: null })
+      setSubUser('')
+      setPassword('')
+      setReload((value) => value + 1)
+    } catch (problem) {
+      setCredError(problem instanceof Error ? problem.message : 'Não foi possível remover as credenciais.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Integração</p><h1>Comunicação com a AT</h1><p>O certificado de transporte e o estado da ligação à AT.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
@@ -34,7 +84,7 @@ export function AtCommunicationPage() {
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Integração</p><h1>Comunicação com a AT</h1><p>O certificado de transporte identifica o produtor na ligação SOAP à AT. Este ecrã mostra o estado do certificado configurado — a senha e a chave privada nunca saem do servidor.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Integração</p><h1>Comunicação com a AT</h1><p>O certificado de transporte identifica o produtor na ligação SOAP à AT. Este ecrã mostra o estado do certificado configurado e as credenciais da empresa — a senha e a chave privada nunca saem do servidor.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 
@@ -56,7 +106,26 @@ export function AtCommunicationPage() {
     </section>}
 
     <section className="panel">
-      <div className="panel-heading"><div><h2>Onde se configura</h2><p>No servidor, não pela interface.</p></div></div>
+      <div className="panel-heading"><div><h2>Credenciais de {activeCompany.legalName}</h2><p>O subutilizador e a senha do perfil e-Fatura desta empresa. A senha é guardada cifrada.</p></div>
+        <span className={`badge ${credentials?.configured ? 'success' : ''}`}>{credentials?.configured ? 'Configuradas' : 'Não configuradas'}</span>
+      </div>
+      {credError && <p className="save-status error">{credError}</p>}
+      {credStatus && !credError && <p className="save-status success">{credStatus}</p>}
+      <form className="builder-row" onSubmit={(event) => void submitCredentials(event)}>
+        <label>Subutilizador
+          <input value={subUser} onChange={(event) => setSubUser(event.target.value)} placeholder={`${activeCompany.taxRegistrationNumber}/1`} />
+        </label>
+        <label>Senha
+          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder={credentials?.configured ? '•••••••• (guardada)' : ''} autoComplete="off" />
+        </label>
+        <button type="submit" className="button button-primary" disabled={busy}>{busy ? 'A guardar…' : 'Guardar'}</button>
+        {credentials?.configured && <button type="button" className="button button-secondary" disabled={busy} onClick={() => void removeCredentials()}>Remover</button>}
+      </form>
+      {credentials?.updatedAtUtc && <p className="mr-hint">Atualizadas em {formatDate(credentials.updatedAtUtc)}.</p>}
+    </section>
+
+    <section className="panel">
+      <div className="panel-heading"><div><h2>Onde se configura o certificado</h2><p>No servidor, não pela interface.</p></div></div>
       <ul className="config-hints">
         <li>Local e nome do ficheiro: <code>At:Certificate:Directory</code> e <code>At:Certificate:FileName</code> (ou <code>At:Certificate:Path</code> absoluto).</li>
         <li>Senha do certificado: <code>At:Certificate:Password</code>, guardada <strong>cifrada</strong> (valor <code>enc:v1:…</code>), nunca em texto.</li>

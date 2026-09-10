@@ -1285,6 +1285,10 @@ public sealed class FoundationApiTests
         using var response = await client.GetAsync("/api/v1/development/at/certificate").ConfigureAwait(false);
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+        const string credentialsPath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222/at-credentials";
+        using var credentials = await client.GetAsync(credentialsPath).ConfigureAwait(false);
+        var credentialsPayload = await credentials.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         StringAssert.Contains(payload, "\"environment\":\"Testes\"");
         StringAssert.Contains(payload, "\"configured\":");
@@ -1292,6 +1296,10 @@ public sealed class FoundationApiTests
         // A invariante que interessa: a senha e o material da chave nunca saem.
         Assert.IsFalse(payload.Contains("password", StringComparison.OrdinalIgnoreCase), "A senha nunca é devolvida.");
         Assert.IsFalse(payload.Contains("enc:v1:", StringComparison.Ordinal), "O valor cifrado nunca é devolvido.");
+
+        Assert.AreEqual(HttpStatusCode.OK, credentials.StatusCode);
+        StringAssert.Contains(credentialsPayload, "\"configured\":false");
+        Assert.IsFalse(credentialsPayload.Contains("password", StringComparison.OrdinalIgnoreCase), "A senha das credenciais nunca é devolvida.");
     }
 
     [TestMethod]

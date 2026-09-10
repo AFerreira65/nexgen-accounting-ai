@@ -26,6 +26,7 @@ public static class DependencyInjection
 
         var keyRingPath = configuration.GetSection(AtOptions.SectionName)["KeyRingPath"];
         services.AddSingleton(_ => AtSecretProtector.Create(keyRingPath));
+        services.AddSingleton<IAtSecretProtector>(sp => sp.GetRequiredService<AtSecretProtector>());
         services.AddSingleton<IAtCertificateProvider, AtCertificateProvider>();
         return services;
     }

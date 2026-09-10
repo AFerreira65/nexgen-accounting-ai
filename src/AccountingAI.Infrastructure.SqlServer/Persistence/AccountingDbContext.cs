@@ -47,6 +47,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<VatReturnFiling> VatReturnFilings => Set<VatReturnFiling>();
 
+    public DbSet<CompanyAtCredentials> CompanyAtCredentials => Set<CompanyAtCredentials>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -71,6 +73,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new ManagementReportConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyAiSettingsConfiguration());
         modelBuilder.ApplyConfiguration(new VatReturnFilingConfiguration());
+        modelBuilder.ApplyConfiguration(new CompanyAtCredentialsConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

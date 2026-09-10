@@ -1412,6 +1412,40 @@ if (app.Environment.IsDevelopment())
     app.MapGet("/api/v1/development/at/certificate", (AccountingAI.Application.At.IAtCertificateProvider certificates) =>
         Results.Ok(certificates.Describe()));
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/at-credentials", async (
+        Guid userId, Guid companyId, CompanyAtCredentialsService credentials, CancellationToken cancellationToken) =>
+    {
+        var view = await credentials.GetAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/at-credentials", async (
+        Guid userId, Guid companyId, PutAtCredentialsRequest request,
+        CompanyAtCredentialsService credentials, CancellationToken cancellationToken) =>
+    {
+        var subUser = request?.SubUser?.Trim();
+        var password = request?.Password;
+        if (string.IsNullOrWhiteSpace(subUser) || string.IsNullOrWhiteSpace(password))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["credenciais"] = ["Indique o subutilizador e a senha."]
+            });
+        }
+
+        var view = await credentials
+            .SaveAsync(userId, companyId, subUser, password, cancellationToken)
+            .ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/at-credentials", async (
+        Guid userId, Guid companyId, CompanyAtCredentialsService credentials, CancellationToken cancellationToken) =>
+    {
+        var removed = await credentials.DeleteAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return removed ? Results.NoContent() : Results.NotFound();
+    });
+
     app.MapGet("/api/v1/development/management-reports/catalog", () =>
         Results.Ok(new
         {
@@ -2958,6 +2992,8 @@ public sealed record PutAiSettingsRequest(bool Enabled, bool AutoMonthly);
 public sealed record GenerateManagementReportRequest(string? Kind, string? Question);
 
 public sealed record SaveVatReturnRequest(decimal PriorPeriodCredit);
+
+public sealed record PutAtCredentialsRequest(string? SubUser, string? Password);
 
 public sealed record CreateSaftCompanyRequest(
     string TaxRegistrationNumber,

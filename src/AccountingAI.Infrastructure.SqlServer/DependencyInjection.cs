@@ -64,6 +64,7 @@ public static class DependencyInjection
         services.AddScoped<ManagementReportService>();
         services.AddScoped<AccountingAI.Application.Vat.IVatReturnService, VatReturnService>();
         services.AddScoped<VatReturnFilingService>();
+        services.AddScoped<CompanyAtCredentialsService>();
         services.AddScoped<OrganizationAdminService>();
         services.AddScoped<JournalPostingService>();
         services.AddScoped<DocumentNumberSeriesService>();

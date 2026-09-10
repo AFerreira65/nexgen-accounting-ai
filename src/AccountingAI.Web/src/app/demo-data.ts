@@ -630,6 +630,12 @@ export type AtCertificateStatus = {
   problem: string | null
 }
 
+export type AtCredentials = {
+  configured: boolean
+  subUser: string | null
+  updatedAtUtc: string | null
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {

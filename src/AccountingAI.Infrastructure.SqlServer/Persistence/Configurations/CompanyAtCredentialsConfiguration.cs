@@ -1,0 +1,18 @@
+using AccountingAI.Domain.Organizations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace AccountingAI.Infrastructure.SqlServer.Persistence.Configurations;
+
+internal sealed class CompanyAtCredentialsConfiguration : IEntityTypeConfiguration<CompanyAtCredentials>
+{
+    public void Configure(EntityTypeBuilder<CompanyAtCredentials> builder)
+    {
+        builder.ToTable("CompanyAtCredentials", "organization");
+        builder.HasKey(item => item.Id);
+        builder.Property(item => item.SubUser).HasMaxLength(CompanyAtCredentials.SubUserMaxLength).IsRequired();
+        builder.Property(item => item.EncryptedPassword).IsRequired();
+        builder.Property(item => item.RowVersion).IsRowVersion();
+        builder.HasIndex(item => item.CompanyId).IsUnique();
+    }
+}

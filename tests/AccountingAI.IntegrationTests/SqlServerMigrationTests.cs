@@ -118,6 +118,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260909185631_VatReturnFiling");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260910200132_CompanyAtCredentials");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
