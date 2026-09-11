@@ -32,6 +32,8 @@ export const VAT_REGIONS: { value: string; label: string }[] = [
 
 const rateLabels = new Map(VAT_RATES.map((item) => [item.value, item.label]))
 const natureLabels = new Map(VAT_NATURES.map((item) => [item.value, item.label]))
+const regionLabels = new Map(VAT_REGIONS.map((item) => [item.value, item.label]))
 
 export const vatRateLabel = (value: string) => rateLabels.get(value) ?? value
 export const vatNatureLabel = (value: string) => natureLabels.get(value) ?? value
+export const vatRegionLabel = (value: string) => regionLabels.get(value) ?? value

@@ -2,10 +2,11 @@ import { Database, Download, Info, Receipt, Save } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
-import { euro, formatMovementDate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView } from '../app/demo-data'
+import { euro, formatMovementDate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type VatSummary, type VatSummaryRow } from '../app/demo-data'
 import { PeriodShortcuts, periodReference, quarterRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
 import { ReportChrome } from '../app/ReportChrome'
+import { vatNatureLabel, vatRateLabel, vatRegionLabel } from '../app/vatClassification'
 import { useWorkContext } from '../app/WorkContext'
 
 const ROLE_LABELS: Record<VatReturn['lines'][number]['role'], string> = {
@@ -14,6 +15,12 @@ const ROLE_LABELS: Record<VatReturn['lines'][number]['role'], string> = {
   regularizacoes: 'Regularizações',
   reporte: 'IVA a recuperar / reporte',
   outras: 'Outras contas de IVA',
+}
+
+const KIND_LABELS: Record<VatSummaryRow['kind'], string> = {
+  base: 'Base tributável',
+  imposto: 'Imposto',
+  outras: 'Outras',
 }
 
 const round2 = (value: number) => Math.round(value * 100) / 100
@@ -26,7 +33,7 @@ function defaultQuarter(fiscalYear: number | null | undefined) {
 }
 
 export function VatSettlementPage() {
-  const { activeCompany, source, savedVatReturn, saveVatReturn, vatReturnHistory } = useWorkContext()
+  const { activeCompany, source, savedVatReturn, saveVatReturn, vatReturnHistory, vatSummary } = useWorkContext()
   const companyId = activeCompany.companyId
   const fiscalYear = activeCompany.settings.defaultFiscalYear
   const onDatabase = source === 'database'
@@ -37,6 +44,8 @@ export function VatSettlementPage() {
   const [view, setView] = useState<VatReturnFilingView | null>(null)
   const [prior, setPrior] = useState('0')
   const [history, setHistory] = useState<VatReturnFilingSummary[]>([])
+  const [summary, setSummary] = useState<VatSummary | null>(null)
+  const [summaryError, setSummaryError] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
@@ -63,6 +72,16 @@ export function VatSettlementPage() {
     if (!onDatabase) { setHistory([]); return }
     void vatReturnHistory(companyId).then(setHistory).catch(() => setHistory([]))
   }, [companyId, onDatabase, vatReturnHistory, reload])
+
+  useEffect(() => {
+    if (!onDatabase || !fromDate || !toDate) { setSummary(null); return }
+    const controller = new AbortController()
+    setSummaryError('')
+    void vatSummary(companyId, { from: fromDate, to: toDate })
+      .then((value) => { if (!controller.signal.aborted) setSummary(value) })
+      .catch((problem: unknown) => { if (!controller.signal.aborted) setSummaryError(problem instanceof Error ? problem.message : 'Não foi possível calcular o resumo de IVA.') })
+    return () => controller.abort()
+  }, [companyId, onDatabase, fromDate, toDate, vatSummary, reload])
 
   const result = view?.return ?? null
   const priorValue = Number(prior.replace(',', '.')) || 0
@@ -112,6 +131,11 @@ export function VatSettlementPage() {
     body.push([])
     body.push(['Conta', 'Descrição', 'Papel', 'Débito', 'Crédito', 'Saldo'])
     for (const line of result.lines) body.push([line.accountCode, line.accountName, ROLE_LABELS[line.role], line.debit, line.credit, line.net])
+    if (summary && summary.rows.length > 0) {
+      body.push([])
+      body.push(['Natureza', 'Taxa', 'Região', 'Base/Imposto', 'Contas', 'Débito', 'Crédito', 'Saldo'])
+      for (const row of summary.rows) body.push([vatNatureLabel(row.nature), vatRateLabel(row.rate), vatRegionLabel(row.region), KIND_LABELS[row.kind], row.accountCount, row.debit, row.credit, row.net])
+    }
     downloadCsv(csvFilename('apuramento-iva', activeCompany.legalName), toCsv(body))
   }
 
@@ -173,6 +197,27 @@ export function VatSettlementPage() {
     </section>}
 
     {result && result.lines.length === 0 && <section className="panel"><p className="empty-state"><Info size={15} /> Sem movimento em contas de IVA (24.3) no período.</p></section>}
+
+    {summaryError && <p className="save-status error">{summaryError}</p>}
+
+    {summary && <section className="panel">
+      <div className="panel-heading"><div><h2>Resumo por taxa e natureza</h2><p>O movimento do período das contas classificadas ({fromDate} a {toDate}), agrupado por natureza, taxa e região — a desagregação que se transcreve para a declaração periódica.</p></div></div>
+      {summary.rows.length === 0
+        ? <p className="empty-state">Sem contas classificadas com movimento no período. Configure a <Link to="/config-iva">classificação de IVA por conta</Link>.</p>
+        : <div className="table-wrap"><table>
+            <thead><tr><th>Natureza</th><th>Taxa</th><th>Região</th><th>Base/Imposto</th><th className="numeric">Contas</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th></tr></thead>
+            <tbody>{summary.rows.map((row) => <tr key={`${row.kind}-${row.nature}-${row.rate}-${row.region}`}>
+              <td>{vatNatureLabel(row.nature)}</td>
+              <td>{vatRateLabel(row.rate)}</td>
+              <td>{vatRegionLabel(row.region)}</td>
+              <td>{KIND_LABELS[row.kind]}</td>
+              <td className="numeric">{row.accountCount}</td>
+              <td className="numeric">{euro.format(row.debit)}</td>
+              <td className="numeric">{euro.format(row.credit)}</td>
+              <td className="numeric strong">{euro.format(row.net)}</td>
+            </tr>)}</tbody>
+          </table></div>}
+    </section>}
 
     <section className="panel no-print">
       <div className="panel-heading"><div><h2>Apuramentos guardados</h2><p>Os últimos apuramentos desta empresa.</p></div></div>

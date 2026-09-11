@@ -1674,6 +1674,27 @@ if (app.Environment.IsDevelopment())
         return count < 0 ? Results.NotFound() : Results.Ok(new { updated = count });
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-summary", async (
+        Guid userId, Guid companyId, string? from, string? to,
+        VatSummaryService summaries, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        if (fromDate is not { } periodFrom || toDate is not { } periodTo)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["periodo"] = ["Indique a data inicial e a data final do período."]
+            });
+        }
+
+        var summary = await summaries.BuildAsync(userId, companyId, periodFrom, periodTo, cancellationToken).ConfigureAwait(false);
+        return summary is null ? Results.NotFound() : Results.Ok(summary);
+    });
+
     app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
     {
         var normalized = reference.Trim().ToUpperInvariant();

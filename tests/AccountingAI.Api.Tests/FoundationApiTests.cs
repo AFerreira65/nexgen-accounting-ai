@@ -1396,6 +1396,41 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task VatSummaryReturnsRowsGroupedByNatureRateAndRegion()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var summary = await client
+            .GetAsync($"{basePath}/vat-summary?from=2026-01-01&to=2026-12-31")
+            .ConfigureAwait(false);
+        var summaryPayload = await summary.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var missingRange = await client
+            .GetAsync($"{basePath}/vat-summary")
+            .ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/vat-summary?from=2026-01-01&to=2026-12-31")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, summary.StatusCode);
+        StringAssert.Contains(summaryPayload, "\"rows\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, missingRange.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task DataDictionaryListsTablesAndDetailsColumns()
     {
         if (!OperatingSystem.IsWindows())

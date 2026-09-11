@@ -646,6 +646,23 @@ export type VatClassificationRow = {
   classified: boolean
 }
 
+export type VatSummaryRow = {
+  kind: 'base' | 'imposto' | 'outras'
+  nature: string
+  rate: string
+  region: string
+  debit: number
+  credit: number
+  net: number
+  accountCount: number
+}
+
+export type VatSummary = {
+  from: string
+  to: string
+  rows: VatSummaryRow[]
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {
