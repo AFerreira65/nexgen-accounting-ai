@@ -5,12 +5,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AccountingAI.Infrastructure.SqlServer;
 
-/// <summary>As credenciais da AT de uma empresa, sem a senha.</summary>
-public sealed record CompanyAtCredentialsView(bool Configured, string? SubUser, DateTimeOffset? UpdatedAtUtc);
+/// <summary>As credenciais e as definições da AT de uma empresa, sem a senha.</summary>
+public sealed record CompanyAtCredentialsView(
+    bool Configured,
+    string? SubUser,
+    string Periodicity,
+    string Environment,
+    DateTimeOffset? UpdatedAtUtc);
 
 /// <summary>
-/// Guarda e lê as credenciais da AT por empresa (subutilizador + senha). A senha
-/// é cifrada com o <see cref="IAtSecretProtector"/> antes de tocar na base de
+/// Guarda e lê as credenciais e as definições da AT por empresa (subutilizador,
+/// senha, periodicidade da declaração periódica, ambiente da AT). A senha é
+/// cifrada com o <see cref="IAtSecretProtector"/> antes de tocar na base de
 /// dados e nunca é devolvida.
 /// </summary>
 public sealed class CompanyAtCredentialsService(AccountingDbContext context, IAtSecretProtector protector)
@@ -29,6 +35,8 @@ public sealed class CompanyAtCredentialsService(AccountingDbContext context, IAt
             .Select(item => new
             {
                 item.SubUser,
+                item.Periodicity,
+                item.Environment,
                 CreatedAtUtc = EF.Property<DateTimeOffset?>(item, "CreatedAtUtc"),
                 ModifiedAtUtc = EF.Property<DateTimeOffset?>(item, "ModifiedAtUtc"),
             })
@@ -36,12 +44,13 @@ public sealed class CompanyAtCredentialsService(AccountingDbContext context, IAt
             .ConfigureAwait(false);
 
         return row is null
-            ? new CompanyAtCredentialsView(false, null, null)
-            : new CompanyAtCredentialsView(true, row.SubUser, row.ModifiedAtUtc ?? row.CreatedAtUtc);
+            ? new CompanyAtCredentialsView(false, null, VatFilingPeriodicity.Mensal.ToString(), AtEnvironment.Testes.ToString(), null)
+            : new CompanyAtCredentialsView(true, row.SubUser, row.Periodicity.ToString(), row.Environment.ToString(), row.ModifiedAtUtc ?? row.CreatedAtUtc);
     }
 
     public async Task<CompanyAtCredentialsView?> SaveAsync(
-        Guid userId, Guid companyId, string subUser, string password, CancellationToken cancellationToken = default)
+        Guid userId, Guid companyId, string subUser, string password,
+        VatFilingPeriodicity periodicity, AtEnvironment environment, CancellationToken cancellationToken = default)
     {
         if (!await HasAccessAsync(userId, companyId, cancellationToken).ConfigureAwait(false))
         {
@@ -55,11 +64,11 @@ public sealed class CompanyAtCredentialsService(AccountingDbContext context, IAt
 
         if (row is null)
         {
-            context.CompanyAtCredentials.Add(CompanyAtCredentials.Create(companyId, subUser, encrypted));
+            context.CompanyAtCredentials.Add(CompanyAtCredentials.Create(companyId, subUser, encrypted, periodicity, environment));
         }
         else
         {
-            row.Update(subUser, encrypted);
+            row.Update(subUser, encrypted, periodicity, environment);
         }
 
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

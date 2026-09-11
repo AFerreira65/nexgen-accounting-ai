@@ -83,18 +83,30 @@ Application/At/
   teste de API (estado `configured:false` sem certificado); teste de interface
   (ecrã + gate de demonstração).
 
-### F2-02B+ — (bloqueado) chamadas SOAP à AT
+### F2-02B — Credenciais e definições da AT por empresa
+
+- **Regras:** `CompanyAtCredentials` (subutilizador + senha cifrada) —
+  ver [`F2-02B`](F2-02B-AT-CREDENTIALS.md) — e a extensão que lhe acrescentou
+  `Periodicity`/`Environment` por empresa — ver
+  [`F2-02B (continuação)`](F2-02B2-AT-SETTINGS-PER-COMPANY.md). `GET/PUT/DELETE
+  .../at-credentials`; painel «Configuração da AT» em `/comunicacao-at`.
+- **Validação:** ver os dois documentos ligados acima.
+
+### F2-02C — (bloqueado) chamadas SOAP à AT
 
 - Consulta e-Fatura e, depois, submissão de declarações — quando a AT fornecer
-  os elementos de teste e confirmar a adesão. Cliente `System.ServiceModel` no
-  `Infrastructure.At`, assente no *provider* de F2-02A.
+  os elementos de teste e confirmar a adesão. Cliente SOAP no
+  `Infrastructure.At`, assente no *provider* de F2-02A e nas credenciais de
+  F2-02B. **Precisa do contrato técnico do webservice** (WSDL ou documentação
+  equivalente) antes de escrever qualquer chamada — não se adivinham nomes de
+  operação, formas de mensagem nem URLs de um webservice do Estado. Confirmado
+  com o utilizador que, numa primeira fase, é só para **validar, nunca
+  submeter**.
 
 ## Decisões em aberto
 
-- **Adesão à AT** — bloqueio externo; F2-02B+ só arranca com os elementos de
+- **Adesão à AT** — bloqueio externo; F2-02C só arranca com os elementos de
   teste.
-- **Credenciais por sujeito passivo** (subutilizador + perfil WFA) — por
-  empresa, guardadas cifradas; desenho quando F2-02B arrancar.
 - **Local do certificado** — `Directory` + `FileName`, com `Path` absoluto a ter
   prioridade.
 

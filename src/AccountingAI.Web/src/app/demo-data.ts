@@ -633,6 +633,8 @@ export type AtCertificateStatus = {
 export type AtCredentials = {
   configured: boolean
   subUser: string | null
+  periodicity: 'Mensal' | 'Trimestral'
+  environment: 'Testes' | 'Producao'
   updatedAtUtc: string | null
 }
 

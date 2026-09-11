@@ -59,10 +59,12 @@ public sealed class CompanyAtCredentialsServiceTests
             Assert.IsFalse(before!.Configured);
 
             var saved = await service
-                .SaveAsync(userId, companyId, "500584095/1", "senha-forte", CancellationToken.None)
+                .SaveAsync(userId, companyId, "500584095/1", "senha-forte", VatFilingPeriodicity.Trimestral, AtEnvironment.Producao, CancellationToken.None)
                 .ConfigureAwait(false);
             Assert.IsTrue(saved!.Configured);
             Assert.AreEqual("500584095/1", saved.SubUser);
+            Assert.AreEqual("Trimestral", saved.Periodicity);
+            Assert.AreEqual("Producao", saved.Environment);
 
             // A senha guardada está cifrada — nunca em texto.
             var stored = await context.CompanyAtCredentials
@@ -75,9 +77,10 @@ public sealed class CompanyAtCredentialsServiceTests
 
             // Um valor já cifrado é guardado tal como está (não se volta a cifrar).
             var reSaved = await service
-                .SaveAsync(userId, companyId, "500584095/2", "enc:v1:ja-cifrado", CancellationToken.None)
+                .SaveAsync(userId, companyId, "500584095/2", "enc:v1:ja-cifrado", VatFilingPeriodicity.Mensal, AtEnvironment.Testes, CancellationToken.None)
                 .ConfigureAwait(false);
             Assert.AreEqual("500584095/2", reSaved!.SubUser);
+            Assert.AreEqual("Mensal", reSaved.Periodicity, "Atualizar substitui a periodicidade/ambiente guardados.");
             var reStored = await context.CompanyAtCredentials
                 .AsNoTracking().SingleAsync(item => item.CompanyId == companyId).ConfigureAwait(false);
             Assert.AreEqual("enc:v1:ja-cifrado", reStored.EncryptedPassword);
@@ -87,7 +90,7 @@ public sealed class CompanyAtCredentialsServiceTests
 
             // Sem acesso.
             Assert.IsNull(await service.GetAsync(Guid.NewGuid(), companyId, CancellationToken.None).ConfigureAwait(false));
-            Assert.IsNull(await service.SaveAsync(Guid.NewGuid(), companyId, "x/1", "y", CancellationToken.None).ConfigureAwait(false));
+            Assert.IsNull(await service.SaveAsync(Guid.NewGuid(), companyId, "x/1", "y", VatFilingPeriodicity.Mensal, AtEnvironment.Testes, CancellationToken.None).ConfigureAwait(false));
             Assert.IsFalse(await service.DeleteAsync(Guid.NewGuid(), companyId, CancellationToken.None).ConfigureAwait(false));
         }
         finally

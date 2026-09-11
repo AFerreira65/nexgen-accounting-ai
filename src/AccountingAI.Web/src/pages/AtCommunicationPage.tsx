@@ -20,6 +20,8 @@ export function AtCommunicationPage() {
   const [credentials, setCredentials] = useState<AtCredentials | null>(null)
   const [subUser, setSubUser] = useState('')
   const [password, setPassword] = useState('')
+  const [periodicity, setPeriodicity] = useState<'Mensal' | 'Trimestral'>('Mensal')
+  const [environment, setEnvironment] = useState<'Testes' | 'Producao'>('Testes')
   const [credError, setCredError] = useState('')
   const [credStatus, setCredStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -39,7 +41,13 @@ export function AtCommunicationPage() {
     if (!onDatabase) { setCredentials(null); return }
     const controller = new AbortController()
     void atCredentials(companyId)
-      .then((value) => { if (controller.signal.aborted) return; setCredentials(value); setSubUser(value.subUser ?? '') })
+      .then((value) => {
+        if (controller.signal.aborted) return
+        setCredentials(value)
+        setSubUser(value.subUser ?? '')
+        setPeriodicity(value.periodicity)
+        setEnvironment(value.environment)
+      })
       .catch(() => { if (!controller.signal.aborted) setCredentials(null) })
     return () => controller.abort()
   }, [onDatabase, companyId, atCredentials, reload])
@@ -49,7 +57,7 @@ export function AtCommunicationPage() {
     if (!subUser.trim() || !password) { setCredError('Indique o subutilizador e a senha.'); return }
     setBusy(true); setCredError(''); setCredStatus('')
     try {
-      const next = await saveAtCredentials(companyId, { subUser: subUser.trim(), password })
+      const next = await saveAtCredentials(companyId, { subUser: subUser.trim(), password, periodicity, environment })
       setCredentials(next)
       setPassword('')
       setCredStatus('Credenciais guardadas (a senha fica cifrada).')
@@ -65,9 +73,11 @@ export function AtCommunicationPage() {
     setBusy(true); setCredError(''); setCredStatus('')
     try {
       await deleteAtCredentials(companyId)
-      setCredentials({ configured: false, subUser: null, updatedAtUtc: null })
+      setCredentials({ configured: false, subUser: null, periodicity: 'Mensal', environment: 'Testes', updatedAtUtc: null })
       setSubUser('')
       setPassword('')
+      setPeriodicity('Mensal')
+      setEnvironment('Testes')
       setReload((value) => value + 1)
     } catch (problem) {
       setCredError(problem instanceof Error ? problem.message : 'Não foi possível remover as credenciais.')
@@ -106,7 +116,7 @@ export function AtCommunicationPage() {
     </section>}
 
     <section className="panel">
-      <div className="panel-heading"><div><h2>Credenciais de {activeCompany.legalName}</h2><p>O subutilizador e a senha do perfil e-Fatura desta empresa. A senha é guardada cifrada.</p></div>
+      <div className="panel-heading"><div><h2>Configuração da AT de {activeCompany.legalName}</h2><p>O subutilizador e a senha do perfil e-Fatura, a periodicidade da declaração periódica e o ambiente da AT — tudo por empresa. A senha é guardada cifrada.</p></div>
         <span className={`badge ${credentials?.configured ? 'success' : ''}`}>{credentials?.configured ? 'Configuradas' : 'Não configuradas'}</span>
       </div>
       {credError && <p className="save-status error">{credError}</p>}
@@ -118,9 +128,22 @@ export function AtCommunicationPage() {
         <label>Senha
           <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder={credentials?.configured ? '•••••••• (guardada)' : ''} autoComplete="off" />
         </label>
+        <label>Periodicidade
+          <select value={periodicity} onChange={(event) => setPeriodicity(event.target.value as 'Mensal' | 'Trimestral')}>
+            <option value="Mensal">Mensal</option>
+            <option value="Trimestral">Trimestral</option>
+          </select>
+        </label>
+        <label>Ambiente da AT
+          <select value={environment} onChange={(event) => setEnvironment(event.target.value as 'Testes' | 'Producao')}>
+            <option value="Testes">Testes</option>
+            <option value="Producao">Produção</option>
+          </select>
+        </label>
         <button type="submit" className="button button-primary" disabled={busy}>{busy ? 'A guardar…' : 'Guardar'}</button>
         {credentials?.configured && <button type="button" className="button button-secondary" disabled={busy} onClick={() => void removeCredentials()}>Remover</button>}
       </form>
+      {credentials?.configured && <p className="mr-hint">Regime {credentials.periodicity === 'Trimestral' ? 'trimestral' : 'mensal'}, ambiente {credentials.environment === 'Producao' ? 'de produção' : 'de testes'}.</p>}
       {credentials?.updatedAtUtc && <p className="mr-hint">Atualizadas em {formatDate(credentials.updatedAtUtc)}.</p>}
     </section>
 

@@ -36,7 +36,7 @@ internal static class DataDictionaryText
         ["ManagementReport"] = "Relatório de gestão gerado por IA: o tipo, o período, o modelo, e o dossiê e o resultado guardados.",
         ["CompanyAiSettings"] = "Interruptor dos relatórios de gestão com IA de uma empresa (ativo, geração mensal automática).",
         ["VatReturnFiling"] = "Apuramento periódico de IVA guardado por uma empresa (período, excesso reportado do período anterior, fotografia do cálculo).",
-        ["CompanyAtCredentials"] = "Credenciais da AT de uma empresa: o subutilizador e a senha (cifrada) do perfil e-Fatura.",
+        ["CompanyAtCredentials"] = "Credenciais e definições da AT de uma empresa: o subutilizador e a senha (cifrada) do perfil e-Fatura, a periodicidade da declaração periódica e o ambiente da AT.",
         ["AccountVatClassification"] = "Classificação de IVA de uma conta (taxa, natureza da operação, região) para a desagregação da declaração periódica.",
         ["IrcEstimateFiling"] = "Estimativa de IRC guardada por uma empresa (período, taxa e correções fiscais indicadas, fotografia do cálculo).",
         ["FoundationState"] = "Estado interno da fundação da plataforma; não é de uso contabilístico.",
@@ -180,6 +180,8 @@ internal static class DataDictionaryText
 
         ["CompanyAtCredentials.SubUser"] = "O subutilizador da AT no formato NIF/n (ex.: 500584095/1).",
         ["CompanyAtCredentials.EncryptedPassword"] = "A senha do subutilizador, guardada cifrada (valor enc:v1:…).",
+        ["CompanyAtCredentials.Periodicity"] = "A periodicidade da declaração periódica de IVA desta empresa (Mensal / Trimestral).",
+        ["CompanyAtCredentials.Environment"] = "O ambiente da AT (Testes / Producao) em que as chamadas desta empresa devem correr.",
 
         ["AccountVatClassification.AccountId"] = "A conta a que a classificação se aplica.",
         ["AccountVatClassification.Rate"] = "A taxa de IVA (isento / reduzida / intermédia / normal).",

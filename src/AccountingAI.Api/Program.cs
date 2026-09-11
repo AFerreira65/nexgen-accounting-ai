@@ -1433,8 +1433,13 @@ if (app.Environment.IsDevelopment())
             });
         }
 
+        if (!TryParseAtSettings(request?.Periodicity, request?.Environment, out var periodicity, out var environment, out var error))
+        {
+            return error!;
+        }
+
         var view = await credentials
-            .SaveAsync(userId, companyId, subUser, password, cancellationToken)
+            .SaveAsync(userId, companyId, subUser, password, periodicity, environment, cancellationToken)
             .ConfigureAwait(false);
         return view is null ? Results.NotFound() : Results.Ok(view);
     });
@@ -3003,6 +3008,31 @@ public partial class Program
         return true;
     }
 
+    private static bool TryParseAtSettings(
+        string? periodicity, string? environment,
+        out AccountingAI.Domain.Organizations.VatFilingPeriodicity parsedPeriodicity,
+        out AccountingAI.Domain.Organizations.AtEnvironment parsedEnvironment,
+        out IResult? error)
+    {
+        parsedPeriodicity = AccountingAI.Domain.Organizations.VatFilingPeriodicity.Mensal;
+        parsedEnvironment = AccountingAI.Domain.Organizations.AtEnvironment.Testes;
+        error = null;
+
+        if (!string.IsNullOrWhiteSpace(periodicity) && !Enum.TryParse(periodicity.Trim(), ignoreCase: true, out parsedPeriodicity))
+        {
+            error = Results.ValidationProblem(new Dictionary<string, string[]> { ["periodicidade"] = ["Periodicidade inválida — use Mensal ou Trimestral."] });
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(environment) && !Enum.TryParse(environment.Trim(), ignoreCase: true, out parsedEnvironment))
+        {
+            error = Results.ValidationProblem(new Dictionary<string, string[]> { ["ambiente"] = ["Ambiente inválido — use Testes ou Producao."] });
+            return false;
+        }
+
+        return true;
+    }
+
     private static Task<bool> HasCompanyAccessAsync(
         AccountingDbContext context,
         Guid userId,
@@ -3187,7 +3217,7 @@ public sealed record GenerateManagementReportRequest(string? Kind, string? Quest
 
 public sealed record SaveVatReturnRequest(decimal PriorPeriodCredit);
 
-public sealed record PutAtCredentialsRequest(string? SubUser, string? Password);
+public sealed record PutAtCredentialsRequest(string? SubUser, string? Password, string? Periodicity, string? Environment);
 
 public sealed record PutVatClassificationRequest(string? Rate, string? Nature, string? Region);
 

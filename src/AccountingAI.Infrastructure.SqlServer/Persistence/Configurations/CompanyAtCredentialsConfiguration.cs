@@ -12,6 +12,8 @@ internal sealed class CompanyAtCredentialsConfiguration : IEntityTypeConfigurati
         builder.HasKey(item => item.Id);
         builder.Property(item => item.SubUser).HasMaxLength(CompanyAtCredentials.SubUserMaxLength).IsRequired();
         builder.Property(item => item.EncryptedPassword).IsRequired();
+        builder.Property(item => item.Periodicity).HasConversion<int>();
+        builder.Property(item => item.Environment).HasConversion<int>();
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.HasIndex(item => item.CompanyId).IsUnique();
     }

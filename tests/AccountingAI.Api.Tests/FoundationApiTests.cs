@@ -1299,6 +1299,8 @@ public sealed class FoundationApiTests
 
         Assert.AreEqual(HttpStatusCode.OK, credentials.StatusCode);
         StringAssert.Contains(credentialsPayload, "\"configured\":false");
+        StringAssert.Contains(credentialsPayload, "\"periodicity\"");
+        StringAssert.Contains(credentialsPayload, "\"environment\"");
         Assert.IsFalse(credentialsPayload.Contains("password", StringComparison.OrdinalIgnoreCase), "A senha das credenciais nunca é devolvida.");
     }
 
