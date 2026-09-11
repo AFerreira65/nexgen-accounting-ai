@@ -51,6 +51,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<AccountVatClassification> AccountVatClassifications => Set<AccountVatClassification>();
 
+    public DbSet<IrcEstimateFiling> IrcEstimateFilings => Set<IrcEstimateFiling>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -77,6 +79,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new VatReturnFilingConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyAtCredentialsConfiguration());
         modelBuilder.ApplyConfiguration(new AccountVatClassificationConfiguration());
+        modelBuilder.ApplyConfiguration(new IrcEstimateFilingConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

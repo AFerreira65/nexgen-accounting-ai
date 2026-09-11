@@ -1730,6 +1730,69 @@ if (app.Environment.IsDevelopment())
         return estimate is null ? Results.NotFound() : Results.Ok(estimate);
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/irc-estimate/saved", async (
+        Guid userId, Guid companyId, string? from, string? to,
+        IrcEstimateFilingService filings, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        if (fromDate is not { } periodFrom || toDate is not { } periodTo)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["periodo"] = ["Indique a data inicial e a data final do período."]
+            });
+        }
+
+        var view = await filings.GetAsync(userId, companyId, periodFrom, periodTo, cancellationToken).ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/irc-estimate/saved", async (
+        Guid userId, Guid companyId, string? from, string? to, IrcEstimateRequest? request,
+        IrcEstimateFilingService filings, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        if (fromDate is not { } periodFrom || toDate is not { } periodTo)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["periodo"] = ["Indique a data inicial e a data final do período."]
+            });
+        }
+
+        if (request is null || request.TaxRate <= 0m || request.TaxRate > 1m)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["taxRate"] = ["Indique uma taxa entre 0% e 100%, em fração (ex.: 0.21 para 21%)."]
+            });
+        }
+
+        var adjustments = (request.Adjustments ?? [])
+            .Select(item => new AccountingAI.Application.Irc.IrcAdjustment((item.Description ?? string.Empty).Trim(), item.Amount))
+            .ToList();
+
+        var view = await filings
+            .SaveAsync(userId, companyId, periodFrom, periodTo, request.TaxRate, adjustments, cancellationToken)
+            .ConfigureAwait(false);
+        return view is null ? Results.NotFound() : Results.Ok(view);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/irc-estimate/history", async (
+        Guid userId, Guid companyId, IrcEstimateFilingService filings, CancellationToken cancellationToken) =>
+    {
+        var list = await filings.ListAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
+    });
+
     app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
     {
         var normalized = reference.Trim().ToUpperInvariant();

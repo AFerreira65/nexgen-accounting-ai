@@ -688,6 +688,23 @@ export type IrcEstimate = {
   estimatedTax: number
 }
 
+export type IrcEstimateFilingView = {
+  saved: boolean
+  savedAtUtc: string | null
+  taxRate: number | null
+  adjustments: IrcAdjustment[]
+  estimate: IrcEstimate | null
+}
+
+export type IrcEstimateFilingSummary = {
+  id: string
+  periodFrom: string
+  periodTo: string
+  taxRate: number
+  estimatedTax: number
+  savedAtUtc: string | null
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {

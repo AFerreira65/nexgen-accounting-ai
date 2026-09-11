@@ -38,6 +38,7 @@ internal static class DataDictionaryText
         ["VatReturnFiling"] = "Apuramento periódico de IVA guardado por uma empresa (período, excesso reportado do período anterior, fotografia do cálculo).",
         ["CompanyAtCredentials"] = "Credenciais da AT de uma empresa: o subutilizador e a senha (cifrada) do perfil e-Fatura.",
         ["AccountVatClassification"] = "Classificação de IVA de uma conta (taxa, natureza da operação, região) para a desagregação da declaração periódica.",
+        ["IrcEstimateFiling"] = "Estimativa de IRC guardada por uma empresa (período, taxa e correções fiscais indicadas, fotografia do cálculo).",
         ["FoundationState"] = "Estado interno da fundação da plataforma; não é de uso contabilístico.",
     };
 
@@ -184,5 +185,11 @@ internal static class DataDictionaryText
         ["AccountVatClassification.Rate"] = "A taxa de IVA (isento / reduzida / intermédia / normal).",
         ["AccountVatClassification.Nature"] = "A natureza da operação de IVA (transmissões internas, prestações de serviços, aquisições intracomunitárias, …).",
         ["AccountVatClassification.Region"] = "A região (Continente / Açores / Madeira).",
+
+        ["IrcEstimateFiling.PeriodFrom"] = "Data inicial do período da estimativa.",
+        ["IrcEstimateFiling.PeriodTo"] = "Data final do período da estimativa.",
+        ["IrcEstimateFiling.TaxRate"] = "A taxa de IRC indicada pelo utilizador (fração, ex.: 0.21 para 21%).",
+        ["IrcEstimateFiling.AdjustmentsJson"] = "As correções fiscais indicadas pelo utilizador, em JSON.",
+        ["IrcEstimateFiling.SnapshotJson"] = "A fotografia da estimativa calculada (resultado líquido, correções, resultado fiscal, coleta) em JSON.",
     };
 }

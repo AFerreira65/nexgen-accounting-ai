@@ -82,11 +82,21 @@ Application/Irc/
   negativo → coleta 0); teste de API (`400` sem datas/taxa inválida, `404` sem
   acesso); teste de interface (formulário + gate de demonstração).
 
+### F2-10B — Persistência da estimativa
+
+- **Regras:** `accounting.IrcEstimateFiling` (taxa + correções + fotografia,
+  um por período) + migração; `IrcEstimateFilingService` guarda e recalcula
+  sempre contra o razão atual ao ler; `GET/PUT .../irc-estimate/saved`,
+  `GET .../irc-estimate/history`; o ecrã carrega a estimativa guardada do
+  período, «Guardar estimativa», histórico com «Abrir». Auditável, no
+  `record-info` e no `DataDictionaryText`.
+- **Validação:** integração (guardar, reler, um lançamento novo muda o
+  resultado líquido lido sem perder a taxa/correções guardadas, atualizar não
+  duplica, histórico); teste de API (leitura + validação, sem escrita real —
+  a base de testes de API é partilhada); teste de interface.
+
 ## Decisões em aberto
 
-- **Persistência** — se vier a ser pedida, um histórico por `(empresa,
-  período)` à imagem do `VatReturnFiling` (F2-08C), guardando as correções e a
-  taxa usadas.
 - **Modelo 22** — os campos numerados dependem da confirmação do utilizador
   sobre a numeração em vigor; não se avança sem isso (mesma cautela da
   F2-09D).

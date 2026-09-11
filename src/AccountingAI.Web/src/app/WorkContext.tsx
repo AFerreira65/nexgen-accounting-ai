@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -110,6 +110,9 @@ type WorkContextValue = WorkContextData & {
   bulkVatClassification: (companyId: string, input: { prefix: string; rate: string; nature: string; region: string }) => Promise<number>
   vatSummary: (companyId: string, params: { from: string; to: string }) => Promise<VatSummary>
   ircEstimate: (companyId: string, params: { from: string; to: string }, input: { taxRate: number; adjustments: IrcAdjustment[] }) => Promise<IrcEstimate>
+  savedIrcEstimate: (companyId: string, params: { from: string; to: string }) => Promise<IrcEstimateFilingView>
+  saveIrcEstimate: (companyId: string, params: { from: string; to: string }, input: { taxRate: number; adjustments: IrcAdjustment[] }) => Promise<IrcEstimateFilingView>
+  ircEstimateHistory: (companyId: string) => Promise<IrcEstimateFilingSummary[]>
   saveAtCredentials: (companyId: string, input: { subUser: string; password: string }) => Promise<AtCredentials>
   deleteAtCredentials: (companyId: string) => Promise<void>
   previewSaftAccounts: (companyId: string, file: File) => Promise<SaftAccountsPreview>
@@ -898,6 +901,27 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as IrcEstimate
+    },
+    savedIrcEstimate: async (companyId, { from, to }) => {
+      const params = new URLSearchParams({ from, to })
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/irc-estimate/saved?${params}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as IrcEstimateFilingView
+    },
+    saveIrcEstimate: async (companyId, { from, to }, input) => {
+      const params = new URLSearchParams({ from, to })
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/irc-estimate/saved?${params}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as IrcEstimateFilingView
+    },
+    ircEstimateHistory: async (companyId) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/irc-estimate/history`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as IrcEstimateFilingSummary[]
     },
     previewSaftAccounts: async (companyId, file) => {
       if (source === 'database') {

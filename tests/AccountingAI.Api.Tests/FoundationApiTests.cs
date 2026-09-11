@@ -1477,6 +1477,50 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task IrcEstimateSavedAndHistoryAreExposedReadOnly()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var saved = await client
+            .GetAsync($"{basePath}/irc-estimate/saved?from=2026-01-01&to=2026-12-31")
+            .ConfigureAwait(false);
+        var savedPayload = await saved.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var history = await client
+            .GetAsync($"{basePath}/irc-estimate/history")
+            .ConfigureAwait(false);
+        var historyPayload = await history.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        // Escrita inválida (taxa 0) — rejeitada antes de tocar na base.
+        using var badRate = await client
+            .PutAsync($"{basePath}/irc-estimate/saved?from=2026-01-01&to=2026-12-31", new StringContent(
+                "{\"taxRate\":0,\"adjustments\":[]}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/irc-estimate/saved?from=2026-01-01&to=2026-12-31")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, saved.StatusCode);
+        StringAssert.Contains(savedPayload, "\"saved\"");
+        Assert.AreEqual(HttpStatusCode.OK, history.StatusCode);
+        StringAssert.StartsWith(historyPayload.TrimStart(), "[");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badRate.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task DataDictionaryListsTablesAndDetailsColumns()
     {
         if (!OperatingSystem.IsWindows())
