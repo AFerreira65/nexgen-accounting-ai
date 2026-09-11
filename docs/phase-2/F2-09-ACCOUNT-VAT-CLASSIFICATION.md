@@ -87,10 +87,22 @@ Domain/Accounting/
 - **Validação:** teste do serviço (empresa construída, contas classificadas,
   agrupamento correto); teste de API; teste de interface.
 
-### F2-09C — (opcional) Mapeamento para os campos numerados
+### F2-09C — Cobertura da classificação
+
+- **Regras:** dentro do próprio resumo (F2-09B), as contas relevantes
+  (6/7/24.3) com movimento no período mas **sem classificação**, com o
+  respetivo débito/crédito/saldo — para o contabilista ver, antes de
+  transcrever o resumo, o que ainda falta classificar.
+- **Validação:** teste do serviço (conta com movimento e sem classificação
+  aparece; uma classificada não); teste de API; teste de interface.
+
+### F2-09D — (opcional, requer confirmação do utilizador) Mapeamento para os campos numerados
 
 - **Regras:** catálogo `(Nature, Rate, Region) → campo` em código, best-effort,
-  com aviso; o resumo passa a mostrar o campo previsto.
+  com aviso; o resumo passa a mostrar o campo previsto. **Não avança sem o
+  utilizador confirmar a numeração exata do modelo em vigor** — os números de
+  campo não se adivinham; um campo mal mapeado pode levar a uma declaração
+  errada.
 - **Validação:** teste do catálogo; nota no ecrã de que é um apoio.
 
 ## Decisões em aberto
