@@ -672,6 +672,22 @@ export type VatSummary = {
   unclassified: VatSummaryUnclassifiedRow[]
 }
 
+export type IrcAdjustment = {
+  description: string
+  amount: number
+}
+
+export type IrcEstimate = {
+  from: string
+  to: string
+  netIncome: number
+  adjustments: IrcAdjustment[]
+  adjustmentsTotal: number
+  taxableResult: number
+  taxRate: number
+  estimatedTax: number
+}
+
 export type RecordInfoParty = { id: string; name: string | null }
 
 export type RecordInfo = {

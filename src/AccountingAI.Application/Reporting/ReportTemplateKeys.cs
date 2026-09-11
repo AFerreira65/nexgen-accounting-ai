@@ -14,6 +14,7 @@ public static class ReportTemplateKeys
         "apuramento-iva",
         "contas-correntes",
         "analises",
+        "estimativa-irc",
     };
 
     public static bool IsKnown(string? reportKey) =>

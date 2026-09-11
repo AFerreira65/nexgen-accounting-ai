@@ -1695,6 +1695,41 @@ if (app.Environment.IsDevelopment())
         return summary is null ? Results.NotFound() : Results.Ok(summary);
     });
 
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/irc-estimate", async (
+        Guid userId, Guid companyId, string? from, string? to, IrcEstimateRequest? request,
+        IrcEstimateService irc, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        if (fromDate is not { } periodFrom || toDate is not { } periodTo)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["periodo"] = ["Indique a data inicial e a data final do período."]
+            });
+        }
+
+        if (request is null || request.TaxRate <= 0m || request.TaxRate > 1m)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["taxRate"] = ["Indique uma taxa entre 0% e 100%, em fração (ex.: 0.21 para 21%)."]
+            });
+        }
+
+        var adjustments = (request.Adjustments ?? [])
+            .Select(item => new AccountingAI.Application.Irc.IrcAdjustment((item.Description ?? string.Empty).Trim(), item.Amount))
+            .ToList();
+
+        var estimate = await irc
+            .BuildAsync(userId, companyId, periodFrom, periodTo, request.TaxRate, adjustments, cancellationToken)
+            .ConfigureAwait(false);
+        return estimate is null ? Results.NotFound() : Results.Ok(estimate);
+    });
+
     app.MapGet("/api/v1/development/accounting/taxonomies/{reference}", (string reference) =>
     {
         var normalized = reference.Trim().ToUpperInvariant();
@@ -3094,6 +3129,10 @@ public sealed record PutAtCredentialsRequest(string? SubUser, string? Password);
 public sealed record PutVatClassificationRequest(string? Rate, string? Nature, string? Region);
 
 public sealed record BulkVatClassificationRequest(string? Prefix, string? Rate, string? Nature, string? Region);
+
+public sealed record IrcAdjustmentRequest(string? Description, decimal Amount);
+
+public sealed record IrcEstimateRequest(decimal TaxRate, List<IrcAdjustmentRequest>? Adjustments);
 
 public sealed record CreateSaftCompanyRequest(
     string TaxRegistrationNumber,

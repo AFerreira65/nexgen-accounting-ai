@@ -748,6 +748,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the IRC estimate screen (requires the database)', () => {
+    window.history.pushState({}, '', '/estimativa-irc')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Estimativa de IRC', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('offers an Opções menu on every screen with the two actions', () => {
     window.history.pushState({}, '', '/')
     render(<App />)

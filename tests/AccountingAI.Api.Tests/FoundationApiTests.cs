@@ -1432,6 +1432,51 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task IrcEstimateComputesFromNetIncomePlusAdjustments()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var estimate = await client
+            .PostAsync($"{basePath}/irc-estimate?from=2026-01-01&to=2026-12-31", new StringContent(
+                "{\"taxRate\":0.21,\"adjustments\":[{\"description\":\"Correção\",\"amount\":100}]}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+        var estimatePayload = await estimate.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var badRate = await client
+            .PostAsync($"{basePath}/irc-estimate?from=2026-01-01&to=2026-12-31", new StringContent(
+                "{\"taxRate\":0,\"adjustments\":[]}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        using var missingRange = await client
+            .PostAsync($"{basePath}/irc-estimate", new StringContent(
+                "{\"taxRate\":0.21,\"adjustments\":[]}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .PostAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/irc-estimate?from=2026-01-01&to=2026-12-31", new StringContent(
+                "{\"taxRate\":0.21,\"adjustments\":[]}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, estimate.StatusCode);
+        StringAssert.Contains(estimatePayload, "\"netIncome\"");
+        StringAssert.Contains(estimatePayload, "\"estimatedTax\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badRate.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, missingRange.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task DataDictionaryListsTablesAndDetailsColumns()
     {
         if (!OperatingSystem.IsWindows())
