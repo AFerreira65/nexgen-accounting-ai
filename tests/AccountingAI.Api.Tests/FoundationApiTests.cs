@@ -1426,6 +1426,7 @@ public sealed class FoundationApiTests
 
         Assert.AreEqual(HttpStatusCode.OK, summary.StatusCode);
         StringAssert.Contains(summaryPayload, "\"rows\"");
+        StringAssert.Contains(summaryPayload, "\"unclassified\"");
         Assert.AreEqual(HttpStatusCode.BadRequest, missingRange.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
     }

@@ -657,10 +657,19 @@ export type VatSummaryRow = {
   accountCount: number
 }
 
+export type VatSummaryUnclassifiedRow = {
+  accountCode: string
+  accountName: string
+  debit: number
+  credit: number
+  net: number
+}
+
 export type VatSummary = {
   from: string
   to: string
   rows: VatSummaryRow[]
+  unclassified: VatSummaryUnclassifiedRow[]
 }
 
 export type RecordInfoParty = { id: string; name: string | null }

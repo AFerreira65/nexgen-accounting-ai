@@ -125,6 +125,14 @@ public sealed class VatSummaryServiceTests
             Assert.AreEqual(20.7m, inputVatRow.Debit);
             Assert.AreEqual(20.7m, inputVatRow.Net);
 
+            // A conta de gasto não classificada, com movimento no período, aparece em Unclassified.
+            Assert.AreEqual(1, q1.Unclassified.Count);
+            var unclassifiedRow = q1.Unclassified.Single();
+            Assert.AreEqual("6222", unclassifiedRow.AccountCode);
+            Assert.AreEqual(15m, unclassifiedRow.Debit);
+            Assert.AreEqual(0m, unclassifiedRow.Credit);
+            Assert.AreEqual(15m, unclassifiedRow.Net);
+
             // Sem acesso → null.
             Assert.IsNull(await service
                 .BuildAsync(Guid.NewGuid(), companyId, new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), CancellationToken.None)

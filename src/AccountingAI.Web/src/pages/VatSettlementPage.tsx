@@ -136,6 +136,11 @@ export function VatSettlementPage() {
       body.push(['Natureza', 'Taxa', 'Região', 'Base/Imposto', 'Contas', 'Débito', 'Crédito', 'Saldo'])
       for (const row of summary.rows) body.push([vatNatureLabel(row.nature), vatRateLabel(row.rate), vatRegionLabel(row.region), KIND_LABELS[row.kind], row.accountCount, row.debit, row.credit, row.net])
     }
+    if (summary && summary.unclassified.length > 0) {
+      body.push([])
+      body.push(['Conta por classificar', 'Descrição', 'Débito', 'Crédito', 'Saldo'])
+      for (const row of summary.unclassified) body.push([row.accountCode, row.accountName, row.debit, row.credit, row.net])
+    }
     downloadCsv(csvFilename('apuramento-iva', activeCompany.legalName), toCsv(body))
   }
 
@@ -217,6 +222,20 @@ export function VatSettlementPage() {
               <td className="numeric strong">{euro.format(row.net)}</td>
             </tr>)}</tbody>
           </table></div>}
+    </section>}
+
+    {summary && summary.unclassified.length > 0 && <section className="panel">
+      <div className="panel-heading"><div><h2>Contas por classificar</h2><p><Info size={13} /> Estas contas moveram-se no período mas ainda não têm classificação de IVA — ficam de fora do resumo acima. Configure-as em <Link to="/config-iva">classificação de IVA por conta</Link> antes de transcrever o resumo.</p></div></div>
+      <div className="table-wrap"><table>
+        <thead><tr><th>Conta</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th></tr></thead>
+        <tbody>{summary.unclassified.map((row) => <tr key={row.accountCode}>
+          <td><Link className="primary-cell" to={`/contas/${row.accountCode}`}>{row.accountCode}</Link></td>
+          <td>{row.accountName}</td>
+          <td className="numeric">{euro.format(row.debit)}</td>
+          <td className="numeric">{euro.format(row.credit)}</td>
+          <td className="numeric strong">{euro.format(row.net)}</td>
+        </tr>)}</tbody>
+      </table></div>
     </section>}
 
     <section className="panel no-print">

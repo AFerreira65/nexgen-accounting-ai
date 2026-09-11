@@ -20,8 +20,24 @@ public sealed record VatSummaryRow(
     decimal Net,
     int AccountCount);
 
+/// <summary>
+/// Uma conta relevante (movimento de classe 6/7 ou <c>243*</c>) com movimento no
+/// período mas sem <see cref="AccountVatClassification"/> — fica de fora do
+/// resumo; ver <see cref="VatSummary.Unclassified"/>.
+/// </summary>
+public sealed record VatSummaryUnclassifiedRow(
+    string AccountCode,
+    string AccountName,
+    decimal Debit,
+    decimal Credit,
+    decimal Net);
+
 /// <summary>O resumo de IVA de um período, pronto a transcrever para a declaração periódica.</summary>
-public sealed record VatSummary(DateOnly From, DateOnly To, IReadOnlyList<VatSummaryRow> Rows);
+public sealed record VatSummary(
+    DateOnly From,
+    DateOnly To,
+    IReadOnlyList<VatSummaryRow> Rows,
+    IReadOnlyList<VatSummaryUnclassifiedRow> Unclassified);
 
 /// <summary>
 /// Soma o movimento do período das contas classificadas
@@ -29,8 +45,10 @@ public sealed record VatSummary(DateOnly From, DateOnly To, IReadOnlyList<VatSum
 /// e separado em base (classes 6/7) e imposto (<c>243*</c>) — a desagregação
 /// que se transcreve para a declaração periódica. Só conta o que teve
 /// movimento no período, pelo que as contas agregadas sem lançamentos próprios
-/// não aparecem. Só lê; exclui os lançamentos anulados. Não é a declaração
-/// periódica oficial da AT.
+/// não aparecem. Devolve também as contas relevantes com movimento no período
+/// mas ainda sem classificação, para o resumo nunca parecer completo estando a
+/// omitir contas por classificar. Só lê; exclui os lançamentos anulados. Não é
+/// a declaração periódica oficial da AT.
 /// </summary>
 public sealed class VatSummaryService(AccountingDbContext context)
 {
@@ -94,7 +112,46 @@ public sealed class VatSummaryService(AccountingDbContext context)
             .ThenBy(row => row.Region, StringComparer.Ordinal)
             .ToList();
 
-        return new VatSummary(from, to, rows);
+        var unclassifiedGrouped = await context.JournalEntryLines
+            .AsNoTracking()
+            .GroupJoin(
+                context.AccountVatClassifications.AsNoTracking(),
+                line => line.AccountId,
+                classification => classification.AccountId,
+                (line, classifications) => new { line, classifications })
+            .SelectMany(
+                item => item.classifications.DefaultIfEmpty(),
+                (item, classification) => new { item.line, classification })
+            .Where(item => item.line.CompanyId == companyId &&
+                item.line.JournalEntry.Status != JournalEntryStatus.Voided &&
+                item.line.JournalEntry.EntryDate >= from &&
+                item.line.JournalEntry.EntryDate <= to &&
+                item.classification == null &&
+                item.line.Account.IsActive && item.line.Account.AllowsPosting &&
+                (item.line.Account.Code.StartsWith("6") || item.line.Account.Code.StartsWith("7") ||
+                 item.line.Account.Code.StartsWith("2432") || item.line.Account.Code.StartsWith("2433") || item.line.Account.Code.StartsWith("2434")))
+            .GroupBy(item => new { item.line.Account.Code, item.line.Account.Name })
+            .Select(group => new
+            {
+                group.Key.Code,
+                group.Key.Name,
+                Debit = group.Sum(item => item.line.Debit),
+                Credit = group.Sum(item => item.line.Credit),
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var unclassified = unclassifiedGrouped
+            .Select(row => new VatSummaryUnclassifiedRow(
+                row.Code,
+                row.Name,
+                decimal.Round(row.Debit, 2),
+                decimal.Round(row.Credit, 2),
+                decimal.Round(row.Debit - row.Credit, 2)))
+            .OrderBy(row => row.AccountCode, StringComparer.Ordinal)
+            .ToList();
+
+        return new VatSummary(from, to, rows, unclassified);
     }
 
     private Task<bool> HasAccessAsync(Guid userId, Guid companyId, CancellationToken cancellationToken) =>
