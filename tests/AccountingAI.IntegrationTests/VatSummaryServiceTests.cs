@@ -112,18 +112,23 @@ public sealed class VatSummaryServiceTests
             Assert.AreEqual(220m, salesRow.Credit);
             Assert.AreEqual(-220m, salesRow.Net);
             Assert.AreEqual(1, salesRow.AccountCount);
+            Assert.AreEqual(3, salesRow.Field?.Number, "Base à taxa normal, operações internas -> campo 3.");
+            Assert.IsNull(salesRow.Field!.Note, "Sede em Continente -> sem nota de Anexo R.");
 
             var outputVatRow = q1.Rows.Single(row => row.Kind == "imposto" && row.Nature == "TransmissoesInternas");
             Assert.AreEqual(33m, outputVatRow.Credit);
             Assert.AreEqual(-33m, outputVatRow.Net);
+            Assert.AreEqual(4, outputVatRow.Field?.Number, "Imposto à taxa normal, operações internas -> campo 4.");
 
             var expenseRow = q1.Rows.Single(row => row.Kind == "base" && row.Nature == "IvaDedutivelOutros");
             Assert.AreEqual(90m, expenseRow.Debit);
             Assert.AreEqual(90m, expenseRow.Net);
+            Assert.IsNull(expenseRow.Field, "A base de uma compra não tem campo próprio na declaração.");
 
             var inputVatRow = q1.Rows.Single(row => row.Kind == "imposto" && row.Nature == "IvaDedutivelOutros");
             Assert.AreEqual(20.7m, inputVatRow.Debit);
             Assert.AreEqual(20.7m, inputVatRow.Net);
+            Assert.AreEqual(24, inputVatRow.Field?.Number, "IVA dedutível de outros bens e serviços -> campo 24.");
 
             // A conta de gasto não classificada, com movimento no período, aparece em Unclassified.
             Assert.AreEqual(1, q1.Unclassified.Count);

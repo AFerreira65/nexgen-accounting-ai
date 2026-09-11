@@ -1,3 +1,4 @@
+using AccountingAI.Application.Vat;
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,9 @@ namespace AccountingAI.Infrastructure.SqlServer;
 /// Uma linha do resumo de IVA: o movimento de um período das contas com uma
 /// dada classificação, agregado por natureza/taxa/região. <see cref="Kind"/> ∈
 /// <c>base | imposto | outras</c> — <c>base</c> para as contas 6/7, <c>imposto</c>
-/// para as <c>243*</c>.
+/// para as <c>243*</c>. <see cref="Field"/> é o campo numerado da declaração
+/// periódica sugerido pelo <see cref="VatDeclarationFieldCatalog"/> — best-effort,
+/// <c>null</c> quando o catálogo não tem uma correspondência inequívoca.
 /// </summary>
 public sealed record VatSummaryRow(
     string Kind,
@@ -18,7 +21,8 @@ public sealed record VatSummaryRow(
     decimal Debit,
     decimal Credit,
     decimal Net,
-    int AccountCount);
+    int AccountCount,
+    VatDeclarationField? Field);
 
 /// <summary>
 /// Uma conta relevante (movimento de classe 6/7 ou <c>243*</c>) com movimento no
@@ -32,12 +36,18 @@ public sealed record VatSummaryUnclassifiedRow(
     decimal Credit,
     decimal Net);
 
-/// <summary>O resumo de IVA de um período, pronto a transcrever para a declaração periódica.</summary>
+/// <summary>
+/// O resumo de IVA de um período, pronto a transcrever para a declaração periódica.
+/// <see cref="FieldMappingSource"/>/<see cref="FieldMappingDisclaimer"/> acompanham
+/// sempre os dados — ver <see cref="VatDeclarationFieldCatalog"/>.
+/// </summary>
 public sealed record VatSummary(
     DateOnly From,
     DateOnly To,
     IReadOnlyList<VatSummaryRow> Rows,
-    IReadOnlyList<VatSummaryUnclassifiedRow> Unclassified);
+    IReadOnlyList<VatSummaryUnclassifiedRow> Unclassified,
+    string FieldMappingSource,
+    string FieldMappingDisclaimer);
 
 /// <summary>
 /// Soma o movimento do período das contas classificadas
@@ -105,7 +115,8 @@ public sealed class VatSummaryService(AccountingDbContext context)
                 decimal.Round(row.Debit, 2),
                 decimal.Round(row.Credit, 2),
                 decimal.Round(row.Debit - row.Credit, 2),
-                row.AccountCount))
+                row.AccountCount,
+                VatDeclarationFieldCatalog.ForRow(row.Kind, row.Nature, row.Rate, row.Region)))
             .OrderBy(row => row.Kind, StringComparer.Ordinal)
             .ThenBy(row => row.Nature, StringComparer.Ordinal)
             .ThenBy(row => row.Rate, StringComparer.Ordinal)
@@ -151,7 +162,9 @@ public sealed class VatSummaryService(AccountingDbContext context)
             .OrderBy(row => row.AccountCode, StringComparer.Ordinal)
             .ToList();
 
-        return new VatSummary(from, to, rows, unclassified);
+        return new VatSummary(
+            from, to, rows, unclassified,
+            VatDeclarationFieldCatalog.Source, VatDeclarationFieldCatalog.Disclaimer);
     }
 
     private Task<bool> HasAccessAsync(Guid userId, Guid companyId, CancellationToken cancellationToken) =>

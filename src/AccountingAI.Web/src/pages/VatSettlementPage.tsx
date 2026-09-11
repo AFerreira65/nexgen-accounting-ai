@@ -133,8 +133,9 @@ export function VatSettlementPage() {
     for (const line of result.lines) body.push([line.accountCode, line.accountName, ROLE_LABELS[line.role], line.debit, line.credit, line.net])
     if (summary && summary.rows.length > 0) {
       body.push([])
-      body.push(['Natureza', 'Taxa', 'Região', 'Base/Imposto', 'Contas', 'Débito', 'Crédito', 'Saldo'])
-      for (const row of summary.rows) body.push([vatNatureLabel(row.nature), vatRateLabel(row.rate), vatRegionLabel(row.region), KIND_LABELS[row.kind], row.accountCount, row.debit, row.credit, row.net])
+      body.push(['Natureza', 'Taxa', 'Região', 'Base/Imposto', 'Campo', 'Contas', 'Débito', 'Crédito', 'Saldo'])
+      for (const row of summary.rows) body.push([vatNatureLabel(row.nature), vatRateLabel(row.rate), vatRegionLabel(row.region), KIND_LABELS[row.kind], row.field?.number ?? '', row.accountCount, row.debit, row.credit, row.net])
+      body.push([summary.fieldMappingDisclaimer])
     }
     if (summary && summary.unclassified.length > 0) {
       body.push([])
@@ -209,19 +210,23 @@ export function VatSettlementPage() {
       <div className="panel-heading"><div><h2>Resumo por taxa e natureza</h2><p>O movimento do período das contas classificadas ({fromDate} a {toDate}), agrupado por natureza, taxa e região — a desagregação que se transcreve para a declaração periódica.</p></div></div>
       {summary.rows.length === 0
         ? <p className="empty-state">Sem contas classificadas com movimento no período. Configure a <Link to="/config-iva">classificação de IVA por conta</Link>.</p>
-        : <div className="table-wrap"><table>
-            <thead><tr><th>Natureza</th><th>Taxa</th><th>Região</th><th>Base/Imposto</th><th className="numeric">Contas</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th></tr></thead>
+        : <>
+        <div className="table-wrap"><table>
+            <thead><tr><th>Natureza</th><th>Taxa</th><th>Região</th><th>Base/Imposto</th><th>Campo</th><th className="numeric">Contas</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th></tr></thead>
             <tbody>{summary.rows.map((row) => <tr key={`${row.kind}-${row.nature}-${row.rate}-${row.region}`}>
               <td>{vatNatureLabel(row.nature)}</td>
               <td>{vatRateLabel(row.rate)}</td>
               <td>{vatRegionLabel(row.region)}</td>
               <td>{KIND_LABELS[row.kind]}</td>
+              <td>{row.field ? <span title={row.field.note ?? undefined}>{row.field.number}{row.field.note ? ' *' : ''}</span> : '—'}</td>
               <td className="numeric">{row.accountCount}</td>
               <td className="numeric">{euro.format(row.debit)}</td>
               <td className="numeric">{euro.format(row.credit)}</td>
               <td className="numeric strong">{euro.format(row.net)}</td>
             </tr>)}</tbody>
-          </table></div>}
+          </table></div>
+        <p className="mr-hint"><Info size={13} /> {summary.fieldMappingDisclaimer}</p>
+        </>}
     </section>}
 
     {summary && summary.unclassified.length > 0 && <section className="panel">

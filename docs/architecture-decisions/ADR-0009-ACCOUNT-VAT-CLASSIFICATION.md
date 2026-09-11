@@ -43,12 +43,16 @@ numerados como um passo à parte, best-effort e com aviso.
   mapeamento aos campos numerados poderia parecer completo estando, na
   verdade, a omitir contas por classificar — o mesmo risco de sobre-alegar
   conformidade que este ADR quer evitar.
-- O **mapeamento para os campos numerados** do modelo oficial (F2-09D, opcional,
-  renumerado de F2-09C) é um catálogo em código, explicitamente best-effort, com
-  o aviso de que não substitui o preenchimento nem a validação oficial. **Fica
-  em aberto até o utilizador confirmar a numeração exata do modelo em vigor** —
-  não se deve fabricar ou assumir números de campo sem essa confirmação; o
-  risco de uma declaração errada por um campo mal mapeado é real.
+- O **mapeamento para os campos numerados** do modelo oficial (F2-09D) é um
+  catálogo em código (`VatDeclarationFieldCatalog`), explicitamente best-effort,
+  com o aviso de que não substitui o preenchimento nem a validação oficial. Só
+  avançou depois do utilizador confirmar a fonte: uma primeira tentativa (uma
+  portaria do Diário da República) revelou-se ser o modelo que só entra em
+  vigor em 1 de julho de 2027, com o quadro 06 reestruturado por categoria em
+  vez de por taxa — foi descartada sem se usar nenhum dos seus números. A fonte
+  usada foi um manual pedagógico com o formulário e exemplos completos e
+  cruzados internamente (não o texto oficial da AT), o que mantém o
+  mapeamento best-effort, nunca certificado.
 - **API:** `GET .../vat-classification`, `PUT .../vat-classification/{código}`,
   `POST .../vat-classification/bulk`; e (F2-09B) `GET .../vat-summary?from=&to=`.
 - **PWA:** ecrã **«Configuração de IVA»** (`/config-iva`) — a grelha das contas

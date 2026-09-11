@@ -646,6 +646,11 @@ export type VatClassificationRow = {
   classified: boolean
 }
 
+export type VatDeclarationField = {
+  number: number
+  note: string | null
+}
+
 export type VatSummaryRow = {
   kind: 'base' | 'imposto' | 'outras'
   nature: string
@@ -655,6 +660,7 @@ export type VatSummaryRow = {
   credit: number
   net: number
   accountCount: number
+  field: VatDeclarationField | null
 }
 
 export type VatSummaryUnclassifiedRow = {
@@ -670,6 +676,8 @@ export type VatSummary = {
   to: string
   rows: VatSummaryRow[]
   unclassified: VatSummaryUnclassifiedRow[]
+  fieldMappingSource: string
+  fieldMappingDisclaimer: string
 }
 
 export type IrcAdjustment = {

@@ -96,14 +96,17 @@ Domain/Accounting/
 - **Validação:** teste do serviço (conta com movimento e sem classificação
   aparece; uma classificada não); teste de API; teste de interface.
 
-### F2-09D — (opcional, requer confirmação do utilizador) Mapeamento para os campos numerados
+### F2-09D — Mapeamento para os campos numerados
 
-- **Regras:** catálogo `(Nature, Rate, Region) → campo` em código, best-effort,
-  com aviso; o resumo passa a mostrar o campo previsto. **Não avança sem o
-  utilizador confirmar a numeração exata do modelo em vigor** — os números de
-  campo não se adivinham; um campo mal mapeado pode levar a uma declaração
-  errada.
-- **Validação:** teste do catálogo; nota no ecrã de que é um apoio.
+- **Regras:** catálogo `(Kind, Nature, Rate, Region) → campo` em código,
+  transcrito de um manual pedagógico com o formulário e exemplos completos e
+  cruzados (não o texto oficial da AT), sempre com aviso; o resumo passa a
+  mostrar o campo previsto por linha. Avançou depois do utilizador confirmar a
+  fonte — uma primeira tentativa (uma portaria do Diário da República) era o
+  modelo que só entra em vigor em 2027, com uma estrutura diferente, e não foi
+  usada.
+- **Validação:** teste do catálogo (todas as combinações documentadas); teste
+  do resumo (o campo certo por linha); nota no ecrã de que é um apoio.
 
 ## Decisões em aberto
 
@@ -114,7 +117,9 @@ Domain/Accounting/
   sujeito passivo / do Estado); afinar com uso.
 - **Contas relevantes** — movimento das classes 6 e 7 e contas `243*`. Rever se
   faltam casos (ex.: `2434` já cobre regularizações).
-- **Campos numerados** — F2-09C, sempre com aviso.
+- **Anexo R** — o catálogo do F2-09D assinala quando uma linha pertence ao
+  Anexo R (região diferente da sede) mas não separa automaticamente os
+  valores; fica para quando for pedido.
 
 ## Referências
 
