@@ -157,7 +157,7 @@ function storedCompanyId() {
   catch { return null }
 }
 
-export function WorkContextProvider({ children }: { children: ReactNode }) {
+export function WorkContextProvider({ children, userId = demoUserId }: { children: ReactNode; userId?: string }) {
   const [data, setData] = useState(fallbackContext)
   const [source, setSource] = useState<'database' | 'demonstration'>('demonstration')
   const [accountingSource, setAccountingSource] = useState<'database' | 'demonstration'>('demonstration')
@@ -174,7 +174,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
 
   const loadWorkContext = useCallback((signal?: AbortSignal, selectCompanyId?: string) => {
     if (import.meta.env.MODE === 'test') return Promise.resolve()
-    return fetch(`/api/v1/development/work-context/${demoUserId}`, { signal })
+    return fetch(`/api/v1/development/work-context/${userId}`, { signal })
       .then(async (response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         return await response.json() as WorkContextData
@@ -202,7 +202,7 @@ export function WorkContextProvider({ children }: { children: ReactNode }) {
         if (error instanceof DOMException && error.name === 'AbortError') return
         setSource('demonstration')
       })
-  }, [])
+  }, [userId])
 
   useEffect(() => {
     const controller = new AbortController()

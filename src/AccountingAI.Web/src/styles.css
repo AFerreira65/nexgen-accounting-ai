@@ -25,6 +25,7 @@ button { color: inherit; }
 .nav-item:hover { color: white; background: #ffffff0e; }
 .nav-item.active { color: white; background: linear-gradient(90deg, #148d82, #0c6f69); box-shadow: 0 8px 22px #04171d50; }
 .sidebar-footer { display: grid; gap: 14px; margin-top: auto; }
+.logout-item { width: 100%; border: 0; background: transparent; font-family: inherit; cursor: pointer; text-align: left; }
 .user-card { display: flex; align-items: center; gap: 10px; padding: 15px 8px 0; border-top: 1px solid #ffffff16; }
 .user-card > span:last-child { display: grid; min-width: 0; }
 .user-card strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
@@ -255,6 +256,17 @@ html[data-theme='dark'] .management-report-alerts ul { color: #d3b58f; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 20px; border-bottom: 1px solid #e7edef; }
 .panel-heading h2 { margin: 0 0 3px; color: #21323a; font-size: 14px; letter-spacing: -.01em; }
 .panel-heading p { margin: 0; color: #849198; font-size: 10px; }
+.login-shell { display: grid; place-items: center; min-height: 100vh; background: #f4f7f8; padding: 20px; }
+.login-card { display: grid; gap: 14px; width: 100%; max-width: 340px; padding: 30px 26px; }
+.login-brand { display: flex; align-items: center; gap: 11px; color: #21323a; }
+.login-brand .brand-mark { width: 34px; height: 34px; font-size: 17px; }
+.login-brand > span:last-child { display: flex; align-items: baseline; gap: 4px; font-size: 15px; letter-spacing: -.02em; }
+.login-brand small { color: #087970; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.login-card h1 { margin: 0; color: #21323a; font-size: 18px; }
+.login-card label { display: grid; gap: 6px; color: #52646c; font-size: 10px; font-weight: 700; }
+.login-card input { padding: 10px 12px; border: 1px solid #d4dfe2; border-radius: 9px; outline: 0; color: #24363e; background: #fbfcfc; font-size: 13px; }
+.login-card input:focus { border-color: #45a89e; box-shadow: 0 0 0 3px #3dad9f1c; }
+.login-submit { width: 100%; margin-top: 4px; }
 .text-link, .inline-link, .back-link { display: inline-flex; align-items: center; gap: 5px; color: #087970; font-weight: 700; }
 .text-link { font-size: 10px; }
 .back-link { justify-self: start; font-size: 11px; }

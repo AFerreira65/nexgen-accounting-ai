@@ -13,9 +13,14 @@ using AccountingAI.Infrastructure.Files;
 using AccountingAI.Infrastructure.SqlServer;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
 using System.Globalization;
+using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 // Ferramenta de linha de comandos: cifra um valor da configuração da AT.
@@ -48,9 +53,42 @@ builder.Services.AddSaftFileReading();
 builder.Services.AddAccountingAi(builder.Configuration);
 builder.Services.AddAccountingAt(builder.Configuration);
 
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+    {
+        options.Cookie.Name = "AccountingAI.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromDays(14);
+        options.SlidingExpiration = true;
+        // API, não uma app com páginas: em vez de redirecionar para um ecrã de
+        // login, devolve o estado HTTP — a PWA decide o que mostrar.
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
+    });
+builder.Services.AddAuthorization(options =>
+{
+    // Todo o endpoint exige sessão autenticada, salvo `.AllowAnonymous()`
+    // explícito (login, health checks, fundação) — ver ADR-0011.
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<CurrentUserMiddleware>();
 
@@ -79,21 +117,108 @@ if (migrateOnly)
     return;
 }
 
+// Ferramenta de linha de comandos: define/substitui a senha de um utilizador.
+//   dotnet run --project src/AccountingAI.Api -- set-user-password "<email>" "<senha>"
+//   (ou a senha por stdin). Nunca há um endpoint público de registo — só esta
+//   ferramenta, correndo localmente, define uma senha.
+if (args is ["set-user-password", ..])
+{
+    if (args.Length < 2)
+    {
+        await Console.Error
+            .WriteLineAsync("Uso: dotnet run --project src/AccountingAI.Api -- set-user-password \"<email>\" \"<senha>\"")
+            .ConfigureAwait(false);
+        return;
+    }
+
+    var email = args[1];
+    var password = args.Length >= 3 ? args[2] : (await Console.In.ReadToEndAsync().ConfigureAwait(false)).Trim();
+    if (string.IsNullOrEmpty(password))
+    {
+        await Console.Error.WriteLineAsync("A senha não pode estar vazia.").ConfigureAwait(false);
+        return;
+    }
+
+    await using var passwordScope = app.Services.CreateAsyncScope();
+    var authService = passwordScope.ServiceProvider.GetRequiredService<AuthService>();
+    try
+    {
+        await authService.SetPasswordAsync(email, password).ConfigureAwait(false);
+        Console.WriteLine($"Senha atualizada para {email}.");
+    }
+    catch (InvalidOperationException exception)
+    {
+        await Console.Error.WriteLineAsync(exception.Message).ConfigureAwait(false);
+    }
+
+    return;
+}
+
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false
-});
+}).AllowAnonymous();
 
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = registration => registration.Tags.Contains("ready")
-});
+}).AllowAnonymous();
 
 app.MapGet("/api/v1/foundation", () => Results.Ok(new
 {
     service = "AccountingAI.Api",
     phase = "F2-01",
     status = "ready"
+})).AllowAnonymous();
+
+app.MapPost("/api/v1/auth/login", async (
+    LoginRequest request,
+    AuthService authService,
+    HttpContext context,
+    CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+    {
+        return Results.ValidationProblem(new Dictionary<string, string[]>
+        {
+            ["credentials"] = ["Indique o email e a senha."],
+        });
+    }
+
+    var user = await authService.ValidateCredentialsAsync(request.Email, request.Password, cancellationToken)
+        .ConfigureAwait(false);
+    if (user is null)
+    {
+        return Results.ValidationProblem(
+            new Dictionary<string, string[]> { ["credentials"] = ["Email ou senha incorretos."] },
+            statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Name, user.DisplayName),
+        new Claim(ClaimTypes.Email, user.Email),
+    };
+    var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
+    await context
+        .SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties { IsPersistent = true })
+        .ConfigureAwait(false);
+
+    return Results.Ok(new { id = user.Id, displayName = user.DisplayName, email = user.Email });
+}).AllowAnonymous();
+
+app.MapPost("/api/v1/auth/logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
+    return Results.Ok();
+}).AllowAnonymous();
+
+app.MapGet("/api/v1/auth/me", (HttpContext context) => Results.Ok(new
+{
+    id = Guid.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!),
+    displayName = context.User.FindFirstValue(ClaimTypes.Name),
+    email = context.User.FindFirstValue(ClaimTypes.Email),
 }));
 
 if (app.Environment.IsDevelopment())
@@ -3255,6 +3380,8 @@ public sealed record CreateOrganizationUserRequest(string DisplayName, string Em
 public sealed record UpdateOrganizationUserRequest(string DisplayName, string Email, bool IsActive);
 
 public sealed record SetMembershipRequest(string Role, bool IsActive);
+
+public sealed record LoginRequest(string? Email, string? Password);
 
 public sealed record MovementLineRequest(string AccountCode, string Description, decimal Debit, decimal Credit);
 

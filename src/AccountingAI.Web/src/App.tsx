@@ -29,11 +29,11 @@ import { AtCommunicationPage } from './pages/AtCommunicationPage'
 import { VatClassificationPage } from './pages/VatClassificationPage'
 import { IrcEstimatePage } from './pages/IrcEstimatePage'
 import { RecordProvider } from './app/RecordContext'
-import { WorkContextProvider } from './app/WorkContext'
+import { AuthGate } from './app/AuthGate'
 
 export function App() {
   return (
-    <WorkContextProvider>
+    <AuthGate>
       <BrowserRouter>
         <RecordProvider>
         <Routes>
@@ -73,6 +73,6 @@ export function App() {
         </Routes>
         </RecordProvider>
       </BrowserRouter>
-    </WorkContextProvider>
+    </AuthGate>
   )
 }

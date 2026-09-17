@@ -39,6 +39,13 @@ public sealed class UserAccount
 
     public bool IsActive { get; private set; }
 
+    /// <summary>
+    /// O hash PBKDF2 da senha (<see cref="Microsoft.AspNetCore.Identity.PasswordHasher{TUser}"/>).
+    /// <c>null</c> enquanto ninguém definir uma senha — sem hash, a conta não
+    /// consegue autenticar-se; nunca há uma senha por omissão.
+    /// </summary>
+    public string? PasswordHash { get; private set; }
+
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
     public byte[] RowVersion { get; private set; } = [];
@@ -62,6 +69,12 @@ public sealed class UserAccount
 
         Email = email.Trim();
         NormalizedEmail = normalized;
+    }
+
+    public void SetPasswordHash(string passwordHash)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash);
+        PasswordHash = passwordHash;
     }
 
     public void Deactivate() => IsActive = false;

@@ -70,6 +70,7 @@ public static class DependencyInjection
         services.AddScoped<IrcEstimateService>();
         services.AddScoped<IrcEstimateFilingService>();
         services.AddScoped<OrganizationAdminService>();
+        services.AddScoped<AuthService>();
         services.AddScoped<JournalPostingService>();
         services.AddScoped<DocumentNumberSeriesService>();
         services.AddScoped<AccountLedgerService>();

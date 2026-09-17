@@ -130,6 +130,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20260911180622_AtSettingsPerCompany");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20260917171335_UserAccountPasswordHash");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");

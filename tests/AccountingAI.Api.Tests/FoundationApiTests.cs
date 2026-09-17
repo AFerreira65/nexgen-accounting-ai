@@ -1,8 +1,15 @@
 using System.Net;
+using System.Security.Claims;
 using System.Text;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace AccountingAI.Api.Tests;
 
@@ -239,11 +246,11 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, firstPage.StatusCode);
         StringAssert.Contains(firstPayload, "\"page\":1");
         StringAssert.Contains(firstPayload, "\"pageSize\":2");
-        StringAssert.Contains(firstPayload, "\"totalItems\":9");
-        StringAssert.Contains(firstPayload, "\"totalPages\":5");
+        StringAssert.Contains(firstPayload, "\"totalItems\":3");
+        StringAssert.Contains(firstPayload, "\"totalPages\":2");
         StringAssert.Contains(firstPayload, "\"items\":[");
-        // A última página fica travada em 5, não sai fora do intervalo.
-        StringAssert.Contains(clampedPayload, "\"page\":5");
+        // A última página fica travada em 2, não sai fora do intervalo.
+        StringAssert.Contains(clampedPayload, "\"page\":2");
         // A pesquisa server-side filtra pela referência do lançamento.
         StringAssert.Contains(searchedPayload, "COMP-2026-00842");
         StringAssert.Contains(searchedPayload, "\"totalItems\":1");
@@ -343,11 +350,11 @@ public sealed class FoundationApiTests
             .ConfigureAwait(false);
 
         Assert.AreEqual(HttpStatusCode.OK, summary.StatusCode);
-        StringAssert.Contains(summaryPayload, "\"total\":9");
+        StringAssert.Contains(summaryPayload, "\"total\":3");
         StringAssert.Contains(summaryPayload, "\"pendingReview\":1");
         StringAssert.Contains(summaryPayload, "\"voided\":");
-        // Posição de IVA = 2433 liquidado (1150) menos 2432 dedutível (552).
-        StringAssert.Contains(summaryPayload, "\"vatPosition\":598");
+        // Posição de IVA = 2433 liquidado (575) menos 2432 dedutível (276).
+        StringAssert.Contains(summaryPayload, "\"vatPosition\":299");
         // A antevisão traz o lançamento por conferir, sem as linhas.
         StringAssert.Contains(summaryPayload, "BANC-2026-00196");
         Assert.IsFalse(summaryPayload.Contains("\"lines\"", StringComparison.OrdinalIgnoreCase));
@@ -771,7 +778,9 @@ public sealed class FoundationApiTests
         StringAssert.Contains(proposePayload, "\"outcome\":\"NewCompanyProposed\"");
         StringAssert.Contains(proposePayload, "\"includesAccounting\":false");
         Assert.AreEqual(HttpStatusCode.BadRequest, malformedResponse.StatusCode);
-        Assert.AreEqual(HttpStatusCode.NotFound, unknownUserResponse.StatusCode);
+        // Desde a F2-11A, um `userId` na rota diferente do da sessão autenticada
+        // nunca chega ao handler — é sempre 403, exista ou não esse utilizador.
+        Assert.AreEqual(HttpStatusCode.Forbidden, unknownUserResponse.StatusCode);
     }
 
     [TestMethod]
@@ -813,7 +822,7 @@ public sealed class FoundationApiTests
         StringAssert.Contains(wellFormedPayload, "\"severity\":\"Warning\"");
         // XML mal formado é 400; XML válido mas não conforme seria 200.
         Assert.AreEqual(HttpStatusCode.BadRequest, malformed.StatusCode);
-        Assert.AreEqual(HttpStatusCode.NotFound, unknownUser.StatusCode);
+        Assert.AreEqual(HttpStatusCode.Forbidden, unknownUser.StatusCode);
     }
 
     [TestMethod]
@@ -1005,7 +1014,7 @@ public sealed class FoundationApiTests
         StringAssert.Contains(duplicatePayload, "NIF DEMO-PT-0001");
         Assert.AreEqual(HttpStatusCode.BadRequest, badRegionResponse.StatusCode);
         StringAssert.Contains(badRegionPayload, "Mainland, Azores");
-        Assert.AreEqual(HttpStatusCode.NotFound, unknownUserResponse.StatusCode);
+        Assert.AreEqual(HttpStatusCode.Forbidden, unknownUserResponse.StatusCode);
     }
 
     [TestMethod]
@@ -1834,6 +1843,43 @@ public sealed class FoundationApiTests
 
                 configuration.AddInMemoryCollection(settings);
             });
+
+            // Desde a F2-11A, todo o pedido exige sessão autenticada (ADR-0011).
+            // Os testes continuam a chamar `client.GetAsync(...)` diretamente,
+            // sem fazer login — substitui-se o esquema de autenticação pelo
+            // utilizador de demonstração fixo, o mesmo que todos os testes já
+            // usam nas rotas (`33333333-...`).
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddAuthentication(TestAuthHandler.SchemeName)
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
+            });
+        }
+    }
+
+    /// <summary>
+    /// Autentica sempre como o utilizador de demonstração
+    /// (<c>33333333-3333-3333-3333-333333333333</c>), o mesmo que todos os
+    /// testes já assumem nas rotas — poupa cada teste de fazer login a sério.
+    /// </summary>
+    private sealed class TestAuthHandler(
+        IOptionsMonitor<AuthenticationSchemeOptions> options,
+        ILoggerFactory logger,
+        UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+    {
+        public const string SchemeName = "Test";
+
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, "33333333-3333-3333-3333-333333333333"),
+                new Claim(ClaimTypes.Name, "António Ferreira (Demonstração)"),
+                new Claim(ClaimTypes.Email, "antonio.demo@accountingai.local"),
+            };
+            var identity = new ClaimsIdentity(claims, SchemeName);
+            var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName);
+            return Task.FromResult(AuthenticateResult.Success(ticket));
         }
     }
 }

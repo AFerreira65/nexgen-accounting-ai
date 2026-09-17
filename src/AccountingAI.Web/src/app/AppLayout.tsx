@@ -15,6 +15,7 @@ import {
   FileUp,
   Landmark,
   ListOrdered,
+  LogOut,
   Percent,
   Receipt,
   Scale,
@@ -91,6 +92,10 @@ export function AppLayout() {
   // classificar) — os mesmos itens acionáveis do ecrã de Tarefas.
   const pendingTasks = movementsSummary.pendingReview
     + taxonomyReview.accounts.filter((account) => account.status === 'Unclassified' || account.status === 'SuggestionAvailable').length
+  const logOut = () => {
+    if (import.meta.env.MODE === 'test') return
+    void fetch('/api/v1/auth/logout', { method: 'POST' }).finally(() => window.location.reload())
+  }
 
   return (
     <div className="product-shell">
@@ -109,6 +114,7 @@ export function AppLayout() {
         </nav>
         <div className="sidebar-footer">
           <NavLink className="nav-item" to="/definicoes"><Settings size={19} />Definições</NavLink>
+          <button type="button" className="nav-item logout-item" onClick={logOut}><LogOut size={19} />Sair</button>
           <div className="user-card"><span className="avatar">{userInitials}</span><span><strong>{user.displayName.replace(' (Demonstração)', '')}</strong><small>{activeCompany.role}</small></span></div>
         </div>
       </aside>
