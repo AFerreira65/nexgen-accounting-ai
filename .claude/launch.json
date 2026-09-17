@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "src/AccountingAI.Web"],
       "port": 5173
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/AccountingAI.Api"],
+      "port": 5080
     }
   ]
 }
