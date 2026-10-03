@@ -774,6 +774,19 @@ describe('App', () => {
     expect(screen.getByRole('img', { name: /Saldo de caixa e bancos/ })).toBeInTheDocument()
   })
 
+  it('shows the operating map and ratios screens (require the database)', () => {
+    window.history.pushState({}, '', '/mapa-exploracao')
+    const { unmount } = render(<App />)
+    expect(screen.getByRole('heading', { name: 'Mapa de exploração', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    unmount()
+
+    window.history.pushState({}, '', '/racios')
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'Rácios', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)

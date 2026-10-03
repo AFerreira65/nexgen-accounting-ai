@@ -2127,6 +2127,34 @@ if (applicationEndpointsAvailable)
         return evolution is null ? Results.NotFound() : Results.Ok(evolution);
     });
 
+    // Mapa de exploração mensal e rácios, sobre as rubricas das demonstrações financeiras.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/operating-map", async (
+        Guid userId, Guid companyId, int year, FinancialStatementsService statements, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        var map = await statements.OperatingMapAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        return map is null ? Results.NotFound() : Results.Ok(map);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/ratios", async (
+        Guid userId, Guid companyId, string? from, string? to, FinancialStatementsService statements, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) ||
+            !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) ||
+            end < start ||
+            start.Year != end.Year)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["from"] = ["Indique um período válido dentro do mesmo exercício (aaaa-mm-dd)."] });
+        }
+
+        var ratios = await statements.RatiosAsync(userId, companyId, start, end, cancellationToken).ConfigureAwait(false);
+        return ratios is null ? Results.NotFound() : Results.Ok(ratios);
+    });
+
     // Exportação do SAF-T (PT) de contabilidade de um exercício: primeiro a análise, depois o ficheiro.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/export-report", async (
         Guid userId, Guid companyId, int year, SaftExportService export, CancellationToken cancellationToken) =>

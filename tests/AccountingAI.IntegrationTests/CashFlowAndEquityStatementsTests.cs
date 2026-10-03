@@ -200,6 +200,42 @@ public sealed class CashFlowAndEquityStatementsTests
             Assert.AreEqual(-110m, evolution.Months.Sum(month => month.Result));
             Assert.IsNull(await service.MonthlyEvolutionAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
 
+            // Mapa de exploração: a demonstração de resultados mês a mês.
+            var map = await service.OperatingMapAsync(userId, companyId, 2026, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsNotNull(map);
+            Assert.AreEqual(10, map!.LastMonth, "O apuramento de dezembro não conta como movimento de exploração.");
+            OperatingMapRow MapRow(string label) => map.Rows.Single(row => row.Label == label);
+            Assert.AreEqual(100m, MapRow("Vendas e serviços prestados").Months[3]);
+            Assert.AreEqual(-200m, MapRow("Fornecimentos e serviços externos").Months[3]);
+            Assert.AreEqual(-10m, MapRow("Juros e gastos similares suportados").Months[6]);
+            var mapResult = MapRow("Resultado líquido do período");
+            Assert.IsTrue(mapResult.IsTotal);
+            Assert.AreEqual(-100m, mapResult.Months[3]);
+            Assert.AreEqual(-110m, mapResult.Total);
+            Assert.AreEqual(0, map.Excluded.Count);
+
+            // Rácios sobre o balanço e a demonstração de resultados, com o período homólogo.
+            var ratios = await service.RatiosAsync(userId, companyId, from, to, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsNotNull(ratios);
+            Assert.AreEqual(365, ratios!.Days);
+            Assert.AreEqual(0m, ratios.BalanceDifference);
+            FinancialRatio Ratio(string label) => ratios.Ratios.Single(ratio => ratio.Label == label);
+            Assert.IsNull(Ratio("Liquidez geral").Value, "Sem passivo corrente não há quociente.");
+            Assert.AreEqual(1520m, Ratio("Fundo de maneio").Value);
+            Assert.AreEqual(1050m, Ratio("Fundo de maneio").Comparative);
+            Assert.AreEqual(72.53m, Ratio("Autonomia financeira").Value);
+            Assert.AreEqual(100m, Ratio("Autonomia financeira").Comparative);
+            Assert.AreEqual(2.64m, Ratio("Solvabilidade").Value);
+            Assert.IsNull(Ratio("Solvabilidade").Comparative);
+            Assert.AreEqual(-8.33m, Ratio("Rendibilidade do capital próprio").Value);
+            Assert.AreEqual(-110m, Ratio("Margem líquida").Value);
+            Assert.AreEqual(100m, Ratio("Margem líquida").Comparative);
+            Assert.AreEqual(0m, Ratio("Prazo médio de pagamento").Value);
+            Assert.IsNull(Ratio("Duração média dos inventários").Value);
+            Assert.AreEqual("%", Ratio("Margem EBITDA").Unit);
+            Assert.IsNull(await service.RatiosAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
+            Assert.IsNull(await service.OperatingMapAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
+
             Assert.IsNull(await service.CashFlowsAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
             Assert.IsNull(await service.EquityChangesAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
         }

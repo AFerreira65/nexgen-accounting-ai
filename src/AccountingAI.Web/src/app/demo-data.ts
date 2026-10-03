@@ -671,6 +671,15 @@ export type BalanceSheetStatement = {
   excluded: StatementExcludedAccount[]
   source: string
 }
+export type OperatingMap = {
+  year: number
+  lastMonth: number
+  model: string
+  rows: { label: string; months: number[]; total: number; isTotal: boolean }[]
+  excluded: StatementExcludedAccount[]
+}
+export type FinancialRatio = { group: string; label: string; value: number | null; comparative: number | null; unit: 'x' | '%' | 'dias' | '€'; formula: string }
+export type FinancialRatios = { from: string; to: string; model: string; days: number; ratios: FinancialRatio[]; balanceDifference: number; excludedAccounts: number }
 export type MonthlyEvolution = {
   year: number
   lastMonth: number

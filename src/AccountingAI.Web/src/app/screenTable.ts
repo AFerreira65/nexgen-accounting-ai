@@ -28,6 +28,8 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/mapa-analitico': { schema: 'accounting', name: 'JournalEntryLines' },
   '/demonstracoes': { schema: 'accounting', name: 'JournalEntryLines' },
   '/evolucao': { schema: 'accounting', name: 'JournalEntryLines' },
+  '/mapa-exploracao': { schema: 'accounting', name: 'JournalEntryLines' },
+  '/racios': { schema: 'accounting', name: 'JournalEntryLines' },
   '/lancamentos-tipo': { schema: 'accounting', name: 'EntryTemplates' },
   '/saldos-terceiros': { schema: 'accounting', name: 'JournalEntryLines' },
   '/terceiros': { schema: 'accounting', name: 'Parties' },

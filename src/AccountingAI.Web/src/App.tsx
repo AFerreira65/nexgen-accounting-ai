@@ -24,6 +24,7 @@ import { CrossCheckPage } from './pages/CrossCheckPage'
 import { DataDictionaryPage } from './pages/DataDictionaryPage'
 import { AnalysesPage } from './pages/AnalysesPage'
 import { ManagementReportsPage } from './pages/ManagementReportsPage'
+import { OperatingMapPage, RatiosPage } from './pages/IndicatorsPages'
 import { MonthlyEvolutionPage } from './pages/MonthlyEvolutionPage'
 import { VatSettlementPage } from './pages/VatSettlementPage'
 import { AtCommunicationPage } from './pages/AtCommunicationPage'
@@ -71,6 +72,8 @@ export function App() {
             <Route path="/comunicacao-at" element={<AtCommunicationPage />} />
             <Route path="/dicionario-de-dados" element={<DataDictionaryPage />} />
             <Route path="/evolucao" element={<MonthlyEvolutionPage />} />
+            <Route path="/mapa-exploracao" element={<OperatingMapPage />} />
+            <Route path="/racios" element={<RatiosPage />} />
             <Route path="/analises" element={<AnalysesPage />} />
             <Route path="/relatorios-gestao" element={<ManagementReportsPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />

@@ -1476,6 +1476,11 @@ public sealed class FoundationApiTests
         using var evolution = await client.GetAsync($"{basePath}/management/monthly-evolution?year=2026").ConfigureAwait(false);
         var evolutionPayload = await evolution.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badYear = await client.GetAsync($"{basePath}/management/monthly-evolution?year=12").ConfigureAwait(false);
+        using var map = await client.GetAsync($"{basePath}/management/operating-map?year=2026").ConfigureAwait(false);
+        var mapPayload = await map.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var ratios = await client.GetAsync($"{basePath}/management/ratios?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
+        var ratiosPayload = await ratios.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badRatios = await client.GetAsync($"{basePath}/management/ratios?from=2025-01-01&to=2026-12-31").ConfigureAwait(false);
         using var unauthorized = await client
             .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/statements/balance-sheet?date=2026-12-31")
             .ConfigureAwait(false);
@@ -1495,6 +1500,11 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, evolution.StatusCode);
         StringAssert.Contains(evolutionPayload, "\"month\":12");
         Assert.AreEqual(HttpStatusCode.BadRequest, badYear.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, map.StatusCode);
+        StringAssert.Contains(mapPayload, "\"label\":\"Resultado líquido do período\"");
+        Assert.AreEqual(HttpStatusCode.OK, ratios.StatusCode);
+        StringAssert.Contains(ratiosPayload, "\"label\":\"Autonomia financeira\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badRatios.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
     }
 

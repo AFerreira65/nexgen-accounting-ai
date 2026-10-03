@@ -73,6 +73,8 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
   ] },
   { label: 'Gestão', links: [
     { to: '/evolucao', label: 'Evolução mensal', icon: ChartLine },
+    { to: '/mapa-exploracao', label: 'Mapa de exploração', icon: TrendingUp },
+    { to: '/racios', label: 'Rácios', icon: Percent },
     { to: '/analises', label: 'Análises', icon: BarChart3 },
     { to: '/relatorios-gestao', label: 'Relatórios de gestão', icon: Sparkles },
   ] },
