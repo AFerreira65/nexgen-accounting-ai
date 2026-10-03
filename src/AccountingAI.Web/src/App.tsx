@@ -29,6 +29,7 @@ import { AtCommunicationPage } from './pages/AtCommunicationPage'
 import { VatClassificationPage } from './pages/VatClassificationPage'
 import { IrcEstimatePage } from './pages/IrcEstimatePage'
 import { PartiesPage } from './pages/PartiesPage'
+import { VatCodesPage } from './pages/VatCodesPage'
 import { RecordProvider } from './app/RecordContext'
 import { AuthGate } from './app/AuthGate'
 
@@ -64,6 +65,7 @@ export function App() {
             <Route path="/iva" element={<VatSummaryPage />} />
             <Route path="/apuramento-iva" element={<VatSettlementPage />} />
             <Route path="/config-iva" element={<VatClassificationPage />} />
+            <Route path="/codigos-iva" element={<VatCodesPage />} />
             <Route path="/estimativa-irc" element={<IrcEstimatePage />} />
             <Route path="/contas-correntes" element={<PartyBalancesPage />} />
             <Route path="/apuramento" element={<YearEndClosingPage />} />

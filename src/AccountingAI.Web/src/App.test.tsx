@@ -748,6 +748,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the VAT codes screen (requires the database)', () => {
+    window.history.pushState({}, '', '/codigos-iva')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Códigos de IVA', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('shows the parties screen (requires the database)', () => {
     window.history.pushState({}, '', '/terceiros')
     render(<App />)

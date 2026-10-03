@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type VatCodeRow, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -8,6 +8,7 @@ export type NewJournalInput = { code: string; name: string }
 export type JournalEditInput = { name: string; isActive: boolean }
 export type NewDocumentTypeInput = { code: string; name: string; defaultJournalCode: string }
 export type DocumentTypeEditInput = { name: string; defaultJournalCode: string; isActive: boolean }
+export type VatCodeInput = { code: string; name: string; rate: string; percentage: number; nature: string; region: string; isActive: boolean }
 export type PartyListParams = { search: string; role: 'Todos' | 'Clientes' | 'Fornecedores'; includeInactive: boolean; page: number; pageSize: number }
 export type PartyEditInput = { name: string; isCustomer: boolean; isSupplier: boolean; customerAccountCode: string | null; supplierAccountCode: string | null; isActive: boolean }
 export type NewPartyInput = PartyEditInput & { countryCode: string; taxRegistrationNumber: string }
@@ -111,6 +112,9 @@ type WorkContextValue = WorkContextData & {
   vatClassification: (companyId: string) => Promise<VatClassificationRow[]>
   setVatClassification: (companyId: string, accountCode: string, input: { rate: string; nature: string; region: string }) => Promise<void>
   bulkVatClassification: (companyId: string, input: { prefix: string; rate: string; nature: string; region: string }) => Promise<number>
+  vatCodes: (companyId: string, includeInactive: boolean) => Promise<VatCodeRow[]>
+  saveVatCode: (companyId: string, input: VatCodeInput, isNew: boolean) => Promise<VatCodeRow>
+  createDefaultVatCodes: (companyId: string) => Promise<number>
   parties: (companyId: string, params: PartyListParams) => Promise<PartyPage>
   createParty: (companyId: string, input: NewPartyInput) => Promise<PartyRow>
   updateParty: (companyId: string, partyId: string, input: PartyEditInput) => Promise<PartyRow>
@@ -895,6 +899,27 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       if (!response.ok) throw new Error(await problemMessage(response))
       const body = await response.json() as { updated: number }
       return body.updated
+    },
+    vatCodes: async (companyId, includeInactive) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/vat-codes?includeInactive=${includeInactive}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as VatCodeRow[]
+    },
+    saveVatCode: async (companyId, input, isNew) => {
+      const base = `/api/v1/development/users/${data.user.id}/companies/${companyId}/vat-codes`
+      const response = await fetch(isNew ? base : `${base}/${encodeURIComponent(input.code)}`, {
+        method: isNew ? 'POST' : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as VatCodeRow
+    },
+    createDefaultVatCodes: async (companyId) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/vat-codes/defaults`, { method: 'POST' })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      const body = await response.json() as { created: number }
+      return body.created
     },
     parties: async (companyId, { search, role, includeInactive, page, pageSize }) => {
       const params = new URLSearchParams({ role, includeInactive: String(includeInactive), page: String(page), pageSize: String(pageSize) })

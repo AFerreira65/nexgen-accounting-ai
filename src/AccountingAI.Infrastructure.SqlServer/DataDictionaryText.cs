@@ -39,6 +39,7 @@ internal static class DataDictionaryText
         ["CompanyAtCredentials"] = "Credenciais e definições da AT de uma empresa: o subutilizador e a senha (cifrada) do perfil e-Fatura, a periodicidade da declaração periódica e o ambiente da AT.",
         ["AccountVatClassification"] = "Classificação de IVA de uma conta (taxa, natureza da operação, região) para a desagregação da declaração periódica.",
         ["IrcEstimateFiling"] = "Estimativa de IRC guardada por uma empresa (período, taxa e correções fiscais indicadas, fotografia do cálculo).",
+        ["VatCodes"] = "Códigos de IVA da empresa: taxa, percentagem, natureza da operação e região, para indicar na linha do lançamento.",
         ["Parties"] = "Terceiros da empresa (clientes e fornecedores), identificados pelo país e pelo número de contribuinte.",
         ["FoundationState"] ="Estado interno da fundação da plataforma; não é de uso contabilístico.",
     };
@@ -188,6 +189,14 @@ internal static class DataDictionaryText
         ["AccountVatClassification.Rate"] = "A taxa de IVA (isento / reduzida / intermédia / normal).",
         ["AccountVatClassification.Nature"] = "A natureza da operação de IVA (transmissões internas, prestações de serviços, aquisições intracomunitárias, …).",
         ["AccountVatClassification.Region"] = "A região (Continente / Açores / Madeira).",
+
+        ["VatCodes.Code"] = "O código curto que se escreve na linha do lançamento (ex.: V-NOR); único por empresa.",
+        ["VatCodes.Name"] = "A descrição do código.",
+        ["VatCodes.Rate"] = "A taxa de IVA (isento / reduzida / intermédia / normal).",
+        ["VatCodes.Percentage"] = "A percentagem de imposto aplicada (zero nos códigos isentos).",
+        ["VatCodes.Nature"] = "A natureza da operação de IVA.",
+        ["VatCodes.Region"] = "A região (Continente / Açores / Madeira).",
+        ["VatCodes.IsActive"] = "Se o código está ativo.",
 
         ["JournalEntries.DocumentDate"] = "A data do documento de origem, quando indicada; pode diferir da data do lançamento.",
         ["JournalEntryLines.PartyId"] = "O terceiro (cliente ou fornecedor) a que a linha diz respeito; vazio quando não se aplica.",

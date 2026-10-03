@@ -55,6 +55,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<Party> Parties => Set<Party>();
 
+    public DbSet<VatCode> VatCodes => Set<VatCode>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -83,6 +85,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new AccountVatClassificationConfiguration());
         modelBuilder.ApplyConfiguration(new IrcEstimateFilingConfiguration());
         modelBuilder.ApplyConfiguration(new PartyConfiguration());
+        modelBuilder.ApplyConfiguration(new VatCodeConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

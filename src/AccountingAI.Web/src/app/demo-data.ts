@@ -642,6 +642,16 @@ export type AtCredentials = {
   updatedAtUtc: string | null
 }
 
+export type VatCodeRow = {
+  code: string
+  name: string
+  rate: string
+  percentage: number
+  nature: string
+  region: string
+  isActive: boolean
+}
+
 export type PartyRow = {
   id: string
   countryCode: string

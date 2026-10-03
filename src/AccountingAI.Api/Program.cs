@@ -1894,6 +1894,68 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-codes", async (
+        Guid userId, Guid companyId, bool? includeInactive, VatCodeService vatCodes, CancellationToken cancellationToken) =>
+    {
+        var list = await vatCodes.ListAsync(userId, companyId, includeInactive ?? false, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-codes/defaults", async (
+        Guid userId, Guid companyId, VatCodeService vatCodes, CancellationToken cancellationToken) =>
+    {
+        var created = await vatCodes.EnsureDefaultsAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return created < 0 ? Results.NotFound() : Results.Ok(new { created });
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-codes", async (
+        Guid userId, Guid companyId, VatCodeRequest request, VatCodeService vatCodes, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseVatClassification(request?.Rate, request?.Nature, request?.Region, out var rate, out var nature, out var region, out var error))
+        {
+            return error!;
+        }
+
+        try
+        {
+            var created = await vatCodes
+                .CreateAsync(
+                    userId, companyId, request!.Code ?? string.Empty,
+                    new VatCodeInput(request.Name ?? string.Empty, rate, request.Percentage, nature, region),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return created is null ? Results.NotFound() : Results.Ok(created);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["codigoIva"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-codes/{code}", async (
+        Guid userId, Guid companyId, string code, VatCodeRequest request, VatCodeService vatCodes, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseVatClassification(request?.Rate, request?.Nature, request?.Region, out var rate, out var nature, out var region, out var error))
+        {
+            return error!;
+        }
+
+        try
+        {
+            var updated = await vatCodes
+                .UpdateAsync(
+                    userId, companyId, code,
+                    new VatCodeInput(request!.Name ?? string.Empty, rate, request.Percentage, nature, region, request.IsActive),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return updated is null ? Results.NotFound() : Results.Ok(updated);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["codigoIva"] = [exception.Message] });
+        }
+    });
+
     // Terceiros a partir do SAF-T: «preview» só analisa, «import» grava.
     foreach (var (route, apply) in new[] { ("parties-preview", false), ("parties-import", true) })
     {
@@ -3481,6 +3543,15 @@ public sealed record PutAtCredentialsRequest(string? SubUser, string? Password, 
 public sealed record PutVatClassificationRequest(string? Rate, string? Nature, string? Region);
 
 public sealed record BulkVatClassificationRequest(string? Prefix, string? Rate, string? Nature, string? Region);
+
+public sealed record VatCodeRequest(
+    string? Code,
+    string? Name,
+    string? Rate,
+    decimal Percentage,
+    string? Nature,
+    string? Region,
+    bool IsActive = true);
 
 public sealed record CreatePartyRequest(
     string? CountryCode,

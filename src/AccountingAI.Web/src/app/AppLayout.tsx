@@ -59,6 +59,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/iva', label: 'Resumo de IVA', icon: Receipt },
     { to: '/apuramento-iva', label: 'Apuramento de IVA', icon: Receipt },
     { to: '/config-iva', label: 'Configuração de IVA', icon: Percent },
+    { to: '/codigos-iva', label: 'Códigos de IVA', icon: Percent },
     { to: '/estimativa-irc', label: 'Estimativa de IRC', icon: Calculator },
     { to: '/comunicacao-at', label: 'Comunicação com a AT', icon: ShieldCheck },
   ] },

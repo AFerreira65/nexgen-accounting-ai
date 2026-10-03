@@ -17,6 +17,7 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/balanco': { schema: 'accounting', name: 'JournalEntryLines' },
   '/iva': { schema: 'accounting', name: 'JournalEntryLines' },
   '/apuramento-iva': { schema: 'accounting', name: 'JournalEntryLines' },
+  '/codigos-iva': { schema: 'accounting', name: 'VatCodes' },
   '/config-iva': { schema: 'accounting', name: 'AccountVatClassification' },
   '/estimativa-irc': { schema: 'accounting', name: 'JournalEntryLines' },
   '/contas-correntes': { schema: 'accounting', name: 'JournalEntryLines' },

@@ -50,7 +50,9 @@ public sealed class RecordInfoService(AccountingDbContext context)
                 (c, company, id, ct) => ById(id, key => Audited(c.IrcEstimateFilings.Where(x => x.CompanyId == company && x.Id == key), ct))),
             ["terceiros"] = (new("accounting", "Parties", true),
                 (c, company, id, ct) => ById(id, key => Audited(c.Parties.Where(x => x.CompanyId == company && x.Id == key), ct))),
-            ["compras-efatura"] =(new("accounting", "EFaturaPurchase", true),
+            ["codigos-iva"] = (new("accounting", "VatCodes", true),
+                (c, company, id, ct) => Audited(c.VatCodes.Where(x => x.CompanyId == company && x.Code == Code(id)), ct)),
+            ["compras-efatura"] = (new("accounting", "EFaturaPurchase", true),
                 (c, company, id, ct) => ById(id, key => CreatedOnly(
                     c.EFaturaPurchases.Where(x => x.CompanyId == company && x.Id == key).Select(x => (DateTimeOffset?)x.CreatedAtUtc), ct))),
             ["validacoes-saft"] = (new("accounting", "SaftValidationRun", true),

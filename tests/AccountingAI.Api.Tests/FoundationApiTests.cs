@@ -1447,6 +1447,48 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task VatCodesListAndValidateInput()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var list = await client.GetAsync($"{basePath}/vat-codes?includeInactive=true").ConfigureAwait(false);
+        var listPayload = await list.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        // Recusados antes de qualquer escrita: enum inválido e isento com percentagem.
+        using var badRate = await client
+            .PostAsync($"{basePath}/vat-codes", new StringContent(
+                "{\"code\":\"X-1\",\"name\":\"X\",\"rate\":\"NaoExiste\",\"percentage\":23,\"nature\":\"TransmissoesInternas\",\"region\":\"Continente\"}",
+                Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+        using var exemptWithRate = await client
+            .PostAsync($"{basePath}/vat-codes", new StringContent(
+                "{\"code\":\"X-1\",\"name\":\"X\",\"rate\":\"Isento\",\"percentage\":6,\"nature\":\"OperacoesIsentasSemDeducao\",\"region\":\"Continente\"}",
+                Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/vat-codes")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, list.StatusCode);
+        StringAssert.StartsWith(listPayload.TrimStart(), "[");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badRate.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, exemptWithRate.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task MovementWithUnknownPartyIsRejectedBeforeWriting()
     {
         if (!OperatingSystem.IsWindows())

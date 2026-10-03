@@ -1,0 +1,193 @@
+using AccountingAI.Domain.Accounting;
+using AccountingAI.Domain.Organizations;
+using AccountingAI.Infrastructure.SqlServer.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace AccountingAI.Infrastructure.SqlServer;
+
+/// <summary>Um código de IVA, com as enumerações pelo nome (a PWA traduz para pt-PT).</summary>
+public sealed record VatCodeRow(
+    string Code,
+    string Name,
+    string Rate,
+    decimal Percentage,
+    string Nature,
+    string Region,
+    bool IsActive);
+
+/// <summary>Os dados editáveis de um código de IVA (o código em si só se define na criação).</summary>
+public sealed record VatCodeInput(
+    string Name,
+    VatRate Rate,
+    decimal Percentage,
+    VatOperationNature Nature,
+    VatRegion Region,
+    bool IsActive = true);
+
+/// <summary>
+/// Os códigos de IVA propostos a uma empresa. As percentagens são as do n.º 1
+/// do artigo 18.º do CIVA em vigor em 2026 por região, tal como indicadas em
+/// fontes secundárias — ficam gravadas em cada código e são editáveis, para a
+/// empresa as corrigir sem esperar por uma versão nova.
+/// </summary>
+public static class VatCodeDefaults
+{
+    private static readonly Dictionary<VatRegion, (decimal Reduced, decimal Intermediate, decimal Normal)> Percentages = new()
+    {
+        [VatRegion.Continente] = (6m, 13m, 23m),
+        [VatRegion.Acores] = (4m, 9m, 16m),
+        [VatRegion.Madeira] = (4m, 12m, 22m),
+    };
+
+    private static readonly (string Prefix, string Label, VatOperationNature Nature, bool AllRates)[] Taxed =
+    [
+        ("V", "Vendas de bens", VatOperationNature.TransmissoesInternas, true),
+        ("S", "Prestações de serviços", VatOperationNature.PrestacoesServicosInternas, true),
+        ("C-EXI", "Compras de existências", VatOperationNature.IvaDedutivelExistencias, true),
+        ("C-OBS", "Compras de outros bens e serviços", VatOperationNature.IvaDedutivelOutros, true),
+        ("C-IMO", "Compras de imobilizado", VatOperationNature.IvaDedutivelImobilizado, false),
+        ("AIB", "Aquisições intracomunitárias de bens", VatOperationNature.AquisicoesIntracomunitariasBens, false),
+        ("AIS", "Aquisições intracomunitárias de serviços", VatOperationNature.AquisicoesIntracomunitariasServicos, false),
+        ("AUT", "Autoliquidação (outras)", VatOperationNature.AutoliquidacaoOutras, false),
+    ];
+
+    public static IReadOnlyList<VatCode> For(Guid companyId, VatRegion region)
+    {
+        var (reduced, intermediate, normal) = Percentages[region];
+        var codes = new List<VatCode>();
+
+        foreach (var (prefix, label, nature, allRates) in Taxed)
+        {
+            codes.Add(VatCode.Create(companyId, $"{prefix}-NOR", $"{label} — taxa normal", VatRate.Normal, normal, nature, region));
+            if (allRates)
+            {
+                codes.Add(VatCode.Create(companyId, $"{prefix}-INT", $"{label} — taxa intermédia", VatRate.Intermedia, intermediate, nature, region));
+                codes.Add(VatCode.Create(companyId, $"{prefix}-RED", $"{label} — taxa reduzida", VatRate.Reduzida, reduced, nature, region));
+            }
+        }
+
+        codes.Add(VatCode.Create(companyId, "V-ISE", "Operações isentas sem direito à dedução", VatRate.Isento, 0m, VatOperationNature.OperacoesIsentasSemDeducao, region));
+        codes.Add(VatCode.Create(companyId, "V-EXP", "Exportações e isentas com direito à dedução", VatRate.Isento, 0m, VatOperationNature.ExportacoesEIsentasComDeducao, region));
+        return codes;
+    }
+
+    public static VatRegion RegionOf(TaxRegion region) => region switch
+    {
+        TaxRegion.Azores => VatRegion.Acores,
+        TaxRegion.Madeira => VatRegion.Madeira,
+        _ => VatRegion.Continente,
+    };
+}
+
+/// <summary>
+/// Mantém os códigos de IVA (<see cref="VatCode"/>) de uma empresa: lista,
+/// criação, edição e a criação dos códigos por omissão da região da empresa.
+/// As regras falhadas saem como <see cref="ArgumentException"/> ou
+/// <see cref="InvalidOperationException"/> com a mensagem em pt-PT.
+/// </summary>
+public sealed class VatCodeService(AccountingDbContext context)
+{
+    /// <returns><c>null</c> sem acesso à empresa.</returns>
+    public async Task<IReadOnlyList<VatCodeRow>?> ListAsync(
+        Guid userId, Guid companyId, bool includeInactive, CancellationToken cancellationToken = default)
+    {
+        if (await FindCompanyAsync(userId, companyId, cancellationToken).ConfigureAwait(false) is null)
+        {
+            return null;
+        }
+
+        var codes = await context.VatCodes
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId && (includeInactive || item.IsActive))
+            .OrderBy(item => item.Code)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return codes.Select(ToRow).ToList();
+    }
+
+    /// <returns><c>null</c> sem acesso à empresa.</returns>
+    public async Task<VatCodeRow?> CreateAsync(
+        Guid userId, Guid companyId, string code, VatCodeInput input, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        if (await FindCompanyAsync(userId, companyId, cancellationToken).ConfigureAwait(false) is null)
+        {
+            return null;
+        }
+
+        var vatCode = VatCode.Create(companyId, code, input.Name, input.Rate, input.Percentage, input.Nature, input.Region);
+        var duplicate = await context.VatCodes
+            .AnyAsync(item => item.CompanyId == companyId && item.Code == vatCode.Code, cancellationToken)
+            .ConfigureAwait(false);
+        if (duplicate)
+        {
+            throw new InvalidOperationException("Já existe um código de IVA com esse código na empresa.");
+        }
+
+        context.VatCodes.Add(vatCode);
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return ToRow(vatCode);
+    }
+
+    /// <returns><c>null</c> sem acesso à empresa ou código desconhecido.</returns>
+    public async Task<VatCodeRow?> UpdateAsync(
+        Guid userId, Guid companyId, string code, VatCodeInput input, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        if (await FindCompanyAsync(userId, companyId, cancellationToken).ConfigureAwait(false) is null)
+        {
+            return null;
+        }
+
+        var normalized = (code ?? string.Empty).Trim().ToUpperInvariant();
+        var vatCode = await context.VatCodes
+            .SingleOrDefaultAsync(item => item.CompanyId == companyId && item.Code == normalized, cancellationToken)
+            .ConfigureAwait(false);
+        if (vatCode is null)
+        {
+            return null;
+        }
+
+        vatCode.Update(input.Name, input.Rate, input.Percentage, input.Nature, input.Region);
+        vatCode.SetActive(input.IsActive);
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return ToRow(vatCode);
+    }
+
+    /// <summary>Cria os códigos por omissão que ainda não existem; não altera os que já existem.</summary>
+    /// <returns>-1 sem acesso; senão o número de códigos criados.</returns>
+    public async Task<int> EnsureDefaultsAsync(Guid userId, Guid companyId, CancellationToken cancellationToken = default)
+    {
+        var company = await FindCompanyAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        if (company is null)
+        {
+            return -1;
+        }
+
+        var existing = await context.VatCodes
+            .Where(item => item.CompanyId == companyId)
+            .Select(item => item.Code)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var existingSet = existing.ToHashSet(StringComparer.Ordinal);
+        var missing = VatCodeDefaults.For(companyId, VatCodeDefaults.RegionOf(company.TaxRegion))
+            .Where(item => !existingSet.Contains(item.Code))
+            .ToList();
+
+        context.VatCodes.AddRange(missing);
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return missing.Count;
+    }
+
+    private static VatCodeRow ToRow(VatCode item) => new(
+        item.Code, item.Name, item.Rate.ToString(), item.Percentage, item.Nature.ToString(), item.Region.ToString(), item.IsActive);
+
+    private Task<Company?> FindCompanyAsync(Guid userId, Guid companyId, CancellationToken cancellationToken) =>
+        context.Companies
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                company => company.Id == companyId &&
+                    company.IsActive &&
+                    company.UserMemberships.Any(membership => membership.UserId == userId && membership.IsActive),
+                cancellationToken);
+}
