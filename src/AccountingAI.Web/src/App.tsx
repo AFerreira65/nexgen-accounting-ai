@@ -32,6 +32,7 @@ import { PartiesPage } from './pages/PartiesPage'
 import { PartyBalancesByPartyPage, PartyStatementPage } from './pages/PartyLedgerPages'
 import { VatCodesPage } from './pages/VatCodesPage'
 import { FiscalTablesPage } from './pages/FiscalTablesPage'
+import { FinancialStatementsPage } from './pages/FinancialStatementsPage'
 import { SaftExportPage } from './pages/SaftExportPage'
 import { AnalyticReportPage, CostCentersPage } from './pages/AnalyticPages'
 import { EntryTemplatesPage } from './pages/EntryTemplatesPage'
@@ -63,6 +64,7 @@ export function App() {
             <Route path="/taxonomias" element={<TaxonomiesPage />} />
             <Route path="/importar" element={<SaftImportPage />} />
             <Route path="/exportar-saft" element={<SaftExportPage />} />
+            <Route path="/demonstracoes" element={<FinancialStatementsPage />} />
             <Route path="/compras-efatura" element={<EFaturaPurchasesPage />} />
             <Route path="/cruzamento" element={<CrossCheckPage />} />
             <Route path="/comunicacao-at" element={<AtCommunicationPage />} />

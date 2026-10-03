@@ -1,0 +1,14012 @@
+{
+"source":"Autoridade Tributária e Aduaneira — «Saldos e Demonstrações Financeiras por Taxonomia» (SVAT_Saldos_Demonst_Fin_Taxonomia.xlsx), versão de janeiro de 2021, consultada em 2026-10-03.",
+"S":[
+{
+"code":1,
+"class":"AC",
+"balance":"D",
+"base":[
+"Caixa e depósitos bancários",
+null
+],
+"pe":[
+"Caixa e depósitos bancários",
+null
+],
+"me":[
+"Caixa e depósitos bancários",
+null
+]
+},
+{
+"code":2,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Caixa e depósitos bancários",
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+"Caixa e depósitos bancários",
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+"Caixa e depósitos bancários",
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":3,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Caixa e depósitos bancários",
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+"Caixa e depósitos bancários",
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+"Caixa e depósitos bancários",
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":4,
+"class":"AC",
+"balance":"D",
+"base":[
+"Ativos financeiros detidos para negociação",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":5,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Passivos financeiros detidos para negociação"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":6,
+"class":"AC",
+"balance":"D",
+"base":[
+"Ativos financeiros detidos para negociação",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":7,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Passivos financeiros detidos para negociação"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":8,
+"class":"AC",
+"balance":"D",
+"base":[
+"Outros ativos financeiros",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":9,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Outros passivos financeiros"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":10,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":11,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":12,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":13,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":14,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":15,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":16,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":17,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":18,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":19,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":20,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":21,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":22,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Clientes",
+"Adiantamentos de clientes"
+],
+"pe":[
+"Clientes",
+"Outros passivos correntes"
+],
+"me":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":23,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Adiantamentos de clientes"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":24,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":25,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":26,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":27,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":28,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":29,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":30,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":31,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":32,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":33,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":34,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":35,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":36,
+"class":"AC",
+"balance":"C",
+"base":[
+"Clientes",
+null
+],
+"pe":[
+"Clientes",
+null
+],
+"me":[
+"Clientes",
+null
+]
+},
+{
+"code":37,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":38,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":39,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":40,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":41,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":42,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":43,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":44,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":45,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":46,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":47,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":48,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":49,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":50,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"pe":[
+"Outros créditos a receber",
+"Fornecedores"
+],
+"me":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":51,
+"class":"AC",
+"balance":"D",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":52,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":53,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":54,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":55,
+"class":"AC",
+"balance":"D",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":56,
+"class":"AC",
+"balance":"D",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":57,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":58,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Outras dívidas a pagar (não corrente)"
+],
+"pe":[
+null,
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+null,
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":59,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":60,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Outras dívidas a pagar (não corrente)"
+],
+"pe":[
+null,
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+null,
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":61,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+"Outros créditos a receber",
+"Outros passivos correntes"
+],
+"me":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":62,
+"class":"APNC",
+"balance":"S2C",
+"base":[
+"Créditos a receber",
+"Outras dívidas a pagar (não corrente)"
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":63,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+"Outros créditos a receber",
+"Outros passivos correntes"
+],
+"me":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":64,
+"class":"APNC",
+"balance":"S2C",
+"base":[
+"Créditos a receber",
+"Outras dívidas a pagar (não corrente)"
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":65,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":66,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":67,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":68,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Créditos a receber",
+null
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+null
+],
+"me":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":69,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":70,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Créditos a receber",
+null
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+null
+],
+"me":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":71,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":72,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":73,
+"class":"AC",
+"balance":"D",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+]
+},
+{
+"code":74,
+"class":"AC",
+"balance":"D",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+]
+},
+{
+"code":75,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":76,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":77,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":78,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":79,
+"class":"AC",
+"balance":"D",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+]
+},
+{
+"code":80,
+"class":"AC",
+"balance":"D",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+]
+},
+{
+"code":81,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":82,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":83,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":84,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":85,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"pe":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+],
+"me":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":86,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":87,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":88,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":89,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":90,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":91,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":92,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":93,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":94,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":95,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":96,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":97,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":98,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":99,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":100,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":101,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":102,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":103,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":104,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":105,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"pe":[
+null,
+"Financiamentos obtidos (não corrente)"
+],
+"me":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":106,
+"class":"AC",
+"balance":"D",
+"base":[
+"Capital subscrito e não realizado",
+null
+],
+"pe":[
+"Capital subscrito e não realizado",
+null
+],
+"me":[
+"Capital subscrito e não realizado",
+null
+]
+},
+{
+"code":107,
+"class":"AC",
+"balance":"D",
+"base":[
+"Capital subscrito e não realizado",
+null
+],
+"pe":[
+"Capital subscrito e não realizado",
+null
+],
+"me":[
+"Capital subscrito e não realizado",
+null
+]
+},
+{
+"code":108,
+"class":"AC",
+"balance":"D",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":109,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+"Outros créditos a receber",
+"Outros passivos correntes"
+],
+"me":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":110,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+"Outros créditos a receber",
+"Outros passivos correntes"
+],
+"me":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":111,
+"class":"AC",
+"balance":"D",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":112,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Créditos a receber",
+null
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+null
+],
+"me":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":113,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+"Outros créditos a receber",
+"Outros passivos correntes"
+],
+"me":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":114,
+"class":"APNC",
+"balance":"S2C",
+"base":[
+"Créditos a receber",
+"Outras dívidas a pagar (não corrente)"
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":115,
+"class":"AC",
+"balance":"C",
+"base":[
+"Capital subscrito e não realizado",
+null
+],
+"pe":[
+"Capital subscrito e não realizado",
+null
+],
+"me":[
+"Capital subscrito e não realizado",
+null
+]
+},
+{
+"code":116,
+"class":"AC",
+"balance":"C",
+"base":[
+"Capital subscrito e não realizado",
+null
+],
+"pe":[
+"Capital subscrito e não realizado",
+null
+],
+"me":[
+"Capital subscrito e não realizado",
+null
+]
+},
+{
+"code":117,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":118,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":119,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":120,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":121,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Créditos a receber",
+null
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+null
+],
+"me":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":122,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":123,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Créditos a receber",
+null
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+null
+],
+"me":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":124,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+"Outros créditos a receber",
+"Outros passivos correntes"
+],
+"me":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":125,
+"class":"APNC",
+"balance":"S2C",
+"base":[
+"Créditos a receber",
+"Outras dívidas a pagar (não corrente)"
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":126,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+"Outros créditos a receber",
+"Outros passivos correntes"
+],
+"me":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":127,
+"class":"APNC",
+"balance":"S2C",
+"base":[
+"Créditos a receber",
+"Outras dívidas a pagar (não corrente)"
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":128,
+"class":"AC",
+"balance":"D",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":129,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Créditos a receber",
+null
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+null
+],
+"me":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":130,
+"class":"AC",
+"balance":"D",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":131,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":132,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Responsabilidades por benefícios pós-emprego"
+],
+"pe":[
+null,
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+null,
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":133,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos por Impostos diferidos",
+null
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+null
+],
+"me":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":134,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Passivos por impostos diferidos"
+],
+"pe":[
+null,
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+null,
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":135,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":136,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Outras dívidas a pagar (não corrente)"
+],
+"pe":[
+null,
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+null,
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":137,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Adiantamentos de clientes"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":138,
+"class":"APC",
+"balance":"S2C",
+"base":[
+"Outros créditos a receber",
+"Outras dívidas a pagar (corrente)"
+],
+"pe":[
+"Outros créditos a receber",
+"Outros passivos correntes"
+],
+"me":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":139,
+"class":"APNC",
+"balance":"S2C",
+"base":[
+"Créditos a receber",
+"Outras dívidas a pagar (não corrente)"
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+],
+"me":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":140,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":141,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Créditos a receber",
+null
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+null
+],
+"me":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":142,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":143,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos por Impostos diferidos",
+null
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+null
+],
+"me":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":144,
+"class":"AC",
+"balance":"C",
+"base":[
+"Outros créditos a receber",
+null
+],
+"pe":[
+"Outros créditos a receber",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":145,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Créditos a receber",
+null
+],
+"pe":[
+"Créditos e outros ativos não correntes",
+null
+],
+"me":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":146,
+"class":"AC",
+"balance":"D",
+"base":[
+"Diferimentos (balanço ativo)",
+null
+],
+"pe":[
+"Diferimentos (balanço ativo)",
+null
+],
+"me":[
+"Diferimentos (balanço ativo)",
+null
+]
+},
+{
+"code":147,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Diferimentos (balanço passivo)"
+],
+"pe":[
+null,
+"Diferimentos (balanço passivo)"
+],
+"me":[
+null,
+"Diferimentos (balanço passivo)"
+]
+},
+{
+"code":148,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Provisões"
+],
+"pe":[
+null,
+"Provisões"
+],
+"me":[
+null,
+"Provisões"
+]
+},
+{
+"code":149,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Provisões"
+],
+"pe":[
+null,
+"Provisões"
+],
+"me":[
+null,
+"Provisões"
+]
+},
+{
+"code":150,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Provisões"
+],
+"pe":[
+null,
+"Provisões"
+],
+"me":[
+null,
+"Provisões"
+]
+},
+{
+"code":151,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Provisões"
+],
+"pe":[
+null,
+"Provisões"
+],
+"me":[
+null,
+"Provisões"
+]
+},
+{
+"code":152,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Provisões"
+],
+"pe":[
+null,
+"Provisões"
+],
+"me":[
+null,
+"Provisões"
+]
+},
+{
+"code":153,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Provisões"
+],
+"pe":[
+null,
+"Provisões"
+],
+"me":[
+null,
+"Provisões"
+]
+},
+{
+"code":154,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Provisões"
+],
+"pe":[
+null,
+"Provisões"
+],
+"me":[
+null,
+"Provisões"
+]
+},
+{
+"code":155,
+"class":"PNC",
+"balance":"C",
+"base":[
+null,
+"Provisões"
+],
+"pe":[
+null,
+"Provisões"
+],
+"me":[
+null,
+"Provisões"
+]
+},
+{
+"code":156,
+"class":null,
+"balance":"Dc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":157,
+"class":null,
+"balance":"Dc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":158,
+"class":null,
+"balance":"Dc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":159,
+"class":null,
+"balance":"Cc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":160,
+"class":null,
+"balance":"Cc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":161,
+"class":null,
+"balance":"Cc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":162,
+"class":null,
+"balance":"Cc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":163,
+"class":null,
+"balance":"Cc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":164,
+"class":null,
+"balance":"Cc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":165,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":166,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":167,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":168,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":169,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":170,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":171,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":172,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":173,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":174,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":175,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":176,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":177,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":178,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":179,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":180,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":181,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":182,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":183,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":184,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":185,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":186,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":187,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":188,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":189,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":190,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":191,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":192,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":193,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":194,
+"class":"AC",
+"balance":"C",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":195,
+"class":"AC",
+"balance":"D",
+"base":[
+"Ativos biológicos (corrente)",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":196,
+"class":"AC",
+"balance":"D",
+"base":[
+"Ativos biológicos (corrente)",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":197,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos biológicos (não corrente)",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":198,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos biológicos (não corrente)",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":199,
+"class":"AC",
+"balance":"C",
+"base":[
+"Ativos biológicos (corrente)",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":200,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos biológicos (não corrente)",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":201,
+"class":"AC",
+"balance":"C",
+"base":[
+"Ativos biológicos (corrente)",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":202,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos biológicos (não corrente)",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":203,
+"class":null,
+"balance":"Sc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":204,
+"class":null,
+"balance":"Sc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":205,
+"class":null,
+"balance":"Sc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":206,
+"class":null,
+"balance":"Sc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":207,
+"class":null,
+"balance":"Sc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":208,
+"class":null,
+"balance":"Sc",
+"base":[
+null,
+null
+],
+"pe":[
+null,
+null
+],
+"me":[
+null,
+null
+]
+},
+{
+"code":209,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":210,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":211,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":212,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":213,
+"class":"AC",
+"balance":"D",
+"base":[
+"Inventários",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":214,
+"class":"AC",
+"balance":"D",
+"base":[
+"Ativos biológicos (corrente)",
+null
+],
+"pe":[
+"Inventários",
+null
+],
+"me":[
+"Inventários",
+null
+]
+},
+{
+"code":215,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos biológicos (não corrente)",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":216,
+"class":"ANC",
+"balance":"S1C",
+"base":[
+"Participações financeiras - método da equivalência patrimonial",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":217,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":218,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":219,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":220,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":221,
+"class":"ANC",
+"balance":"S1C",
+"base":[
+"Participações financeiras - método da equivalência patrimonial",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":222,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":223,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":224,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":225,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":226,
+"class":"ANC",
+"balance":"S1C",
+"base":[
+"Participações financeiras - método da equivalência patrimonial",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":227,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":228,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":229,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":230,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":231,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":232,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":233,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":234,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":235,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":236,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":237,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":238,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":239,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Participações financeiras - método da equivalência patrimonial",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":240,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":241,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":242,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":243,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":244,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Participações financeiras - método da equivalência patrimonial",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":245,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":246,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":247,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":248,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":249,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Participações financeiras - método da equivalência patrimonial",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":250,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":251,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":252,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":253,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":254,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":255,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":256,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":257,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":258,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":259,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":260,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":261,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":262,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":263,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":264,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":265,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":266,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":267,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":268,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":269,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":270,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":271,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":272,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":273,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":274,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":275,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":276,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":277,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":278,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":279,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":280,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":281,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":282,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":283,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":284,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":285,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":286,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":287,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":288,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":289,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":290,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":291,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":292,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":293,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":294,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":295,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":296,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":297,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":298,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":299,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Goodwill",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":300,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":301,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":302,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":303,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":304,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":305,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":306,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":307,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":308,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":309,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":310,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":311,
+"class":"ANC",
+"balance":"D",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":312,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":313,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":314,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":315,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":316,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Outros investimentos financeiros",
+null
+],
+"pe":[
+"Investimentos financeiros",
+null
+],
+"me":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":317,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Propriedades de investimento",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":318,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos fixos tangíveis",
+null
+],
+"pe":[
+"Ativos fixos tangíveis",
+null
+],
+"me":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":319,
+"class":"ANC",
+"balance":"C",
+"base":[
+"Ativos intangíveis",
+null
+],
+"pe":[
+"Ativos intangíveis",
+null
+],
+"me":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":320,
+"class":"AC",
+"balance":"D",
+"base":[
+"Ativos não correntes detidos para venda",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":321,
+"class":"AC",
+"balance":"D",
+"base":[
+"Ativos não correntes detidos para venda",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":322,
+"class":"AC",
+"balance":"D",
+"base":[
+"Ativos não correntes detidos para venda",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":323,
+"class":"AC",
+"balance":"D",
+"base":[
+"Ativos não correntes detidos para venda",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":324,
+"class":"AC",
+"balance":"D",
+"base":[
+"Ativos não correntes detidos para venda",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":325,
+"class":"PC",
+"balance":"C",
+"base":[
+null,
+"Passivos não correntes detidos para venda"
+],
+"pe":[
+null,
+"Outros passivos correntes"
+],
+"me":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":326,
+"class":"AC",
+"balance":"C",
+"base":[
+"Ativos não correntes detidos para venda",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":327,
+"class":"AC",
+"balance":"C",
+"base":[
+"Ativos não correntes detidos para venda",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":328,
+"class":"AC",
+"balance":"C",
+"base":[
+"Ativos não correntes detidos para venda",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":329,
+"class":"AC",
+"balance":"C",
+"base":[
+"Ativos não correntes detidos para venda",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":330,
+"class":"AC",
+"balance":"C",
+"base":[
+"Ativos não correntes detidos para venda",
+null
+],
+"pe":[
+"Outros ativos correntes",
+null
+],
+"me":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":331,
+"class":"C",
+"balance":"C",
+"base":[
+null,
+"Capital Subscrito"
+],
+"pe":[
+null,
+"Capital Subscrito"
+],
+"me":[
+null,
+"Capital Subscrito"
+]
+},
+{
+"code":332,
+"class":"C",
+"balance":"D",
+"base":[
+null,
+"Ações (quotas) próprias"
+],
+"pe":[
+null,
+"Ações (quotas) próprias"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":333,
+"class":"C",
+"balance":"S1C",
+"base":[
+null,
+"Ações (quotas) próprias"
+],
+"pe":[
+null,
+"Ações (quotas) próprias"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":334,
+"class":"C",
+"balance":"C",
+"base":[
+null,
+"Outros instrumentos de capital próprio"
+],
+"pe":[
+null,
+"Outros instrumentos de capital próprio"
+],
+"me":[
+null,
+"Outros instrumentos de capital próprio"
+]
+},
+{
+"code":335,
+"class":"C",
+"balance":"C",
+"base":[
+null,
+"Prémios de emissão"
+],
+"pe":[
+null,
+"Prémios de emissão"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":336,
+"class":"C",
+"balance":"C",
+"base":[
+null,
+"Reservas legais"
+],
+"pe":[
+null,
+"Reservas legais"
+],
+"me":[
+null,
+"Reservas legais"
+]
+},
+{
+"code":337,
+"class":"C",
+"balance":"C",
+"base":[
+null,
+"Outras reservas"
+],
+"pe":[
+null,
+"Outras reservas"
+],
+"me":[
+null,
+"Outras reservas"
+]
+},
+{
+"code":338,
+"class":"C",
+"balance":"S1C",
+"base":[
+null,
+"Resultados transitados"
+],
+"pe":[
+null,
+"Resultados transitados"
+],
+"me":[
+null,
+"Resultados transitados"
+]
+},
+{
+"code":339,
+"class":"C",
+"balance":"S1C",
+"base":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"pe":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":340,
+"class":"C",
+"balance":"C",
+"base":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"pe":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":341,
+"class":"C",
+"balance":"S1C",
+"base":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"pe":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":342,
+"class":"C",
+"balance":"S1C",
+"base":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"pe":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":343,
+"class":"C",
+"balance":"C",
+"base":[
+null,
+"Excedentes de revalorização"
+],
+"pe":[
+null,
+"Excedentes de revalorização"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":344,
+"class":"C",
+"balance":"D",
+"base":[
+null,
+"Excedentes de revalorização"
+],
+"pe":[
+null,
+"Excedentes de revalorização"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":345,
+"class":"C",
+"balance":"C",
+"base":[
+null,
+"Excedentes de revalorização"
+],
+"pe":[
+null,
+"Excedentes de revalorização"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":346,
+"class":"C",
+"balance":"D",
+"base":[
+null,
+"Excedentes de revalorização"
+],
+"pe":[
+null,
+"Excedentes de revalorização"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":347,
+"class":"C",
+"balance":"S1C",
+"base":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"pe":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":348,
+"class":"C",
+"balance":"S1C",
+"base":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"pe":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":349,
+"class":"C",
+"balance":"C",
+"base":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"pe":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":350,
+"class":"C",
+"balance":"D",
+"base":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"pe":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":351,
+"class":"C",
+"balance":"C",
+"base":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"pe":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":352,
+"class":"C",
+"balance":"S1C",
+"base":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"pe":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+],
+"me":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":353,
+"class":"GR",
+"balance":"Sa1C",
+"base":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+],
+"pe":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+],
+"me":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+]
+},
+{
+"code":354,
+"class":"GR",
+"balance":"Sa1C",
+"base":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+],
+"pe":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+],
+"me":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+]
+},
+{
+"code":355,
+"class":"GR",
+"balance":"Sa1C",
+"base":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+],
+"pe":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+],
+"me":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+]
+},
+{
+"code":356,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":357,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":358,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":359,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":360,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":361,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":362,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":363,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":364,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":365,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":366,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":367,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":368,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":369,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":370,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":371,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":372,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":373,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":374,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":375,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":376,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":377,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":378,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":379,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":380,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":381,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":382,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":383,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":384,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Fornecimentos e serviços externos",
+null
+],
+"pe":[
+"Fornecimentos e serviços externos",
+null
+],
+"me":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":385,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos com o pessoal",
+null
+],
+"pe":[
+"Gastos com o pessoal",
+null
+],
+"me":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":386,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos com o pessoal",
+null
+],
+"pe":[
+"Gastos com o pessoal",
+null
+],
+"me":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":387,
+"class":"GR",
+"balance":"Sa1C",
+"base":[
+"Gastos com o pessoal",
+null
+],
+"pe":[
+"Gastos com o pessoal",
+null
+],
+"me":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":388,
+"class":"GR",
+"balance":"Sa1C",
+"base":[
+"Gastos com o pessoal",
+null
+],
+"pe":[
+"Gastos com o pessoal",
+null
+],
+"me":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":389,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos com o pessoal",
+null
+],
+"pe":[
+"Gastos com o pessoal",
+null
+],
+"me":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":390,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos com o pessoal",
+null
+],
+"pe":[
+"Gastos com o pessoal",
+null
+],
+"me":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":391,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos com o pessoal",
+null
+],
+"pe":[
+"Gastos com o pessoal",
+null
+],
+"me":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":392,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos com o pessoal",
+null
+],
+"pe":[
+"Gastos com o pessoal",
+null
+],
+"me":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":393,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos com o pessoal",
+null
+],
+"pe":[
+"Gastos com o pessoal",
+null
+],
+"me":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":394,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":395,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":396,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":397,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":398,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":399,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":400,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":401,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":402,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":403,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":404,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":405,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":406,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":407,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":408,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":409,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":410,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":411,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":412,
+"class":"GR",
+"balance":"Sa1C",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":413,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de dívidas a receber (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade de dívidas a receber (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":414,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de dívidas a receber (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade de dívidas a receber (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":415,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":416,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":417,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":418,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":419,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":420,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":421,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":422,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":423,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":424,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":425,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":426,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":427,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":428,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":429,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":430,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":431,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":432,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":433,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":434,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":435,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":436,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":437,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":438,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":439,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":440,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":441,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":442,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":443,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":444,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":445,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":446,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":447,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":448,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":449,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":450,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":451,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":452,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":453,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":454,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":455,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":456,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":457,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":458,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":459,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":460,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":461,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":462,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":463,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":464,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":465,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":466,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":467,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":468,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":469,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":470,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":471,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":472,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":473,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":474,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":475,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":476,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":477,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":478,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":479,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Ganhos / perdas imputados de subsidiárias, associadas e empreendimentos conjuntos"
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":480,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Ganhos / perdas imputados de subsidiárias, associadas e empreendimentos conjuntos"
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":481,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Ganhos / perdas imputados de subsidiárias, associadas e empreendimentos conjuntos"
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":482,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Ganhos / perdas imputados de subsidiárias, associadas e empreendimentos conjuntos"
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":483,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":484,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":485,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":486,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":487,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":488,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":489,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":490,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":491,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":492,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":493,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":494,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":495,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":496,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":497,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":498,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":499,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Outros gastos",
+null
+],
+"pe":[
+"Outros gastos",
+null
+],
+"me":[
+"Outros gastos",
+null
+]
+},
+{
+"code":500,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Juros e gastos similares suportados",
+null
+],
+"pe":[
+"Juros e gastos similares suportados",
+null
+],
+"me":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":501,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Juros e gastos similares suportados",
+null
+],
+"pe":[
+"Juros e gastos similares suportados",
+null
+],
+"me":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":502,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Juros e gastos similares suportados",
+null
+],
+"pe":[
+"Juros e gastos similares suportados",
+null
+],
+"me":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":503,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Juros e gastos similares suportados",
+null
+],
+"pe":[
+"Juros e gastos similares suportados",
+null
+],
+"me":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":504,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Juros e gastos similares suportados",
+null
+],
+"pe":[
+"Juros e gastos similares suportados",
+null
+],
+"me":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":505,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Juros e gastos similares suportados",
+null
+],
+"pe":[
+"Juros e gastos similares suportados",
+null
+],
+"me":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":506,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":507,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":508,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":509,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":510,
+"class":"RG",
+"balance":"Sa1C",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":511,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":512,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":513,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":514,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":515,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":516,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":517,
+"class":"RG",
+"balance":"Sa1C",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":518,
+"class":"RG",
+"balance":"Da",
+"base":[
+null,
+"Vendas e serviços prestados"
+],
+"pe":[
+null,
+"Vendas e serviços prestados"
+],
+"me":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":519,
+"class":"RG",
+"balance":"Sa1C",
+"base":[
+null,
+"Variação nos inventários da produção"
+],
+"pe":[
+null,
+"Variação nos inventários da produção"
+],
+"me":[
+null,
+"Variação nos inventários da produção"
+]
+},
+{
+"code":520,
+"class":"RG",
+"balance":"Sa1C",
+"base":[
+null,
+"Variação nos inventários da produção"
+],
+"pe":[
+null,
+"Variação nos inventários da produção"
+],
+"me":[
+null,
+"Variação nos inventários da produção"
+]
+},
+{
+"code":521,
+"class":"RG",
+"balance":"Sa1C",
+"base":[
+null,
+"Variação nos inventários da produção"
+],
+"pe":[
+null,
+"Variação nos inventários da produção"
+],
+"me":[
+null,
+"Variação nos inventários da produção"
+]
+},
+{
+"code":522,
+"class":"RG",
+"balance":"Sa1C",
+"base":[
+null,
+"Variação nos inventários da produção"
+],
+"pe":[
+null,
+"Variação nos inventários da produção"
+],
+"me":[
+null,
+"Variação nos inventários da produção"
+]
+},
+{
+"code":523,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Trabalhos para a própria entidade"
+],
+"pe":[
+null,
+"Trabalhos para a própria entidade"
+],
+"me":[
+null,
+"Trabalhos para a própria entidade"
+]
+},
+{
+"code":524,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Trabalhos para a própria entidade"
+],
+"pe":[
+null,
+"Trabalhos para a própria entidade"
+],
+"me":[
+null,
+"Trabalhos para a própria entidade"
+]
+},
+{
+"code":525,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Trabalhos para a própria entidade"
+],
+"pe":[
+null,
+"Trabalhos para a própria entidade"
+],
+"me":[
+null,
+"Trabalhos para a própria entidade"
+]
+},
+{
+"code":526,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Trabalhos para a própria entidade"
+],
+"pe":[
+null,
+"Trabalhos para a própria entidade"
+],
+"me":[
+null,
+"Trabalhos para a própria entidade"
+]
+},
+{
+"code":527,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Subsídios à exploração"
+],
+"pe":[
+null,
+"Subsídios à exploração"
+],
+"me":[
+null,
+"Subsídios à exploração"
+]
+},
+{
+"code":528,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Subsídios à exploração"
+],
+"pe":[
+null,
+"Subsídios à exploração"
+],
+"me":[
+null,
+"Subsídios à exploração"
+]
+},
+{
+"code":529,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":530,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":531,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":532,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":533,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":534,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":535,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":536,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":537,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":538,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":539,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":540,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":541,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":542,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":543,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":544,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":545,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":546,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"pe":[
+"Gastos / reversões de depreciação e de amortização",
+null
+],
+"me":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":547,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de dívidas a receber (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade de dívidas a receber (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":548,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de dívidas a receber (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade de dívidas a receber (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":549,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":550,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":551,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":552,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":553,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":554,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":555,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"pe":[
+"Imparidade / Ajustamentos de inventários (perdas/reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":556,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":557,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":558,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":559,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":560,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":561,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":562,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":563,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":564,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":565,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":566,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":567,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":568,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":569,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":570,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":571,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":572,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos depreciáveis / amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":573,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":574,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":575,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":576,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":577,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":578,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":579,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":580,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":581,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":582,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":583,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":584,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":585,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Imparidade de investimentos não depreciáveis/amortizáveis (perdas/reversões)",
+null
+],
+"pe":[
+"Outras Imparidades (Perdas/Reversões)",
+null
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":586,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":587,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":588,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":589,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":590,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":591,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":592,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":593,
+"class":"GR",
+"balance":"Ca",
+"base":[
+"Provisões (aumentos/reduções)",
+null
+],
+"pe":[
+"Provisões (aumentos/reduções)",
+null
+],
+"me":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":594,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":595,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":596,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":597,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":598,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":599,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":600,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":601,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":602,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"pe":[
+null,
+"Aumentos / reduções de justo valor"
+],
+"me":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":603,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":604,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":605,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":606,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":607,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":608,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":609,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":610,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":611,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":612,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":613,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":614,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Ganhos / perdas imputados de subsidiárias, associadas e empreendimentos conjuntos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":615,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Ganhos / perdas imputados de subsidiárias, associadas e empreendimentos conjuntos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":616,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Ganhos / perdas imputados de subsidiárias, associadas e empreendimentos conjuntos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":617,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":618,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":619,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":620,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":621,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":622,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":623,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":624,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":625,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":626,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":627,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":628,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":629,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":630,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":631,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":632,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":633,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":634,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":635,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Juros e rendimentos similares obtidos"
+],
+"pe":[
+null,
+"Juros e rendimentos similares obtidos"
+],
+"me":[
+null,
+"Juros e rendimentos similares obtidos"
+]
+},
+{
+"code":636,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":637,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":638,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Ganhos / perdas imputados de subsidiárias, associadas e empreendimentos conjuntos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":639,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Ganhos / perdas imputados de subsidiárias, associadas e empreendimentos conjuntos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":640,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":641,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Juros e rendimentos similares obtidos"
+],
+"pe":[
+null,
+"Juros e rendimentos similares obtidos"
+],
+"me":[
+null,
+"Juros e rendimentos similares obtidos"
+]
+},
+{
+"code":642,
+"class":"RG",
+"balance":"Ca",
+"base":[
+null,
+"Outros rendimentos"
+],
+"pe":[
+null,
+"Outros rendimentos"
+],
+"me":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":643,
+"class":"RG",
+"balance":"Sa1C",
+"base":[
+null,
+"Resultado antes de impostos"
+],
+"pe":[
+null,
+"Resultado antes de impostos"
+],
+"me":[
+null,
+"Resultado antes de impostos"
+]
+},
+{
+"code":644,
+"class":"GR",
+"balance":"Da",
+"base":[
+"Imposto sobre o rendimento do período",
+null
+],
+"pe":[
+"Imposto sobre o rendimento do período",
+null
+],
+"me":[
+"Imposto sobre o rendimento do período",
+null
+]
+},
+{
+"code":645,
+"class":"GR",
+"balance":"Sa1C",
+"base":[
+"Imposto sobre o rendimento do período",
+null
+],
+"pe":[
+"Imposto sobre o rendimento do período",
+null
+],
+"me":[
+"Imposto sobre o rendimento do período",
+null
+]
+},
+{
+"code":646,
+"class":"C",
+"balance":"S1C",
+"base":[
+null,
+"Resultado líquido do período (Demonstração e balanço)"
+],
+"pe":[
+null,
+"Resultado líquido do período (Demonstração e balanço)"
+],
+"me":[
+null,
+"Resultado líquido do período (Demonstração e balanço)"
+]
+},
+{
+"code":647,
+"class":"C",
+"balance":"D",
+"base":[
+null,
+"Dividendos antecipados"
+],
+"pe":[
+null,
+"Dividendos antecipados"
+],
+"me":[
+null,
+"Dividendos antecipados"
+]
+}
+],
+"M":[
+{
+"code":1,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Caixa e depósitos bancários",
+null
+]
+},
+{
+"code":2,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Caixa e depósitos bancários",
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":3,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Caixa e depósitos bancários",
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":4,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":5,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":6,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":7,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Clientes",
+"Outros passivos correntes"
+]
+},
+{
+"code":8,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":9,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Clientes",
+null
+]
+},
+{
+"code":10,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Clientes",
+null
+]
+},
+{
+"code":11,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Clientes",
+null
+]
+},
+{
+"code":12,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":13,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":14,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":15,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Fornecedores"
+]
+},
+{
+"code":16,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":17,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":18,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":19,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":20,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":21,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":22,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":23,
+"class":"APNC",
+"balance":"S2C",
+"micro":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":24,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":25,
+"class":"APNC",
+"balance":"S2C",
+"micro":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":26,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":27,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":28,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":29,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":30,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":31,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":32,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":33,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":34,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+]
+},
+{
+"code":35,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+]
+},
+{
+"code":36,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":37,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":38,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":39,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":40,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+]
+},
+{
+"code":41,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+null
+]
+},
+{
+"code":42,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":43,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":44,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":45,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":46,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Estado e outros entes públicos (balanço ativo)",
+"Estado e outros entes públicos (balanço passivo)"
+]
+},
+{
+"code":47,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":48,
+"class":"PNC",
+"balance":"C",
+"micro":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":49,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":50,
+"class":"PNC",
+"balance":"C",
+"micro":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":51,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":52,
+"class":"PNC",
+"balance":"C",
+"micro":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":53,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":54,
+"class":"PNC",
+"balance":"C",
+"micro":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":55,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Financiamentos obtidos (corrente)"
+]
+},
+{
+"code":56,
+"class":"PNC",
+"balance":"C",
+"micro":[
+null,
+"Financiamentos obtidos (não corrente)"
+]
+},
+{
+"code":57,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Capital subscrito e não realizado",
+null
+]
+},
+{
+"code":58,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":59,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":60,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":61,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":62,
+"class":"APNC",
+"balance":"S2C",
+"micro":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":63,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Capital subscrito e não realizado",
+null
+]
+},
+{
+"code":64,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":65,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":66,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":67,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":68,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":69,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":70,
+"class":"APNC",
+"balance":"S2C",
+"micro":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":71,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":72,
+"class":"APNC",
+"balance":"S2C",
+"micro":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":73,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":74,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":75,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":76,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":77,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Outros passivos correntes"
+]
+},
+{
+"code":78,
+"class":"APC",
+"balance":"S2C",
+"micro":[
+"Outros ativos correntes",
+"Outros passivos correntes"
+]
+},
+{
+"code":79,
+"class":"APNC",
+"balance":"S2C",
+"micro":[
+"Créditos e outros ativos não correntes",
+"Outras dívidas a pagar (não corrente)"
+]
+},
+{
+"code":80,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":81,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":82,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":83,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Outros ativos correntes",
+null
+]
+},
+{
+"code":84,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Créditos e outros ativos não correntes",
+null
+]
+},
+{
+"code":85,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Diferimentos (balanço ativo)",
+null
+]
+},
+{
+"code":86,
+"class":"PC",
+"balance":"C",
+"micro":[
+null,
+"Diferimentos (balanço passivo)"
+]
+},
+{
+"code":87,
+"class":"PNC",
+"balance":"C",
+"micro":[
+null,
+"Provisões"
+]
+},
+{
+"code":88,
+"class":"PNC",
+"balance":"C",
+"micro":[
+null,
+"Provisões"
+]
+},
+{
+"code":89,
+"class":"PNC",
+"balance":"C",
+"micro":[
+null,
+"Provisões"
+]
+},
+{
+"code":90,
+"class":"PNC",
+"balance":"C",
+"micro":[
+null,
+"Provisões"
+]
+},
+{
+"code":91,
+"class":"PNC",
+"balance":"C",
+"micro":[
+null,
+"Provisões"
+]
+},
+{
+"code":92,
+"class":null,
+"balance":"Dc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":93,
+"class":null,
+"balance":"Dc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":94,
+"class":null,
+"balance":"Cc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":95,
+"class":null,
+"balance":"Cc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":96,
+"class":null,
+"balance":"Cc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":97,
+"class":null,
+"balance":"Cc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":98,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":99,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":100,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":101,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":102,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":103,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":104,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":105,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":106,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":107,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":108,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":109,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":110,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":111,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":112,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":113,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":114,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":115,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":116,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":117,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":118,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":119,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":120,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":121,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":122,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":123,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":124,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":125,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":126,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":127,
+"class":"AC",
+"balance":"C",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":128,
+"class":null,
+"balance":"Sc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":129,
+"class":null,
+"balance":"Sc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":130,
+"class":null,
+"balance":"Sc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":131,
+"class":null,
+"balance":"Sc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":132,
+"class":null,
+"balance":"Sc",
+"micro":[
+null,
+null
+]
+},
+{
+"code":133,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":134,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":135,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":136,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":137,
+"class":"AC",
+"balance":"D",
+"micro":[
+"Inventários",
+null
+]
+},
+{
+"code":138,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":139,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":140,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":141,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":142,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":143,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":144,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":145,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":146,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":147,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":148,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":149,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":150,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":151,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":152,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":153,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":154,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":155,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":156,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":157,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":158,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":159,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":160,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":161,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":162,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":163,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":164,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":165,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":166,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":167,
+"class":"ANC",
+"balance":"C",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":168,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":169,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":170,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":171,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Investimentos financeiros",
+null
+]
+},
+{
+"code":172,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos fixos tangíveis",
+null
+]
+},
+{
+"code":173,
+"class":"ANC",
+"balance":"D",
+"micro":[
+"Ativos intangíveis",
+null
+]
+},
+{
+"code":174,
+"class":"C",
+"balance":"C",
+"micro":[
+null,
+"Capital Subscrito"
+]
+},
+{
+"code":175,
+"class":"C",
+"balance":"D",
+"micro":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":176,
+"class":"C",
+"balance":"S1C",
+"micro":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":177,
+"class":"C",
+"balance":"C",
+"micro":[
+null,
+"Outros instrumentos de capital próprio"
+]
+},
+{
+"code":178,
+"class":"C",
+"balance":"C",
+"micro":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":179,
+"class":"C",
+"balance":"C",
+"micro":[
+null,
+"Reservas legais"
+]
+},
+{
+"code":180,
+"class":"C",
+"balance":"C",
+"micro":[
+null,
+"Outras reservas"
+]
+},
+{
+"code":181,
+"class":"C",
+"balance":"S1C",
+"micro":[
+null,
+"Resultados transitados"
+]
+},
+{
+"code":182,
+"class":"C",
+"balance":"C",
+"micro":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":183,
+"class":"C",
+"balance":"C",
+"micro":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":184,
+"class":"C",
+"balance":"C",
+"micro":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":185,
+"class":"C",
+"balance":"D",
+"micro":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":186,
+"class":"C",
+"balance":"C",
+"micro":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":187,
+"class":"C",
+"balance":"S1C",
+"micro":[
+null,
+"Ajustamentos / Outras variações no capital próprio"
+]
+},
+{
+"code":188,
+"class":"GR",
+"balance":"Sa1C",
+"micro":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+]
+},
+{
+"code":189,
+"class":"GR",
+"balance":"Sa1C",
+"micro":[
+"Custo das mercadorias vendidas e das matérias consumidas",
+null
+]
+},
+{
+"code":190,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":191,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":192,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":193,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":194,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":195,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Fornecimentos e serviços externos",
+null
+]
+},
+{
+"code":196,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":197,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":198,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":199,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":200,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":201,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":202,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos com o pessoal",
+null
+]
+},
+{
+"code":203,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":204,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":205,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":206,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":207,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":208,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":209,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":210,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":211,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":212,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":213,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":214,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":215,
+"class":"GR",
+"balance":"Sa1C",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":216,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":217,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":218,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":219,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":220,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":221,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":222,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":223,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":224,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":225,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":226,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":227,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":228,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":229,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":230,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":231,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":232,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":233,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":234,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":235,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":236,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":237,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":238,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":239,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":240,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":241,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":242,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":243,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":244,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":245,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":246,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":247,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":248,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":249,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":250,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":251,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":252,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":253,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":254,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Outros gastos",
+null
+]
+},
+{
+"code":255,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":256,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":257,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":258,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":259,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":260,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Juros e gastos similares suportados",
+null
+]
+},
+{
+"code":261,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":262,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":263,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":264,
+"class":"RG",
+"balance":"Sa1C",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":265,
+"class":"RG",
+"balance":"Da",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":266,
+"class":"RG",
+"balance":"Da",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":267,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":268,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":269,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":270,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":271,
+"class":"RG",
+"balance":"Sa1C",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":272,
+"class":"RG",
+"balance":"Da",
+"micro":[
+null,
+"Vendas e serviços prestados"
+]
+},
+{
+"code":273,
+"class":"RG",
+"balance":"Sa1C",
+"micro":[
+null,
+"Variação nos inventários da produção"
+]
+},
+{
+"code":274,
+"class":"RG",
+"balance":"Sa1C",
+"micro":[
+null,
+"Variação nos inventários da produção"
+]
+},
+{
+"code":275,
+"class":"RG",
+"balance":"Sa1C",
+"micro":[
+null,
+"Variação nos inventários da produção"
+]
+},
+{
+"code":276,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Trabalhos para a própria entidade"
+]
+},
+{
+"code":277,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Trabalhos para a própria entidade"
+]
+},
+{
+"code":278,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Trabalhos para a própria entidade"
+]
+},
+{
+"code":279,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Subsídios à exploração"
+]
+},
+{
+"code":280,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Subsídios à exploração"
+]
+},
+{
+"code":281,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":282,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":283,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":284,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":285,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":286,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":287,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":288,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":289,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":290,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":291,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":292,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Gastos / reversões de depreciação e de amortização",
+null
+]
+},
+{
+"code":293,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":294,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":295,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":296,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":297,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":298,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":299,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":300,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":301,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":302,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Imparidades (Perdas/Reversões)",
+null
+]
+},
+{
+"code":303,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":304,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":305,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":306,
+"class":"GR",
+"balance":"Ca",
+"micro":[
+"Provisões (aumentos/reduções)",
+null
+]
+},
+{
+"code":307,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":308,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":309,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":310,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":311,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":312,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":313,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":314,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":315,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":316,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":317,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":318,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":319,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":320,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":321,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":322,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":323,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":324,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":325,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":326,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Juros e rendimentos similares obtidos"
+]
+},
+{
+"code":327,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":328,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":329,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Juros e rendimentos similares obtidos"
+]
+},
+{
+"code":330,
+"class":"RG",
+"balance":"Ca",
+"micro":[
+null,
+"Outros rendimentos"
+]
+},
+{
+"code":331,
+"class":"RG",
+"balance":"Sa1C",
+"micro":[
+null,
+"Resultado antes de impostos"
+]
+},
+{
+"code":332,
+"class":"GR",
+"balance":"Da",
+"micro":[
+"Imposto sobre o rendimento do período",
+null
+]
+},
+{
+"code":333,
+"class":"C",
+"balance":"S1C",
+"micro":[
+null,
+"Resultado líquido do período (Demonstração e balanço)"
+]
+},
+{
+"code":334,
+"class":"C",
+"balance":"D",
+"micro":[
+null,
+"Dividendos antecipados"
+]
+}
+]
+}

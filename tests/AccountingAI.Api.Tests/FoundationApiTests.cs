@@ -1447,6 +1447,42 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task FinancialStatementsAreBuiltFromTheTaxonomies()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var balance = await client.GetAsync($"{basePath}/statements/balance-sheet?date=2026-12-31").ConfigureAwait(false);
+        var balancePayload = await balance.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var income = await client.GetAsync($"{basePath}/statements/income-statement?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
+        var incomePayload = await income.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badDate = await client.GetAsync($"{basePath}/statements/balance-sheet?date=31-12-2026").ConfigureAwait(false);
+        using var badPeriod = await client.GetAsync($"{basePath}/statements/income-statement?from=2026-12-31&to=2026-01-01").ConfigureAwait(false);
+        using var unauthorized = await client
+            .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/statements/balance-sheet?date=2026-12-31")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, balance.StatusCode);
+        StringAssert.Contains(balancePayload, "\"label\":\"Total do ativo\"");
+        StringAssert.Contains(balancePayload, "\"comparativeDate\":\"2025-12-31\"");
+        Assert.AreEqual(HttpStatusCode.OK, income.StatusCode);
+        StringAssert.Contains(incomePayload, "\"label\":\"Resultado antes de impostos\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badDate.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, badPeriod.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task SaftExportReportsAndRefusesAnInvalidCompany()
     {
         if (!OperatingSystem.IsWindows())

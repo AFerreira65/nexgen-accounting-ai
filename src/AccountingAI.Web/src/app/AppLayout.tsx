@@ -56,6 +56,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/balancete', label: 'Balancete', icon: Scale },
     { to: '/resultados', label: 'Resultados', icon: TrendingUp },
     { to: '/balanco', label: 'Balanço', icon: Scale },
+    { to: '/demonstracoes', label: 'Demonstrações financeiras', icon: Landmark },
     { to: '/contas-correntes', label: 'Contas correntes', icon: Users },
     { to: '/saldos-terceiros', label: 'Saldos de terceiros', icon: Contact },
     { to: '/mapa-analitico', label: 'Mapa analítico', icon: FolderTree },

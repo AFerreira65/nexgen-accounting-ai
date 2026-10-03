@@ -11,6 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources/taxonomy-catalog.json" />
+    <EmbeddedResource Include="Resources/taxonomy-statement-lines.json" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

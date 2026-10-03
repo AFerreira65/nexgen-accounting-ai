@@ -2058,6 +2058,33 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Demonstrações financeiras nos modelos do SNC, montadas pelas taxonomias das contas.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/statements/balance-sheet", async (
+        Guid userId, Guid companyId, string? date, FinancialStatementsService statements, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(date, "yyyy-MM-dd", out var at))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["date"] = ["Indique a data do balanço (aaaa-mm-dd)."] });
+        }
+
+        var statement = await statements.BalanceSheetAsync(userId, companyId, at, cancellationToken).ConfigureAwait(false);
+        return statement is null ? Results.NotFound() : Results.Ok(statement);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/statements/income-statement", async (
+        Guid userId, Guid companyId, string? from, string? to, FinancialStatementsService statements, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) ||
+            !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) ||
+            end < start)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["from"] = ["Indique um período válido (aaaa-mm-dd)."] });
+        }
+
+        var statement = await statements.IncomeStatementAsync(userId, companyId, start, end, cancellationToken).ConfigureAwait(false);
+        return statement is null ? Results.NotFound() : Results.Ok(statement);
+    });
+
     // Exportação do SAF-T (PT) de contabilidade de um exercício: primeiro a análise, depois o ficheiro.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/export-report", async (
         Guid userId, Guid companyId, int year, SaftExportService export, CancellationToken cancellationToken) =>

@@ -312,6 +312,8 @@ tr.subtotal-row td { border-top: 1px solid #d5dfe1; background: #fbfdfd; color: 
 .period-shortcuts { display: flex; align-items: center; gap: 6px; }
 .period-chip { padding: 0 12px; min-height: 34px; border: 1px solid #cbd8db; border-radius: 8px; color: #37525b; background: white; font-size: 10px; font-weight: 750; letter-spacing: 0.03em; text-transform: uppercase; cursor: pointer; }
 .period-chip:hover { border-color: #45a89e; color: #0b9286; }
+.period-chip.active { border-color: #0b9286; color: white; background: #0b9286; }
+.statement-note { margin: 0; color: #5d727a; font-size: 11px; }
 .toggle-inline { width: auto !important; gap: 6px; color: #5a6b72 !important; font-size: 10px; font-weight: 700; white-space: nowrap; cursor: pointer; }
 .toggle-inline input { width: auto; min-height: 0; accent-color: #16736a; }
 .badge { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 999px; font-size: 8px; font-weight: 800; white-space: nowrap; }

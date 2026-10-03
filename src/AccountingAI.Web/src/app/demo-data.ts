@@ -657,6 +657,30 @@ export type SaftExportReport = {
 
 export type CostCenterRow = { code: string; name: string; isActive: boolean }
 
+export type StatementLine = { section: string; label: string; amount: number; comparative: number; isTotal: boolean }
+export type StatementExcludedAccount = { accountCode: string; accountName: string; balance: number; reason: string }
+export type BalanceSheetStatement = {
+  date: string
+  comparativeDate: string
+  model: string
+  lines: StatementLine[]
+  totalAssets: number
+  totalEquity: number
+  totalLiabilities: number
+  difference: number
+  excluded: StatementExcludedAccount[]
+  source: string
+}
+export type IncomeStatementByNature = {
+  from: string
+  to: string
+  model: string
+  lines: StatementLine[]
+  netResult: number
+  excluded: StatementExcludedAccount[]
+  source: string
+}
+
 export type AnalyticReport = {
   from: string | null
   to: string | null
