@@ -506,3 +506,6 @@ html[data-theme='dark'] .period-selector, html[data-theme='dark'] .icon-button, 
 /* Terceiro na linha do lançamento. */
 .party-field { min-width: 150px; }
 .party-field .party-name { display: block; max-width: 190px; margin-top: 2px; overflow: hidden; color: #75858c; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Código de IVA na linha do lançamento. */
+.vat-code-select { min-width: 96px; min-height: 36px; padding: 0 6px; border: 1px solid #d4dfe2; border-radius: 8px; background: #fbfcfc; font-size: 11px; }

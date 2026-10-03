@@ -43,7 +43,7 @@ function VatCodeEditor({ vatCode, onSaved, onClose }: { vatCode: VatCodeRow | nu
 
   return <section className="panel settings-panel">
     <div className="panel-heading">
-      <div><h2>{isCreate ? 'Novo código de IVA' : `Editar ${vatCode.code}`}</h2><p>A percentagem fica gravada no código: se a taxa legal mudar, corrija-a aqui.</p></div>
+      <div><h2>{isCreate ? 'Novo código de IVA' : `Editar ${vatCode.code}`}</h2><p>A percentagem fica gravada no código. Depois de haver lançamentos com ele, a taxa, a natureza e a região deixam de poder mudar: desative-o e crie um novo.</p></div>
       <button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button>
     </div>
     <form className="settings-grid" onSubmit={submit}>

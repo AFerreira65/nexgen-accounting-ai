@@ -1,6 +1,6 @@
 import { Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { euro, type Movement, type PartyRow } from '../app/demo-data'
+import { euro, type Movement, type PartyRow, type VatClassificationRow, type VatCodeRow } from '../app/demo-data'
 import { useWorkContext, type MovementLineInput } from '../app/WorkContext'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -8,7 +8,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 // como está escrito («500584095» ou «ES B12345678») e o nome para confirmação.
 type EditorLine = MovementLineInput & { partyText: string; partyName: string }
 
-const emptyLine = (): EditorLine => ({ accountCode: '', description: '', debit: 0, credit: 0, partyText: '', partyName: '' })
+const emptyLine = (): EditorLine => ({ accountCode: '', description: '', debit: 0, credit: 0, vatCode: '', partyText: '', partyName: '' })
 
 const partyText = (countryCode?: string | null, taxNumber?: string | null) =>
   taxNumber ? `${countryCode && countryCode !== 'PT' ? `${countryCode} ` : ''}${taxNumber}` : ''
@@ -151,8 +151,26 @@ function PartyField({ value, name, ariaLabel, search, onChange }: {
 }
 
 export function MovementEditor({ movement, duplicate = false, onClose }: { movement: Movement | null; duplicate?: boolean; onClose: () => void }) {
-  const { accountingSetup, activeCompany, createMovement, parties, reviseMovement, source, user } = useWorkContext()
+  const { accountingSetup, activeCompany, createMovement, parties, reviseMovement, source, user, vatClassification, vatCodes } = useWorkContext()
   const companyId = activeCompany.companyId
+  // Códigos de IVA ativos e a classificação por conta, que propõe o código.
+  const [vatCodeList, setVatCodeList] = useState<VatCodeRow[]>([])
+  const [accountVat, setAccountVat] = useState<VatClassificationRow[]>([])
+  useEffect(() => {
+    if (source !== 'database') return
+    let cancelled = false
+    void vatCodes(companyId, false).then((rows) => { if (!cancelled) setVatCodeList(rows) }).catch(() => { /* coluna opcional */ })
+    void vatClassification(companyId).then((rows) => { if (!cancelled) setAccountVat(rows) }).catch(() => { /* proposta opcional */ })
+    return () => { cancelled = true }
+  }, [companyId, source, vatClassification, vatCodes])
+  // O código proposto para uma conta: o único código ativo com a mesma taxa,
+  // natureza e região da classificação dessa conta.
+  const proposedVatCode = (accountCode: string) => {
+    const classification = accountVat.find((row) => row.accountCode === accountCode.trim().toUpperCase() && row.classified)
+    if (!classification) return ''
+    const matches = vatCodeList.filter((code) => code.rate === classification.rate && code.nature === classification.nature && code.region === classification.region)
+    return matches.length === 1 ? matches[0].code : ''
+  }
   const searchParties = useMemo(
     () => source === 'database'
       ? (term: string) => parties(companyId, { search: term, role: 'Todos', includeInactive: false, page: 1, pageSize: 8 }).then((result) => result.items)
@@ -192,7 +210,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
   const [notes, setNotes] = useState(movement?.notes ?? '')
   const [reviewed, setReviewed] = useState(isEdit && movement?.status === 'Conferido')
   const [lines, setLines] = useState<EditorLine[]>(
-    movement ? movement.lines.map((line) => ({ accountCode: line.account, description: line.description, debit: line.debit, credit: line.credit, partyText: partyText(line.partyCountryCode, line.partyTaxNumber), partyName: line.partyName ?? '' })) : [emptyLine(), emptyLine()],
+    movement ? movement.lines.map((line) => ({ accountCode: line.account, description: line.description, debit: line.debit, credit: line.credit, vatCode: line.vatCode ?? '', partyText: partyText(line.partyCountryCode, line.partyTaxNumber), partyName: line.partyName ?? '' })) : [emptyLine(), emptyLine()],
   )
   const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
   const [error, setError] = useState('')
@@ -276,7 +294,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
         reviewed,
         lines: lines
           .filter((line) => line.accountCode.trim())
-          .map((line): MovementLineInput => ({ accountCode: line.accountCode.trim().toUpperCase(), description: line.description, debit: Number(line.debit) || 0, credit: Number(line.credit) || 0, ...parsePartyText(line.partyText) })),
+          .map((line): MovementLineInput => ({ accountCode: line.accountCode.trim().toUpperCase(), description: line.description, debit: Number(line.debit) || 0, credit: Number(line.credit) || 0, vatCode: line.vatCode || null, ...parsePartyText(line.partyText) })),
       }
       if (isEdit) await reviseMovement(movement.id, payload)
       else await createMovement(payload)
@@ -302,7 +320,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
 
       <label className="field-block"><span>Observações <small>(opcional, uso interno)</small></span><textarea value={notes} rows={2} maxLength={2000} onChange={(event) => setNotes(event.target.value)} placeholder="Notas internas sobre este lançamento" /></label>
 
-      <div className="table-wrap"><table><thead><tr><th>Conta</th><th>Terceiro</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
+      <div className="table-wrap"><table><thead><tr><th>Conta</th><th>Terceiro</th><th>IVA</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
         {lines.map((line, index) => <tr key={index}>
           <td><AccountField
             fieldKey={`line-${index}-account`}
@@ -311,7 +329,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
             accounts={postingAccounts}
             value={line.accountCode}
             invalid={isInvalidAccount(line.accountCode)}
-            onChange={(code) => patchLine(index, { accountCode: code })}
+            onChange={(code) => patchLine(index, line.vatCode ? { accountCode: code } : { accountCode: code, vatCode: proposedVatCode(code) })}
             onCommit={() => focusNextField(`line-${index}-account`)}
           /></td>
           <td><PartyField
@@ -321,12 +339,17 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
             name={line.partyName}
             onChange={(text, name) => patchLine(index, { partyText: text, partyName: name })}
           /></td>
+          <td><select aria-label={`Código de IVA da linha ${index + 1}`} className="vat-code-select" value={line.vatCode ?? ''} title={vatCodeList.find((code) => code.code === line.vatCode)?.name} onChange={(event) => patchLine(index, { vatCode: event.target.value })}>
+            <option value="">—</option>
+            {line.vatCode && !vatCodeList.some((code) => code.code === line.vatCode) && <option value={line.vatCode}>{line.vatCode}</option>}
+            {vatCodeList.map((code) => <option key={code.code} value={code.code}>{code.code}</option>)}
+          </select></td>
           <td><input data-field-key={`line-${index}-description`} ref={register(`line-${index}-description`)} aria-label={`Descrição da linha ${index + 1}`} value={line.description} onChange={(event) => patchLine(index, { description: event.target.value })} /></td>
           <td className="numeric"><input data-field-key={`line-${index}-debit`} ref={register(`line-${index}-debit`)} aria-label={`Débito da linha ${index + 1}`} type="number" step="0.01" min="0" value={line.debit || ''} onChange={(event) => patchLine(index, { debit: Number(event.target.value), credit: 0 })} /></td>
           <td className="numeric"><input data-field-key={`line-${index}-credit`} ref={register(`line-${index}-credit`)} aria-label={`Crédito da linha ${index + 1}`} type="number" step="0.01" min="0" value={line.credit || ''} onChange={(event) => patchLine(index, { credit: Number(event.target.value), debit: 0 })} /></td>
           <td>{lines.length > 2 && <button className="icon-button" type="button" aria-label={`Remover linha ${index + 1}`} onClick={() => setLines((current) => current.filter((_, position) => position !== index))}><Trash2 size={16} /></button>}</td>
         </tr>)}
-      </tbody><tfoot><tr><td colSpan={3}><button className="button button-secondary" type="button" onClick={() => setLines((current) => [...current, emptyLine()])}><Plus size={16} /> Linha</button></td><td className="numeric strong">{euro.format(totalDebit)}</td><td className="numeric strong">{euro.format(totalCredit)}</td><td /></tr></tfoot></table></div>
+      </tbody><tfoot><tr><td colSpan={4}><button className="button button-secondary" type="button" onClick={() => setLines((current) => [...current, emptyLine()])}><Plus size={16} /> Linha</button></td><td className="numeric strong">{euro.format(totalDebit)}</td><td className="numeric strong">{euro.format(totalCredit)}</td><td /></tr></tfoot></table></div>
 
       <footer className="settings-actions">
         <span className={`save-status ${difference === 0 ? 'success' : 'error'}`}>{difference === 0 ? 'Equilibrado' : `Diferença de ${euro.format(difference)}`}</span>

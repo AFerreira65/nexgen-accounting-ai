@@ -102,7 +102,8 @@ public sealed class JournalEntry
         string description,
         decimal debit,
         decimal credit,
-        Guid? partyId = null)
+        Guid? partyId = null,
+        Guid? vatCodeId = null)
     {
         if (lineId == Guid.Empty)
         {
@@ -117,6 +118,11 @@ public sealed class JournalEntry
         if (partyId == Guid.Empty)
         {
             throw new ArgumentException("The party identifier cannot be empty.", nameof(partyId));
+        }
+
+        if (vatCodeId == Guid.Empty)
+        {
+            throw new ArgumentException("The VAT code identifier cannot be empty.", nameof(vatCodeId));
         }
 
         ArgumentException.ThrowIfNullOrWhiteSpace(description);
@@ -147,7 +153,8 @@ public sealed class JournalEntry
             description.Trim(),
             debit,
             credit,
-            partyId));
+            partyId,
+            vatCodeId));
     }
 
     public void Complete(JournalEntryStatus status)

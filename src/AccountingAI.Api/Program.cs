@@ -452,6 +452,8 @@ if (applicationEndpointsAvailable)
                 .ThenInclude(item => item.Account)
             .Include(item => item.Lines)
                 .ThenInclude(item => item.Party)
+            .Include(item => item.Lines)
+                .ThenInclude(item => item.VatCode)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(documentType))
@@ -576,7 +578,8 @@ if (applicationEndpointsAvailable)
                     line.Credit,
                     PartyCountryCode = line.Party?.CountryCode,
                     PartyTaxNumber = line.Party?.TaxRegistrationNumber,
-                    PartyName = line.Party?.Name
+                    PartyName = line.Party?.Name,
+                    VatCode = line.VatCode?.Code
                 })
         };
     }
@@ -693,6 +696,8 @@ if (applicationEndpointsAvailable)
                 .ThenInclude(item => item.Account)
             .Include(item => item.Lines)
                 .ThenInclude(item => item.Party)
+            .Include(item => item.Lines)
+                .ThenInclude(item => item.VatCode)
             .SingleOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -721,7 +726,8 @@ if (applicationEndpointsAvailable)
                     line.Debit,
                     line.Credit,
                     line.PartyTaxNumber,
-                    line.PartyCountryCode))
+                    line.PartyCountryCode,
+                    line.VatCode))
                 .ToList();
 
             var movement = await posting
@@ -768,7 +774,7 @@ if (applicationEndpointsAvailable)
         {
             var lines = (request.Lines ?? [])
                 .Select(line => new JournalEntryLineInput(
-                    line.AccountCode, line.Description, line.Debit, line.Credit, line.PartyTaxNumber, line.PartyCountryCode))
+                    line.AccountCode, line.Description, line.Debit, line.Credit, line.PartyTaxNumber, line.PartyCountryCode, line.VatCode))
                 .ToList();
             var movement = await posting
                 .ReviseAsync(companyId, reference, request.JournalCode, request.EntryDate,
@@ -3241,7 +3247,8 @@ public partial class Program
             line.Credit,
             line.PartyCountryCode,
             line.PartyTaxNumber,
-            line.PartyName
+            line.PartyName,
+            line.VatCode
         })
     };
 
@@ -3611,7 +3618,8 @@ public sealed record MovementLineRequest(
     decimal Debit,
     decimal Credit,
     string? PartyTaxNumber = null,
-    string? PartyCountryCode = null);
+    string? PartyCountryCode = null,
+    string? VatCode = null);
 
 public sealed record CreateMovementRequest(
     string JournalCode,

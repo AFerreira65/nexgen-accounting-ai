@@ -11,7 +11,7 @@ namespace AccountingAI.IntegrationTests;
 public sealed class JournalPostingPartyTests
 {
     [TestMethod]
-    public async Task PostsRevisesAndReviewsLinesWithPartyAndDocumentDate()
+    public async Task PostsRevisesAndReviewsLinesWithPartyVatCodeAndDocumentDate()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -57,6 +57,14 @@ public sealed class JournalPostingPartyTests
             var inactive = Party.Create(companyId, "PT", "509999999", "Inativo, Lda.");
             inactive.SetActive(false);
             context.Add(inactive);
+
+            var userId = Guid.NewGuid();
+            context.Add(new UserAccount(userId, "Utilizador Linha", "linha@test.invalid"));
+            context.Add(new CompanyUser(companyId, userId, CompanyUserRole.Accountant));
+            context.Add(VatCode.Create(companyId, "V-NOR", "Vendas — taxa normal", VatRate.Normal, 23m, VatOperationNature.TransmissoesInternas, VatRegion.Continente));
+            var retired = VatCode.Create(companyId, "V-OLD", "Código antigo", VatRate.Normal, 21m, VatOperationNature.TransmissoesInternas, VatRegion.Continente);
+            retired.SetActive(false);
+            context.Add(retired);
             await context.SaveChangesAsync().ConfigureAwait(false);
             context.ChangeTracker.Clear();
 
@@ -68,9 +76,11 @@ public sealed class JournalPostingPartyTests
                 companyId, "VENDAS", date, "FT 1/1", "Venda a crédito", reviewed: false,
                 [
                     new JournalEntryLineInput("21111", "Cliente", 123m, 0m, " 500 584 095 "),
-                    new JournalEntryLineInput("7111", "Venda", 0m, 123m),
+                    new JournalEntryLineInput("7111", "Venda", 0m, 123m, VatCode: " v-nor "),
                 ],
                 documentDate: new DateOnly(2026, 3, 8)).ConfigureAwait(false);
+            Assert.AreEqual("V-NOR", posted.Lines[1].VatCode);
+            Assert.IsNull(posted.Lines[0].VatCode);
             Assert.AreEqual(new DateOnly(2026, 3, 8), posted.DocumentDate);
             Assert.AreEqual("500584095", posted.Lines[0].PartyTaxNumber);
             Assert.AreEqual("PT", posted.Lines[0].PartyCountryCode);
@@ -96,6 +106,47 @@ public sealed class JournalPostingPartyTests
             var reviewed = await service.MarkReviewedAsync(companyId, posted.Reference).ConfigureAwait(false);
             Assert.AreEqual("B12345678", reviewed.Lines[0].PartyTaxNumber);
             Assert.IsNull(reviewed.Lines[1].PartyName);
+            Assert.IsNull(reviewed.Lines[1].VatCode, "A correção não indicou código de IVA.");
+
+            // Um código com lançamentos não pode mudar de significado; sem lançamentos pode.
+            var withCode = await service.PostAsync(
+                companyId, "VENDAS", date, "FT 1/3", "Venda com IVA", reviewed: true,
+                [
+                    new JournalEntryLineInput("21111", "Cliente", 100m, 0m),
+                    new JournalEntryLineInput("7111", "Venda", 0m, 100m, VatCode: "V-NOR"),
+                ]).ConfigureAwait(false);
+            var reread = await service.ReopenAsync(companyId, withCode.Reference).ConfigureAwait(false);
+            Assert.AreEqual("V-NOR", reread.Lines[1].VatCode);
+            context.ChangeTracker.Clear();
+
+            var vatCodes = new VatCodeService(context);
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => vatCodes.UpdateAsync(
+                userId, companyId, "V-NOR",
+                new VatCodeInput("Vendas — taxa normal", VatRate.Normal, 22m, VatOperationNature.TransmissoesInternas, VatRegion.Continente),
+                CancellationToken.None)).ConfigureAwait(false);
+            context.ChangeTracker.Clear();
+            var renamed = await vatCodes.UpdateAsync(
+                userId, companyId, "V-NOR",
+                new VatCodeInput("Vendas à taxa normal", VatRate.Normal, 23m, VatOperationNature.TransmissoesInternas, VatRegion.Continente),
+                CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual("Vendas à taxa normal", renamed!.Name);
+            var unused = await vatCodes.UpdateAsync(
+                userId, companyId, "V-OLD",
+                new VatCodeInput("Código antigo", VatRate.Normal, 20m, VatOperationNature.TransmissoesInternas, VatRegion.Continente, IsActive: false),
+                CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual(20m, unused!.Percentage);
+            context.ChangeTracker.Clear();
+
+            // Código de IVA desconhecido ou inativo recusa o lançamento.
+            foreach (var code in new[] { "NAO-HA", "V-OLD" })
+            {
+                await Assert.ThrowsExactlyAsync<ArgumentException>(() => service.PostAsync(
+                    companyId, "VENDAS", date, "FT 1/4", "Venda", reviewed: false,
+                    [
+                        new JournalEntryLineInput("21111", "Cliente", 10m, 0m),
+                        new JournalEntryLineInput("7111", "Venda", 0m, 10m, VatCode: code),
+                    ])).ConfigureAwait(false);
+            }
 
             // Terceiro desconhecido, inativo, e o mesmo NIF noutro país.
             var entriesBefore = await context.JournalEntries.CountAsync().ConfigureAwait(false);

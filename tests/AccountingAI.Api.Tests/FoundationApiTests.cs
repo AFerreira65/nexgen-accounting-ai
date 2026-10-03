@@ -1514,8 +1514,17 @@ public sealed class FoundationApiTests
             .ConfigureAwait(false);
         var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+        using var unknownVatCode = await client
+            .PostAsync($"{basePath}/accounting/movements", new StringContent(
+                body.Replace("\"partyTaxNumber\":\"ZZ-NAO-EXISTE\",\"partyCountryCode\":\"ZZ\"", "\"vatCode\":\"ZZ-NAO-HA\"", StringComparison.Ordinal),
+                Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+        var vatPayload = await unknownVatCode.Content.ReadAsStringAsync().ConfigureAwait(false);
+
         Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
         StringAssert.Contains(payload, "O terceiro ZZ ZZ-NAO-EXISTE");
+        Assert.AreEqual(HttpStatusCode.BadRequest, unknownVatCode.StatusCode);
+        StringAssert.Contains(vatPayload, "ZZ-NAO-HA");
     }
 
     [TestMethod]

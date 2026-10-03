@@ -148,6 +148,16 @@ public sealed class VatCodeService(AccountingDbContext context)
             return null;
         }
 
+        var changesMeaning = input.Rate != vatCode.Rate || input.Nature != vatCode.Nature || input.Region != vatCode.Region ||
+            decimal.Round(input.Percentage, 2, MidpointRounding.AwayFromZero) != vatCode.Percentage;
+        if (changesMeaning &&
+            await context.JournalEntryLines.AnyAsync(line => line.VatCodeId == vatCode.Id, cancellationToken).ConfigureAwait(false))
+        {
+            // Mudar o significado de um código usado mudaria a leitura do passado.
+            throw new InvalidOperationException(
+                "O código já tem lançamentos: a taxa, a percentagem, a natureza e a região não podem mudar. Desative-o e crie um código novo.");
+        }
+
         vatCode.Update(input.Name, input.Rate, input.Percentage, input.Nature, input.Region);
         vatCode.SetActive(input.IsActive);
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

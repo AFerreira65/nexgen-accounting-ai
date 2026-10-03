@@ -39,6 +39,13 @@ public sealed class AccountingEntryTests
         Assert.IsNull(entry.Lines.Last().PartyId);
         Assert.ThrowsExactly<ArgumentException>(() =>
             CreateEntry().AddLine(Guid.NewGuid(), Guid.NewGuid(), "Cliente", 100m, 0m, Guid.Empty));
+
+        var vatCodeId = Guid.NewGuid();
+        var withVat = CreateEntry();
+        withVat.AddLine(Guid.NewGuid(), Guid.NewGuid(), "Venda", 0m, 100m, vatCodeId: vatCodeId);
+        Assert.AreEqual(vatCodeId, withVat.Lines.Single().VatCodeId);
+        Assert.ThrowsExactly<ArgumentException>(() =>
+            CreateEntry().AddLine(Guid.NewGuid(), Guid.NewGuid(), "Venda", 0m, 100m, vatCodeId: Guid.Empty));
     }
 
     [TestMethod]

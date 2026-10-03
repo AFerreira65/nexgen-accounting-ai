@@ -7,6 +7,7 @@ export type MovementLine = {
   partyCountryCode?: string | null
   partyTaxNumber?: string | null
   partyName?: string | null
+  vatCode?: string | null
 }
 
 export type Movement = {

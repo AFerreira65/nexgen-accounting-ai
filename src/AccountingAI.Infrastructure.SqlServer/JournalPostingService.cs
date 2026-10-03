@@ -14,7 +14,8 @@ public sealed record JournalEntryLineInput(
     decimal Debit,
     decimal Credit,
     string? PartyTaxNumber = null,
-    string? PartyCountryCode = null);
+    string? PartyCountryCode = null,
+    string? VatCode = null);
 
 public sealed record PostedMovementLine(
     string AccountCode,
@@ -24,7 +25,8 @@ public sealed record PostedMovementLine(
     decimal Credit,
     string? PartyCountryCode = null,
     string? PartyTaxNumber = null,
-    string? PartyName = null);
+    string? PartyName = null,
+    string? VatCode = null);
 
 public sealed record PostedMovement(
     string Reference,
@@ -75,6 +77,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             var (journal, prefix, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
             var parties = await ResolvePartiesAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
+            var vatCodes = await ResolveVatCodesAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
             var reference = await NextReferenceAsync(companyId, prefix, entryDate.Year, cancellationToken).ConfigureAwait(false);
 
             var entry = new JournalEntry(
@@ -84,13 +87,14 @@ public sealed class JournalPostingService(AccountingDbContext context)
             {
                 entry.AddLine(
                     Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit,
-                    PartyKeyOf(line) is { } key ? parties[key].Id : null);
+                    PartyKeyOf(line) is { } key ? parties[key].Id : null,
+                    string.IsNullOrWhiteSpace(line.VatCode) ? null : vatCodes[Normalize(line.VatCode)].Id);
             }
 
             entry.Complete(reviewed ? JournalEntryStatus.Reviewed : JournalEntryStatus.PendingReview);
             context.JournalEntries.Add(entry);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            result = Project(entry, journal, accounts, documentType, parties.Values);
+            result = Project(entry, journal, accounts, documentType, parties.Values, vatCodes.Values);
         }, cancellationToken).ConfigureAwait(false);
 
         return result!;
@@ -135,6 +139,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             var (journal, _, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
             var parties = await ResolvePartiesAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
+            var vatCodes = await ResolveVatCodesAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
 
             // Corrigir é substituir: remove o lançamento e recria-o com a mesma referência e origem.
             var originalSource = existing.Source;
@@ -148,13 +153,14 @@ public sealed class JournalPostingService(AccountingDbContext context)
             {
                 entry.AddLine(
                     Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit,
-                    PartyKeyOf(line) is { } key ? parties[key].Id : null);
+                    PartyKeyOf(line) is { } key ? parties[key].Id : null,
+                    string.IsNullOrWhiteSpace(line.VatCode) ? null : vatCodes[Normalize(line.VatCode)].Id);
             }
 
             entry.Complete(reviewed ? JournalEntryStatus.Reviewed : JournalEntryStatus.PendingReview);
             context.JournalEntries.Add(entry);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            result = Project(entry, journal, accounts, documentType, parties.Values);
+            result = Project(entry, journal, accounts, documentType, parties.Values, vatCodes.Values);
         }, cancellationToken).ConfigureAwait(false);
 
         return result!;
@@ -198,6 +204,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
                     .ThenInclude(item => item.Account)
                 .Include(item => item.Lines)
                     .ThenInclude(item => item.Party)
+                .Include(item => item.Lines)
+                    .ThenInclude(item => item.VatCode)
                 .SingleOrDefaultAsync(
                     item => item.CompanyId == companyId && item.Reference == normalizedReference,
                     cancellationToken)
@@ -222,7 +230,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
                 .ToDictionary(account => account.Code, StringComparer.Ordinal);
             result = Project(
                 entry, entry.Journal, accountsByCode,
-                parties: entry.Lines.Where(line => line.Party is not null).Select(line => line.Party!).DistinctBy(party => party.Id));
+                parties: entry.Lines.Where(line => line.Party is not null).Select(line => line.Party!).DistinctBy(party => party.Id),
+                vatCodes: entry.Lines.Where(line => line.VatCode is not null).Select(line => line.VatCode!).DistinctBy(code => code.Id));
         }, cancellationToken).ConfigureAwait(false);
 
         return result!;
@@ -427,10 +436,12 @@ public sealed class JournalPostingService(AccountingDbContext context)
         AccountingJournal journal,
         IReadOnlyDictionary<string, LedgerAccount> accountsByCode,
         AccountingDocumentType? documentType = null,
-        IEnumerable<Party>? parties = null)
+        IEnumerable<Party>? parties = null,
+        IEnumerable<VatCode>? vatCodes = null)
     {
         var byId = accountsByCode.Values.ToDictionary(account => account.Id);
         var partiesById = (parties ?? []).ToDictionary(party => party.Id);
+        var vatCodesById = (vatCodes ?? []).ToDictionary(code => code.Id);
         var type = documentType ?? entry.DocumentType;
         return new PostedMovement(
             entry.Reference,
@@ -458,7 +469,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
                     var party = line.PartyId is { } partyId ? partiesById.GetValueOrDefault(partyId) : null;
                     return new PostedMovementLine(
                         account.Code, account.Name, line.Description, line.Debit, line.Credit,
-                        party?.CountryCode, party?.TaxRegistrationNumber, party?.Name);
+                        party?.CountryCode, party?.TaxRegistrationNumber, party?.Name,
+                        line.VatCodeId is { } vatCodeId ? vatCodesById.GetValueOrDefault(vatCodeId)?.Code : null);
                 })
                 .ToList(),
             entry.DocumentDate);
@@ -502,6 +514,42 @@ public sealed class JournalPostingService(AccountingDbContext context)
         }
 
         return keys.ToDictionary(key => key, key => parties[key]);
+    }
+
+    private async Task<Dictionary<string, VatCode>> ResolveVatCodesAsync(
+        Guid companyId,
+        IReadOnlyList<JournalEntryLineInput> lines,
+        CancellationToken cancellationToken)
+    {
+        var codes = lines
+            .Where(line => !string.IsNullOrWhiteSpace(line.VatCode))
+            .Select(line => Normalize(line.VatCode))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        if (codes.Count == 0)
+        {
+            return [];
+        }
+
+        var vatCodes = await context.VatCodes
+            .Where(item => item.CompanyId == companyId && codes.Contains(item.Code))
+            .ToDictionaryAsync(item => item.Code, StringComparer.Ordinal, cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var code in codes)
+        {
+            if (!vatCodes.TryGetValue(code, out var vatCode))
+            {
+                throw new ArgumentException($"O código de IVA {code} não existe na empresa.");
+            }
+
+            if (!vatCode.IsActive)
+            {
+                throw new ArgumentException($"O código de IVA {code} está inativo.");
+            }
+        }
+
+        return vatCodes;
     }
 
     private static void RequireLines(IReadOnlyList<JournalEntryLineInput> lines)

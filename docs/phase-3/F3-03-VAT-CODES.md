@@ -44,11 +44,44 @@ classificação por conta (F2-09) fica como recurso e como valor proposto.
 - `AccountingAI.Web`: `tsc`, `eslint` e o teste do ecrã.
 - **Por verificar em direto:** o ecrã contra a base real.
 
-### F3-03B — Código de IVA na linha do lançamento (a seguir)
+### F3-03B — Código de IVA na linha do lançamento (feito)
 
-`JournalEntryLines.VatCodeId`, coluna «IVA» no editor com o código proposto
-pela classificação da conta, e bloqueio da alteração de taxa/natureza/região de
-um código com movimento.
+- **Domínio:** `JournalEntryLine.VatCodeId` (opcional) e
+  `JournalEntry.AddLine(..., vatCodeId)`.
+- **`accounting.JournalEntryLines.VatCodeId`** — coluna anulável com FK a
+  `VatCodes` sem cascata; migração aditiva
+  `20261003180432_JournalEntryLineVatCode`.
+- **`JournalPostingService`** — `JournalEntryLineInput.VatCode` (o código);
+  lançar e corrigir recusam um código desconhecido ou inativo antes de gerar a
+  referência. `PostedMovementLine.VatCode` devolve-o.
+- **`VatCodeService.UpdateAsync`** — um código **com lançamentos** não pode
+  mudar de taxa, percentagem, natureza nem região (mudaria a leitura do
+  passado); o nome e o estado continuam editáveis. Sem lançamentos, tudo é
+  editável.
+- **API:** `vatCode` nas linhas de `POST`/`PUT .../accounting/movements` e nas
+  leituras de movimentos.
+- **PWA:** coluna **«IVA»** no editor de lançamentos, com os códigos ativos.
+  Ao escolher a conta, o editor **propõe** o código quando a classificação
+  dessa conta (F2-09) corresponde a exatamente um código ativo; nunca substitui
+  um código já escolhido. O detalhe do movimento mostra o código da linha.
+
+**Validação efetuada**
+
+- `AccountingAI.Domain.Tests`: a linha guarda o código e recusa um
+  identificador vazio.
+- `AccountingAI.IntegrationTests`: `JournalPostingPartyTests` — lançar com
+  código, reler depois de reabrir, corrigir sem código, código desconhecido e
+  inativo recusados; o código com lançamentos não muda de percentagem mas muda
+  de nome, e um código sem lançamentos muda livremente.
+  `SqlServerMigrationTests` inclui a migração.
+- `AccountingAI.Api.Tests`: um `vatCode` desconhecido dá `400`.
+- `AccountingAI.Web`: `tsc`, `eslint`, os 86 testes; a coluna foi confirmada no
+  navegador em modo de demonstração (sem códigos — vêm do servidor).
+- **Por verificar em direto:** a lista de códigos, a proposta pela conta e a
+  gravação contra a base real.
+
+**Ainda sem efeito no apuramento:** o resumo e o apuramento de IVA continuam a
+ler só a classificação por conta até ao F3-03C.
 
 ### F3-03C — Resumo e apuramento a partir da linha
 

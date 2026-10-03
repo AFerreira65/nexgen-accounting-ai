@@ -15,7 +15,8 @@ public sealed class JournalEntryLine
         string description,
         decimal debit,
         decimal credit,
-        Guid? partyId = null)
+        Guid? partyId = null,
+        Guid? vatCodeId = null)
     {
         Id = id;
         CompanyId = companyId;
@@ -26,6 +27,7 @@ public sealed class JournalEntryLine
         Debit = debit;
         Credit = credit;
         PartyId = partyId;
+        VatCodeId = vatCodeId;
     }
 
     public Guid Id { get; private set; }
@@ -47,9 +49,14 @@ public sealed class JournalEntryLine
     /// <summary>O terceiro (cliente, fornecedor) a que a linha diz respeito, se houver.</summary>
     public Guid? PartyId { get; private set; }
 
+    /// <summary>O código de IVA da linha, se houver; sem ele vale a classificação da conta.</summary>
+    public Guid? VatCodeId { get; private set; }
+
     public JournalEntry JournalEntry { get; private set; } = null!;
 
     public LedgerAccount Account { get; private set; } = null!;
 
     public Party? Party { get; private set; }
+
+    public VatCode? VatCode { get; private set; }
 }
