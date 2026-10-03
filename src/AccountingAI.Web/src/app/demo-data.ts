@@ -638,6 +638,20 @@ export type AtCredentials = {
   updatedAtUtc: string | null
 }
 
+export type PartyRow = {
+  id: string
+  countryCode: string
+  taxRegistrationNumber: string
+  name: string
+  isCustomer: boolean
+  isSupplier: boolean
+  customerAccountCode: string | null
+  supplierAccountCode: string | null
+  isActive: boolean
+}
+
+export type PartyPage = { total: number; items: PartyRow[] }
+
 export type VatClassificationRow = {
   accountCode: string
   accountName: string

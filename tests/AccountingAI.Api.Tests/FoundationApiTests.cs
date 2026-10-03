@@ -1407,6 +1407,46 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task PartiesListIsPagedAndValidatesInput()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var list = await client.GetAsync($"{basePath}/parties?pageSize=5").ConfigureAwait(false);
+        var listPayload = await list.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var badRole = await client.GetAsync($"{basePath}/parties?role=NaoExiste").ConfigureAwait(false);
+
+        // Um NIF português inválido é recusado antes de qualquer escrita.
+        using var badTaxNumber = await client
+            .PostAsync($"{basePath}/parties", new StringContent(
+                "{\"countryCode\":\"PT\",\"taxRegistrationNumber\":\"123456780\",\"name\":\"Inválido\",\"isCustomer\":true,\"isSupplier\":false}",
+                Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        using var unauthorized = await client
+            .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/parties")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, list.StatusCode);
+        StringAssert.Contains(listPayload, "\"total\"");
+        StringAssert.Contains(listPayload, "\"items\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badRole.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, badTaxNumber.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task VatSummaryReturnsRowsGroupedByNatureRateAndRegion()
     {
         if (!OperatingSystem.IsWindows())

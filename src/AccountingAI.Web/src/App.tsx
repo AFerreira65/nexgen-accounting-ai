@@ -28,6 +28,7 @@ import { VatSettlementPage } from './pages/VatSettlementPage'
 import { AtCommunicationPage } from './pages/AtCommunicationPage'
 import { VatClassificationPage } from './pages/VatClassificationPage'
 import { IrcEstimatePage } from './pages/IrcEstimatePage'
+import { PartiesPage } from './pages/PartiesPage'
 import { RecordProvider } from './app/RecordContext'
 import { AuthGate } from './app/AuthGate'
 
@@ -44,6 +45,7 @@ export function App() {
             <Route path="/contas/:accountCode" element={<AccountPage />} />
             <Route path="/diarios/:journalId" element={<JournalPage />} />
             <Route path="/contas" element={<AccountsPage />} />
+            <Route path="/terceiros" element={<PartiesPage />} />
             <Route path="/diarios" element={<JournalsPage />} />
             <Route path="/documentos" element={<DocumentTypesPage />} />
             <Route path="/series" element={<DocumentNumberSeriesPage />} />

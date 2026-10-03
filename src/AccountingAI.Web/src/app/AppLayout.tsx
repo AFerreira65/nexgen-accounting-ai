@@ -8,6 +8,7 @@ import {
   CalendarCheck,
   ChevronDown,
   CircleGauge,
+  Contact,
   ArrowLeftRight,
   ClipboardCheck,
   DoorOpen,
@@ -16,6 +17,9 @@ import {
   Landmark,
   ListOrdered,
   LogOut,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Percent,
   Receipt,
   Scale,
@@ -26,6 +30,7 @@ import {
   TrendingUp,
   Users,
   WalletCards,
+  type LucideIcon,
 } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
@@ -34,40 +39,76 @@ import { OptionsMenu } from './OptionsMenu'
 import { useDismiss } from './useDismiss'
 import { useMovementsSummary, useWorkContext } from './WorkContext'
 
-const links = [
-  { to: '/', label: 'Visão geral', icon: CircleGauge, end: true },
-  { to: '/movimentos', label: 'Movimentos', icon: WalletCards },
-  { to: '/livro-diario', label: 'Livro diário', icon: BookText },
-  { to: '/analises', label: 'Análises', icon: BarChart3 },
-  { to: '/relatorios-gestao', label: 'Relatórios de gestão', icon: Sparkles },
-  { to: '/balancete', label: 'Balancete', icon: Scale },
-  { to: '/resultados', label: 'Resultados', icon: TrendingUp },
-  { to: '/balanco', label: 'Balanço', icon: Scale },
-  { to: '/iva', label: 'Resumo de IVA', icon: Receipt },
-  { to: '/apuramento-iva', label: 'Apuramento de IVA', icon: Receipt },
-  { to: '/config-iva', label: 'Configuração de IVA', icon: Percent },
-  { to: '/estimativa-irc', label: 'Estimativa de IRC', icon: Calculator },
-  { to: '/contas-correntes', label: 'Contas correntes', icon: Users },
-  { to: '/apuramento', label: 'Apuramento', icon: CalendarCheck },
-  { to: '/abertura', label: 'Abertura', icon: DoorOpen },
-  { to: '/contas', label: 'Plano de contas', icon: BookOpen },
-  { to: '/diarios', label: 'Diários', icon: Landmark },
-  { to: '/documentos', label: 'Documentos', icon: FileText },
-  { to: '/series', label: 'Séries', icon: ListOrdered },
-  { to: '/taxonomias', label: 'Taxonomias', icon: Tags },
-  { to: '/importar', label: 'Importar SAF-T', icon: FileUp },
-  { to: '/compras-efatura', label: 'Compras e-Fatura', icon: Receipt },
-  { to: '/cruzamento', label: 'Cruzamento', icon: ArrowLeftRight },
-  { to: '/comunicacao-at', label: 'Comunicação com a AT', icon: ShieldCheck },
-  { to: '/organizacao', label: 'Organização', icon: Building2 },
-  { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
+// O menu lateral em grupos de trabalho, pela ordem em que o contabilista os usa.
+type NavLinkItem = { to: string; label: string; icon: LucideIcon; end?: boolean }
+
+const navGroups: { label: string; links: NavLinkItem[] }[] = [
+  { label: 'Trabalho', links: [
+    { to: '/', label: 'Visão geral', icon: CircleGauge, end: true },
+    { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
+    { to: '/movimentos', label: 'Movimentos', icon: WalletCards },
+  ] },
+  { label: 'Mapas', links: [
+    { to: '/livro-diario', label: 'Livro diário', icon: BookText },
+    { to: '/balancete', label: 'Balancete', icon: Scale },
+    { to: '/resultados', label: 'Resultados', icon: TrendingUp },
+    { to: '/balanco', label: 'Balanço', icon: Scale },
+    { to: '/contas-correntes', label: 'Contas correntes', icon: Users },
+  ] },
+  { label: 'Fiscal', links: [
+    { to: '/iva', label: 'Resumo de IVA', icon: Receipt },
+    { to: '/apuramento-iva', label: 'Apuramento de IVA', icon: Receipt },
+    { to: '/config-iva', label: 'Configuração de IVA', icon: Percent },
+    { to: '/estimativa-irc', label: 'Estimativa de IRC', icon: Calculator },
+    { to: '/comunicacao-at', label: 'Comunicação com a AT', icon: ShieldCheck },
+  ] },
+  { label: 'Gestão', links: [
+    { to: '/analises', label: 'Análises', icon: BarChart3 },
+    { to: '/relatorios-gestao', label: 'Relatórios de gestão', icon: Sparkles },
+  ] },
+  { label: 'Exercício', links: [
+    { to: '/apuramento', label: 'Apuramento', icon: CalendarCheck },
+    { to: '/abertura', label: 'Abertura', icon: DoorOpen },
+  ] },
+  { label: 'Cadastros', links: [
+    { to: '/contas', label: 'Plano de contas', icon: BookOpen },
+    { to: '/terceiros', label: 'Terceiros', icon: Contact },
+    { to: '/diarios', label: 'Diários', icon: Landmark },
+    { to: '/documentos', label: 'Documentos', icon: FileText },
+    { to: '/series', label: 'Séries', icon: ListOrdered },
+    { to: '/taxonomias', label: 'Taxonomias', icon: Tags },
+  ] },
+  { label: 'Dados', links: [
+    { to: '/importar', label: 'Importar SAF-T', icon: FileUp },
+    { to: '/compras-efatura', label: 'Compras e-Fatura', icon: Receipt },
+    { to: '/cruzamento', label: 'Cruzamento', icon: ArrowLeftRight },
+  ] },
+  { label: 'Administração', links: [
+    { to: '/organizacao', label: 'Organização', icon: Building2 },
+  ] },
 ]
+
+const SIDEBAR_KEY = 'accounting-ai.sidebar-collapsed'
+
+function storedSidebarCollapsed() {
+  try { return window.localStorage.getItem(SIDEBAR_KEY) === 'true' }
+  catch { return false }
+}
 
 export function AppLayout() {
   const { activeCompany, companies, saveSettings, selectCompany, source, taxonomyReview, user } = useWorkContext()
   const movementsSummary = useMovementsSummary()
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [periodOpen, setPeriodOpen] = useState(false)
+  // Recolhido, o menu fica só com os ícones (guardado no navegador); em ecrãs
+  // estreitos é uma gaveta que abre pelo botão da barra de topo.
+  const [collapsed, setCollapsed] = useState(storedSidebarCollapsed)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const toggleCollapsed = () => setCollapsed((current) => {
+    try { window.localStorage.setItem(SIDEBAR_KEY, String(!current)) } catch { /* storage is optional */ }
+    return !current
+  })
+  const closeDrawer = () => setDrawerOpen(false)
   const switcherRef = useRef<HTMLDivElement>(null)
   const periodRef = useRef<HTMLDivElement>(null)
   const closeSwitcher = useCallback(() => setSwitcherOpen(false), [])
@@ -98,29 +139,39 @@ export function AppLayout() {
   }
 
   return (
-    <div className="product-shell">
-      <aside className="sidebar">
-        <NavLink className="brand" to="/" aria-label="Accounting AI — início">
-          <span className="brand-mark">A</span>
-          <span><strong>Accounting</strong><small>AI</small></span>
-        </NavLink>
+    <div className={`product-shell${collapsed ? ' nav-collapsed' : ''}`}>
+      {drawerOpen && <div className="sidebar-backdrop" onClick={closeDrawer} />}
+      <aside className={`sidebar${drawerOpen ? ' open' : ''}`}>
+        <div className="sidebar-head">
+          <NavLink className="brand" to="/" aria-label="Accounting AI — início" onClick={closeDrawer}>
+            <span className="brand-mark">A</span>
+            <span><strong>Accounting</strong><small>AI</small></span>
+          </NavLink>
+          <button type="button" className="sidebar-toggle" onClick={toggleCollapsed} aria-pressed={collapsed} aria-label={collapsed ? 'Expandir o menu' : 'Recolher o menu'} title={collapsed ? 'Expandir o menu' : 'Recolher o menu'}>
+            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+          </button>
+        </div>
         <nav className="primary-nav" aria-label="Navegação principal">
-          {links.map(({ to, label, icon: Icon, end }) => (
-            <NavLink key={to} to={to} end={end} className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-              <Icon size={19} strokeWidth={1.8} />
-              <span>{label}</span>
-            </NavLink>
-          ))}
+          {navGroups.map((group) => <div className="nav-group" key={group.label}>
+            <p className="nav-group-label">{group.label}</p>
+            {group.links.map(({ to, label, icon: Icon, end }) => (
+              <NavLink key={to} to={to} end={end} title={label} onClick={closeDrawer} className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+                <Icon size={18} strokeWidth={1.8} />
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </div>)}
         </nav>
         <div className="sidebar-footer">
-          <NavLink className="nav-item" to="/definicoes"><Settings size={19} />Definições</NavLink>
-          <button type="button" className="nav-item logout-item" onClick={logOut}><LogOut size={19} />Sair</button>
+          <NavLink className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`} to="/definicoes" title="Definições" onClick={closeDrawer}><Settings size={18} strokeWidth={1.8} /><span>Definições</span></NavLink>
+          <button type="button" className="nav-item logout-item" title="Sair" onClick={logOut}><LogOut size={18} strokeWidth={1.8} /><span>Sair</span></button>
           <div className="user-card"><span className="avatar">{userInitials}</span><span><strong>{user.displayName.replace(' (Demonstração)', '')}</strong><small>{activeCompany.role}</small></span></div>
         </div>
       </aside>
 
       <div className="workspace">
         <header className="topbar">
+          <button type="button" className="icon-button nav-drawer-button" onClick={() => setDrawerOpen(true)} aria-label="Abrir o menu"><Menu size={19} /></button>
           <div className="company-switcher-wrap" ref={switcherRef}>
             <button className="company-switcher" type="button" aria-expanded={switcherOpen} onClick={() => setSwitcherOpen((open) => !open)}>
               <span className="company-monogram">{companyMonogram}</span>

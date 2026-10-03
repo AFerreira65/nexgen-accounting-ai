@@ -39,7 +39,8 @@ internal static class DataDictionaryText
         ["CompanyAtCredentials"] = "Credenciais e definições da AT de uma empresa: o subutilizador e a senha (cifrada) do perfil e-Fatura, a periodicidade da declaração periódica e o ambiente da AT.",
         ["AccountVatClassification"] = "Classificação de IVA de uma conta (taxa, natureza da operação, região) para a desagregação da declaração periódica.",
         ["IrcEstimateFiling"] = "Estimativa de IRC guardada por uma empresa (período, taxa e correções fiscais indicadas, fotografia do cálculo).",
-        ["FoundationState"] = "Estado interno da fundação da plataforma; não é de uso contabilístico.",
+        ["Parties"] = "Terceiros da empresa (clientes e fornecedores), identificados pelo país e pelo número de contribuinte.",
+        ["FoundationState"] ="Estado interno da fundação da plataforma; não é de uso contabilístico.",
     };
 
     private static readonly Dictionary<string, string> Generic = new(StringComparer.OrdinalIgnoreCase)
@@ -188,7 +189,16 @@ internal static class DataDictionaryText
         ["AccountVatClassification.Nature"] = "A natureza da operação de IVA (transmissões internas, prestações de serviços, aquisições intracomunitárias, …).",
         ["AccountVatClassification.Region"] = "A região (Continente / Açores / Madeira).",
 
-        ["IrcEstimateFiling.PeriodFrom"] = "Data inicial do período da estimativa.",
+        ["Parties.CountryCode"] = "O país do contribuinte (código ISO de duas letras; PT por omissão).",
+        ["Parties.TaxRegistrationNumber"] = "O número de contribuinte; único por empresa e país. Um NIF português é validado pelo dígito de controlo.",
+        ["Parties.Name"] = "O nome ou a designação social do terceiro.",
+        ["Parties.IsCustomer"] = "Se o terceiro é cliente.",
+        ["Parties.IsSupplier"] = "Se o terceiro é fornecedor.",
+        ["Parties.CustomerAccountId"] = "A subconta de clientes (21) deste terceiro, se estiver ligada.",
+        ["Parties.SupplierAccountId"] = "A subconta de fornecedores (22) deste terceiro, se estiver ligada.",
+        ["Parties.IsActive"] = "Se o terceiro está ativo.",
+
+        ["IrcEstimateFiling.PeriodFrom"] ="Data inicial do período da estimativa.",
         ["IrcEstimateFiling.PeriodTo"] = "Data final do período da estimativa.",
         ["IrcEstimateFiling.TaxRate"] = "A taxa de IRC indicada pelo utilizador (fração, ex.: 0.21 para 21%).",
         ["IrcEstimateFiling.AdjustmentsJson"] = "As correções fiscais indicadas pelo utilizador, em JSON.",

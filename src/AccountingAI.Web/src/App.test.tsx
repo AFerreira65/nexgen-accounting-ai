@@ -748,6 +748,29 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the parties screen (requires the database)', () => {
+    window.history.pushState({}, '', '/terceiros')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Terceiros', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
+  it('groups the side menu and collapses it to an icon rail', () => {
+    window.history.pushState({}, '', '/')
+    render(<App />)
+
+    const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
+    expect(within(nav).getByText('Cadastros')).toBeInTheDocument()
+    expect(within(nav).getByRole('link', { name: 'Terceiros' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Recolher o menu' }))
+    expect(screen.getByRole('button', { name: 'Expandir o menu' })).toHaveAttribute('aria-pressed', 'true')
+    // Recolhido, as ligações continuam acessíveis pelo nome.
+    expect(within(nav).getByRole('link', { name: 'Terceiros' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Expandir o menu' }))
+  })
+
   it('shows the IRC estimate screen (requires the database)', () => {
     window.history.pushState({}, '', '/estimativa-irc')
     render(<App />)

@@ -53,6 +53,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<IrcEstimateFiling> IrcEstimateFilings => Set<IrcEstimateFiling>();
 
+    public DbSet<Party> Parties => Set<Party>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -80,6 +82,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new CompanyAtCredentialsConfiguration());
         modelBuilder.ApplyConfiguration(new AccountVatClassificationConfiguration());
         modelBuilder.ApplyConfiguration(new IrcEstimateFilingConfiguration());
+        modelBuilder.ApplyConfiguration(new PartyConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

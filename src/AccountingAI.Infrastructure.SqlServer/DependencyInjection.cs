@@ -66,6 +66,7 @@ public static class DependencyInjection
         services.AddScoped<VatReturnFilingService>();
         services.AddScoped<CompanyAtCredentialsService>();
         services.AddScoped<AccountVatClassificationService>();
+        services.AddScoped<PartyService>();
         services.AddScoped<VatSummaryService>();
         services.AddScoped<IrcEstimateService>();
         services.AddScoped<IrcEstimateFilingService>();

@@ -1823,6 +1823,65 @@ if (applicationEndpointsAvailable)
         return count < 0 ? Results.NotFound() : Results.Ok(new { updated = count });
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/parties", async (
+        Guid userId, Guid companyId, string? search, string? role, bool? includeInactive, int? page, int? pageSize,
+        PartyService parties, CancellationToken cancellationToken) =>
+    {
+        var roleFilter = PartyRoleFilter.Todos;
+        if (!string.IsNullOrWhiteSpace(role) &&
+            !(Enum.TryParse(role.Trim(), ignoreCase: true, out roleFilter) && Enum.IsDefined(roleFilter)))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["funcao"] = ["Função inválida."] });
+        }
+
+        var result = await parties
+            .ListAsync(userId, companyId, search, roleFilter, includeInactive ?? false, page ?? 1, pageSize ?? 50, cancellationToken)
+            .ConfigureAwait(false);
+        return result is null ? Results.NotFound() : Results.Ok(result);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/parties", async (
+        Guid userId, Guid companyId, CreatePartyRequest request, PartyService parties, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var created = await parties
+                .CreateAsync(
+                    userId, companyId, request.CountryCode, request.TaxRegistrationNumber ?? string.Empty,
+                    new PartyInput(
+                        request.Name ?? string.Empty, request.IsCustomer, request.IsSupplier,
+                        request.CustomerAccountCode, request.SupplierAccountCode),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return created is null ? Results.NotFound() : Results.Ok(created);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["terceiro"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/parties/{partyId:guid}", async (
+        Guid userId, Guid companyId, Guid partyId, UpdatePartyRequest request, PartyService parties, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var updated = await parties
+                .UpdateAsync(
+                    userId, companyId, partyId,
+                    new PartyInput(
+                        request.Name ?? string.Empty, request.IsCustomer, request.IsSupplier,
+                        request.CustomerAccountCode, request.SupplierAccountCode, request.IsActive),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return updated is null ? Results.NotFound() : Results.Ok(updated);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["terceiro"] = [exception.Message] });
+        }
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-summary", async (
         Guid userId, Guid companyId, string? from, string? to,
         VatSummaryService summaries, CancellationToken cancellationToken) =>
@@ -3373,6 +3432,23 @@ public sealed record PutAtCredentialsRequest(string? SubUser, string? Password, 
 public sealed record PutVatClassificationRequest(string? Rate, string? Nature, string? Region);
 
 public sealed record BulkVatClassificationRequest(string? Prefix, string? Rate, string? Nature, string? Region);
+
+public sealed record CreatePartyRequest(
+    string? CountryCode,
+    string? TaxRegistrationNumber,
+    string? Name,
+    bool IsCustomer,
+    bool IsSupplier,
+    string? CustomerAccountCode = null,
+    string? SupplierAccountCode = null);
+
+public sealed record UpdatePartyRequest(
+    string? Name,
+    bool IsCustomer,
+    bool IsSupplier,
+    string? CustomerAccountCode = null,
+    string? SupplierAccountCode = null,
+    bool IsActive = true);
 
 public sealed record IrcAdjustmentRequest(string? Description, decimal Amount);
 
