@@ -207,9 +207,9 @@ export function VatSettlementPage() {
     {summaryError && <p className="save-status error">{summaryError}</p>}
 
     {summary && <section className="panel">
-      <div className="panel-heading"><div><h2>Resumo por taxa e natureza</h2><p>O movimento do período das contas classificadas ({fromDate} a {toDate}), agrupado por natureza, taxa e região — a desagregação que se transcreve para a declaração periódica.</p></div></div>
+      <div className="panel-heading"><div><h2>Resumo por taxa e natureza</h2><p>O movimento do período das linhas com código de IVA e das contas classificadas ({fromDate} a {toDate}), agrupado por natureza, taxa e região — a desagregação que se transcreve para a declaração periódica.</p></div></div>
       {summary.rows.length === 0
-        ? <p className="empty-state">Sem contas classificadas com movimento no período. Configure a <Link to="/config-iva">classificação de IVA por conta</Link>.</p>
+        ? <p className="empty-state">Sem linhas com código de IVA nem contas classificadas com movimento no período. Indique o <Link to="/codigos-iva">código de IVA</Link> nos lançamentos ou configure a <Link to="/config-iva">classificação de IVA por conta</Link>.</p>
         : <>
         <div className="table-wrap"><table>
             <thead><tr><th>Natureza</th><th>Taxa</th><th>Região</th><th>Base/Imposto</th><th>Campo</th><th className="numeric">Contas</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th></tr></thead>
@@ -230,7 +230,7 @@ export function VatSettlementPage() {
     </section>}
 
     {summary && summary.unclassified.length > 0 && <section className="panel">
-      <div className="panel-heading"><div><h2>Contas por classificar</h2><p><Info size={13} /> Estas contas moveram-se no período mas ainda não têm classificação de IVA — ficam de fora do resumo acima. Configure-as em <Link to="/config-iva">classificação de IVA por conta</Link> antes de transcrever o resumo.</p></div></div>
+      <div className="panel-heading"><div><h2>Contas por classificar</h2><p><Info size={13} /> Estas contas têm linhas no período sem código de IVA e ainda não têm classificação de IVA — essas linhas ficam de fora do resumo acima. Configure-as em <Link to="/config-iva">classificação de IVA por conta</Link> antes de transcrever o resumo.</p></div></div>
       <div className="table-wrap"><table>
         <thead><tr><th>Conta</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th className="numeric">Saldo</th></tr></thead>
         <tbody>{summary.unclassified.map((row) => <tr key={row.accountCode}>

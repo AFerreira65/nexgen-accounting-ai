@@ -80,13 +80,31 @@ classificação por conta (F2-09) fica como recurso e como valor proposto.
 - **Por verificar em direto:** a lista de códigos, a proposta pela conta e a
   gravação contra a base real.
 
-**Ainda sem efeito no apuramento:** o resumo e o apuramento de IVA continuam a
-ler só a classificação por conta até ao F3-03C.
+### F3-03C — Resumo de IVA a partir da linha (feito)
 
-### F3-03C — Resumo e apuramento a partir da linha
+- **`VatSummaryService`** — cada linha é lida pelo seu código de IVA quando o
+  tem; sem código, pela classificação da sua conta, como antes. As duas origens
+  somam-se na mesma combinação natureza / taxa / região.
+- **Base e imposto:** uma linha com código numa conta `243*` é imposto;
+  qualquer outra linha com código é **base** — incluindo as compras em classe 3
+  e o imobilizado em classe 4, que a classificação por conta deixava de fora.
+- **Contas por classificar:** só contam as linhas **sem código**; uma conta sem
+  classificação cujas linhas trazem todas código deixa de aparecer.
+- A API e a forma da resposta não mudam; o ecrã «Apuramento de IVA» só mudou os
+  textos para referir os códigos.
 
-O resumo de IVA lê o código da linha e só recorre à classificação da conta
-quando a linha não tem código.
+O apuramento periódico (F2-08) assenta nos saldos das contas 24.3 e não
+depende desta leitura; o mapa de conferência por documento e a ligação aos
+campos oficiais ficam para a declaração periódica (F3-08).
+
+**Validação efetuada**
+
+- `AccountingAI.IntegrationTests`: `VatSummaryLineCodeTests` — a mesma conta
+  com uma linha sem código (taxa da conta) e outra com código de taxa reduzida
+  (prevalece o código); compra em classe 3 com código entra como base; conta
+  sem classificação com uma linha com código e outra sem — só a segunda fica
+  por classificar. `VatSummaryServiceTests` (sem códigos) continua igual.
+- A suite completa: 206 testes .NET, 86 de interface.
 
 ### F3-03D — Lançamentos-tipo
 
