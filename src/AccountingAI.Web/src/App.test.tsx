@@ -787,6 +787,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the VAT declaration screen (requires the database)', () => {
+    window.history.pushState({}, '', '/declaracao-iva')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Declaração periódica de IVA', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)

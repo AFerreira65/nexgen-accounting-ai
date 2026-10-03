@@ -71,74 +71,9 @@ public sealed class VatSummaryService(AccountingDbContext context)
             return null;
         }
 
-        // Linhas sem código de IVA: valem pela classificação da sua conta (ADR-0009).
-        var byAccount = await context.JournalEntryLines
-            .AsNoTracking()
-            .Join(
-                context.AccountVatClassifications.AsNoTracking(),
-                line => line.AccountId,
-                classification => classification.AccountId,
-                (line, classification) => new { line, classification })
-            .Where(item => item.line.CompanyId == companyId &&
-                item.classification.CompanyId == companyId &&
-                item.line.VatCodeId == null &&
-                item.line.JournalEntry.Status != JournalEntryStatus.Voided &&
-                item.line.JournalEntry.EntryDate >= from &&
-                item.line.JournalEntry.EntryDate <= to)
-            .GroupBy(item => new
-            {
-                Kind = item.line.Account.Code.StartsWith("243")
-                    ? "imposto"
-                    : item.line.Account.Code.StartsWith("6") || item.line.Account.Code.StartsWith("7")
-                        ? "base"
-                        : "outras",
-                item.classification.Nature,
-                item.classification.Rate,
-                item.classification.Region,
-                item.line.AccountId,
-            })
-            .Select(group => new SummaryPart(
-                group.Key.Kind,
-                group.Key.Nature,
-                group.Key.Rate,
-                group.Key.Region,
-                group.Key.AccountId,
-                group.Sum(item => item.line.Debit),
-                group.Sum(item => item.line.Credit)))
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
+        var parts = await PartsAsync(companyId, from, to, cancellationToken).ConfigureAwait(false);
 
-        // Linhas com código de IVA: o código prevalece sobre a conta (ADR-0012).
-        // Uma linha numa conta 243 é imposto; qualquer outra com código é base —
-        // incluindo as compras em classe 3 e o imobilizado em classe 4.
-        var byCode = await context.JournalEntryLines
-            .AsNoTracking()
-            .Where(line => line.CompanyId == companyId &&
-                line.VatCodeId != null &&
-                line.JournalEntry.Status != JournalEntryStatus.Voided &&
-                line.JournalEntry.EntryDate >= from &&
-                line.JournalEntry.EntryDate <= to)
-            .GroupBy(line => new
-            {
-                Kind = line.Account.Code.StartsWith("243") ? "imposto" : "base",
-                line.VatCode!.Nature,
-                line.VatCode.Rate,
-                line.VatCode.Region,
-                line.AccountId,
-            })
-            .Select(group => new SummaryPart(
-                group.Key.Kind,
-                group.Key.Nature,
-                group.Key.Rate,
-                group.Key.Region,
-                group.Key.AccountId,
-                group.Sum(line => line.Debit),
-                group.Sum(line => line.Credit)))
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        var grouped = byAccount
-            .Concat(byCode)
+        var grouped = parts
             .GroupBy(part => (part.Kind, part.Nature, part.Rate, part.Region))
             .Select(group => new
             {
@@ -214,9 +149,82 @@ public sealed class VatSummaryService(AccountingDbContext context)
             VatDeclarationFieldCatalog.Source, VatDeclarationFieldCatalog.Disclaimer);
     }
 
-    /// <summary>O movimento de uma conta numa combinação natureza/taxa/região, de uma das duas origens.</summary>
-    private sealed record SummaryPart(
-        string Kind, VatOperationNature Nature, VatRate Rate, VatRegion Region, Guid AccountId, decimal Debit, decimal Credit);
+    /// <summary>
+    /// O movimento do período por conta e por combinação natureza/taxa/região,
+    /// das duas origens (código de IVA da linha ou classificação da conta). Não
+    /// verifica o acesso: é para quem já o verificou.
+    /// </summary>
+    public async Task<IReadOnlyList<VatSummaryPart>> PartsAsync(
+        Guid companyId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    {
+        // Linhas sem código de IVA: valem pela classificação da sua conta (ADR-0009).
+        var byAccount = await context.JournalEntryLines
+            .AsNoTracking()
+            .Join(
+                context.AccountVatClassifications.AsNoTracking(),
+                line => line.AccountId,
+                classification => classification.AccountId,
+                (line, classification) => new { line, classification })
+            .Where(item => item.line.CompanyId == companyId &&
+                item.classification.CompanyId == companyId &&
+                item.line.VatCodeId == null &&
+                item.line.JournalEntry.Status != JournalEntryStatus.Voided &&
+                item.line.JournalEntry.EntryDate >= from &&
+                item.line.JournalEntry.EntryDate <= to)
+            .GroupBy(item => new
+            {
+                Kind = item.line.Account.Code.StartsWith("243")
+                    ? "imposto"
+                    : item.line.Account.Code.StartsWith("6") || item.line.Account.Code.StartsWith("7")
+                        ? "base"
+                        : "outras",
+                item.classification.Nature,
+                item.classification.Rate,
+                item.classification.Region,
+                item.line.AccountId,
+            })
+            .Select(group => new VatSummaryPart(
+                group.Key.Kind,
+                group.Key.Nature,
+                group.Key.Rate,
+                group.Key.Region,
+                group.Key.AccountId,
+                group.Sum(item => item.line.Debit),
+                group.Sum(item => item.line.Credit)))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        // Linhas com código de IVA: o código prevalece sobre a conta (ADR-0012).
+        // Uma linha numa conta 243 é imposto; qualquer outra com código é base —
+        // incluindo as compras em classe 3 e o imobilizado em classe 4.
+        var byCode = await context.JournalEntryLines
+            .AsNoTracking()
+            .Where(line => line.CompanyId == companyId &&
+                line.VatCodeId != null &&
+                line.JournalEntry.Status != JournalEntryStatus.Voided &&
+                line.JournalEntry.EntryDate >= from &&
+                line.JournalEntry.EntryDate <= to)
+            .GroupBy(line => new
+            {
+                Kind = line.Account.Code.StartsWith("243") ? "imposto" : "base",
+                line.VatCode!.Nature,
+                line.VatCode.Rate,
+                line.VatCode.Region,
+                line.AccountId,
+            })
+            .Select(group => new VatSummaryPart(
+                group.Key.Kind,
+                group.Key.Nature,
+                group.Key.Rate,
+                group.Key.Region,
+                group.Key.AccountId,
+                group.Sum(line => line.Debit),
+                group.Sum(line => line.Credit)))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return [.. byAccount, .. byCode];
+    }
 
     private Task<bool> HasAccessAsync(Guid userId, Guid companyId, CancellationToken cancellationToken) =>
         context.Companies
@@ -227,3 +235,8 @@ public sealed class VatSummaryService(AccountingDbContext context)
                     company.UserMemberships.Any(membership => membership.UserId == userId && membership.IsActive),
                 cancellationToken);
 }
+
+/// <summary>O movimento de uma conta numa combinação natureza/taxa/região, de uma das duas origens.</summary>
+/// <param name="Kind"><c>base</c>, <c>imposto</c> (contas <c>243*</c>) ou <c>outras</c>.</param>
+public sealed record VatSummaryPart(
+    string Kind, VatOperationNature Nature, VatRate Rate, VatRegion Region, Guid AccountId, decimal Debit, decimal Credit);

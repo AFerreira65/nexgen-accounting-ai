@@ -65,6 +65,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
   { label: 'Fiscal', links: [
     { to: '/iva', label: 'Resumo de IVA', icon: Receipt },
     { to: '/apuramento-iva', label: 'Apuramento de IVA', icon: Receipt },
+    { to: '/declaracao-iva', label: 'Declaração de IVA', icon: Receipt },
     { to: '/config-iva', label: 'Configuração de IVA', icon: Percent },
     { to: '/codigos-iva', label: 'Códigos de IVA', icon: Percent },
     { to: '/estimativa-irc', label: 'Estimativa de IRC', icon: Calculator },

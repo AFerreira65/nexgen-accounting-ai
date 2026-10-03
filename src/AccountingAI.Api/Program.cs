@@ -1738,6 +1738,27 @@ if (applicationEndpointsAvailable)
         return view is null ? Results.NotFound() : Results.Ok(view);
     });
 
+    // O quadro 06 da declaração periódica de IVA, preenchido a partir da contabilidade.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-declaration", async (
+        Guid userId, Guid companyId, string? from, string? to, decimal? priorCredit,
+        VatDeclarationService declarations, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) ||
+            !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) ||
+            end < start)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = ["Indique um período válido (aaaa-mm-dd)."] });
+        }
+
+        if (priorCredit is < 0m)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["priorCredit"] = ["O excesso a reportar não pode ser negativo."] });
+        }
+
+        var declaration = await declarations.BuildAsync(userId, companyId, start, end, priorCredit, cancellationToken).ConfigureAwait(false);
+        return declaration is null ? Results.NotFound() : Results.Ok(declaration);
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-return", async (
         Guid userId, Guid companyId, string? from, string? to,
         AccountingAI.Application.Vat.IVatReturnService vat, CancellationToken cancellationToken) =>

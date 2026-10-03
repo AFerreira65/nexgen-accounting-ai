@@ -26,6 +26,7 @@ import { AnalysesPage } from './pages/AnalysesPage'
 import { ManagementReportsPage } from './pages/ManagementReportsPage'
 import { OperatingMapPage, RatiosPage } from './pages/IndicatorsPages'
 import { MonthlyEvolutionPage } from './pages/MonthlyEvolutionPage'
+import { VatDeclarationPage } from './pages/VatDeclarationPage'
 import { VatSettlementPage } from './pages/VatSettlementPage'
 import { AtCommunicationPage } from './pages/AtCommunicationPage'
 import { VatClassificationPage } from './pages/VatClassificationPage'
@@ -82,6 +83,7 @@ export function App() {
             <Route path="/balanco" element={<BalanceSheetPage />} />
             <Route path="/iva" element={<VatSummaryPage />} />
             <Route path="/apuramento-iva" element={<VatSettlementPage />} />
+            <Route path="/declaracao-iva" element={<VatDeclarationPage />} />
             <Route path="/config-iva" element={<VatClassificationPage />} />
             <Route path="/codigos-iva" element={<VatCodesPage />} />
             <Route path="/tabelas-fiscais" element={<FiscalTablesPage />} />

@@ -671,6 +671,20 @@ export type BalanceSheetStatement = {
   excluded: StatementExcludedAccount[]
   source: string
 }
+export type VatFormField = { number: number; label: string; column: 'base' | 'sujeito-passivo' | 'estado' | 'apuramento'; amount: number; computed: boolean; supported: boolean; sources: { accountCode: string; accountName: string; amount: number }[] }
+export type VatDeclaration = {
+  from: string
+  to: string
+  period: string | null
+  seat: string
+  fields: VatFormField[]
+  warnings: string[]
+  accountingPayable: number
+  accountingCredit: number
+  difference: number
+  source: string
+  disclaimer: string
+}
 export type OperatingMap = {
   year: number
   lastMonth: number

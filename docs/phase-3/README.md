@@ -22,7 +22,8 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | A | **F3-05** | Contabilidade analítica | **Concluído (F3-05A)** — [`F3-05`](F3-05-ANALYTIC-ACCOUNTING.md): centros de custo, centro na linha do lançamento e mapa analítico |
 | B | **F3-06** | Exportação do SAF-T (PT) de contabilidade | **Concluído** — [`F3-06`](F3-06-SAFT-EXPORT.md); F3-06A (exportador, análise e ecrã) e F3-06B (morada da empresa e dos terceiros) feitos, validados contra o XSD oficial; falta exportar uma empresa real |
 | B | **F3-07** | Demonstrações financeiras oficiais (modelos SNC) | **Em curso** — [`F3-07`](F3-07-OFFICIAL-STATEMENTS.md); F3-07A (balanço e demonstração de resultados por naturezas, pela tabela de taxonomias da AT) e F3-07B (fluxos de caixa pelo método direto e alterações no capital próprio, por critério da aplicação) feitos; faltam resultados por funções e anexo |
-| B | F3-08 … F3-14 | Saídas sem a AT: IVA, recapitulativa, Modelo 22, IES, ativos fixos, retenções, dossier fiscal | Por especificar |
+| B | **F3-08** | Declaração periódica de IVA | **Em curso** — [`F3-08`](F3-08-VAT-DECLARATION.md); F3-08A (quadro 06 pelo modelo oficial em vigor, com conferência por conta) feito; faltam o lançamento de apuramento, os anexos e o XML (sem XML-Schema oficial encontrado); modelo novo para períodos a partir de 1 de julho de 2027 |
+| B | F3-09 … F3-14 | Saídas sem a AT: recapitulativa, Modelo 22, IES, ativos fixos, retenções, dossier fiscal | Por especificar |
 | C | F3-15 … F3-17 | Comunicação com a AT | Depende da adesão — [`../ADESAO-AT.md`](../ADESAO-AT.md) |
 | D | F3-18 … F3-21 | Automação do lançamento | Por especificar |
 | E | **F3-22** | Gráficos | **Em curso** — [`F3-22`](F3-22-CHARTS.md); F3-22A (componente de gráficos e ecrã «Evolução mensal») feito; faltam os gráficos na visão geral e nos relatórios |

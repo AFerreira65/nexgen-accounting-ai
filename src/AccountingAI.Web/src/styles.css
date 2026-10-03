@@ -314,6 +314,10 @@ tr.subtotal-row td { border-top: 1px solid #d5dfe1; background: #fbfdfd; color: 
 .period-chip:hover { border-color: #45a89e; color: #0b9286; }
 .period-chip.active { border-color: #0b9286; color: white; background: #0b9286; }
 .statement-note { margin: 0; color: #5d727a; font-size: 11px; }
+.warning-list { display: grid; gap: 8px; margin: 0; padding: 4px 22px 18px; list-style: none; color: #8a5a12; font-size: 12px; }
+.warning-list li { display: flex; align-items: flex-start; gap: 8px; }
+.warning-list svg { flex: 0 0 auto; margin-top: 1px; }
+html[data-theme='dark'] .warning-list { color: #f0c987; }
 .ratio-formula { color: #738289; font-size: 11px; }
 html[data-theme='dark'] .ratio-formula { color: #9fb3ba; }
 .chart-grid-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
