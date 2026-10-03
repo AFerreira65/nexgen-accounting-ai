@@ -1738,6 +1738,22 @@ if (applicationEndpointsAvailable)
         return view is null ? Results.NotFound() : Results.Ok(view);
     });
 
+    // Os quadros 04 e 05 da declaração recapitulativa de IVA.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/recapitulative-statement", async (
+        Guid userId, Guid companyId, string? from, string? to,
+        RecapitulativeStatementService statements, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) ||
+            !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) ||
+            end < start)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = ["Indique um período válido (aaaa-mm-dd)."] });
+        }
+
+        var statement = await statements.BuildAsync(userId, companyId, start, end, cancellationToken).ConfigureAwait(false);
+        return statement is null ? Results.NotFound() : Results.Ok(statement);
+    });
+
     // O quadro 06 da declaração periódica de IVA, preenchido a partir da contabilidade.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-declaration", async (
         Guid userId, Guid companyId, string? from, string? to, decimal? priorCredit,

@@ -76,6 +76,7 @@ public static class DependencyInjection
         services.AddScoped<PartyLedgerService>();
         services.AddScoped<VatSummaryService>();
         services.AddScoped<VatDeclarationService>();
+        services.AddScoped<RecapitulativeStatementService>();
         services.AddScoped<IrcEstimateService>();
         services.AddScoped<IrcEstimateFilingService>();
         services.AddScoped<OrganizationAdminService>();

@@ -143,7 +143,8 @@ public sealed class VatDeclarationServiceTests
             // A venda dos Açores não entra nos campos 3 e 4: só o imposto, no total do Anexo R.
             Assert.AreEqual(16m, Field(66).Amount);
             Assert.AreEqual(0m, Field(65).Amount);
-            Assert.IsFalse(Field(7).Supported);
+            Assert.IsTrue(Field(7).Supported);
+            Assert.IsFalse(Field(14).Supported);
 
             Assert.AreEqual(1600m, Field(90).Amount);
             Assert.AreEqual(240m, Field(91).Amount);

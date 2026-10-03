@@ -51,7 +51,7 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
         "aprova um modelo novo para os períodos com início a partir de 1 de julho de 2027.";
 
     public const string Disclaimer =
-        "Mapa de apoio ao preenchimento, não validado pela AT. Não apura o campo 7 (operações da declaração recapitulativa), " +
+        "Mapa de apoio ao preenchimento, não validado pela AT. Não apura " +
         "os campos 14, 15, 18 e 19, o quadro 06-A nem os anexos das regularizações dos campos 40 e 41; " +
         "as operações de outra região vão só em total para os campos 65 a 68 (o Anexo R não é preenchido).";
 
@@ -160,7 +160,11 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
                     selfAssessed = true;
                     PutByRate(part, tax ? credit : debit, tax);
                     break;
-                case VatOperationNature.ExportacoesEIsentasComDeducao when !tax:
+                case VatOperationNature.TransmissoesIntracomunitariasBens or VatOperationNature.PrestacoesServicosIntracomunitarias when !tax:
+                    Put(7, part, credit);
+                    break;
+                // As operações triangulares vão à declaração recapitulativa com o tipo 4, mas aqui ao campo 8.
+                case VatOperationNature.ExportacoesEIsentasComDeducao or VatOperationNature.OperacoesTriangulares when !tax:
                     Put(8, part, credit);
                     break;
                 case VatOperationNature.OperacoesIsentasSemDeducao when !tax:
@@ -222,7 +226,7 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
         Field(6, "Imposto liquidado à taxa intermédia", State);
         Field(3, "Transmissões de bens e prestações de serviços — base tributável à taxa normal", Base);
         Field(4, "Imposto liquidado à taxa normal", State);
-        Field(7, "Transmissões intracomunitárias de bens e prestações de serviços incluídas na declaração recapitulativa", Base, supported: false);
+        Field(7, "Transmissões intracomunitárias de bens e prestações de serviços incluídas na declaração recapitulativa", Base);
         Field(8, "Operações que conferem direito à dedução (exportações, inversão do sujeito passivo e outras)", Base);
         Field(9, "Operações isentas que não conferem direito à dedução", Base);
         Field(12, "Aquisições intracomunitárias de bens com imposto liquidado pelo declarante — base", Base);
@@ -294,6 +298,11 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
         if (otherRegions.Count > 0)
         {
             warnings.Add($"Há operações localizadas noutra região ({string.Join(", ", otherRegions)}): é preciso preencher o Anexo R; aqui só entram os totais nos campos 65 a 68.");
+        }
+
+        if (Value(7) != 0m)
+        {
+            warnings.Add("Há operações no campo 7: assinale o quadro 04 e entregue a declaração recapitulativa, cujo campo 19 deve coincidir com este valor.");
         }
 
         if (Value(40) != 0m || Value(41) != 0m)

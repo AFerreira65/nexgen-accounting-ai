@@ -48,8 +48,8 @@ campos do modelo oficial, as somas de controlo e a conferência campo a campo.
 | 93 / 94 | Imposto a entregar ou a recuperar. |
 | 95 / 96 | Sem reembolso pedido: todo o crédito segue como excesso a reportar. |
 
-- **Campos que a aplicação não apura** (aparecem como «à mão»): 7 (operações
-  da declaração recapitulativa — vem com o F3-09), 14, 15, 18 e 19. Também
+- **Campos que a aplicação não apura** (aparecem como «à mão»): 14, 15, 18
+  e 19. O campo 7 passou a ser apurado com o [F3-09](F3-09-RECAPITULATIVE-STATEMENT.md). Também
   não preenche o quadro 06-A, o Anexo R nem os anexos dos campos 40 e 41.
 - **Conferência:** cada campo guarda as contas que o formam e os valores.
 - **Avisos:** período que não é mês nem trimestre; contas com movimento sem

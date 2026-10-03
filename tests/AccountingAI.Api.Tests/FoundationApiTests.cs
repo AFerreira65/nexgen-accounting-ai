@@ -1466,6 +1466,9 @@ public sealed class FoundationApiTests
         var payload = await declaration.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badPeriod = await client.GetAsync($"{basePath}/vat-declaration?from=2026-03-31&to=2026-01-01").ConfigureAwait(false);
         using var negative = await client.GetAsync($"{basePath}/vat-declaration?from=2026-01-01&to=2026-03-31&priorCredit=-1").ConfigureAwait(false);
+        using var recapitulative = await client.GetAsync($"{basePath}/recapitulative-statement?from=2026-01-01&to=2026-03-31").ConfigureAwait(false);
+        var recapitulativePayload = await recapitulative.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badRecapitulative = await client.GetAsync($"{basePath}/recapitulative-statement?from=2026-01-01").ConfigureAwait(false);
         using var unauthorized = await client
             .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/vat-declaration?from=2026-01-01&to=2026-03-31")
             .ConfigureAwait(false);
@@ -1476,6 +1479,9 @@ public sealed class FoundationApiTests
         StringAssert.Contains(payload, "Portaria n.º 221/2017");
         Assert.AreEqual(HttpStatusCode.BadRequest, badPeriod.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, negative.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, recapitulative.StatusCode);
+        StringAssert.Contains(recapitulativePayload, "\"field19\":");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badRecapitulative.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
     }
 

@@ -70,7 +70,12 @@ public static class VatDeclarationFieldCatalog
             };
         }
 
-        if (kind == "base" && nature == VatOperationNature.ExportacoesEIsentasComDeducao)
+        if (kind == "base" && nature is VatOperationNature.TransmissoesIntracomunitariasBens or VatOperationNature.PrestacoesServicosIntracomunitarias)
+        {
+            return new VatDeclarationField(7, note);
+        }
+
+        if (kind == "base" && nature is VatOperationNature.ExportacoesEIsentasComDeducao or VatOperationNature.OperacoesTriangulares)
         {
             return new VatDeclarationField(8, note);
         }

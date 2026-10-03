@@ -69,6 +69,9 @@ public static class VatCodeDefaults
 
         codes.Add(VatCode.Create(companyId, "V-ISE", "Operações isentas sem direito à dedução", VatRate.Isento, 0m, VatOperationNature.OperacoesIsentasSemDeducao, region));
         codes.Add(VatCode.Create(companyId, "V-EXP", "Exportações e isentas com direito à dedução", VatRate.Isento, 0m, VatOperationNature.ExportacoesEIsentasComDeducao, region));
+        codes.Add(VatCode.Create(companyId, "V-TIB", "Transmissões intracomunitárias de bens", VatRate.Isento, 0m, VatOperationNature.TransmissoesIntracomunitariasBens, region));
+        codes.Add(VatCode.Create(companyId, "S-PSI", "Prestações de serviços intracomunitárias", VatRate.Isento, 0m, VatOperationNature.PrestacoesServicosIntracomunitarias, region));
+        codes.Add(VatCode.Create(companyId, "V-TRI", "Operações triangulares", VatRate.Isento, 0m, VatOperationNature.OperacoesTriangulares, region));
         return codes;
     }
 

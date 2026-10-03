@@ -59,6 +59,15 @@ public enum VatOperationNature
 
     /// <summary>Regularizações a favor do Estado.</summary>
     RegularizacoesFavorEstado = 12,
+
+    /// <summary>Transmissões intracomunitárias de bens e operações assimiladas (declaração recapitulativa, tipo 1).</summary>
+    TransmissoesIntracomunitariasBens = 13,
+
+    /// <summary>Prestações de serviços a sujeitos passivos de outros Estados-Membros (declaração recapitulativa, tipo 5).</summary>
+    PrestacoesServicosIntracomunitarias = 14,
+
+    /// <summary>Operações triangulares (declaração recapitulativa, tipo 4).</summary>
+    OperacoesTriangulares = 15,
 }
 
 /// <summary>A região relevante para os campos regionais da declaração.</summary>
