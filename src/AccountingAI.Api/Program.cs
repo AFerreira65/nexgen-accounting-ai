@@ -1882,6 +1882,39 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Terceiros a partir do SAF-T: «preview» só analisa, «import» grava.
+    foreach (var (route, apply) in new[] { ("parties-preview", false), ("parties-import", true) })
+    {
+        app.MapPost($"/api/v1/development/users/{{userId:guid}}/companies/{{companyId:guid}}/saft/{route}", async (
+            Guid userId, Guid companyId, HttpRequest request, PartyImportService imports, CancellationToken cancellationToken) =>
+        {
+            var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+            if (maxBodySize is { IsReadOnly: false })
+            {
+                maxBodySize.MaxRequestBodySize = null;
+            }
+
+            try
+            {
+                var result = await imports
+                    .FromSaftAsync(userId, companyId, request.Body, apply, cancellationToken)
+                    .ConfigureAwait(false);
+                return result is null ? Results.NotFound() : Results.Ok(result);
+            }
+            catch (SaftFileFormatException exception)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["saft"] = [exception.Message] });
+            }
+        });
+
+        app.MapPost($"/api/v1/development/users/{{userId:guid}}/companies/{{companyId:guid}}/efatura/{route}", async (
+            Guid userId, Guid companyId, PartyImportService imports, CancellationToken cancellationToken) =>
+        {
+            var result = await imports.FromEFaturaAsync(userId, companyId, apply, cancellationToken).ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        });
+    }
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-summary", async (
         Guid userId, Guid companyId, string? from, string? to,
         VatSummaryService summaries, CancellationToken cancellationToken) =>

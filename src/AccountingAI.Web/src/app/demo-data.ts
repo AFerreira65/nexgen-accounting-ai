@@ -652,6 +652,19 @@ export type PartyRow = {
 
 export type PartyPage = { total: number; items: PartyRow[] }
 
+export type PartyImportItem = Omit<PartyRow, 'id' | 'isActive'> & { state: 'New' | 'Updated' | 'Unchanged' }
+
+export type PartyImportResult = {
+  applied: boolean
+  sourceCount: number
+  newCount: number
+  updatedCount: number
+  unchangedCount: number
+  skippedCount: number
+  items: PartyImportItem[]
+  skipped: { reason: string; count: number }[]
+}
+
 export type VatClassificationRow = {
   accountCode: string
   accountName: string

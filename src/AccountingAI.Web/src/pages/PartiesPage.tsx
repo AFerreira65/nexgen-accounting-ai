@@ -1,7 +1,7 @@
-import { Contact, Database, Plus, Search, X } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { Contact, Database, Download, FileUp, Plus, Receipt, Search, X } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { type PartyRow } from '../app/demo-data'
+import { type PartyImportResult, type PartyRow } from '../app/demo-data'
 import { Pager } from '../app/Pager'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext, type PartyListParams } from '../app/WorkContext'
@@ -12,7 +12,7 @@ const ROLE_FILTERS: { value: PartyListParams['role']; label: string }[] = [
   { value: 'Fornecedores', label: 'Fornecedores' },
 ]
 
-function roleLabel(party: PartyRow) {
+function roleLabel(party: Pick<PartyRow, 'isCustomer' | 'isSupplier'>) {
   if (party.isCustomer && party.isSupplier) return 'Cliente e fornecedor'
   if (party.isCustomer) return 'Cliente'
   if (party.isSupplier) return 'Fornecedor'
@@ -86,6 +86,79 @@ function PartyEditor({ party, onSaved, onClose }: { party: PartyRow | null; onSa
   </section>
 }
 
+const IMPORT_STATE_LABELS: Record<PartyImportResult['items'][number]['state'], string> = {
+  New: 'Novo',
+  Updated: 'A completar',
+  Unchanged: 'Sem alterações',
+}
+
+type ImportSource = { kind: 'saft'; file: File } | { kind: 'efatura' }
+
+function PartyImporter({ onImported, onClose }: { onImported: () => void; onClose: () => void }) {
+  const { activeCompany, importPartiesFromSaft, importPartiesFromEFatura } = useWorkContext()
+  const companyId = activeCompany.companyId
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [source, setSource] = useState<ImportSource | null>(null)
+  const [result, setResult] = useState<PartyImportResult | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const run = async (from: ImportSource, apply: boolean) => {
+    setBusy(true)
+    setError('')
+    try {
+      const value = from.kind === 'saft'
+        ? await importPartiesFromSaft(companyId, from.file, apply)
+        : await importPartiesFromEFatura(companyId, apply)
+      setSource(from)
+      setResult(value)
+      if (apply) onImported()
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Não foi possível analisar a origem.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const pending = result ? result.newCount + result.updatedCount : 0
+
+  return <section className="panel settings-panel">
+    <div className="panel-heading">
+      <div><h2>Importar terceiros</h2><p>Cria os terceiros em falta a partir dos clientes e fornecedores de um SAF-T ou dos emitentes das compras do e-Fatura. Primeiro analisa; só grava quando confirmar.</p></div>
+      <button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button>
+    </div>
+    <div className="builder-row party-import-sources">
+      <input ref={fileInput} type="file" accept=".xml,application/xml,text/xml" hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void run({ kind: 'saft', file }, false) }} />
+      <button className="button button-secondary" type="button" disabled={busy} onClick={() => fileInput.current?.click()}><FileUp size={16} /> Analisar um SAF-T…</button>
+      <button className="button button-secondary" type="button" disabled={busy} onClick={() => void run({ kind: 'efatura' }, false)}><Receipt size={16} /> Analisar as compras do e-Fatura</button>
+      {busy && <span className="catalog-count">A processar…</span>}
+    </div>
+    {error && <p className="save-status error">{error}</p>}
+    {result && source && <>
+      <p className={`save-status ${result.applied ? 'success' : ''}`}>
+        {source.kind === 'saft' ? source.file.name : 'Compras do e-Fatura'} — {result.sourceCount} na origem: {result.newCount} {result.applied ? 'criados' : 'novos'}, {result.updatedCount} {result.applied ? 'completados' : 'a completar'}, {result.unchangedCount} sem alterações, {result.skippedCount} de fora.
+      </p>
+      {result.skipped.length > 0 && <ul className="party-import-skipped">{result.skipped.map((item) => <li key={item.reason}>{item.reason}: {item.count}</li>)}</ul>}
+      {result.items.length > 0 && <div className="table-wrap"><table>
+        <thead><tr><th>Contribuinte</th><th>Nome</th><th>Função</th><th>Conta de cliente</th><th>Conta de fornecedor</th><th>Resultado</th></tr></thead>
+        <tbody>{result.items.map((item) => <tr key={`${item.countryCode}-${item.taxRegistrationNumber}`} className={item.state === 'Unchanged' ? 'muted-row' : undefined}>
+          <td>{item.countryCode !== 'PT' && `${item.countryCode} `}{item.taxRegistrationNumber}</td>
+          <td>{item.name}</td>
+          <td>{roleLabel(item)}</td>
+          <td>{item.customerAccountCode ?? '—'}</td>
+          <td>{item.supplierAccountCode ?? '—'}</td>
+          <td><span className={`badge ${item.state === 'New' ? 'success' : item.state === 'Updated' ? 'warning' : 'neutral'}`}>{IMPORT_STATE_LABELS[item.state]}</span></td>
+        </tr>)}</tbody>
+      </table></div>}
+      {result.items.length < result.newCount + result.updatedCount + result.unchangedCount && <p className="catalog-count">A mostrar os primeiros {result.items.length}; a importação abrange todos.</p>}
+      {!result.applied && <footer className="settings-actions">
+        <button className="button button-secondary" type="button" onClick={onClose}>Cancelar</button>
+        <button className="button button-primary" type="button" disabled={busy || pending === 0} onClick={() => void run(source, true)}><Download size={16} /> {pending === 0 ? 'Nada a importar' : `Importar ${pending} ${pending === 1 ? 'terceiro' : 'terceiros'}`}</button>
+      </footer>}
+    </>}
+  </section>
+}
+
 export function PartiesPage() {
   const { activeCompany, source, parties } = useWorkContext()
   const companyId = activeCompany.companyId
@@ -102,6 +175,7 @@ export function PartiesPage() {
   const [error, setError] = useState('')
   const [reload, setReload] = useState(0)
   const [editor, setEditor] = useState<{ mode: 'create' } | { mode: 'edit'; party: PartyRow } | null>(null)
+  const [importing, setImporting] = useState(false)
   usePublishRecord(editor?.mode === 'edit' ? 'terceiros' : undefined, editor?.mode === 'edit' ? editor.party.id : undefined, editor?.mode === 'edit' ? editor.party.name : undefined)
 
   useEffect(() => {
@@ -141,8 +215,11 @@ export function PartiesPage() {
       </div>
       <label className="inline-check"><input type="checkbox" checked={includeInactive} onChange={(event) => { setIncludeInactive(event.target.checked); setPage(1) }} /> Incluir inativos</label>
       <span className="catalog-count">{loading ? 'A carregar…' : `${total} ${total === 1 ? 'terceiro' : 'terceiros'}`}</span>
+      <button className="button button-secondary" type="button" onClick={() => setImporting(true)}><Download size={16} /> Importar</button>
       <button className="button button-primary" type="button" onClick={() => setEditor({ mode: 'create' })}><Plus size={16} /> Novo terceiro</button>
     </div>
+
+    {importing && <PartyImporter onImported={() => setReload((value) => value + 1)} onClose={() => setImporting(false)} />}
 
     {editor?.mode === 'create' && <PartyEditor party={null} onSaved={saved} onClose={() => setEditor(null)} />}
     {editor?.mode === 'edit' && <PartyEditor key={editor.party.id} party={editor.party} onSaved={saved} onClose={() => setEditor(null)} />}

@@ -496,3 +496,9 @@ html[data-theme='dark'] .segmented button.selected { color: #b6f1e6; background:
 /* Moldura no tema escuro: a barra de topo funde-se com o fundo, como no claro. */
 html[data-theme='dark'] .topbar { background-color: #102129d9; border-color: transparent; }
 html[data-theme='dark'] .period-selector, html[data-theme='dark'] .icon-button, html[data-theme='dark'] .icon-button:not(.bordered) { color: #dce8ea; background: #182d36; border-color: #29414a; }
+
+/* Painel de importação de terceiros. */
+.party-import-sources { padding: 14px 22px 0; }
+.party-import-skipped { margin: 0 22px 12px; padding-left: 18px; color: #75858c; font-size: 11px; }
+.settings-panel > .save-status { display: flex; margin: 12px 22px; }
+.settings-panel > .catalog-count { display: block; margin: 8px 22px 14px; }

@@ -51,10 +51,48 @@ lançamentos automáticos a partir do e-Fatura.
 - **Por verificar em direto:** o ecrã ligado à base real — precisa de uma
   sessão iniciada pelo utilizador.
 
-### F3-01B — Terceiros a partir do SAF-T e do e-Fatura (a seguir)
+### F3-01B — Terceiros a partir do SAF-T e do e-Fatura (feito)
 
-Criar os terceiros em falta a partir de `Customers` / `Suppliers` do SAF-T e
-dos emitentes das compras do e-Fatura, com pré-visualização e sem duplicar.
+- **`ISaftPartiesReader` / `SaftPartiesReader`** — lê `MasterFiles/Customer` e
+  `MasterFiles/Supplier` em streaming (um elemento de cada vez), com a conta
+  (`AccountID`) e o país da morada de faturação; para antes de
+  `GeneralLedgerEntries` e `SourceDocuments`. Serve os ficheiros de
+  contabilidade e os de faturação.
+- **`PartyImportService`** — `FromSaftAsync` e `FromEFaturaAsync`, ambos com
+  `apply` (falso = só análise). Regras:
+  - funde cliente e fornecedor com o mesmo país + contribuinte num só terceiro;
+  - um terceiro que já existe **nunca muda de nome nem perde ligações** — só
+    ganha a função e a subconta que lhe faltarem («A completar»);
+  - a subconta só é ligada se for uma conta de movimento da empresa;
+  - um país que não seja um código de duas letras (o SAF-T admite
+    «Desconhecido») é tratado como Portugal;
+  - ficam de fora, contados por motivo: consumidor final (`999999990`), sem
+    contribuinte, sem nome, NIF português inválido, contribuinte demasiado
+    longo;
+  - do e-Fatura vêm os emitentes distintos das compras já importadas, como
+    fornecedores portugueses.
+- **API:** `POST .../saft/parties-preview` e `.../saft/parties-import` (corpo =
+  o ficheiro), `POST .../efatura/parties-preview` e
+  `.../efatura/parties-import`. Devolvem as contagens do conjunto inteiro, até
+  200 linhas (novos e a completar primeiro) e os motivos de exclusão.
+- **PWA:** botão **«Importar»** no ecrã «Terceiros» — escolhe-se um SAF-T ou as
+  compras do e-Fatura, vê-se a análise e só então se confirma.
+
+**Validação efetuada**
+
+- `AccountingAI.Infrastructure.Files.Tests`: `SaftPartiesReaderTests` —
+  clientes e fornecedores com conta e país, ficheiro sem terceiros, XML
+  malformado, e o `Customer` dentro de `SourceDocuments` não é lido.
+- `AccountingAI.IntegrationTests`: `PartyImportServiceTests` — a análise não
+  escreve; a importação cria, funde e completa sem mudar o nome; reimportar
+  não altera nada; e-Fatura com duas faturas do mesmo emitente; sem acesso.
+- `AccountingAI.Api.Tests`: `PartiesImportPreviewsAnalyseWithoutWriting` (só
+  as análises, que não escrevem).
+- O leitor foi corrido contra os oito ficheiros de `SAFTs Exemplo`: as
+  contagens batem com o ficheiro (ex.: 815 clientes e 271 fornecedores, todos
+  com conta, no SAF-T de contabilidade de 2024).
+- **Por verificar em direto:** o painel «Importar» no navegador — o ecrã exige
+  a base real e uma sessão iniciada pelo utilizador.
 
 ### F3-01C — Contas correntes por terceiro
 

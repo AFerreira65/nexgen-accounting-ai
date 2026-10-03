@@ -1447,6 +1447,45 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task PartiesImportPreviewsAnalyseWithoutWriting()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+        const string saft =
+            "<AuditFile><MasterFiles><Customer><CustomerID>C1</CustomerID><CustomerTaxID>999999990</CustomerTaxID>" +
+            "<CompanyName>Consumidor final</CompanyName></Customer></MasterFiles></AuditFile>";
+
+        using var saftPreview = await client
+            .PostAsync($"{basePath}/saft/parties-preview", new StringContent(saft, Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+        var saftPayload = await saftPreview.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        using var malformed = await client
+            .PostAsync($"{basePath}/saft/parties-preview", new StringContent("<AuditFile><MasterFiles>", Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+
+        using var efaturaPreview = await client.PostAsync($"{basePath}/efatura/parties-preview", null).ConfigureAwait(false);
+        var efaturaPayload = await efaturaPreview.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, saftPreview.StatusCode);
+        StringAssert.Contains(saftPayload, "\"applied\":false");
+        StringAssert.Contains(saftPayload, "\"skippedCount\":1");
+        Assert.AreEqual(HttpStatusCode.BadRequest, malformed.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, efaturaPreview.StatusCode);
+        StringAssert.Contains(efaturaPayload, "\"applied\":false");
+    }
+
+    [TestMethod]
     public async Task VatSummaryReturnsRowsGroupedByNatureRateAndRegion()
     {
         if (!OperatingSystem.IsWindows())
