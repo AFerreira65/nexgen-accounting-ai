@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type VatCodeRow, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AppliedTemplate, type EntryTemplateRow, type VatCodeRow, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -8,6 +8,7 @@ export type NewJournalInput = { code: string; name: string }
 export type JournalEditInput = { name: string; isActive: boolean }
 export type NewDocumentTypeInput = { code: string; name: string; defaultJournalCode: string }
 export type DocumentTypeEditInput = { name: string; defaultJournalCode: string; isActive: boolean }
+export type EntryTemplateInput = { name: string; journalCode: string; documentTypeCode: string | null; description: string | null; isActive: boolean; lines: { kind: string; side: string; accountCode: string; vatCode: string | null; description: string | null }[] }
 export type VatCodeInput = { code: string; name: string; rate: string; percentage: number; nature: string; region: string; isActive: boolean }
 export type PartyListParams = { search: string; role: 'Todos' | 'Clientes' | 'Fornecedores'; includeInactive: boolean; page: number; pageSize: number }
 export type PartyEditInput = { name: string; isCustomer: boolean; isSupplier: boolean; customerAccountCode: string | null; supplierAccountCode: string | null; isActive: boolean }
@@ -112,6 +113,9 @@ type WorkContextValue = WorkContextData & {
   vatClassification: (companyId: string) => Promise<VatClassificationRow[]>
   setVatClassification: (companyId: string, accountCode: string, input: { rate: string; nature: string; region: string }) => Promise<void>
   bulkVatClassification: (companyId: string, input: { prefix: string; rate: string; nature: string; region: string }) => Promise<number>
+  entryTemplates: (companyId: string, includeInactive: boolean) => Promise<EntryTemplateRow[]>
+  saveEntryTemplate: (companyId: string, code: string, input: EntryTemplateInput) => Promise<EntryTemplateRow>
+  applyEntryTemplate: (companyId: string, code: string, amount: number, amountIncludesVat: boolean) => Promise<AppliedTemplate>
   vatCodes: (companyId: string, includeInactive: boolean) => Promise<VatCodeRow[]>
   saveVatCode: (companyId: string, input: VatCodeInput, isNew: boolean) => Promise<VatCodeRow>
   createDefaultVatCodes: (companyId: string) => Promise<number>
@@ -899,6 +903,29 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       if (!response.ok) throw new Error(await problemMessage(response))
       const body = await response.json() as { updated: number }
       return body.updated
+    },
+    entryTemplates: async (companyId, includeInactive) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/entry-templates?includeInactive=${includeInactive}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as EntryTemplateRow[]
+    },
+    saveEntryTemplate: async (companyId, code, input) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/entry-templates/${encodeURIComponent(code.trim())}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as EntryTemplateRow
+    },
+    applyEntryTemplate: async (companyId, code, amount, amountIncludesVat) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/entry-templates/${encodeURIComponent(code)}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, amountIncludesVat }),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as AppliedTemplate
     },
     vatCodes: async (companyId, includeInactive) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/vat-codes?includeInactive=${includeInactive}`)

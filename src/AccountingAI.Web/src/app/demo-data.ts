@@ -643,6 +643,33 @@ export type AtCredentials = {
   updatedAtUtc: string | null
 }
 
+export type EntryTemplateLineRow = {
+  kind: string
+  side: string
+  accountCode: string
+  accountName: string
+  vatCode: string | null
+  description: string | null
+}
+
+export type EntryTemplateRow = {
+  code: string
+  name: string
+  journalCode: string
+  documentTypeCode: string | null
+  description: string | null
+  isActive: boolean
+  lines: EntryTemplateLineRow[]
+}
+
+export type AppliedTemplate = {
+  code: string
+  journalCode: string
+  documentTypeCode: string | null
+  description: string | null
+  lines: { kind: string; accountCode: string; description: string; debit: number; credit: number; vatCode: string | null }[]
+}
+
 export type VatCodeRow = {
   code: string
   name: string

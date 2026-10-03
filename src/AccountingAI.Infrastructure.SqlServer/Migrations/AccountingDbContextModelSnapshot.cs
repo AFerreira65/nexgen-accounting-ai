@@ -237,6 +237,111 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.ToTable("DocumentNumberSeries", "accounting");
                 });
 
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.EntryTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid?>("DocumentTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid>("JournalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentTypeId");
+
+                    b.HasIndex("JournalId");
+
+                    b.HasIndex("CompanyId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("EntryTemplates", "accounting");
+                });
+
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.EntryTemplateLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<Guid>("EntryTemplateId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Side")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("VatCodeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("VatCodeId");
+
+                    b.HasIndex("EntryTemplateId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("EntryTemplateLines", "accounting");
+                });
+
             modelBuilder.Entity("AccountingAI.Domain.Accounting.IrcEstimateFiling", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1423,6 +1528,46 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.EntryTemplate", b =>
+                {
+                    b.HasOne("AccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AccountingAI.Domain.Accounting.AccountingDocumentType", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentTypeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("AccountingAI.Domain.Accounting.AccountingJournal", null)
+                        .WithMany()
+                        .HasForeignKey("JournalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.EntryTemplateLine", b =>
+                {
+                    b.HasOne("AccountingAI.Domain.Accounting.LedgerAccount", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AccountingAI.Domain.Accounting.EntryTemplate", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("EntryTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AccountingAI.Domain.Accounting.VatCode", null)
+                        .WithMany()
+                        .HasForeignKey("VatCodeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("AccountingAI.Domain.Accounting.JournalEntry", b =>
                 {
                     b.HasOne("AccountingAI.Domain.Accounting.AccountingDocumentType", "DocumentType")
@@ -1559,6 +1704,11 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
             modelBuilder.Entity("AccountingAI.Domain.Accounting.AccountingJournal", b =>
                 {
                     b.Navigation("Entries");
+                });
+
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.EntryTemplate", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("AccountingAI.Domain.Accounting.JournalEntry", b =>

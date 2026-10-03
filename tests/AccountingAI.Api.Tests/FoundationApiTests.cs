@@ -1447,6 +1447,47 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task EntryTemplatesListAndValidateInput()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var list = await client.GetAsync($"{basePath}/entry-templates?includeInactive=true").ConfigureAwait(false);
+        var listPayload = await list.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        // Recusados antes de qualquer escrita: tipo de linha inválido e modelo sem contrapartida.
+        using var badKind = await client
+            .PutAsync($"{basePath}/entry-templates/ZZ-TESTE", new StringContent(
+                "{\"name\":\"X\",\"journalCode\":\"COMPRAS\",\"isActive\":true,\"lines\":[{\"kind\":\"NaoExiste\",\"side\":\"Debit\",\"accountCode\":\"6221\"}]}",
+                Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+        using var noBalance = await client
+            .PutAsync($"{basePath}/entry-templates/ZZ-TESTE", new StringContent(
+                "{\"name\":\"X\",\"journalCode\":\"COMPRAS\",\"isActive\":true,\"lines\":[{\"kind\":\"Base\",\"side\":\"Debit\",\"accountCode\":\"6221\"}]}",
+                Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+        using var unknown = await client
+            .PostAsync($"{basePath}/entry-templates/ZZ-NAO-HA/apply", new StringContent("{\"amount\":10}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, list.StatusCode);
+        StringAssert.StartsWith(listPayload.TrimStart(), "[");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badKind.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, noBalance.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unknown.StatusCode);
+    }
+
+    [TestMethod]
     public async Task VatCodesListAndValidateInput()
     {
         if (!OperatingSystem.IsWindows())

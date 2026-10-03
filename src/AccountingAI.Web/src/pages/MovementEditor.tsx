@@ -1,6 +1,6 @@
 import { Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { euro, type Movement, type PartyRow, type VatClassificationRow, type VatCodeRow } from '../app/demo-data'
+import { euro, type EntryTemplateRow, type Movement, type PartyRow, type VatClassificationRow, type VatCodeRow } from '../app/demo-data'
 import { useWorkContext, type MovementLineInput } from '../app/WorkContext'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -151,18 +151,25 @@ function PartyField({ value, name, ariaLabel, search, onChange }: {
 }
 
 export function MovementEditor({ movement, duplicate = false, onClose }: { movement: Movement | null; duplicate?: boolean; onClose: () => void }) {
-  const { accountingSetup, activeCompany, createMovement, parties, reviseMovement, source, user, vatClassification, vatCodes } = useWorkContext()
+  const { accountingSetup, activeCompany, applyEntryTemplate, createMovement, entryTemplates, parties, reviseMovement, source, user, vatClassification, vatCodes } = useWorkContext()
   const companyId = activeCompany.companyId
   // Códigos de IVA ativos e a classificação por conta, que propõe o código.
   const [vatCodeList, setVatCodeList] = useState<VatCodeRow[]>([])
   const [accountVat, setAccountVat] = useState<VatClassificationRow[]>([])
+  // Lançamentos-tipo: escolhe-se o modelo e o valor, e as linhas ficam preenchidas.
+  const [templateList, setTemplateList] = useState<EntryTemplateRow[]>([])
+  const [templateCode, setTemplateCode] = useState('')
+  const [templateAmount, setTemplateAmount] = useState('')
+  const [templateIncludesVat, setTemplateIncludesVat] = useState(false)
+  const [templateError, setTemplateError] = useState('')
   useEffect(() => {
     if (source !== 'database') return
     let cancelled = false
     void vatCodes(companyId, false).then((rows) => { if (!cancelled) setVatCodeList(rows) }).catch(() => { /* coluna opcional */ })
     void vatClassification(companyId).then((rows) => { if (!cancelled) setAccountVat(rows) }).catch(() => { /* proposta opcional */ })
+    void entryTemplates(companyId, false).then((rows) => { if (!cancelled) setTemplateList(rows) }).catch(() => { /* barra opcional */ })
     return () => { cancelled = true }
-  }, [companyId, source, vatClassification, vatCodes])
+  }, [companyId, entryTemplates, source, vatClassification, vatCodes])
   // O código proposto para uma conta: o único código ativo com a mesma taxa,
   // natureza e região da classificação dessa conta.
   const proposedVatCode = (accountCode: string) => {
@@ -274,6 +281,28 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
   const yearClosed = closedYears.includes(entryYear)
   const periodLocked = postingLockDate !== null && entryDate <= postingLockDate
 
+  async function fillFromTemplate() {
+    const amount = Number(templateAmount.replace(',', '.'))
+    if (!templateCode || !(amount > 0)) { setTemplateError('Escolha o lançamento-tipo e indique um valor positivo.'); return }
+    setTemplateError('')
+    try {
+      const applied = await applyEntryTemplate(companyId, templateCode, amount, templateIncludesVat)
+      setJournalCode(applied.journalCode)
+      if (applied.documentTypeCode) setDocumentTypeCode(applied.documentTypeCode)
+      if (applied.description && !description.trim()) setDescription(applied.description)
+      // O terceiro é do documento, não do modelo: o que já estava escrito
+      // passa para a contrapartida (o cliente, o fornecedor).
+      const party = lines.find((line) => line.partyText.trim())
+      setLines(applied.lines.map((line) => ({
+        accountCode: line.accountCode, description: line.description, debit: line.debit, credit: line.credit, vatCode: line.vatCode ?? '',
+        partyText: line.kind === 'Balance' ? party?.partyText ?? '' : '',
+        partyName: line.kind === 'Balance' ? party?.partyName ?? '' : '',
+      })))
+    } catch (problem) {
+      setTemplateError(problem instanceof Error ? problem.message : 'Não foi possível aplicar o lançamento-tipo.')
+    }
+  }
+
   function patchLine(index: number, patch: Partial<EditorLine>) {
     setLines((current) => current.map((line, position) => position === index ? { ...line, ...patch } : line))
   }
@@ -307,6 +336,13 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
 
   return <section className="panel settings-panel">
     <div className="panel-heading"><div><h2>{isEdit ? `Corrigir ${movement.id.replaceAll('-', ' ')}` : (duplicate ? `Novo lançamento a partir de ${movement!.id.replaceAll('-', ' ')}` : 'Novo lançamento')}</h2><p>Débito igual a crédito, pelo menos duas linhas. Enter avança para o campo seguinte; no último campo da última linha, cria uma linha nova. {isEdit ? 'Só um lançamento por conferir pode ser corrigido.' : 'A referência é gerada pelo diário e exercício.'}</p></div><button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button></div>
+    {!isEdit && templateList.length > 0 && <div className="builder-row template-bar">
+      <label>Lançamento-tipo <select aria-label="Lançamento-tipo" value={templateCode} onChange={(event) => setTemplateCode(event.target.value)}><option value="">Escolher…</option>{templateList.map((item) => <option key={item.code} value={item.code}>{item.code} · {item.name}</option>)}</select></label>
+      <label>Valor <input aria-label="Valor do lançamento-tipo" inputMode="decimal" value={templateAmount} onChange={(event) => setTemplateAmount(event.target.value)} placeholder="0,00" /></label>
+      <label className="inline-check"><input type="checkbox" checked={templateIncludesVat} onChange={(event) => setTemplateIncludesVat(event.target.checked)} /> Valor com IVA incluído</label>
+      <button className="button button-secondary" type="button" onClick={() => void fillFromTemplate()}>Preencher linhas</button>
+      {templateError && <span className="save-status error">{templateError}</span>}
+    </div>}
     <form onSubmit={submit} onKeyDown={handleFormKeyDown}>
       <div className="settings-grid">
         {!isEdit && <label><span>Tipo de documento</span><select data-field-key="doctype" ref={register('doctype')} value={documentTypeCode} onChange={(event) => { const code = event.target.value; setDocumentTypeCode(code); const chosen = documentTypes.find((item) => item.code === code); if (chosen) setJournalCode(chosen.defaultJournalCode) }}><option value="">Sem tipo · numerar pelo diário</option>{documentTypes.map((document) => <option key={document.code} value={document.code}>{document.code} · {document.name}</option>)}</select></label>}

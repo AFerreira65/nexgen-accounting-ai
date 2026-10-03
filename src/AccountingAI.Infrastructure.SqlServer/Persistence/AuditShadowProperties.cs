@@ -39,6 +39,7 @@ internal static class AuditShadowProperties
         typeof(IrcEstimateFiling),
         typeof(Party),
         typeof(VatCode),
+        typeof(EntryTemplate),
     ];
 
     public static void Apply(ModelBuilder modelBuilder)

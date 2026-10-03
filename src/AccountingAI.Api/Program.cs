@@ -1962,6 +1962,62 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/entry-templates", async (
+        Guid userId, Guid companyId, bool? includeInactive, EntryTemplateService templates, CancellationToken cancellationToken) =>
+    {
+        var list = await templates.ListAsync(userId, companyId, includeInactive ?? false, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/entry-templates/{code}", async (
+        Guid userId, Guid companyId, string code, EntryTemplateRequest request, EntryTemplateService templates, CancellationToken cancellationToken) =>
+    {
+        var lines = new List<EntryTemplateLineInput>();
+        foreach (var line in request?.Lines ?? [])
+        {
+            if (!Enum.TryParse<AccountingAI.Domain.Accounting.EntryTemplateLineKind>(line.Kind, ignoreCase: true, out var kind) || !Enum.IsDefined(kind) ||
+                !Enum.TryParse<AccountingAI.Domain.Accounting.EntryTemplateSide>(line.Side, ignoreCase: true, out var side) || !Enum.IsDefined(side))
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["lancamentoTipo"] = ["Tipo ou lado de linha inválido."] });
+            }
+
+            lines.Add(new EntryTemplateLineInput(kind, side, line.AccountCode ?? string.Empty, line.VatCode, line.Description));
+        }
+
+        try
+        {
+            var saved = await templates
+                .SaveAsync(
+                    userId, companyId, code,
+                    new EntryTemplateInput(
+                        request?.Name ?? string.Empty, request?.JournalCode ?? string.Empty, request?.DocumentTypeCode,
+                        request?.Description, request?.IsActive ?? true, lines),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return saved is null ? Results.NotFound() : Results.Ok(saved);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["lancamentoTipo"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/entry-templates/{code}/apply", async (
+        Guid userId, Guid companyId, string code, ApplyEntryTemplateRequest request, EntryTemplateService templates, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var applied = await templates
+                .ApplyAsync(userId, companyId, code, request?.Amount ?? 0m, request?.AmountIncludesVat ?? false, cancellationToken)
+                .ConfigureAwait(false);
+            return applied is null ? Results.NotFound() : Results.Ok(applied);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["lancamentoTipo"] = [exception.Message] });
+        }
+    });
+
     // Terceiros a partir do SAF-T: «preview» só analisa, «import» grava.
     foreach (var (route, apply) in new[] { ("parties-preview", false), ("parties-import", true) })
     {
@@ -3550,6 +3606,18 @@ public sealed record PutAtCredentialsRequest(string? SubUser, string? Password, 
 public sealed record PutVatClassificationRequest(string? Rate, string? Nature, string? Region);
 
 public sealed record BulkVatClassificationRequest(string? Prefix, string? Rate, string? Nature, string? Region);
+
+public sealed record EntryTemplateLineRequest(string? Kind, string? Side, string? AccountCode, string? VatCode = null, string? Description = null);
+
+public sealed record EntryTemplateRequest(
+    string? Name,
+    string? JournalCode,
+    string? DocumentTypeCode,
+    string? Description,
+    bool IsActive,
+    List<EntryTemplateLineRequest>? Lines);
+
+public sealed record ApplyEntryTemplateRequest(decimal Amount, bool AmountIncludesVat = false);
 
 public sealed record VatCodeRequest(
     string? Code,

@@ -30,6 +30,7 @@ import { VatClassificationPage } from './pages/VatClassificationPage'
 import { IrcEstimatePage } from './pages/IrcEstimatePage'
 import { PartiesPage } from './pages/PartiesPage'
 import { VatCodesPage } from './pages/VatCodesPage'
+import { EntryTemplatesPage } from './pages/EntryTemplatesPage'
 import { RecordProvider } from './app/RecordContext'
 import { AuthGate } from './app/AuthGate'
 
@@ -47,6 +48,7 @@ export function App() {
             <Route path="/diarios/:journalId" element={<JournalPage />} />
             <Route path="/contas" element={<AccountsPage />} />
             <Route path="/terceiros" element={<PartiesPage />} />
+            <Route path="/lancamentos-tipo" element={<EntryTemplatesPage />} />
             <Route path="/diarios" element={<JournalsPage />} />
             <Route path="/documentos" element={<DocumentTypesPage />} />
             <Route path="/series" element={<DocumentNumberSeriesPage />} />

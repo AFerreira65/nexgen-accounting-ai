@@ -509,3 +509,11 @@ html[data-theme='dark'] .period-selector, html[data-theme='dark'] .icon-button, 
 
 /* Código de IVA na linha do lançamento. */
 .vat-code-select { min-width: 96px; min-height: 36px; padding: 0 6px; border: 1px solid #d4dfe2; border-radius: 8px; background: #fbfcfc; font-size: 11px; }
+
+/* Barra de lançamento-tipo no editor de lançamentos. */
+.template-bar { align-items: flex-end; gap: 10px; margin: 0; padding: 14px 22px; border-bottom: 1px solid #e5ecee; }
+.template-bar label { display: grid; gap: 4px; color: #64767e; font-size: 10px; font-weight: 700; }
+.template-bar label.inline-check { display: flex; align-items: center; gap: 6px; min-height: 36px; font-size: 11px; font-weight: 600; }
+.template-bar select { min-width: 240px; }
+.template-bar input:not([type='checkbox']) { width: 120px; flex: 0 0 auto; }
+html[data-theme='dark'] .template-bar { border-color: #29414a; }

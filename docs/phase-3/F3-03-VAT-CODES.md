@@ -106,6 +106,64 @@ campos oficiais ficam para a declaração periódica (F3-08).
   por classificar. `VatSummaryServiceTests` (sem códigos) continua igual.
 - A suite completa: 206 testes .NET, 86 de interface.
 
-### F3-03D — Lançamentos-tipo
+### F3-03D — Lançamentos-tipo (feito)
 
-Modelos de lançamento que calculam o IVA a partir do código e da base.
+Um lançamento-tipo é o molde de um lançamento repetitivo: o diário, o tipo de
+documento, a descrição proposta e as linhas, cada uma com um papel.
+
+| Linha | O que recebe |
+|---|---|
+| **Base** (exatamente uma) | O valor indicado — ou, com IVA incluído, o valor sem o imposto |
+| **IVA** (zero ou mais) | A base × a percentagem do código de IVA da linha |
+| **Contrapartida** (exatamente uma) | O que falta para o débito igualar o crédito |
+
+- **`Domain/Accounting/EntryTemplate`** + `EntryTemplateLine`, com
+  `Compute(valor, comIvaIncluído, percentagens)`:
+  - arredonda ao cêntimo, metade para cima;
+  - com IVA incluído, a base é o total ÷ (1 + taxa) e **o imposto é o que
+    sobra**, para o total bater ao cêntimo com o documento — só permitido com
+    uma única linha de IVA do mesmo lado da base;
+  - a autoliquidação modela-se com duas linhas de IVA em lados opostos: a
+    contrapartida fica só com a base;
+  - uma linha que fica a zero (código isento) é omitida;
+  - uma contrapartida do lado errado é recusada.
+- **`accounting.EntryTemplates`** e **`accounting.EntryTemplateLines`** —
+  migração aditiva `20261003183508_EntryTemplates`; auditável, no
+  `record-info` (`lancamentos-tipo`) e no dicionário de dados.
+- **`EntryTemplateService`** — `ListAsync`, `SaveAsync` (cria ou substitui pelo
+  código, com as linhas) e `ApplyAsync`, que **só calcula**: devolve o diário,
+  o tipo de documento, a descrição e as linhas com o papel, a conta, o valor e
+  o código de IVA. O lançamento continua a passar pelo `JournalPostingService`.
+- **API:** `GET .../entry-templates?includeInactive=`,
+  `PUT .../entry-templates/{código}`,
+  `POST .../entry-templates/{código}/apply` com `{ amount, amountIncludesVat }`.
+- **PWA:**
+  - ecrã **«Lançamentos-tipo»** (`/lancamentos-tipo`, grupo «Cadastros») —
+    lista e editor com as linhas (papel, lado, conta, código de IVA, descrição);
+  - no **editor de lançamentos**, quando há modelos ativos, uma barra
+    «Lançamento-tipo»: escolhe-se o modelo, indica-se o valor (com ou sem IVA)
+    e «Preencher linhas» coloca o diário, o tipo de documento, a descrição e
+    as linhas calculadas. Um terceiro já escrito passa para a contrapartida.
+    As linhas ficam editáveis antes de gravar.
+
+**Validação efetuada**
+
+- `AccountingAI.Domain.Tests`: `EntryTemplateTests` — base + IVA + contrapartida;
+  IVA incluído ao cêntimo (100,00 → 81,30 + 18,70); autoliquidação; linha
+  isenta omitida; modelos e valores malformados.
+- `AccountingAI.IntegrationTests`: `EntryTemplateServiceTests` — guardar,
+  aplicar (sem lançar nada), IVA incluído, substituir as linhas sem duplicar,
+  conta de integração / diário / código de IVA desconhecidos, inativo, sem
+  acesso. `SqlServerMigrationTests` inclui a migração.
+- `AccountingAI.Api.Tests`: `EntryTemplatesListAndValidateInput`.
+- `AccountingAI.Web`: `tsc`, `eslint`, os 87 testes; o ecrã foi aberto no
+  navegador em modo de demonstração.
+- **Por verificar em direto:** criar um modelo e preencher um lançamento com
+  ele contra a base real.
+
+**Fora deste incremento**
+
+- Vários valores de base no mesmo modelo (uma fatura com duas taxas).
+- Dedutibilidade parcial e pro rata.
+- Modelos por omissão: dependem das contas de cada empresa; propô-los a partir
+  do plano fica para a automação do lançamento (Bloco D).

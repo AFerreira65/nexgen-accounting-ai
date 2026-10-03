@@ -57,6 +57,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<VatCode> VatCodes => Set<VatCode>();
 
+    public DbSet<EntryTemplate> EntryTemplates => Set<EntryTemplate>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -86,6 +88,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new IrcEstimateFilingConfiguration());
         modelBuilder.ApplyConfiguration(new PartyConfiguration());
         modelBuilder.ApplyConfiguration(new VatCodeConfiguration());
+        modelBuilder.ApplyConfiguration(new EntryTemplateConfiguration());
+        modelBuilder.ApplyConfiguration(new EntryTemplateLineConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 
