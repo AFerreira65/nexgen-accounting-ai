@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:tns="https://servicos.portaldasfinancas.gov.pt/drivaWebService/2025"
+            targetNamespace="https://servicos.portaldasfinancas.gov.pt/drivaWebService/2025"
+            elementFormDefault="qualified">
+
+    <!-- Requests / Responses -->
+    <xsd:element name="submeterDeclaracaoRequest" type="tns:submeterDeclaracaoRequestType"/>
+    <xsd:element name="submeterDeclaracaoResponse" type="tns:submeterDeclaracaoResponseType"/>
+    <xsd:element name="consultarDeclaracaoRequest" type="tns:consultarDeclaracaoRequestType"/>
+    <xsd:element name="consultarDeclaracaoResponse" type="tns:consultarDeclaracaoResponseType"/>
+    <xsd:element name="obterComprovativoRequest" type="tns:obterComprovativoRequestType"/>
+    <xsd:element name="obterComprovativoResponse" type="tns:obterComprovativoResponseType"/>
+
+    <xsd:complexType name="submeterDeclaracaoRequestType">
+        <xsd:sequence>
+            <xsd:element name="declaracao" type="tns:DeclaracaoType"/>
+            <xsd:element name="version" type="xsd:string"/>
+            <xsd:element name="aceitaAlertas" type="xsd:boolean" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="submeterDeclaracaoResponseType">
+        <xsd:complexContent>
+            <xsd:extension base="tns:WSResponseType">
+                <xsd:sequence>
+                    <xsd:element name="idDeclaracao" type="xsd:long" minOccurs="0"/>
+                    <xsd:element name="erros" type="tns:ErrorsType" minOccurs="0"/>
+                    <xsd:element name="alertas" type="tns:WarningsType" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="consultarDeclaracaoRequestType">
+        <xsd:sequence>
+            <xsd:element name="nif" type="xsd:long" minOccurs="0"/>
+            <xsd:element name="ano" type="xsd:long"/>
+            <xsd:element name="periodo" type="xsd:long" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="consultarDeclaracaoResponseType">
+        <xsd:complexContent>
+            <xsd:extension base="tns:WSResponseType">
+                <xsd:sequence>
+                    <xsd:element name="resultadosConsulta" type="tns:ResultadoConsultaType" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="obterComprovativoRequestType">
+        <xsd:sequence>
+            <xsd:element name="idDeclaracao" type="xsd:long"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="obterComprovativoResponseType">
+        <xsd:complexContent>
+            <xsd:extension base="tns:WSResponseType">
+                <xsd:sequence>
+                    <xsd:element name="comprovativo" type="xsd:base64Binary" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="WSResponseType">
+        <xsd:sequence>
+            <xsd:element name="codigo" type="xsd:int"/>
+            <xsd:element name="mensagem" minOccurs="0">
+                <xsd:simpleType>
+                    <xsd:restriction base="xsd:string">
+                        <xsd:maxLength value="256"/>
+                    </xsd:restriction>
+                </xsd:simpleType>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <!-- Generic authentication failed exception element -->
+    <xsd:element name="AutenticationException">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="AuthenticationFailed" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="Code" type="xsd:int"/>
+                            <xsd:element name="Message" type="xsd:string"/>
+                            <xsd:element name="NumberOfTriesRemaining" type="xsd:int"/>
+                            <xsd:element name="Actor" type="xsd:string" minOccurs="0"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+
+    <!-- Types -->
+    <xsd:complexType name="ResultadoConsultaType">
+        <xsd:sequence>
+            <xsd:element name="idDeclaracao" type="xsd:long"/>
+            <xsd:element name="periodo" type="xsd:string"/>
+            <xsd:element name="situacao" type="xsd:string"/>
+            <xsd:element name="dataRececao" type="xsd:date"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="ErrorsType">
+        <xsd:sequence>
+            <xsd:element name="erro" type="tns:ErrorType" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="ErrorType">
+        <xsd:sequence>
+            <xsd:element name="campo" type="xsd:string"/>
+            <xsd:element name="mensagem">
+                <xsd:simpleType>
+                    <xsd:restriction base="xsd:string">
+                        <xsd:maxLength value="256"/>
+                    </xsd:restriction>
+                </xsd:simpleType>
+            </xsd:element>
+            <xsd:element name="ligacoes" type="tns:LinksType" minOccurs="0" />
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="LinksType">
+        <xsd:sequence>
+            <xsd:element name="licacao" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="WarningsType">
+        <xsd:sequence>
+            <xsd:element name="alerta" type="tns:WarningType" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="WarningType">
+        <xsd:sequence>
+            <xsd:element name="campo" type="xsd:string"/>
+            <xsd:element name="mensagem">
+                <xsd:simpleType>
+                    <xsd:restriction base="xsd:string">
+                        <xsd:maxLength value="256"/>
+                    </xsd:restriction>
+                </xsd:simpleType>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="DeclaracaoType">
+        <xsd:sequence>
+            <xsd:element name="quadro01" type="tns:RostoQuadro01SectionType"/>
+            <xsd:element name="quadro02" type="tns:RostoQuadro02SectionType"/>
+            <xsd:element name="quadro03" type="tns:RostoQuadro03SectionType"/>
+            <xsd:element name="quadro0405" type="tns:RostoQuadro0405SectionType" minOccurs="0"/>
+            <xsd:element name="quadro06" type="tns:RostoQuadro06SectionType" minOccurs="0"/>
+            <xsd:element name="quadro07" type="tns:RostoQuadro07SectionType"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="RostoQuadro01SectionType">
+        <xsd:sequence>
+            <xsd:element name="f1" type="xsd:long" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="RostoQuadro02SectionType">
+        <xsd:sequence>
+            <xsd:element name="f1" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f3" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f4" type="xsd:boolean" minOccurs="0"/>
+            <xsd:element name="f5" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f6" type="xsd:boolean" minOccurs="0"/>
+            <xsd:element name="f7" type="xsd:boolean" minOccurs="0"/>
+            <xsd:element name="f8" type="xsd:boolean" minOccurs="0"/>
+            <xsd:element name="f9" type="xsd:boolean" minOccurs="0"/>
+            <xsd:element name="f10" type="xsd:boolean" minOccurs="0"/>
+            <xsd:element name="f11" type="xsd:boolean" minOccurs="0"/>
+            <xsd:element name="f12" type="xsd:boolean" minOccurs="0"/>
+            <xsd:element name="f13" type="xsd:boolean" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="RostoQuadro03SectionType">
+        <xsd:sequence>
+            <xsd:element name="f1" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f2" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f3" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f4" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f5" type="xsd:string" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="RostoQuadro0405SectionType">
+        <xsd:sequence>
+            <xsd:element name="f10" type="xsd:long" minOccurs="0"/>
+            <xsd:element name="f11" type="xsd:long" minOccurs="0"/>
+            <xsd:element name="f17" type="xsd:long" minOccurs="0"/>
+            <xsd:element name="f18" type="xsd:long" minOccurs="0"/>
+            <xsd:element name="f19" type="xsd:long" minOccurs="0"/>
+            <xsd:element name="rostoQuadro0405TableItemType" type="tns:RostoQuadro0405TableItemType" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="RostoQuadro0405TableItemType">
+        <xsd:sequence>
+            <xsd:element name="f2" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f3" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f4" type="xsd:long" minOccurs="0"/>
+            <xsd:element name="f5" type="xsd:string" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="RostoQuadro06SectionType">
+        <xsd:sequence>
+            <xsd:element name="rostoQuadro06TableItemType" type="tns:RostoQuadro06TableItemType" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="RostoQuadro06TableItemType">
+        <xsd:sequence>
+            <xsd:element name="f2" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f3" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f4" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="f5" type="xsd:string" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="RostoQuadro07SectionType">
+        <xsd:sequence>
+            <xsd:element name="f1" type="xsd:long" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+</xsd:schema>

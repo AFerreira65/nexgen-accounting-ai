@@ -1,0 +1,1030 @@
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+  xmlns:tns="https://servicos.portaldasfinancas.gov.pt/dpivaws/DeclaracaoPeriodicaIVAWebService"
+  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  name="DeclaracaoPeriodicaIVAWebService"
+  targetNamespace="https://servicos.portaldasfinancas.gov.pt/dpivaws/DeclaracaoPeriodicaIVAWebService">
+  <wsdl:types>
+    <xsd:schema
+      targetNamespace="https://servicos.portaldasfinancas.gov.pt/dpivaws/DeclaracaoPeriodicaIVAWebService">
+
+      <xsd:element name="dashboardIVAAutomaticoRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="1" minOccurs="1" name="nif" type="xsd:long"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="dashboardIVAAutomaticoResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element maxOccurs="1" minOccurs="1" name="codigo" type="xsd:int"/>
+            <xsd:element maxOccurs="1" minOccurs="1" name="mensagem">
+              <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                  <xsd:maxLength value="256"/>
+                </xsd:restriction>
+              </xsd:simpleType>
+            </xsd:element>
+            <xsd:element maxOccurs="1" minOccurs="0" name="ano" type="xsd:int"/>
+            <xsd:element maxOccurs="1" minOccurs="0" name="periodo" type="xsd:string"/>
+            <xsd:element maxOccurs="1" minOccurs="0" name="isPodeSubmeter" type="xsd:boolean"/>
+            <xsd:element maxOccurs="1" minOccurs="0" name="declId" type="xsd:long"/>
+            <xsd:element maxOccurs="1" minOccurs="0" name="faturasPorClassificar" type="tns:resumoFaturas"/>
+            <xsd:element maxOccurs="1" minOccurs="0" name="faturasClassificadas" type="tns:resumoFaturas"/>
+            <xsd:element maxOccurs="1" minOccurs="0" name="faturasEmitidas" type="tns:resumoFaturas"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:complexType name="resumoFaturas">
+        <xsd:sequence>
+          <xsd:element maxOccurs="1" minOccurs="1" name="nFaturas" type="xsd:long"/>
+          <xsd:element maxOccurs="1" minOccurs="1" name="vBaseTributaria" type="xsd:decimal"/>
+          <xsd:element maxOccurs="1" minOccurs="1" name="vTotalImposto" type="xsd:decimal"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:element name="submeterDeclaracaoPeriodicaIVARequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="versaoDeclaracao" minOccurs="1" maxOccurs="1">
+              <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                  <xsd:maxLength value="10"/>
+                </xsd:restriction>
+              </xsd:simpleType>
+            </xsd:element>
+            <xsd:element name="declaracao" type="xsd:base64Binary" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="aceitaAlertas" type="xsd:boolean" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="flexibilizacaoPagamento" type="xsd:boolean" minOccurs="0" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="submeterDeclaracaoPeriodicaIVAResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="codigo" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="mensagem" minOccurs="0" maxOccurs="1">
+              <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                  <xsd:maxLength value="256"/>
+                </xsd:restriction>
+              </xsd:simpleType>
+            </xsd:element>
+            <xsd:element name="dadosSubmissao" type="tns:informacaoSubmissao" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="alertas" type="tns:informacaoAlertas" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="erros" type="tns:informacaoErros" minOccurs="0" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="obterFaturasDedutivelIVARequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="nif" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="ano" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="periodo" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="obterFaturasDedutivelIVAResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="codigo" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="mensagem" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="faturasDedutiveis" minOccurs="0" maxOccurs="1">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="naoClassificadas">
+                    <xsd:complexType>
+                      <xsd:sequence>
+                        <xsd:element name="nrTotal" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="valorTotalTributavel" type="xsd:decimal"
+                          minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="valorTotalIva" type="xsd:decimal" minOccurs="1"
+                          maxOccurs="1"/>
+                        <xsd:element minOccurs="0" maxOccurs="unbounded" name="faturaDedutivel"
+                          type="tns:faturaDedutivel"/>
+                      </xsd:sequence>
+                    </xsd:complexType>
+                  </xsd:element>
+                  <xsd:element name="pessoais">
+                    <xsd:complexType>
+                      <xsd:sequence>
+                        <xsd:element name="nrTotal" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="valorTotalTributavel" type="xsd:decimal"
+                          minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="valorTotalIva" type="xsd:decimal" minOccurs="1"
+                          maxOccurs="1"/>
+                        <xsd:element minOccurs="0" maxOccurs="unbounded" name="faturaDedutivel"
+                          type="tns:faturaDedutivel"/>
+                      </xsd:sequence>
+                    </xsd:complexType>
+                  </xsd:element>
+                  <xsd:element name="profissionaisExistencias">
+                    <xsd:complexType>
+                      <xsd:sequence>
+                        <xsd:element name="nrTotal" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="valorTotalTributavel" type="xsd:decimal"
+                          minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="valorTotalIva" type="xsd:decimal" minOccurs="1"
+                          maxOccurs="1"/>
+                        <xsd:element minOccurs="0" maxOccurs="unbounded" name="faturaDedutivel"
+                          type="tns:faturaDedutivel"/>
+                      </xsd:sequence>
+                    </xsd:complexType>
+                  </xsd:element>
+                  <xsd:element name="profissionaisOutros">
+                    <xsd:complexType>
+                      <xsd:sequence>
+                        <xsd:element name="nrTotal" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="valorTotalTributavel" type="xsd:decimal"
+                          minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="valorTotalIva" type="xsd:decimal" minOccurs="1"
+                          maxOccurs="1"/>
+                        <xsd:element minOccurs="0" maxOccurs="unbounded" name="faturaDedutivel"
+                          type="tns:faturaDedutivel"/>
+                      </xsd:sequence>
+                    </xsd:complexType>
+                  </xsd:element>
+                  <xsd:element name="profissionaisImobilizado">
+                    <xsd:complexType>
+                      <xsd:sequence>
+                        <xsd:element name="nrTotal" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="valorTotalTributavel" type="xsd:decimal"
+                          minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="valorTotalIva" type="xsd:decimal" minOccurs="1"
+                          maxOccurs="1"/>
+                        <xsd:element minOccurs="0" maxOccurs="unbounded" name="faturaDedutivel"
+                          type="tns:faturaDedutivel"/>
+                      </xsd:sequence>
+                    </xsd:complexType>
+                  </xsd:element>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="obterFaturasEmitidasIVARequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="nif" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="ano" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="periodo" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="obterFaturasEmitidasIVAResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="codigo" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="mensagem" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="faturasDedutiveis" minOccurs="0" maxOccurs="1">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element minOccurs="0" maxOccurs="unbounded" name="faturaDedutivel"
+                    type="tns:faturaDedutivel"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:complexType name="faturaDedutivel">
+        <xsd:sequence>
+          <xsd:element name="cAmbito" nillable="true" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="cFim" nillable="true" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="cTipoDocumento" nillable="true" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="dDataDocumento" nillable="true" type="xsd:date" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="iIdClassDoc" nillable="true" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="novoAmbito" nillable="true" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="novoFim" nillable="true" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="temLinhasIsentas" nillable="true" type="xsd:boolean" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalDeduzido" nillable="true" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="vTotalDeduzidoTaxaNormal" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalDeduzidoTaxaIntermedia" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalDeduzidoTaxaReduzida" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalIVA" nillable="true" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="vTotalIVATaxaNormal" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalIVATaxaIntermedia" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalIVATaxaReduzida" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalTributavel" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalTributavelTaxaNormal" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalTributavelTaxaIntermedia" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalTributavelTaxaReduzida" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="vTotalTributavelIsentoIva" nillable="true" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="xNomeAdquirente" nillable="true" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="xNomeEmitente" nillable="true" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="xNumFiscAdquirente" nillable="true" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="xNumFiscEmitente" nillable="true" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="xNumeroDocumento" nillable="true" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="xPercentagem" nillable="true" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:element name="classificarFaturasRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="nif" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="ano" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="periodo" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="faturasDedutiveis" minOccurs="0" maxOccurs="1">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element minOccurs="0" maxOccurs="unbounded" name="faturaDedutivel"
+                    type="tns:faturaDedutivel"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="classificarFaturasResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="codigo" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="mensagem" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="faturasDedutiveis" minOccurs="0" maxOccurs="1">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element minOccurs="0" maxOccurs="unbounded" name="faturaDedutivel"
+                    type="tns:faturaDedutivel"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="validarDeclaracaoPeriodicaIVARequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="versaoDeclaracao" minOccurs="1" maxOccurs="1">
+              <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                  <xsd:maxLength value="10"/>
+                </xsd:restriction>
+              </xsd:simpleType>
+            </xsd:element>
+            <xsd:element name="declaracao" type="xsd:base64Binary" minOccurs="1" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="validarDeclaracaoPeriodicaIVAResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="codigo" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="mensagem" minOccurs="0" maxOccurs="1">
+              <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                  <xsd:maxLength value="256"/>
+                </xsd:restriction>
+              </xsd:simpleType>
+            </xsd:element>
+            <xsd:element name="alertas" type="tns:informacaoAlertas" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="erros" type="tns:informacaoErros" minOccurs="0" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="obterComprovativoIVARequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="idDeclaracao" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="obterComprovativoIVAResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+
+            <xsd:element name="codigo" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+
+            <xsd:element name="mensagem" minOccurs="1" maxOccurs="1">
+              <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                  <xsd:maxLength value="256"/>
+                </xsd:restriction>
+              </xsd:simpleType>
+            </xsd:element>
+
+            <xsd:element name="declaracao" type="xsd:base64Binary" minOccurs="0" maxOccurs="1"/>
+
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="pagamentoIVARequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="idDeclaracao" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+
+            <xsd:element name="montantePagoAnterior" type="xsd:long" minOccurs="0" maxOccurs="1"/>
+
+            <xsd:element name="montantePagar" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+
+            <xsd:element name="metodoPagamento" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="pagamentoIVAResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+
+            <xsd:element name="codigo" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+
+            <xsd:element name="mensagem" minOccurs="1" maxOccurs="1">
+              <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                  <xsd:maxLength value="256"/>
+                </xsd:restriction>
+              </xsd:simpleType>
+            </xsd:element>
+
+            <xsd:element name="dadosPagamento" minOccurs="0" maxOccurs="1">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="referencia" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+
+                  <xsd:element name="importancia" type="xsd:long" minOccurs="0" maxOccurs="1"/>
+
+                  <xsd:element name="dataLimPagamento" type="xsd:date" minOccurs="0" maxOccurs="1"/>
+
+                  <xsd:element name="dataDebito" type="xsd:date" minOccurs="0" maxOccurs="1"/>
+
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="documento" type="xsd:base64Binary" minOccurs="0" maxOccurs="1"/>
+
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="listaDeclaracoesRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="nif" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="ano" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="pageLimit" type="xsd:int" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="pageNumber" type="xsd:int" minOccurs="0" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="listaDeclaracoesResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="codigo" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="mensagem" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="pageInfo" minOccurs="0" maxOccurs="1">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="numberOfElements" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="currentPage" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="totalPages" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="totalResults" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="declaracoes" minOccurs="0" maxOccurs="1">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element minOccurs="0" maxOccurs="unbounded" name="element">
+                    <xsd:complexType>
+                      <xsd:sequence>
+                        <xsd:element name="dataRececao" type="xsd:string" minOccurs="1"
+                          maxOccurs="1"/>
+                        <xsd:element name="declId" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+                        <xsd:element name="numeroDeclaracao" type="xsd:long" minOccurs="1"
+                          maxOccurs="1"/>
+                        <xsd:element name="periodo" type="xsd:string" minOccurs="1"
+                          maxOccurs="1"/>
+                      </xsd:sequence>
+                    </xsd:complexType>
+                  </xsd:element>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="submeterDeclaracaoIVAAutoRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="nif" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="idIvaAuto" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="submeterDeclaracaoIVAAutoResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="codigo" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="mensagem" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="declaracao" minOccurs="0" maxOccurs="1">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="nif" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="sede" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="ano" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="periodo" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="declId" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="dataRececao" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="numeroDeclaracao" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="obterComprovativoProvisorioRequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="idDeclaracao" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="obterComprovativoProvisorioResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="codigo" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="mensagem" minOccurs="1" maxOccurs="1">
+              <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                  <xsd:maxLength value="256"/>
+                </xsd:restriction>
+              </xsd:simpleType>
+            </xsd:element>
+            <xsd:element name="declaracao" type="xsd:base64Binary" minOccurs="0" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="gerarDeclaracaoIVARequest">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="nif" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="gerarDeclaracaoIVAResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="codigo" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="mensagem" minOccurs="1" maxOccurs="1">
+              <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                  <xsd:maxLength value="256"/>
+                </xsd:restriction>
+              </xsd:simpleType>
+            </xsd:element>
+            <xsd:element name="nFaturasClassificar" type="xsd:int" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="idIvaAuto" type="xsd:long" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="declIVAModel" type="tns:resumoDeclIVAModel" minOccurs="0" maxOccurs="1"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:complexType name="resumoDeclIVAModel">
+        <xsd:sequence>
+          <xsd:element name="declId" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="id" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="nif" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="anoDeclaracao" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="periodoDeclaracao" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="localizacaoSede" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="btTaxaReduzida" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="btTaxaIntermedia" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="btTaxaNormal" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaTaxaReduzida" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaTaxaIntermedia" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaTaxaNormal" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelImobilizado" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelExistenciasTaxaReduzida" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelExistenciasTaxaIntermedia" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelExistenciasTaxaNormal" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelOutros" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="excessoAReportarPeriodoAnterior" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaFavorSujPassivoTotal" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaFavorEstadoTotal" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaAEntregar" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaARecuperar" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="anexos" minOccurs="0" maxOccurs="1">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="anexo" minOccurs="0" maxOccurs="2" type="tns:resumoAnexoRModel"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="resumoAnexoRModel">
+        <xsd:sequence>
+          <xsd:element name="id" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="btTaxaReduzida" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="btTaxaIntermedia" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="btTaxaNormal" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaTaxaReduzida" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaTaxaIntermedia" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaTaxaNormal" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelImobilizado" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelExistenciasTaxaReduzida" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelExistenciasTaxaIntermedia" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelExistenciasTaxaNormal" type="xsd:decimal" minOccurs="1"
+            maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelOutros" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaDedutivelTotal" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="btTotal" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaFavorSujPassivoTotal" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ivaFavorEstadoTotal" type="xsd:decimal" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+      </xsd:complexType>
+
+      <xsd:element name="AutenticationException">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="AuthenticationFailed" minOccurs="1" maxOccurs="unbounded">
+              <xsd:complexType>
+                <xsd:sequence>
+                  <xsd:element name="Code" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="Message" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+                  <xsd:element name="NumberOfTriesRemaining" type="xsd:int" minOccurs="1"
+                    maxOccurs="1"/>
+                  <xsd:element name="actor" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+                </xsd:sequence>
+              </xsd:complexType>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:complexType name="informacaoSubmissao">
+        <xsd:sequence>
+          <xsd:element name="data" type="xsd:dateTime" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="ano" type="xsd:short" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="periodo" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="idDeclaracao" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="contribuinte" minOccurs="1" maxOccurs="unbounded">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="actor" minOccurs="1" maxOccurs="1">
+                  <xsd:simpleType>
+                    <xsd:restriction base="xsd:string">
+                      <xsd:maxLength value="40"/>
+                    </xsd:restriction>
+                  </xsd:simpleType>
+                </xsd:element>
+                <xsd:element name="nif" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+              </xsd:sequence>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="informacaoAlertas">
+        <xsd:sequence>
+          <xsd:element name="temMaisAlertas" type="xsd:boolean" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="alerta" type="tns:informacaoErroOuAlerta" minOccurs="1" maxOccurs="unbounded"/>
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="informacaoErros">
+        <xsd:sequence>
+          <xsd:element name="temMaisErros" type="xsd:boolean" minOccurs="1" maxOccurs="1"/>
+          <xsd:element name="erro" type="tns:informacaoErroOuAlerta" minOccurs="1" maxOccurs="unbounded"/>
+        </xsd:sequence>
+      </xsd:complexType>
+      <xsd:complexType name="informacaoErroOuAlerta">
+        <xsd:sequence>
+          <xsd:element name="anexo" minOccurs="0" maxOccurs="1">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:maxLength value="80"/>
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element name="quadro" minOccurs="0" maxOccurs="1">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:maxLength value="80"/>
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element name="tabela" minOccurs="0" maxOccurs="1">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:maxLength value="80"/>
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element name="linha" minOccurs="0" maxOccurs="1">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:maxLength value="80"/>
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element name="campo" minOccurs="0" maxOccurs="1">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:maxLength value="80"/>
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element name="codigo" minOccurs="0" maxOccurs="1">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:maxLength value="20"/>
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+          <xsd:element name="mensagem" minOccurs="1" maxOccurs="1">
+            <xsd:simpleType>
+              <xsd:restriction base="xsd:string">
+                <xsd:maxLength value="256"/>
+              </xsd:restriction>
+            </xsd:simpleType>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:complexType>
+
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="dashboardIVAAutomaticoRequest">
+    <wsdl:part name="Request" element="tns:dashboardIVAAutomaticoRequest"/>
+  </wsdl:message>
+  <wsdl:message name="dashboardIVAAutomaticoResponse">
+    <wsdl:part name="Response" element="tns:dashboardIVAAutomaticoResponse"/>
+  </wsdl:message>
+  <wsdl:message name="dashboardIVAAutomaticoFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="submeterDeclaracaoPeriodicaIVARequest">
+    <wsdl:part element="tns:submeterDeclaracaoPeriodicaIVARequest" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="submeterDeclaracaoPeriodicaIVAResponse">
+    <wsdl:part element="tns:submeterDeclaracaoPeriodicaIVAResponse" name="response"/>
+  </wsdl:message>
+
+  <wsdl:message name="validarDeclaracaoPeriodicaIVARequest">
+    <wsdl:part element="tns:validarDeclaracaoPeriodicaIVARequest" name="parameters"/>
+  </wsdl:message>
+  <wsdl:message name="validarDeclaracaoPeriodicaIVAResponse">
+    <wsdl:part element="tns:validarDeclaracaoPeriodicaIVAResponse" name="response"/>
+  </wsdl:message>
+
+  <wsdl:message name="AutenticationFault">
+    <wsdl:part element="tns:AutenticationException" name="fault"/>
+  </wsdl:message>
+
+  <wsdl:message name="submeterRequestMessage">
+    <wsdl:part name="Request" element="tns:submeterDeclaracaoPeriodicaIVARequest"/>
+  </wsdl:message>
+  <wsdl:message name="submeterResponseMessage">
+    <wsdl:part name="Response" element="tns:submeterDeclaracaoPeriodicaIVAResponse"/>
+  </wsdl:message>
+  <wsdl:message name="submeterFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="validarRequestMessage">
+    <wsdl:part name="Request" element="tns:validarDeclaracaoPeriodicaIVARequest"/>
+  </wsdl:message>
+  <wsdl:message name="validarResponseMessage">
+    <wsdl:part name="Response" element="tns:validarDeclaracaoPeriodicaIVAResponse"/>
+  </wsdl:message>
+  <wsdl:message name="validarFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="obterComprovativoRequestMessage">
+    <wsdl:part name="Request" element="tns:obterComprovativoIVARequest"/>
+  </wsdl:message>
+  <wsdl:message name="obterComprovativoResponseMessage">
+    <wsdl:part name="Response" element="tns:obterComprovativoIVAResponse"/>
+  </wsdl:message>
+  <wsdl:message name="obterComprovativoFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="pagamentoRequestMessage">
+    <wsdl:part name="Request" element="tns:pagamentoIVARequest"/>
+  </wsdl:message>
+  <wsdl:message name="pagamentoResponseMessage">
+    <wsdl:part name="Response" element="tns:pagamentoIVAResponse"/>
+  </wsdl:message>
+  <wsdl:message name="pagamentoFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="listaDeclaracoesRequestMessage">
+    <wsdl:part name="Request" element="tns:listaDeclaracoesRequest"/>
+  </wsdl:message>
+  <wsdl:message name="listaDeclaracoesResponseMessage">
+    <wsdl:part name="Response" element="tns:listaDeclaracoesResponse"/>
+  </wsdl:message>
+  <wsdl:message name="listaDeclaracoesFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="obterFaturasDedutivelIVARequest">
+    <wsdl:part name="Request" element="tns:obterFaturasDedutivelIVARequest"/>
+  </wsdl:message>
+  <wsdl:message name="obterFaturasDedutivelIVAResponse">
+    <wsdl:part name="Response" element="tns:obterFaturasDedutivelIVAResponse"/>
+  </wsdl:message>
+  <wsdl:message name="obterFaturasDedutivelIVAFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="obterFaturasEmitidasIVARequest">
+    <wsdl:part name="Request" element="tns:obterFaturasEmitidasIVARequest"/>
+  </wsdl:message>
+  <wsdl:message name="obterFaturasEmitidasIVAResponse">
+    <wsdl:part name="Response" element="tns:obterFaturasEmitidasIVAResponse"/>
+  </wsdl:message>
+  <wsdl:message name="obterFaturasEmitidasIVAFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="classificarFaturasRequest">
+    <wsdl:part name="Request" element="tns:classificarFaturasRequest"/>
+  </wsdl:message>
+  <wsdl:message name="classificarFaturasResponse">
+    <wsdl:part name="Response" element="tns:classificarFaturasResponse"/>
+  </wsdl:message>
+  <wsdl:message name="classificarFaturasFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="submeterDeclaracaoIVAAutoRequest">
+    <wsdl:part name="Request" element="tns:submeterDeclaracaoIVAAutoRequest"/>
+  </wsdl:message>
+  <wsdl:message name="submeterDeclaracaoIVAAutoResponse">
+    <wsdl:part name="Response" element="tns:submeterDeclaracaoIVAAutoResponse"/>
+  </wsdl:message>
+  <wsdl:message name="submeterDeclaracaoIVAAutoFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="obterComprovativoProvisorioRequest">
+    <wsdl:part name="Request" element="tns:obterComprovativoProvisorioRequest"/>
+  </wsdl:message>
+  <wsdl:message name="obterComprovativoProvisorioResponse">
+    <wsdl:part name="Response" element="tns:obterComprovativoProvisorioResponse"/>
+  </wsdl:message>
+  <wsdl:message name="obterComprovativoProvisorioFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:message name="gerarDeclaracaoIVARequest">
+    <wsdl:part name="Request" element="tns:gerarDeclaracaoIVARequest"/>
+  </wsdl:message>
+  <wsdl:message name="gerarDeclaracaoIVAResponse">
+    <wsdl:part name="Response" element="tns:gerarDeclaracaoIVAResponse"/>
+  </wsdl:message>
+  <wsdl:message name="gerarDeclaracaoIVAFaultMessage">
+    <wsdl:part name="Fault" element="tns:AutenticationException"/>
+  </wsdl:message>
+
+  <wsdl:portType name="DeclaracaoPeriodicaIVAWebService">
+    <wsdl:operation name="dashboardIVAAutomatico">
+      <wsdl:input message="tns:dashboardIVAAutomaticoRequest"/>
+      <wsdl:output message="tns:dashboardIVAAutomaticoResponse"/>
+      <wsdl:fault message="tns:dashboardIVAAutomaticoFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="submeterDeclaracao">
+      <wsdl:input message="tns:submeterRequestMessage"/>
+      <wsdl:output message="tns:submeterResponseMessage"/>
+      <wsdl:fault message="tns:submeterFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="validarDeclaracao">
+      <wsdl:input message="tns:validarRequestMessage"/>
+      <wsdl:output message="tns:validarResponseMessage"/>
+      <wsdl:fault message="tns:validarFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="obterComprovativo">
+      <wsdl:input message="tns:obterComprovativoRequestMessage"/>
+      <wsdl:output message="tns:obterComprovativoResponseMessage"/>
+      <wsdl:fault message="tns:obterComprovativoFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="pagamento">
+      <wsdl:input message="tns:pagamentoRequestMessage"/>
+      <wsdl:output message="tns:pagamentoResponseMessage"/>
+      <wsdl:fault message="tns:pagamentoFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="listaDeclaracoes">
+      <wsdl:input message="tns:listaDeclaracoesRequestMessage"/>
+      <wsdl:output message="tns:listaDeclaracoesResponseMessage"/>
+      <wsdl:fault message="tns:listaDeclaracoesFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="obterFaturasDedutivelIVA">
+      <wsdl:input message="tns:obterFaturasDedutivelIVARequest"/>
+      <wsdl:output message="tns:obterFaturasDedutivelIVAResponse"/>
+      <wsdl:fault message="tns:obterFaturasDedutivelIVAFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="obterFaturasEmitidasIVA">
+      <wsdl:input message="tns:obterFaturasEmitidasIVARequest"/>
+      <wsdl:output message="tns:obterFaturasEmitidasIVAResponse"/>
+      <wsdl:fault message="tns:obterFaturasEmitidasIVAFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="classificarFaturas">
+      <wsdl:input message="tns:classificarFaturasRequest"/>
+      <wsdl:output message="tns:classificarFaturasResponse"/>
+      <wsdl:fault message="tns:classificarFaturasFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="submeterDeclaracaoIVAAuto">
+      <wsdl:input message="tns:submeterDeclaracaoIVAAutoRequest"/>
+      <wsdl:output message="tns:submeterDeclaracaoIVAAutoResponse"/>
+      <wsdl:fault message="tns:submeterDeclaracaoIVAAutoFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="obterComprovativoProvisorio">
+      <wsdl:input message="tns:obterComprovativoProvisorioRequest"/>
+      <wsdl:output message="tns:obterComprovativoProvisorioResponse"/>
+      <wsdl:fault message="tns:obterComprovativoProvisorioFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+    <wsdl:operation name="gerarDeclaracaoIVA">
+      <wsdl:input message="tns:gerarDeclaracaoIVARequest"/>
+      <wsdl:output message="tns:gerarDeclaracaoIVAResponse"/>
+      <wsdl:fault message="tns:gerarDeclaracaoIVAFaultMessage" name="AutenticationFault"/>
+    </wsdl:operation>
+  </wsdl:portType>
+
+  <wsdl:binding name="DeclaracaoPeriodicaIVAWebServicePortBinding" type="tns:DeclaracaoPeriodicaIVAWebService">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="dashboardIVAAutomatico">
+      <soap:operation soapAction="tns:dashboardIVAAutomatico"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="submeterDeclaracao">
+      <soap:operation soapAction="tns:submeterDeclaracao"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="validarDeclaracao">
+      <soap:operation soapAction="tns:validarDeclaracao"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="obterComprovativo">
+      <soap:operation soapAction="tns:obterComprovativo"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="pagamento">
+      <soap:operation soapAction="tns:pagamento"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="listaDeclaracoes">
+      <soap:operation soapAction="tns:listaDeclaracoes"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="obterFaturasDedutivelIVA">
+      <soap:operation soapAction="tns:obterFaturasDedutivelIVA"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="obterFaturasEmitidasIVA">
+      <soap:operation soapAction="tns:obterFaturasEmitidasIVA"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="classificarFaturas">
+      <soap:operation soapAction="tns:classificarFaturas"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="submeterDeclaracaoIVAAuto">
+      <soap:operation soapAction="tns:submeterDeclaracaoIVAAuto"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="obterComprovativoProvisorio">
+      <soap:operation soapAction="tns:obterComprovativoProvisorio"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="gerarDeclaracaoIVA">
+      <soap:operation soapAction="tns:gerarDeclaracaoIVA"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="AutenticationFault">
+        <soap:fault name="AutenticationFault" use="literal"/>
+      </wsdl:fault>
+    </wsdl:operation>
+
+  </wsdl:binding>
+  <wsdl:service name="DeclaracaoPeriodicaIVAWebService">
+    <wsdl:port binding="tns:DeclaracaoPeriodicaIVAWebServicePortBinding"
+      name="DeclaracaoPeriodicaIVAWebServicePort">
+      <soap:address
+        location="https://servicos.portaldasfinancas.gov.pt/dpivaws/DeclaracaoPeriodicaIVAWebService/"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

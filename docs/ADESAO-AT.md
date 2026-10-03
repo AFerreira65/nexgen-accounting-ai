@@ -10,11 +10,24 @@ Quem faz o quê: os passos 1, 2, 4 e 6 são feitos pelo titular no Portal das
 Finanças e por email; o passo 3 (gerar a chave) faz-se nesta máquina; o resto
 é desenvolvimento.
 
+## Estado (2026-10-03)
+
+- Produtor: RumaoAlgarismo - Unipessoal, Lda., NIF 518104486.
+- Pedido do certificado de testes e da chave pública **enviado** por email a
+  `asi-cd@at.gov.pt` — a aguardar resposta.
+- Subutilizador de testes criado: `518104486/2`.
+- O formulário «Aderir ao serviço» pede só NIF, email, CSR e a aceitação do
+  contrato — não pede número de certificado de programa de faturação. A
+  adesão (produção) fica para depois dos testes.
+- A página «Testar Webservice» lista os serviços de IRC, IVA, IES, Imposto do
+  Selo, obrigações acessórias e recapitulativa; os WSDL e manuais estão em
+  [`at-wsdl/`](at-wsdl/README.md).
+
 ## Passo 1 — Decidir quem é o produtor
 
 O produtor é a entidade (NIF) que assina o pedido e fica titular do
-certificado. Pode ser a empresa ou o próprio em nome individual. Tudo o que se
-segue usa esse NIF.
+certificado. Decidido em 2026-10-03: **RumaoAlgarismo - Unipessoal, Lda.,
+NIF 518104486**. Tudo o que se segue usa esse NIF.
 
 ## Passo 2 — Pedir os elementos de testes (email)
 
@@ -27,11 +40,11 @@ deve dizê-lo e pedir a confirmação de elegibilidade. Rascunho:
 > **Para:** asi-cd@at.gov.pt
 >
 > **Assunto:** Obtenção do certificado SSL para testes e chave pública do
-> sistema de Autenticação – NIF `<NIF do produtor>`
+> sistema de Autenticação – NIF 518104486
 >
 > Exmos. Senhores,
 >
-> O Produtor de Software `<nome do produtor>` (NIF `<NIF>`) vem por este meio
+> O Produtor de Software RumaoAlgarismo - Unipessoal, Lda. (NIF 518104486) vem por este meio
 > solicitar o envio dos seguintes elementos para desenvolvimento e testes de
 > comunicação por webservice:
 >
@@ -63,7 +76,7 @@ deve dizê-lo e pedir a confirmação de elegibilidade. Rascunho:
 > Aguardamos a vossa resposta.
 >
 > Com os melhores cumprimentos,
-> `<nome, função, contacto>`
+> António Ferreira — RumaoAlgarismo - Unipessoal, Lda.
 
 ## Passo 3 — Gerar a chave e o pedido de certificado (CSR)
 
@@ -71,7 +84,7 @@ A chave privada gera-se nesta máquina e nunca sai dela. Os campos não podem
 ter acentos nem cedilhas. Exemplo do manual, a adaptar:
 
 ```bash
-openssl req -new -subj "/C=PT/ST=<Distrito da sede>/L=<Local da sede>/O=<Designacao legal>/OU=<Departamento>/CN=<NIF>/emailAddress=<email de contacto>" -newkey rsa:4096 -nodes -out <NIF>.csr -keyout <NIF>.key
+openssl req -new -subj "/C=PT/ST=<Distrito da sede>/L=<Local da sede>/O=<Designacao legal>/OU=<Departamento>/CN=518104486/emailAddress=<email de contacto>" -newkey rsa:4096 -nodes -out 518104486.csr -keyout 518104486.key
 ```
 
 - `CN` é o NIF do produtor (9 caracteres).

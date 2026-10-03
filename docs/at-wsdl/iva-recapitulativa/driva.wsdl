@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+                  xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
+                  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                  xmlns:tns="https://servicos.portaldasfinancas.gov.pt/drivaWebService/2025"
+                  targetNamespace="https://servicos.portaldasfinancas.gov.pt/drivaWebService/2025"
+                  name="DrivaWebService">
+
+    <!-- Import definitions from XSD -->
+    <wsdl:types>
+        <xsd:schema>
+            <xsd:import namespace="https://servicos.portaldasfinancas.gov.pt/drivaWebService/2025" schemaLocation="driva-ws.xsd"/>
+        </xsd:schema>
+    </wsdl:types>
+
+    <!-- Messages: Define request and response messages -->
+    <wsdl:message name="submeterDeclaracaoRequest">
+        <wsdl:part name="parameters" element="tns:submeterDeclaracaoRequest"/>
+    </wsdl:message>
+
+    <wsdl:message name="submeterDeclaracaoResponse">
+        <wsdl:part name="parameters" element="tns:submeterDeclaracaoResponse"/>
+    </wsdl:message>
+
+    <wsdl:message name="consultarDeclaracaoRequest">
+        <wsdl:part name="parameters" element="tns:consultarDeclaracaoRequest"/>
+    </wsdl:message>
+
+    <wsdl:message name="consultarDeclaracaoResponse">
+        <wsdl:part name="parameters" element="tns:consultarDeclaracaoResponse"/>
+    </wsdl:message>
+
+    <wsdl:message name="obterComprovativoRequest">
+        <wsdl:part name="parameters" element="tns:obterComprovativoRequest"/>
+    </wsdl:message>
+
+    <wsdl:message name="obterComprovativoResponse">
+        <wsdl:part name="parameters" element="tns:obterComprovativoResponse"/>
+    </wsdl:message>
+
+    <wsdl:message name="AutenticationFault">
+        <wsdl:part name="fault" element="tns:AutenticationException" />
+    </wsdl:message>
+
+    <!-- PortType: Define operation and service -->
+    <wsdl:portType name="DrivaWebServicePortType">
+        <wsdl:operation name="submeterDeclaracao">
+            <wsdl:input message="tns:submeterDeclaracaoRequest"/>
+            <wsdl:output message="tns:submeterDeclaracaoResponse"/>
+            <wsdl:fault message="tns:AutenticationFault" name="AutenticationFault"/>
+        </wsdl:operation>
+
+        <wsdl:operation name="consultarDeclaracao">
+            <wsdl:input message="tns:consultarDeclaracaoRequest"/>
+            <wsdl:output message="tns:consultarDeclaracaoResponse"/>
+            <wsdl:fault message="tns:AutenticationFault" name="AutenticationFault"/>
+        </wsdl:operation>
+
+        <wsdl:operation name="obterComprovativo">
+            <wsdl:input message="tns:obterComprovativoRequest"/>
+            <wsdl:output message="tns:obterComprovativoResponse"/>
+            <wsdl:fault message="tns:AutenticationFault" name="AutenticationFault"/>
+        </wsdl:operation>
+    </wsdl:portType>
+
+    <!-- Binding: specify the transport protocol (SOAP 1.2) -->
+    <wsdl:binding name="DrivaWebServiceSoap12Binding" type="tns:DrivaWebServicePortType">
+        <soap12:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="submeterDeclaracao">
+            <soap12:operation soapAction="submeterDeclaracao" style="document"/>
+            <wsdl:input>
+                <soap12:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap12:body use="literal"/>
+            </wsdl:output>
+            <wsdl:fault name="AutenticationFault">
+                <soap12:fault name="AutenticationFault" use="literal"/>
+            </wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="consultarDeclaracao">
+            <soap12:operation soapAction="consultarDeclaracao" style="document"/>
+            <wsdl:input>
+                <soap12:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap12:body use="literal"/>
+            </wsdl:output>
+            <wsdl:fault name="AutenticationFault">
+                <soap12:fault name="AutenticationFault" use="literal"/>
+            </wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="obterComprovativo">
+            <soap12:operation soapAction="obterComprovativo" style="document"/>
+            <wsdl:input>
+                <soap12:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap12:body use="literal"/>
+            </wsdl:output>
+            <wsdl:fault name="AutenticationFault">
+                <soap12:fault name="AutenticationFault" use="literal"/>
+            </wsdl:fault>
+        </wsdl:operation>
+    </wsdl:binding>
+
+    <!-- Service: Define the endpoint where the service is available -->
+    <wsdl:service name="DrivaWebService">
+        <wsdl:port name="DrivaWebServicePort" binding="tns:DrivaWebServiceSoap12Binding">
+            <soap12:address location="https://servicos.portaldasfinancas.gov.pt:426/driva/ws"/>
+        </wsdl:port>
+    </wsdl:service>
+
+</wsdl:definitions>

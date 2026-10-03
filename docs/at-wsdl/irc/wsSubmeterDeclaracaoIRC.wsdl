@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<wsdl:definitions 
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:tns="https://servicos.portaldasfinancas.gov.pt/dm22ircws/SubmeterDeclaracaoIRCService/2020"
+	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xmime="http://www.w3.org/2005/05/xmlmime"
+	name="SubmeterDeclaracaoIRCService"
+	targetNamespace="https://servicos.portaldasfinancas.gov.pt/dm22ircws/SubmeterDeclaracaoIRCService/2020">
+	
+	<!-- schema -->
+	
+	<wsdl:types>
+		<xsd:schema targetNamespace="https://servicos.portaldasfinancas.gov.pt/dm22ircws/SubmeterDeclaracaoIRCService/2020">
+		
+			<xsd:element name="submeterDeclaracaoIRCRequest">
+				<xsd:complexType>
+					<xsd:sequence>
+						<!-- Exemplo: 2222, 2223, etc. -->
+						<xsd:element name="versaoDeclaracao" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+						<xsd:element name="declaracao" type="xsd:base64Binary" xmime:contentType="application/octet-stream" minOccurs="1" maxOccurs="1"/>
+						<xsd:element name="aceitaAlertas" type="xsd:boolean" minOccurs="0" maxOccurs="1"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+
+			<xsd:element name="submeterDeclaracaoIRCResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="codigo" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+						<xsd:element name="mensagem" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+						<xsd:element name="dadosSubmissao" type="tns:informacaoSubmissao" minOccurs="0" maxOccurs="1"/>
+						<xsd:element name="alertas" type="tns:informacaoAlertas" minOccurs="0" maxOccurs="1"/>
+						<xsd:element name="erros" type="tns:informacaoErros" minOccurs="0" maxOccurs="1"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		
+			<xsd:element name="validarDeclaracaoIRCRequest">
+				<xsd:complexType>
+					<xsd:sequence>
+						<!-- Exemplo: 2222, 2223, etc. -->
+						<xsd:element name="versaoDeclaracao" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+						<xsd:element name="declaracao" type="xsd:base64Binary" xmime:contentType="application/octet-stream" minOccurs="1" maxOccurs="1"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+
+			<xsd:element name="validarDeclaracaoIRCResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="codigo" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+						<xsd:element name="mensagem" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+						<xsd:element name="alertas" type="tns:informacaoAlertas" minOccurs="0" maxOccurs="1"/>
+						<xsd:element name="erros" type="tns:informacaoErros" minOccurs="0" maxOccurs="1"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			
+			<xsd:element name="AutenticationException">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="AuthenticationFailed" minOccurs="1" maxOccurs="unbounded">
+							<xsd:complexType>
+								<xsd:sequence>
+									<xsd:element name="Code" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+									<xsd:element name="Message" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+									<xsd:element name="NumberOfTriesRemaining" type="xsd:int" minOccurs="1" maxOccurs="1"/>
+									<xsd:element name="Actor" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+								</xsd:sequence>
+							</xsd:complexType>
+						</xsd:element>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+
+			<!-- complementary types -->
+			
+			<xsd:complexType name="informacaoSubmissao">
+				<xsd:sequence>
+					<xsd:element name="data" type="xsd:dateTime" minOccurs="1" maxOccurs="1"/>
+					<xsd:element name="ano" type="xsd:short" minOccurs="1" maxOccurs="1"/>
+					<xsd:element name="idDeclaracao" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+					<xsd:element name="contribuinte" minOccurs="1" maxOccurs="unbounded">
+						<xsd:complexType>
+							<xsd:sequence>
+								<!-- Exemplos: http://at.pt/actor/SPA, http://at.pt/actor/TOC, etc. -->
+								<xsd:element name="Actor" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+								<xsd:element name="nif" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+							</xsd:sequence>
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="dadosPagamento" minOccurs="0" maxOccurs="1">
+						<xsd:complexType>
+							<xsd:sequence>
+							    <!-- Exemplo: 164735000002962 -->
+								<xsd:element name="referencia" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+								<!-- Valor descrito em centimos. Exemplo: 289403 que se le e 2.894,03 -->
+								<xsd:element name="importancia" type="xsd:long" minOccurs="1" maxOccurs="1"/>
+							</xsd:sequence>
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:sequence>
+			</xsd:complexType>
+						
+			<xsd:complexType name="informacaoAlertas">
+				<xsd:sequence>
+					<xsd:element name="temMaisAlertas" type="xsd:boolean" minOccurs="1" maxOccurs="1"/>
+					<xsd:element name="alerta" type="tns:informacaoErroOuAlerta" minOccurs="1" maxOccurs="unbounded"/>
+				</xsd:sequence>							
+			</xsd:complexType>
+			
+			<xsd:complexType name="informacaoErros">
+				<xsd:sequence>
+					<xsd:element name="temMaisErros" type="xsd:boolean" minOccurs="1" maxOccurs="1"/>
+					<xsd:element name="erro" type="tns:informacaoErroOuAlerta" minOccurs="1" maxOccurs="unbounded"/>
+				</xsd:sequence>			
+			</xsd:complexType>
+			
+			<xsd:complexType name="informacaoErroOuAlerta">
+				<xsd:sequence>
+					<xsd:element name="anexo" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+					<xsd:element name="quadro" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+					<xsd:element name="tabela" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+					<xsd:element name="linha" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+					<xsd:element name="campo" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+					<xsd:element name="codigo" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+					<xsd:element name="mensagem" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			
+		</xsd:schema>
+	</wsdl:types>
+	
+	<!-- wsdl -->
+	
+	<wsdl:message name="submeterDeclaracaoIRCRequest">
+		<wsdl:part element="tns:submeterDeclaracaoIRCRequest" name="parameters" />
+	</wsdl:message>
+	
+	<wsdl:message name="submeterDeclaracaoIRCResponse">
+		<wsdl:part element="tns:submeterDeclaracaoIRCResponse" name="response" />
+	</wsdl:message>
+	
+	<wsdl:message name="validarDeclaracaoIRCRequest">
+		<wsdl:part element="tns:validarDeclaracaoIRCRequest" name="parameters" />
+	</wsdl:message>
+	
+	<wsdl:message name="validarDeclaracaoIRCResponse">
+		<wsdl:part element="tns:validarDeclaracaoIRCResponse" name="response" />
+	</wsdl:message>
+	
+	<wsdl:message name="AutenticationFault">
+		<wsdl:part element="tns:AutenticationException" name="fault" />
+	</wsdl:message>
+	
+	<wsdl:portType name="SubmeterDeclaracaoIRC">
+		<wsdl:operation name="submeterDeclaracao">
+			<wsdl:input message="tns:submeterDeclaracaoIRCRequest" />
+			<wsdl:output message="tns:submeterDeclaracaoIRCResponse" />
+			<wsdl:fault message="tns:AutenticationFault" name="AutenticationFault"/>
+		</wsdl:operation>
+		
+		<wsdl:operation name="validarDeclaracao">
+			<wsdl:input message="tns:validarDeclaracaoIRCRequest" />
+			<wsdl:output message="tns:validarDeclaracaoIRCResponse" />
+			<wsdl:fault message="tns:AutenticationFault" name="AutenticationFault"/>
+		</wsdl:operation>
+	</wsdl:portType>
+	
+	<wsdl:binding name="SubmeterDeclaracaoIRCPortBinding" type="tns:SubmeterDeclaracaoIRC">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+		<wsdl:operation name="submeterDeclaracao">
+			<soap:operation	soapAction="tns:submeterDeclaracao" />
+			<wsdl:input>
+				<soap:body use="literal" />
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" />
+			</wsdl:output>
+			<wsdl:fault name="AutenticationFault">
+				<soap:fault name="AutenticationFault" use="literal" />
+			</wsdl:fault>
+		</wsdl:operation>
+		<wsdl:operation name="validarDeclaracao">
+			<soap:operation	soapAction="tns:validarDeclaracao" />
+			<wsdl:input>
+				<soap:body use="literal" />
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" />
+			</wsdl:output>
+			<wsdl:fault name="AutenticationFault">
+				<soap:fault name="AutenticationFault" use="literal" />
+			</wsdl:fault>
+		</wsdl:operation>
+	</wsdl:binding>
+	
+	<wsdl:service name="SubmeterDeclaracaoIRCService">
+		<wsdl:port binding="tns:SubmeterDeclaracaoIRCPortBinding" name="SubmeterDeclaracaoIRCPort">
+			<soap:address location="https://servicos.portaldasfinancas.gov.pt/dm22ircws/SubmeterDeclaracaoIRCService/" />
+		</wsdl:port>
+	</wsdl:service>
+	
+</wsdl:definitions>

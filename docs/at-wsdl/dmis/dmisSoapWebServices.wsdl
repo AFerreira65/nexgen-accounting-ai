@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:tns="http://servicos.portaldasfinancas.gov.pt/dmis/dmisService"
+	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="DmisServiceImplService"
+	targetNamespace="http://servicos.portaldasfinancas.gov.pt/dmis/dmisService">
+	<wsdl:types>
+	<xsd:schema>
+		<xsd:import
+			namespace="http://servicos.portaldasfinancas.gov.pt/dmis/dmisService"
+			schemaLocation="dmisSchemaTypes.xsd" />
+	</xsd:schema>
+	</wsdl:types>
+	<wsdl:message name="DmisSubmissionRequest">
+		<wsdl:part element="tns:DmisWsSubmissionRequest" name="parameters" />
+	</wsdl:message>
+	<wsdl:message name="DmisSubmissionResponse">
+		<wsdl:part element="tns:DmisWsSubmissionResponse"
+			name="parameters" />
+	</wsdl:message>
+	<wsdl:portType name="DmisService">
+		<wsdl:operation name="DmisSubmission">
+			<wsdl:input message="tns:DmisSubmissionRequest" />
+			<wsdl:output message="tns:DmisSubmissionResponse" />
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:binding name="DmisServicePortBinding"
+		type="tns:DmisService">
+		<soap:binding style="document"
+			transport="http://schemas.xmlsoap.org/soap/http" />
+		<wsdl:operation name="DmisSubmission">
+			<soap:operation
+				soapAction="http://servicos.portaldasfinancas.gov.pt/dmis/dmisService/DmisSubmission" />
+			<wsdl:input>
+				<soap:body use="literal" />
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" />
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:service name="DmisServiceImplService">
+		<wsdl:port binding="tns:DmisServicePortBinding"
+			name="DmisServicePort">
+			<soap:address location="http://localhost:7001/dmis-webServices/DmisServiceImplService" />
+		</wsdl:port>
+	</wsdl:service>
+</wsdl:definitions>
