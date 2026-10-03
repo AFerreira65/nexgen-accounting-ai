@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AppliedTemplate, type EntryTemplateRow, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AppliedTemplate, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -109,6 +109,7 @@ type WorkContextValue = WorkContextData & {
   saveVatReturn: (companyId: string, params: { from: string; to: string }, priorPeriodCredit: number) => Promise<VatReturnFilingView>
   vatReturnHistory: (companyId: string) => Promise<VatReturnFilingSummary[]>
   atCertificateStatus: () => Promise<AtCertificateStatus>
+  fiscalTable: (year: number) => Promise<FiscalTable | null>
   atCredentials: (companyId: string) => Promise<AtCredentials>
   vatClassification: (companyId: string) => Promise<VatClassificationRow[]>
   setVatClassification: (companyId: string, accountCode: string, input: { rate: string; nature: string; region: string }) => Promise<void>
@@ -860,6 +861,12 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/vat-return/history`)
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as VatReturnFilingSummary[]
+    },
+    fiscalTable: async (year) => {
+      const response = await fetch(`/api/v1/development/fiscal-tables/${year}`)
+      if (response.status === 404) return null
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as FiscalTable
     },
     atCertificateStatus: async () => {
       const response = await fetch('/api/v1/development/at/certificate')

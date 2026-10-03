@@ -523,3 +523,7 @@ html[data-theme='dark'] .template-bar { border-color: #29414a; }
 .party-link p { margin: 0 0 10px; color: #4d5f68; font-size: 11px; line-height: 1.5; }
 .party-link .builder-row { margin: 0; }
 html[data-theme='dark'] .party-link { background: #14262e; border-color: #29414a; }
+
+/* Fonte de cada grupo das tabelas fiscais. */
+.fiscal-source { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 12px 22px 16px; color: #75858c; font-size: 10px; line-height: 1.5; }
+.fiscal-source .badge { flex: 0 0 auto; }

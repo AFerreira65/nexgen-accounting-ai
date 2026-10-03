@@ -748,6 +748,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the fiscal tables screen (requires the database)', () => {
+    window.history.pushState({}, '', '/tabelas-fiscais')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Tabelas fiscais', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('shows the party balances screen (requires the database)', () => {
     window.history.pushState({}, '', '/saldos-terceiros')
     render(<App />)

@@ -1571,6 +1571,10 @@ if (applicationEndpointsAvailable)
             .ConfigureAwait(false);
     });
 
+    // Tabelas fiscais por ano: valores propostos, com a fonte de cada grupo.
+    app.MapGet("/api/v1/development/fiscal-tables/{year:int}", (int year) =>
+        AccountingAI.Application.Fiscal.FiscalTableCatalog.For(year) is { } table ? Results.Ok(table) : Results.NotFound());
+
     app.MapGet("/api/v1/development/at/certificate", (AccountingAI.Application.At.IAtCertificateProvider certificates) =>
         Results.Ok(certificates.Describe()));
 

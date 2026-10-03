@@ -1,5 +1,6 @@
 import { Calculator, Database, Download, Info, Plus, Save, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { euro, formatMovementDate, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingSummary } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
@@ -8,13 +9,16 @@ import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
 
 export function IrcEstimatePage() {
-  const { activeCompany, source, ircEstimate, savedIrcEstimate, saveIrcEstimate, ircEstimateHistory } = useWorkContext()
+  const { activeCompany, source, fiscalTable, ircEstimate, savedIrcEstimate, saveIrcEstimate, ircEstimateHistory } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   usePublishRecord(undefined, undefined)
 
   const { fromDate, setFromDate, toDate, setToDate } = useExerciseDateRange(activeCompany.settings.defaultFiscalYear, activeCompany.companyId)
-  const [taxRatePercent, setTaxRatePercent] = useState('21')
+  const [taxRatePercent, setTaxRatePercent] = useState('')
+  // A taxa proposta vem da tabela fiscal do ano em que o período termina.
+  const lastSuggested = useRef('')
+  const [suggestion, setSuggestion] = useState<{ year: number; general: number; sme: number; threshold: number; official: boolean } | null>(null)
   const [adjustments, setAdjustments] = useState<IrcAdjustment[]>([])
   const [result, setResult] = useState<IrcEstimate | null>(null)
   const [savedAtUtc, setSavedAtUtc] = useState<string | null>(null)
@@ -27,6 +31,26 @@ export function IrcEstimatePage() {
   const taxRate = (Number(taxRatePercent.replace(',', '.')) || 0) / 100
 
   useEffect(() => {
+    const year = Number(toDate.slice(0, 4))
+    if (!onDatabase || !year) { setSuggestion(null); return }
+    let cancelled = false
+    void fiscalTable(year)
+      .then((table) => {
+        if (cancelled) return
+        if (!table) { setSuggestion(null); return }
+        setSuggestion({ year, general: Math.round(table.irc.generalRate * 10000) / 100, sme: Math.round(table.irc.smeRate * 10000) / 100, threshold: table.irc.smeThreshold, official: table.irc.source.status === 'Oficial' && !table.carriedForward })
+        // Só preenche um campo vazio ou ainda com a proposta de outro ano:
+        // nunca substitui a taxa escrita pelo utilizador ou guardada.
+        const proposed = String(Math.round(table.irc.generalRate * 10000) / 100)
+        const previous = lastSuggested.current
+        lastSuggested.current = proposed
+        setTaxRatePercent((current) => (!current.trim() || current === previous ? proposed : current))
+      })
+      .catch(() => { if (!cancelled) setSuggestion(null) })
+    return () => { cancelled = true }
+  }, [fiscalTable, onDatabase, toDate])
+
+  useEffect(() => {
     if (!onDatabase || !fromDate || !toDate) { return }
     const controller = new AbortController()
     setError('')
@@ -34,7 +58,7 @@ export function IrcEstimatePage() {
       .then((view) => {
         if (controller.signal.aborted) return
         if (view.saved) {
-          setTaxRatePercent(String((view.taxRate ?? 0.21) * 100))
+          if (view.taxRate != null) setTaxRatePercent(String(Math.round(view.taxRate * 10000) / 100))
           setAdjustments(view.adjustments)
           setResult(view.estimate)
           setSavedAtUtc(view.savedAtUtc)
@@ -127,7 +151,9 @@ export function IrcEstimatePage() {
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={!result}><Download size={15} /> Exportar CSV</button>
     </div>
 
-    <p className="mr-hint no-print"><Info size={13} /> A taxa sugerida (21%) é apenas um ponto de partida — confirme a taxa aplicável ao regime e à região da empresa antes de usar o resultado.</p>
+    <p className="mr-hint no-print"><Info size={13} /> {suggestion
+      ? <>Taxa geral de IRC em {suggestion.year}: {suggestion.general}%{suggestion.official ? '' : ' (por confirmar no texto legal)'}. Uma PME paga {suggestion.sme}% nos primeiros {euro.format(suggestion.threshold)} de matéria coletável e a taxa geral no excedente — esta estimativa aplica uma só taxa, por isso ajuste-a se for o caso. Ver <Link to="/tabelas-fiscais">Tabelas fiscais</Link>.</>
+      : <>Indique a taxa aplicável ao regime e à região da empresa; não há tabela fiscal para o ano deste período.</>}</p>
 
     {error && <p className="save-status error">{error}</p>}
     {status && !error && <p className="save-status success">{status}</p>}

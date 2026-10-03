@@ -1447,6 +1447,32 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task FiscalTablesReturnTheYearWithItsSources()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        using var current = await client.GetAsync("/api/v1/development/fiscal-tables/2026").ConfigureAwait(false);
+        var payload = await current.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var notCovered = await client.GetAsync("/api/v1/development/fiscal-tables/2020").ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, current.StatusCode);
+        StringAssert.Contains(payload, "\"generalRate\":0.19");
+        StringAssert.Contains(payload, "\"smeThreshold\":50000");
+        StringAssert.Contains(payload, "\"status\":\"Oficial\"");
+        StringAssert.Contains(payload, "\"status\":\"Secundaria\"");
+        Assert.AreEqual(HttpStatusCode.NotFound, notCovered.StatusCode);
+    }
+
+    [TestMethod]
     public async Task PartyLedgerReturnsBalancesAndRejectsUnknownParties()
     {
         if (!OperatingSystem.IsWindows())

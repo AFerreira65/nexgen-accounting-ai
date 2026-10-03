@@ -643,6 +643,20 @@ export type AtCredentials = {
   updatedAtUtc: string | null
 }
 
+export type FiscalSource = { reference: string; status: 'Oficial' | 'Secundaria' }
+
+export type FiscalTable = {
+  year: number
+  carriedForward: boolean
+  irc: { generalRate: number; smeRate: number; smeThreshold: number; source: FiscalSource }
+  stateSurtax: { from: number; to: number | null; rate: number }[]
+  stateSurtaxSource: FiscalSource
+  vat: { region: string; reduced: number; intermediate: number; normal: number; source: FiscalSource }[]
+  autonomousTaxation: { key: string; description: string; rate: number }[]
+  autonomousTaxationSource: FiscalSource
+  disclaimer: string
+}
+
 export type EntryTemplateLineRow = {
   kind: string
   side: string

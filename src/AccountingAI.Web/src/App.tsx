@@ -31,6 +31,7 @@ import { IrcEstimatePage } from './pages/IrcEstimatePage'
 import { PartiesPage } from './pages/PartiesPage'
 import { PartyBalancesByPartyPage, PartyStatementPage } from './pages/PartyLedgerPages'
 import { VatCodesPage } from './pages/VatCodesPage'
+import { FiscalTablesPage } from './pages/FiscalTablesPage'
 import { EntryTemplatesPage } from './pages/EntryTemplatesPage'
 import { RecordProvider } from './app/RecordContext'
 import { AuthGate } from './app/AuthGate'
@@ -71,6 +72,7 @@ export function App() {
             <Route path="/apuramento-iva" element={<VatSettlementPage />} />
             <Route path="/config-iva" element={<VatClassificationPage />} />
             <Route path="/codigos-iva" element={<VatCodesPage />} />
+            <Route path="/tabelas-fiscais" element={<FiscalTablesPage />} />
             <Route path="/estimativa-irc" element={<IrcEstimatePage />} />
             <Route path="/contas-correntes" element={<PartyBalancesPage />} />
             <Route path="/apuramento" element={<YearEndClosingPage />} />

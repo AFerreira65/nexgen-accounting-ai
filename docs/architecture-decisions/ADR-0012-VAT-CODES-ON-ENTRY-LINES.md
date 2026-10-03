@@ -46,8 +46,9 @@ no lançamento.
   sem alterar a leitura do passado: a partir do F3-03B essas alterações ficam
   bloqueadas para códigos com movimento — desativa-se o código e cria-se outro.
 - As percentagens vêm de fontes secundárias (n.º 1 do artigo 18.º do CIVA,
-  2026: Continente 6/13/23, Açores 4/9/16, Madeira 4/12/22). Passam para as
-  tabelas fiscais por ano no F3-04, com a fonte legal confirmada.
+  2026: Continente 6/13/23, Açores 4/9/16, Madeira 4/12/22). Desde o F3-04A vêm
+  da tabela fiscal do ano: as do Continente confirmadas no texto do CIVA, as
+  das regiões autónomas ainda de fonte secundária.
 - A dedutibilidade parcial (ex.: gasóleo a 50%) e o pro rata não cabem neste
   modelo e ficam para a declaração periódica (F3-08).
 

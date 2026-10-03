@@ -1,3 +1,4 @@
+using AccountingAI.Application.Fiscal;
 using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Infrastructure.SqlServer.Persistence;
@@ -25,19 +26,19 @@ public sealed record VatCodeInput(
     bool IsActive = true);
 
 /// <summary>
-/// Os códigos de IVA propostos a uma empresa. As percentagens são as do n.º 1
-/// do artigo 18.º do CIVA em vigor em 2026 por região, tal como indicadas em
-/// fontes secundárias — ficam gravadas em cada código e são editáveis, para a
-/// empresa as corrigir sem esperar por uma versão nova.
+/// Os códigos de IVA propostos a uma empresa. As percentagens vêm da tabela
+/// fiscal do ano (<see cref="FiscalTableCatalog"/>), ficam gravadas em cada
+/// código e são editáveis, para a empresa as corrigir sem esperar por uma
+/// versão nova.
 /// </summary>
 public static class VatCodeDefaults
 {
-    private static readonly Dictionary<VatRegion, (decimal Reduced, decimal Intermediate, decimal Normal)> Percentages = new()
+    private static (decimal Reduced, decimal Intermediate, decimal Normal) PercentagesOf(VatRegion region, int year)
     {
-        [VatRegion.Continente] = (6m, 13m, 23m),
-        [VatRegion.Acores] = (4m, 9m, 16m),
-        [VatRegion.Madeira] = (4m, 12m, 22m),
-    };
+        var table = FiscalTableCatalog.For(Math.Max(year, FiscalTableCatalog.FirstYear))!;
+        var rates = table.Vat.Single(item => item.Region == region.ToString());
+        return (rates.Reduced * 100m, rates.Intermediate * 100m, rates.Normal * 100m);
+    }
 
     private static readonly (string Prefix, string Label, VatOperationNature Nature, bool AllRates)[] Taxed =
     [
@@ -51,9 +52,9 @@ public static class VatCodeDefaults
         ("AUT", "Autoliquidação (outras)", VatOperationNature.AutoliquidacaoOutras, false),
     ];
 
-    public static IReadOnlyList<VatCode> For(Guid companyId, VatRegion region)
+    public static IReadOnlyList<VatCode> For(Guid companyId, VatRegion region, int year)
     {
-        var (reduced, intermediate, normal) = Percentages[region];
+        var (reduced, intermediate, normal) = PercentagesOf(region, year);
         var codes = new List<VatCode>();
 
         foreach (var (prefix, label, nature, allRates) in Taxed)
@@ -180,7 +181,7 @@ public sealed class VatCodeService(AccountingDbContext context)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
         var existingSet = existing.ToHashSet(StringComparer.Ordinal);
-        var missing = VatCodeDefaults.For(companyId, VatCodeDefaults.RegionOf(company.TaxRegion))
+        var missing = VatCodeDefaults.For(companyId, VatCodeDefaults.RegionOf(company.TaxRegion), DateTime.UtcNow.Year)
             .Where(item => !existingSet.Contains(item.Code))
             .ToList();
 

@@ -18,7 +18,7 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | A | **F3-01** | Terceiros | **Concluído** — [`F3-01`](F3-01-PARTIES.md); F3-01A (cadastro), F3-01B (importação do SAF-T e do e-Fatura), F3-01C (saldos e extrato por terceiro) e F3-01D (ligar os terceiros a lançamentos já importados) |
 | A | **F3-02** | Linha de lançamento enriquecida (terceiro, código de IVA, base, documento externo) | **Concluído** — [`F3-02`](F3-02-ENRICHED-ENTRY-LINE.md); épico concluído: F3-02A (terceiro na linha), F3-02B (data do documento) e F3-02C (terceiro na importação de movimentos do SAF-T) |
 | A | **F3-03** | Códigos de IVA e lançamentos-tipo | **Concluído** — [`F3-03`](F3-03-VAT-CODES.md) ([`ADR-0012`](../architecture-decisions/ADR-0012-VAT-CODES-ON-ENTRY-LINES.md)); épico concluído: F3-03A (cadastro de códigos), F3-03B (código na linha), F3-03C (resumo de IVA a ler o código da linha) e F3-03D (lançamentos-tipo) |
-| A | F3-04 | Tabelas fiscais por ano | Por especificar |
+| A | **F3-04** | Tabelas fiscais por ano | **Em curso** — [`F3-04`](F3-04-FISCAL-TABLES.md); F3-04A (catálogo com fontes, consulta, estimativa de IRC e códigos de IVA) feito |
 | A | F3-05 | Contabilidade analítica | Por especificar |
 | B | F3-06 … F3-14 | Saídas sem a AT: SAF-T, demonstrações oficiais, IVA, recapitulativa, Modelo 22, IES, ativos fixos, retenções, dossier fiscal | Por especificar |
 | C | F3-15 … F3-17 | Comunicação com a AT | Depende da adesão — [`../ADESAO-AT.md`](../ADESAO-AT.md) |

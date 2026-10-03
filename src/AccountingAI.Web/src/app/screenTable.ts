@@ -35,6 +35,7 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/compras-efatura': { schema: 'accounting', name: 'EFaturaPurchase' },
   '/cruzamento': { schema: 'accounting', name: 'EFaturaPurchase' },
   '/comunicacao-at': null,
+  '/tabelas-fiscais': null,
   '/organizacao': { schema: 'organization', name: 'Companies' },
   '/definicoes': { schema: 'identity', name: 'UserCompanySettings' },
 }
