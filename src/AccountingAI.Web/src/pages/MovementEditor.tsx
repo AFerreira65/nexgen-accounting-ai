@@ -187,6 +187,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
   const [journalCode, setJournalCode] = useState(movement?.journalId ?? journals[0]?.code ?? '')
   const [entryDate, setEntryDate] = useState(isEdit && movement ? movement.date : today())
   const [documentReference, setDocumentReference] = useState(isEdit && movement ? movement.document : '')
+  const [documentDate, setDocumentDate] = useState(isEdit && movement ? movement.documentDate ?? '' : '')
   const [description, setDescription] = useState(movement?.description ?? '')
   const [notes, setNotes] = useState(movement?.notes ?? '')
   const [reviewed, setReviewed] = useState(isEdit && movement?.status === 'Conferido')
@@ -269,6 +270,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
         documentTypeCode: documentTypeCode || null,
         entryDate,
         documentReference,
+        documentDate: documentDate || null,
         description,
         notes: notes.trim() || null,
         reviewed,
@@ -293,6 +295,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
         <label><span>Diário</span><select data-field-key="journal" ref={register('journal')} value={journalCode} onChange={(event) => setJournalCode(event.target.value)}>{journals.map((journal) => <option key={journal.code} value={journal.code}>{journal.code} · {journal.name}</option>)}</select></label>
         <label><span>Data</span><input data-field-key="date" ref={register('date')} type="date" value={entryDate} onChange={(event) => setEntryDate(event.target.value)} /></label>
         <label><span>Documento</span><input data-field-key="document" ref={register('document')} value={documentReference} onChange={(event) => setDocumentReference(event.target.value)} placeholder="ex.: FT 2026/1" /></label>
+        <label><span>Data do documento <small>(opcional)</small></span><input aria-label="Data do documento" type="date" value={documentDate} onChange={(event) => setDocumentDate(event.target.value)} /></label>
         <label><span>Descrição</span><input data-field-key="description" ref={register('description')} value={description} onChange={(event) => setDescription(event.target.value)} /></label>
         <label className="toggle-field"><input data-field-key="reviewed" ref={register('reviewed')} type="checkbox" checked={reviewed} onChange={(event) => setReviewed(event.target.checked)} /><span><strong>Conferido</strong><small>Caso contrário fica por conferir.</small></span></label>
       </div>

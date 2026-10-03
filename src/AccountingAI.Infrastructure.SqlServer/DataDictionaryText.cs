@@ -189,6 +189,7 @@ internal static class DataDictionaryText
         ["AccountVatClassification.Nature"] = "A natureza da operação de IVA (transmissões internas, prestações de serviços, aquisições intracomunitárias, …).",
         ["AccountVatClassification.Region"] = "A região (Continente / Açores / Madeira).",
 
+        ["JournalEntries.DocumentDate"] = "A data do documento de origem, quando indicada; pode diferir da data do lançamento.",
         ["JournalEntryLines.PartyId"] = "O terceiro (cliente ou fornecedor) a que a linha diz respeito; vazio quando não se aplica.",
 
         ["Parties.CountryCode"] = "O país do contribuinte (código ISO de duas letras; PT por omissão).",

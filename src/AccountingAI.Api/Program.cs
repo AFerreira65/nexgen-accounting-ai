@@ -554,6 +554,7 @@ if (applicationEndpointsAvailable)
             DocumentType = item.DocumentType == null ? null : item.DocumentType.Code,
             DocumentTypeName = item.DocumentType == null ? null : item.DocumentType.Name,
             Document = item.DocumentReference,
+            item.DocumentDate,
             item.Description,
             item.Notes,
             Status = item.Status switch
@@ -734,7 +735,8 @@ if (applicationEndpointsAvailable)
                     lines,
                     cancellationToken,
                     request.DocumentTypeCode,
-                    request.Notes)
+                    request.Notes,
+                    documentDate: request.DocumentDate)
                 .ConfigureAwait(false);
 
             return Results.Ok(ToMovementResponse(movement));
@@ -771,7 +773,7 @@ if (applicationEndpointsAvailable)
             var movement = await posting
                 .ReviseAsync(companyId, reference, request.JournalCode, request.EntryDate,
                     request.DocumentReference, request.Description, request.Reviewed, lines, cancellationToken,
-                    request.DocumentTypeCode, request.Notes)
+                    request.DocumentTypeCode, request.Notes, request.DocumentDate)
                 .ConfigureAwait(false);
             return Results.Ok(ToMovementResponse(movement));
         }
@@ -3162,6 +3164,7 @@ public partial class Program
         DocumentType = movement.DocumentTypeCode,
         DocumentTypeName = movement.DocumentTypeName,
         Document = movement.DocumentReference,
+        movement.DocumentDate,
         movement.Description,
         movement.Notes,
         movement.Status,
@@ -3547,4 +3550,5 @@ public sealed record CreateMovementRequest(
     bool Reviewed,
     List<MovementLineRequest> Lines,
     string? DocumentTypeCode = null,
-    string? Notes = null);
+    string? Notes = null,
+    DateOnly? DocumentDate = null);

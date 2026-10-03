@@ -17,6 +17,17 @@ public sealed class AccountingEntryTests
     }
 
     [TestMethod]
+    public void DocumentDateIsOptionalAndIndependentFromTheEntryDate()
+    {
+        var withDate = new JournalEntry(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "GERAL-2026-00001", new DateOnly(2026, 3, 10),
+            "FT 1/1", "Compra", documentDate: new DateOnly(2026, 2, 27));
+
+        Assert.AreEqual(new DateOnly(2026, 2, 27), withDate.DocumentDate);
+        Assert.IsNull(CreateEntry().DocumentDate);
+    }
+
+    [TestMethod]
     public void LineCanCarryAPartyButNotAnEmptyOne()
     {
         var entry = CreateEntry();

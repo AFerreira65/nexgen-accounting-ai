@@ -15,7 +15,8 @@ public sealed class JournalEntry
         string documentReference,
         string description,
         Guid? documentTypeId = null,
-        string? notes = null)
+        string? notes = null,
+        DateOnly? documentDate = null)
     {
         if (id == Guid.Empty)
         {
@@ -48,6 +49,7 @@ public sealed class JournalEntry
         Reference = reference.Trim().ToUpperInvariant();
         EntryDate = entryDate;
         DocumentReference = documentReference.Trim();
+        DocumentDate = documentDate;
         Description = description.Trim();
         Notes = NormalizeNotes(notes);
         Status = JournalEntryStatus.PendingReview;
@@ -70,6 +72,9 @@ public sealed class JournalEntry
     public DateOnly EntryDate { get; private set; }
 
     public string DocumentReference { get; private set; } = string.Empty;
+
+    /// <summary>A data do documento de origem, quando difere da data do lançamento; `null` se não foi indicada.</summary>
+    public DateOnly? DocumentDate { get; private set; }
 
     public string Description { get; private set; } = string.Empty;
 

@@ -11,7 +11,7 @@ namespace AccountingAI.IntegrationTests;
 public sealed class JournalPostingPartyTests
 {
     [TestMethod]
-    public async Task PostsRevisesAndReviewsLinesWithParty()
+    public async Task PostsRevisesAndReviewsLinesWithPartyAndDocumentDate()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -69,7 +69,9 @@ public sealed class JournalPostingPartyTests
                 [
                     new JournalEntryLineInput("21111", "Cliente", 123m, 0m, " 500 584 095 "),
                     new JournalEntryLineInput("7111", "Venda", 0m, 123m),
-                ]).ConfigureAwait(false);
+                ],
+                documentDate: new DateOnly(2026, 3, 8)).ConfigureAwait(false);
+            Assert.AreEqual(new DateOnly(2026, 3, 8), posted.DocumentDate);
             Assert.AreEqual("500584095", posted.Lines[0].PartyTaxNumber);
             Assert.AreEqual("PT", posted.Lines[0].PartyCountryCode);
             Assert.AreEqual("Cliente A, Lda.", posted.Lines[0].PartyName);
@@ -86,6 +88,7 @@ public sealed class JournalPostingPartyTests
                     new JournalEntryLineInput("21111", "Cliente", 123m, 0m, "b12345678", "es"),
                     new JournalEntryLineInput("7111", "Venda", 0m, 123m),
                 ]).ConfigureAwait(false);
+            Assert.IsNull(revised.DocumentDate, "Corrigir sem data do documento limpa-a.");
             Assert.AreEqual("ES", revised.Lines[0].PartyCountryCode);
             Assert.AreEqual("Cliente B, S.L.", revised.Lines[0].PartyName);
 

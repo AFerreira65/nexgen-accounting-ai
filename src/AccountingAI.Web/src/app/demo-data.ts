@@ -17,6 +17,7 @@ export type Movement = {
   documentType?: string | null
   documentTypeName?: string | null
   document: string
+  documentDate?: string | null
   description: string
   notes?: string | null
   status: 'Conferido' | 'Por conferir' | 'Anulado'

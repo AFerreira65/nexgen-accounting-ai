@@ -64,7 +64,37 @@ trazem, e o que as importações futuras vão usar.
 - Propor o terceiro a partir da subconta 21/22 escolhida — F3-01C.
 - Filtrar movimentos e razão por terceiro — F3-01C.
 
-### F3-02B — Documento externo (a seguir)
+### F3-02B — Data do documento (feito)
 
-Número e data do documento de origem no lançamento, separados da referência
-interna.
+O número do documento de origem já existia (`DocumentReference`, o campo
+«Documento» do editor); faltava a **data do documento**, que pode diferir da
+data do lançamento — uma fatura de fevereiro lançada em março.
+
+- **Domínio:** `JournalEntry.DocumentDate` (opcional), definido na criação.
+- **`accounting.JournalEntries.DocumentDate`** — coluna `date` anulável;
+  migração aditiva `20261003175412_JournalEntryDocumentDate`.
+- **`JournalPostingService`** — `PostAsync` e `ReviseAsync` aceitam
+  `documentDate`; `PostedMovement` devolve-a. Corrigir substitui o lançamento,
+  por isso corrigir sem a indicar limpa-a.
+- **API:** `documentDate` no corpo de `POST`/`PUT .../accounting/movements` e
+  nas leituras de movimentos.
+- **PWA:** campo **«Data do documento»** (opcional) no editor, fora da
+  navegação por Enter; o detalhe do movimento mostra-a junto ao documento de
+  origem.
+
+Sem regra de coerência entre as duas datas: a lei não impede lançar um
+documento com data posterior, e a validação fica para as regras analíticas.
+
+**Validação efetuada**
+
+- `AccountingAI.Domain.Tests`: `DocumentDateIsOptionalAndIndependentFromTheEntryDate`.
+- `AccountingAI.IntegrationTests`: `JournalPostingPartyTests` — lançar com
+  data do documento e corrigir sem ela; `SqlServerMigrationTests` inclui a
+  migração.
+- `AccountingAI.Web`: `tsc`, `eslint` e os 85 testes.
+- **Por verificar em direto:** o campo no editor contra a base real.
+
+### F3-02C — Terceiro e data do documento na importação do SAF-T (a seguir)
+
+Preencher o terceiro (`CustomerID` / `SupplierID`) e a data do documento ao
+importar `GeneralLedgerEntries`.

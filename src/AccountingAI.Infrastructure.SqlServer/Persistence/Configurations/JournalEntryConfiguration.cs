@@ -14,6 +14,7 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
         builder.Property(item => item.Reference).HasMaxLength(48).IsRequired();
         builder.Property(item => item.EntryDate).HasColumnType("date");
         builder.Property(item => item.DocumentReference).HasMaxLength(240).IsRequired();
+        builder.Property(item => item.DocumentDate).HasColumnType("date");
         builder.Property(item => item.Description).HasMaxLength(500).IsRequired();
         builder.Property(item => item.Notes).HasMaxLength(JournalEntry.NotesMaxLength);
         builder.Property(item => item.Status).HasConversion<int>();

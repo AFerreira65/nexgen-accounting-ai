@@ -314,6 +314,9 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateOnly?>("DocumentDate")
+                        .HasColumnType("date");
+
                     b.Property<string>("DocumentReference")
                         .IsRequired()
                         .HasMaxLength(240)

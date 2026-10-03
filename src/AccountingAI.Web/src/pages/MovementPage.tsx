@@ -87,7 +87,7 @@ export function MovementPage() {
     <section className="context-grid" aria-label="Atalhos contextuais">
       <Link className="context-card" to={`/diarios/${movement.journalId}`}><span className="context-icon navy"><Landmark /></span><span><small>Diário</small><strong>{movement.journalName}</strong><em>Abrir diário e movimentos relacionados</em></span><ArrowLeft className="rotate-180" size={17} /></Link>
       <Link className="context-card" to={`/contas/${mainAccount.account}`}><span className="context-icon teal"><BookOpen /></span><span><small>Conta principal</small><strong>{mainAccount.account} · {mainAccount.accountName}</strong><em>Ver razão e saldo da conta</em></span><ArrowLeft className="rotate-180" size={17} /></Link>
-      <Link className="context-card" to="/documentos"><span className="context-icon amber"><FileText /></span><span><small>Documento de origem</small><strong>{movement.document}</strong><em>Abrir documento digitalizado</em></span><ArrowLeft className="rotate-180" size={17} /></Link>
+      <Link className="context-card" to="/documentos"><span className="context-icon amber"><FileText /></span><span><small>Documento de origem</small><strong>{movement.document}{movement.documentDate ? ` · ${formatMovementDate(movement.documentDate)}` : ''}</strong><em>Abrir documento digitalizado</em></span><ArrowLeft className="rotate-180" size={17} /></Link>
     </section>
 
     <section className="panel">

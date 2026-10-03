@@ -39,7 +39,8 @@ public sealed record PostedMovement(
     string Status,
     EntrySource Source,
     decimal Amount,
-    IReadOnlyList<PostedMovementLine> Lines);
+    IReadOnlyList<PostedMovementLine> Lines,
+    DateOnly? DocumentDate = null);
 
 /// <summary>
 /// Cria e mantém lançamentos contabilísticos de uma empresa: valida o diário e as
@@ -61,7 +62,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
         CancellationToken cancellationToken = default,
         string? documentTypeCode = null,
         string? notes = null,
-        EntrySource source = EntrySource.Manual)
+        EntrySource source = EntrySource.Manual,
+        DateOnly? documentDate = null)
     {
         RequireLines(lines);
         PostedMovement? result = null;
@@ -76,7 +78,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             var reference = await NextReferenceAsync(companyId, prefix, entryDate.Year, cancellationToken).ConfigureAwait(false);
 
             var entry = new JournalEntry(
-                Guid.NewGuid(), companyId, journal.Id, reference, entryDate, documentReference, description, documentType?.Id, notes);
+                Guid.NewGuid(), companyId, journal.Id, reference, entryDate, documentReference, description, documentType?.Id, notes, documentDate);
             entry.SetSource(source);
             foreach (var line in lines)
             {
@@ -105,7 +107,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
         IReadOnlyList<JournalEntryLineInput> lines,
         CancellationToken cancellationToken = default,
         string? documentTypeCode = null,
-        string? notes = null)
+        string? notes = null,
+        DateOnly? documentDate = null)
     {
         RequireLines(lines);
         var normalizedReference = Normalize(reference);
@@ -139,7 +142,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             var entry = new JournalEntry(
-                Guid.NewGuid(), companyId, journal.Id, normalizedReference, entryDate, documentReference, description, documentType?.Id, notes);
+                Guid.NewGuid(), companyId, journal.Id, normalizedReference, entryDate, documentReference, description, documentType?.Id, notes, documentDate);
             entry.SetSource(originalSource);
             foreach (var line in lines)
             {
@@ -457,7 +460,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
                         account.Code, account.Name, line.Description, line.Debit, line.Credit,
                         party?.CountryCode, party?.TaxRegistrationNumber, party?.Name);
                 })
-                .ToList());
+                .ToList(),
+            entry.DocumentDate);
     }
 
     /// <summary>A chave (país, contribuinte) do terceiro de uma linha, ou <c>null</c> se a linha não tem terceiro.</summary>
