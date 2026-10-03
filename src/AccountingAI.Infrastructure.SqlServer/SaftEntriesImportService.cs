@@ -47,6 +47,8 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
         var imported = 0;
         var journalsCreated = new List<string>();
         var skipped = new List<SaftEntrySkipped>();
+        var linesWithParty = 0;
+        var transactionsWithUnknownParty = 0;
 
         var strategy = context.Database.CreateExecutionStrategy();
         await strategy.ExecuteAsync(async () =>
@@ -55,6 +57,8 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
             imported = 0;
             journalsCreated.Clear();
             skipped.Clear();
+            linesWithParty = 0;
+            transactionsWithUnknownParty = 0;
 
             await using var transaction = await context.Database
                 .BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
@@ -70,6 +74,17 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
             var seenReferences = await SeenReferencesAsync(companyId, cancellationToken).ConfigureAwait(false);
             var lockDate = await LockDateAsync(companyId, cancellationToken).ConfigureAwait(false);
             var closedYears = await ClosedYearsAsync(companyId, cancellationToken).ConfigureAwait(false);
+            var partyIds = (await context.Parties
+                    .AsNoTracking()
+                    .Where(party => party.CompanyId == companyId)
+                    .Select(party => new { party.Id, party.CountryCode, party.TaxRegistrationNumber })
+                    .ToListAsync(cancellationToken)
+                    .ConfigureAwait(false))
+                .ToDictionary(party => (party.CountryCode, party.TaxRegistrationNumber), party => party.Id);
+            var fileParties = (read.Parties ?? [])
+                .Where(party => !string.IsNullOrWhiteSpace(party.SourceId))
+                .GroupBy(party => (party.Kind, party.SourceId), FilePartyKeyComparer.Instance)
+                .ToDictionary(group => group.Key, group => group.First(), FilePartyKeyComparer.Instance);
 
             foreach (var fileTransaction in transactions)
             {
@@ -99,14 +114,26 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
                 var entry = new JournalEntry(
                     Guid.NewGuid(), companyId, journal.Id, reference, check.EntryDate, documentReference, description);
                 entry.SetSource(EntrySource.SaftImport);
-                foreach (var line in fileTransaction.Lines)
+                var lineParties = LinePartiesOf(fileTransaction, fileParties, partyIds, out var unknownParty);
+                if (unknownParty)
                 {
+                    transactionsWithUnknownParty++;
+                }
+
+                for (var index = 0; index < fileTransaction.Lines.Count; index++)
+                {
+                    var line = fileTransaction.Lines[index];
                     entry.AddLine(
                         Guid.NewGuid(),
                         accountsByCode[Normalize(line.AccountCode)].Id,
                         FallbackText(line.Description, description),
                         line.Debit,
-                        line.Credit);
+                        line.Credit,
+                        lineParties[index]);
+                    if (lineParties[index] is not null)
+                    {
+                        linesWithParty++;
+                    }
                 }
 
                 entry.Complete(JournalEntryStatus.Reviewed);
@@ -124,7 +151,77 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
         return new SaftEntriesImportResult(
             imported, skipped.Count, journalsCreated, skipped,
             read.DeclaredEntryCount, read.DeclaredTotalDebit, read.DeclaredTotalCredit,
-            periodFrom, periodTo, companyDebit, companyCredit);
+            periodFrom, periodTo, companyDebit, companyCredit,
+            linesWithParty, transactionsWithUnknownParty);
+    }
+
+    /// <summary>
+    /// O terceiro de cada linha de uma transação. O SAF-T indica o cliente e/ou o
+    /// fornecedor ao nível da transação; atribui-se às linhas da conta a que o
+    /// ficheiro liga esse terceiro ou, na falta dela, às linhas das contas 21
+    /// (cliente) ou 22 (fornecedor). Um terceiro que ainda não existe na empresa
+    /// não é criado aqui: a linha fica sem terceiro e a transação é contada.
+    /// </summary>
+    private static Guid?[] LinePartiesOf(
+        SaftTransaction transaction,
+        Dictionary<(SaftPartyKind Kind, string SourceId), SaftParty> fileParties,
+        Dictionary<(string Country, string TaxNumber), Guid> partyIds,
+        out bool unknownParty)
+    {
+        var result = new Guid?[transaction.Lines.Count];
+        unknownParty = false;
+
+        foreach (var (kind, sourceId, prefix) in new[]
+        {
+            (SaftPartyKind.Customer, transaction.CustomerId, "21"),
+            (SaftPartyKind.Supplier, transaction.SupplierId, "22"),
+        })
+        {
+            if (string.IsNullOrWhiteSpace(sourceId))
+            {
+                continue;
+            }
+
+            if (!fileParties.TryGetValue((kind, sourceId), out var fileParty) ||
+                PartyImportService.KeyOf(fileParty) is not { } key ||
+                !partyIds.TryGetValue(key, out var partyId))
+            {
+                // Consumidor final e afins não são terceiros: só conta o que a
+                // importação de terceiros criaria e ainda não existe.
+                unknownParty |= fileParty is not null && PartyImportService.KeyOf(fileParty) is not null;
+                continue;
+            }
+
+            var linked = Enumerable.Range(0, result.Length)
+                .Where(index => result[index] is null && fileParty.AccountId is not null &&
+                    string.Equals(transaction.Lines[index].AccountCode.Trim(), fileParty.AccountId, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (linked.Count == 0)
+            {
+                linked = Enumerable.Range(0, result.Length)
+                    .Where(index => result[index] is null &&
+                        transaction.Lines[index].AccountCode.Trim().StartsWith(prefix, StringComparison.Ordinal))
+                    .ToList();
+            }
+
+            foreach (var index in linked)
+            {
+                result[index] = partyId;
+            }
+        }
+
+        return result;
+    }
+
+    private sealed class FilePartyKeyComparer : IEqualityComparer<(SaftPartyKind Kind, string SourceId)>
+    {
+        public static readonly FilePartyKeyComparer Instance = new();
+
+        public bool Equals((SaftPartyKind Kind, string SourceId) x, (SaftPartyKind Kind, string SourceId) y) =>
+            x.Kind == y.Kind && string.Equals(x.SourceId, y.SourceId, StringComparison.OrdinalIgnoreCase);
+
+        public int GetHashCode((SaftPartyKind Kind, string SourceId) obj) =>
+            HashCode.Combine(obj.Kind, StringComparer.OrdinalIgnoreCase.GetHashCode(obj.SourceId));
     }
 
     /// <summary>

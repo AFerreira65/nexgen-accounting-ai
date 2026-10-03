@@ -205,6 +205,18 @@ public sealed class PartyImportService(ISaftPartiesReader partiesReader, Account
                 .ToList());
     }
 
+    /// <summary>
+    /// A chave (país, contribuinte) com que um cliente ou fornecedor de um SAF-T
+    /// fica como terceiro, pelas mesmas regras da importação; <c>null</c> quando
+    /// a importação o deixaria de fora (consumidor final, NIF inválido, …).
+    /// </summary>
+    public static (string Country, string TaxNumber)? KeyOf(SaftParty party)
+    {
+        ArgumentNullException.ThrowIfNull(party);
+        var candidate = new Candidate(party.Country, party.TaxId, string.IsNullOrWhiteSpace(party.Name) ? "-" : party.Name, false, false, null, null);
+        return TryNormalize(candidate, out var normalized, out _) ? (normalized.Country!, normalized.TaxId) : null;
+    }
+
     private static bool TryNormalize(Candidate candidate, out Candidate normalized, out string reason)
     {
         normalized = candidate;

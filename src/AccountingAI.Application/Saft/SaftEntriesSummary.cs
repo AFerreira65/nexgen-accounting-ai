@@ -54,7 +54,9 @@ public sealed record SaftTransaction(
     DateOnly? Date,
     string Description,
     string DocumentReference,
-    IReadOnlyList<SaftTransactionLine> Lines);
+    IReadOnlyList<SaftTransactionLine> Lines,
+    string? CustomerId = null,
+    string? SupplierId = null);
 
 /// <summary>Uma transação do ficheiro que não foi importada e a razão (em pt-PT).</summary>
 public sealed record SaftEntrySkipped(string TransactionId, string Reason);
@@ -68,7 +70,8 @@ public sealed record SaftTransactions(
     int? DeclaredEntryCount,
     decimal? DeclaredTotalDebit,
     decimal? DeclaredTotalCredit,
-    IReadOnlyList<SaftTransaction> Items);
+    IReadOnlyList<SaftTransaction> Items,
+    IReadOnlyList<SaftParty>? Parties = null);
 
 /// <summary>
 /// Análise (sem escrever) do que aconteceria ao importar os movimentos de um SAF-T
@@ -120,7 +123,9 @@ public sealed record SaftEntriesImportResult(
     DateOnly? FilePeriodFrom,
     DateOnly? FilePeriodTo,
     decimal CompanyPeriodDebit,
-    decimal CompanyPeriodCredit)
+    decimal CompanyPeriodCredit,
+    int LinesWithParty = 0,
+    int TransactionsWithUnknownParty = 0)
 {
     /// <summary>
     /// `true` quando o ficheiro declara totais e a soma dos débitos e créditos da

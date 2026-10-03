@@ -169,6 +169,7 @@ public sealed class SaftEntriesReader : ISaftEntriesReader
         };
 
         var transactions = new List<SaftTransaction>();
+        var parties = new List<SaftParty>();
         int? declaredEntryCount = null;
         decimal? totalDebit = null;
         decimal? totalCredit = null;
@@ -204,6 +205,18 @@ public sealed class SaftEntriesReader : ISaftEntriesReader
                 {
                     case "GeneralLedgerEntries":
                         inEntries = true;
+                        break;
+                    // Os clientes e fornecedores de MasterFiles vêm antes dos movimentos:
+                    // guardam-se para ligar o CustomerID/SupplierID de cada transação a um terceiro.
+                    case "Customer" or "Supplier" when !inEntries && reader.Depth == 2:
+                        var kind = reader.LocalName == "Customer" ? SaftPartyKind.Customer : SaftPartyKind.Supplier;
+                        using (var subtree = reader.ReadSubtree())
+                        {
+                            var element = await XElement
+                                .LoadAsync(subtree, LoadOptions.None, cancellationToken)
+                                .ConfigureAwait(false);
+                            parties.Add(SaftPartiesReader.Build(element, kind));
+                        }
                         break;
                     case "NumberOfEntries" when inEntries:
                         declaredEntryCount = ParseInt(await reader.ReadElementContentAsStringAsync().ConfigureAwait(false));
@@ -255,7 +268,7 @@ public sealed class SaftEntriesReader : ISaftEntriesReader
             throw new SaftFileFormatException($"O ficheiro não é um XML SAF-T legível: {exception.Message}");
         }
 
-        return new SaftTransactions(declaredEntryCount, totalDebit, totalCredit, transactions);
+        return new SaftTransactions(declaredEntryCount, totalDebit, totalCredit, transactions, parties);
     }
 
     private static SaftTransaction BuildTransaction(XElement transaction, string journalCode, string journalDescription)
@@ -301,8 +314,12 @@ public sealed class SaftEntriesReader : ISaftEntriesReader
             date,
             description,
             archival.Length > 0 ? archival : transactionId,
-            lines);
+            lines,
+            NullIfBlank(ChildValue(transaction, "CustomerID")),
+            NullIfBlank(ChildValue(transaction, "SupplierID")));
     }
+
+    private static string? NullIfBlank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static string? ChildValue(XElement parent, string localName) =>
         parent.Elements().FirstOrDefault(element => element.Name.LocalName.Equals(localName, StringComparison.OrdinalIgnoreCase))?.Value;

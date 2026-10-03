@@ -948,6 +948,8 @@ export type SaftEntriesImport = {
   companyPeriodDebit: number
   companyPeriodCredit: number
   matchesDeclaredTotals: boolean | null
+  linesWithParty?: number
+  transactionsWithUnknownParty?: number
 }
 
 // Extração do plano geral de contas no cliente, usada apenas no modo de

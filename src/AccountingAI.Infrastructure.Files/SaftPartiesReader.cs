@@ -81,7 +81,7 @@ public sealed class SaftPartiesReader : ISaftPartiesReader
     private static bool Is(XmlReader reader, string name) =>
         reader.LocalName.Equals(name, StringComparison.OrdinalIgnoreCase);
 
-    private static SaftParty Build(XElement element, SaftPartyKind kind)
+    internal static SaftParty Build(XElement element, SaftPartyKind kind)
     {
         static XElement? Child(XElement parent, string name) => parent
             .Elements()

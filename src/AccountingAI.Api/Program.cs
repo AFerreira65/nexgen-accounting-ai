@@ -3053,7 +3053,9 @@ if (applicationEndpointsAvailable)
                 result.FilePeriodTo,
                 result.CompanyPeriodDebit,
                 result.CompanyPeriodCredit,
-                result.MatchesDeclaredTotals
+                result.MatchesDeclaredTotals,
+                result.LinesWithParty,
+                result.TransactionsWithUnknownParty
             });
         }
         catch (Exception exception) when (exception is SaftFileFormatException or ArgumentException or InvalidOperationException)

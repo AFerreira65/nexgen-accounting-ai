@@ -94,7 +94,52 @@ documento com data posterior, e a validação fica para as regras analíticas.
 - `AccountingAI.Web`: `tsc`, `eslint` e os 85 testes.
 - **Por verificar em direto:** o campo no editor contra a base real.
 
-### F3-02C — Terceiro e data do documento na importação do SAF-T (a seguir)
+### F3-02C — Terceiro na importação de movimentos do SAF-T (feito)
 
-Preencher o terceiro (`CustomerID` / `SupplierID`) e a data do documento ao
-importar `GeneralLedgerEntries`.
+O SAF-T indica o cliente e/ou o fornecedor **ao nível da transação**
+(`CustomerID` / `SupplierID`), não da linha. A importação de movimentos passa
+a ligá-lo às linhas certas.
+
+- **Leitor:** `SaftTransaction` ganha `CustomerId` e `SupplierId`, e
+  `ReadTransactionsAsync` recolhe também os `Customer` / `Supplier` de
+  `MasterFiles` (`SaftTransactions.Parties`) na mesma passagem — o corpo do
+  pedido não se pode ler duas vezes.
+- **Do identificador do ficheiro ao terceiro da empresa:** o identificador
+  leva ao registo de `MasterFiles`, e este à chave país + contribuinte pelas
+  **mesmas regras** da importação de terceiros (`PartyImportService.KeyOf`).
+- **A que linhas se atribui:** às linhas da conta a que o ficheiro liga esse
+  terceiro (`AccountID` do registo); na falta delas, às linhas das contas 21
+  (cliente) ou 22 (fornecedor). Sem nenhuma, o lançamento fica sem terceiro.
+- **Não cria terceiros.** Se o terceiro ainda não existe na empresa, a linha
+  fica sem ele e a transação é contada (`TransactionsWithUnknownParty`). O
+  consumidor final e os registos que a importação de terceiros deixaria de
+  fora não contam.
+- **Resultado:** `LinesWithParty` e `TransactionsWithUnknownParty` na resposta
+  de `saft/entries-import`; o ecrã de importação mostra-os, com a indicação de
+  importar os terceiros antes dos movimentos.
+
+**A ordem importa.** Reimportar um ficheiro não altera os lançamentos que já
+existem (a referência já está usada), por isso os terceiros têm de ser
+importados **antes** dos movimentos: plano de contas → terceiros → movimentos.
+Completar os terceiros de lançamentos já importados fica para um incremento
+próprio.
+
+**A data do documento não é preenchida.** No SAF-T, `TransactionDate` é a data
+do movimento (já usada como data do lançamento) e `GLPostingDate` é a data de
+gravação no sistema de origem; nenhuma é a data do documento, e não se inventa.
+
+**Validação efetuada**
+
+- `AccountingAI.Infrastructure.Files.Tests`: `SaftEntriesReaderPartyTests` — a
+  transação traz o cliente ou o fornecedor e os terceiros de `MasterFiles` são
+  recolhidos.
+- `AccountingAI.IntegrationTests`: `SaftEntriesImportPartyTests` — terceiro
+  pela conta do ficheiro, pelo prefixo 21, fornecedor ainda inexistente
+  (contado, sem terceiro), consumidor final (não contado) e transação sem
+  terceiro.
+- O leitor foi corrido contra os dois SAF-T de contabilidade de `SAFTs Exemplo`:
+  em 2024, das 18 300 referências a terceiro, 18 290 ligam pela conta do
+  terceiro, 3 pelo prefixo e 7 não têm linha de terceiros; em 2025, 22 132 de
+  22 308 pela conta, 130 pelo prefixo e 46 sem linha.
+- A suite completa: 215 testes .NET, 87 de interface.
+- **Por verificar em direto:** uma importação real com os terceiros já criados.
