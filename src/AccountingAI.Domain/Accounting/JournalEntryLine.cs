@@ -16,7 +16,8 @@ public sealed class JournalEntryLine
         decimal debit,
         decimal credit,
         Guid? partyId = null,
-        Guid? vatCodeId = null)
+        Guid? vatCodeId = null,
+        Guid? costCenterId = null)
     {
         Id = id;
         CompanyId = companyId;
@@ -28,6 +29,7 @@ public sealed class JournalEntryLine
         Credit = credit;
         PartyId = partyId;
         VatCodeId = vatCodeId;
+        CostCenterId = costCenterId;
     }
 
     public Guid Id { get; private set; }
@@ -52,6 +54,9 @@ public sealed class JournalEntryLine
     /// <summary>O código de IVA da linha, se houver; sem ele vale a classificação da conta.</summary>
     public Guid? VatCodeId { get; private set; }
 
+    /// <summary>O centro de custo da linha, se houver.</summary>
+    public Guid? CostCenterId { get; private set; }
+
     public JournalEntry JournalEntry { get; private set; } = null!;
 
     public LedgerAccount Account { get; private set; } = null!;
@@ -59,4 +64,6 @@ public sealed class JournalEntryLine
     public Party? Party { get; private set; }
 
     public VatCode? VatCode { get; private set; }
+
+    public CostCenter? CostCenter { get; private set; }
 }

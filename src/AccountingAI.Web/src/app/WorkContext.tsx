@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AppliedTemplate, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type AppliedTemplate, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -13,7 +13,7 @@ export type VatCodeInput = { code: string; name: string; rate: string; percentag
 export type PartyListParams = { search: string; role: 'Todos' | 'Clientes' | 'Fornecedores'; includeInactive: boolean; page: number; pageSize: number; accountCode?: string }
 export type PartyEditInput = { name: string; isCustomer: boolean; isSupplier: boolean; customerAccountCode: string | null; supplierAccountCode: string | null; isActive: boolean }
 export type NewPartyInput = PartyEditInput & { countryCode: string; taxRegistrationNumber: string }
-export type MovementLineInput = { accountCode: string; description: string; debit: number; credit: number; partyTaxNumber?: string | null; partyCountryCode?: string | null; vatCode?: string | null }
+export type MovementLineInput = { accountCode: string; description: string; debit: number; credit: number; partyTaxNumber?: string | null; partyCountryCode?: string | null; vatCode?: string | null; costCenter?: string | null }
 export type MovementInput = { journalCode: string; entryDate: string; documentReference: string; documentDate?: string | null; description: string; reviewed: boolean; lines: MovementLineInput[]; documentTypeCode?: string | null; notes?: string | null }
 
 export async function problemMessage(response: Response) {
@@ -110,6 +110,9 @@ type WorkContextValue = WorkContextData & {
   vatReturnHistory: (companyId: string) => Promise<VatReturnFilingSummary[]>
   atCertificateStatus: () => Promise<AtCertificateStatus>
   fiscalTable: (year: number) => Promise<FiscalTable | null>
+  costCenters: (companyId: string, includeInactive: boolean) => Promise<CostCenterRow[]>
+  saveCostCenter: (companyId: string, input: CostCenterRow, isNew: boolean) => Promise<CostCenterRow>
+  analyticReport: (companyId: string, params: { from: string; to: string }) => Promise<AnalyticReport>
   atCredentials: (companyId: string) => Promise<AtCredentials>
   vatClassification: (companyId: string) => Promise<VatClassificationRow[]>
   setVatClassification: (companyId: string, accountCode: string, input: { rate: string; nature: string; region: string }) => Promise<void>
@@ -861,6 +864,29 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/vat-return/history`)
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as VatReturnFilingSummary[]
+    },
+    costCenters: async (companyId, includeInactive) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/cost-centers?includeInactive=${includeInactive}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as CostCenterRow[]
+    },
+    saveCostCenter: async (companyId, input, isNew) => {
+      const base = `/api/v1/development/users/${data.user.id}/companies/${companyId}/cost-centers`
+      const response = await fetch(isNew ? base : `${base}/${encodeURIComponent(input.code)}`, {
+        method: isNew ? 'POST' : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as CostCenterRow
+    },
+    analyticReport: async (companyId, { from, to }) => {
+      const params = new URLSearchParams()
+      if (from) params.set('from', from)
+      if (to) params.set('to', to)
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/cost-centers/report?${params}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as AnalyticReport
     },
     fiscalTable: async (year) => {
       const response = await fetch(`/api/v1/development/fiscal-tables/${year}`)

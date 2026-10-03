@@ -454,6 +454,8 @@ if (applicationEndpointsAvailable)
                 .ThenInclude(item => item.Party)
             .Include(item => item.Lines)
                 .ThenInclude(item => item.VatCode)
+            .Include(item => item.Lines)
+                .ThenInclude(item => item.CostCenter)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(documentType))
@@ -579,7 +581,8 @@ if (applicationEndpointsAvailable)
                     PartyCountryCode = line.Party?.CountryCode,
                     PartyTaxNumber = line.Party?.TaxRegistrationNumber,
                     PartyName = line.Party?.Name,
-                    VatCode = line.VatCode?.Code
+                    VatCode = line.VatCode?.Code,
+                    CostCenter = line.CostCenter?.Code
                 })
         };
     }
@@ -698,6 +701,8 @@ if (applicationEndpointsAvailable)
                 .ThenInclude(item => item.Party)
             .Include(item => item.Lines)
                 .ThenInclude(item => item.VatCode)
+            .Include(item => item.Lines)
+                .ThenInclude(item => item.CostCenter)
             .SingleOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -727,7 +732,8 @@ if (applicationEndpointsAvailable)
                     line.Credit,
                     line.PartyTaxNumber,
                     line.PartyCountryCode,
-                    line.VatCode))
+                    line.VatCode,
+                    line.CostCenter))
                 .ToList();
 
             var movement = await posting
@@ -774,7 +780,7 @@ if (applicationEndpointsAvailable)
         {
             var lines = (request.Lines ?? [])
                 .Select(line => new JournalEntryLineInput(
-                    line.AccountCode, line.Description, line.Debit, line.Credit, line.PartyTaxNumber, line.PartyCountryCode, line.VatCode))
+                    line.AccountCode, line.Description, line.Debit, line.Credit, line.PartyTaxNumber, line.PartyCountryCode, line.VatCode, line.CostCenter))
                 .ToList();
             var movement = await posting
                 .ReviseAsync(companyId, reference, request.JournalCode, request.EntryDate,
@@ -1993,6 +1999,57 @@ if (applicationEndpointsAvailable)
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["codigoIva"] = [exception.Message] });
+        }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/cost-centers", async (
+        Guid userId, Guid companyId, bool? includeInactive, CostCenterService costCenters, CancellationToken cancellationToken) =>
+    {
+        var list = await costCenters.ListAsync(userId, companyId, includeInactive ?? false, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/cost-centers/report", async (
+        Guid userId, Guid companyId, string? from, string? to, CostCenterService costCenters, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        var report = await costCenters.ReportAsync(userId, companyId, fromDate, toDate, cancellationToken).ConfigureAwait(false);
+        return report is null ? Results.NotFound() : Results.Ok(report);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/cost-centers", async (
+        Guid userId, Guid companyId, CostCenterRequest request, CostCenterService costCenters, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var created = await costCenters
+                .CreateAsync(userId, companyId, request?.Code ?? string.Empty, request?.Name ?? string.Empty, cancellationToken)
+                .ConfigureAwait(false);
+            return created is null ? Results.NotFound() : Results.Ok(created);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["centroCusto"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/cost-centers/{code}", async (
+        Guid userId, Guid companyId, string code, CostCenterRequest request, CostCenterService costCenters, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var updated = await costCenters
+                .UpdateAsync(userId, companyId, code, request?.Name ?? string.Empty, request?.IsActive ?? true, cancellationToken)
+                .ConfigureAwait(false);
+            return updated is null ? Results.NotFound() : Results.Ok(updated);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["centroCusto"] = [exception.Message] });
         }
     });
 
@@ -3366,7 +3423,8 @@ public partial class Program
             line.PartyCountryCode,
             line.PartyTaxNumber,
             line.PartyName,
-            line.VatCode
+            line.VatCode,
+            line.CostCenter
         })
     };
 
@@ -3681,6 +3739,8 @@ public sealed record EntryTemplateRequest(
 
 public sealed record ApplyEntryTemplateRequest(decimal Amount, bool AmountIncludesVat = false);
 
+public sealed record CostCenterRequest(string? Code, string? Name, bool IsActive = true);
+
 public sealed record VatCodeRequest(
     string? Code,
     string? Name,
@@ -3749,7 +3809,8 @@ public sealed record MovementLineRequest(
     decimal Credit,
     string? PartyTaxNumber = null,
     string? PartyCountryCode = null,
-    string? VatCode = null);
+    string? VatCode = null,
+    string? CostCenter = null);
 
 public sealed record CreateMovementRequest(
     string JournalCode,

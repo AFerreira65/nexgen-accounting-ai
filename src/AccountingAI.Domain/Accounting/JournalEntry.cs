@@ -103,7 +103,8 @@ public sealed class JournalEntry
         decimal debit,
         decimal credit,
         Guid? partyId = null,
-        Guid? vatCodeId = null)
+        Guid? vatCodeId = null,
+        Guid? costCenterId = null)
     {
         if (lineId == Guid.Empty)
         {
@@ -123,6 +124,11 @@ public sealed class JournalEntry
         if (vatCodeId == Guid.Empty)
         {
             throw new ArgumentException("The VAT code identifier cannot be empty.", nameof(vatCodeId));
+        }
+
+        if (costCenterId == Guid.Empty)
+        {
+            throw new ArgumentException("The cost center identifier cannot be empty.", nameof(costCenterId));
         }
 
         ArgumentException.ThrowIfNullOrWhiteSpace(description);
@@ -154,7 +160,8 @@ public sealed class JournalEntry
             debit,
             credit,
             partyId,
-            vatCodeId));
+            vatCodeId,
+            costCenterId));
     }
 
     public void Complete(JournalEntryStatus status)

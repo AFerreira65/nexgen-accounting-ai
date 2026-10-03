@@ -1447,6 +1447,41 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task CostCentersListReportAndValidateInput()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var list = await client.GetAsync($"{basePath}/cost-centers?includeInactive=true").ConfigureAwait(false);
+        var listPayload = await list.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var report = await client.GetAsync($"{basePath}/cost-centers/report?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
+        var reportPayload = await report.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badDate = await client.GetAsync($"{basePath}/cost-centers/report?from=01-01-2026").ConfigureAwait(false);
+        // Recusado antes de qualquer escrita: código com espaço.
+        using var badCode = await client
+            .PostAsync($"{basePath}/cost-centers", new StringContent("{\"code\":\"COM ESPACO\",\"name\":\"X\"}", Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, list.StatusCode);
+        StringAssert.StartsWith(listPayload.TrimStart(), "[");
+        Assert.AreEqual(HttpStatusCode.OK, report.StatusCode);
+        StringAssert.Contains(reportPayload, "\"totalResult\"");
+        StringAssert.Contains(reportPayload, "\"centers\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badDate.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, badCode.StatusCode);
+    }
+
+    [TestMethod]
     public async Task FiscalTablesReturnTheYearWithItsSources()
     {
         if (!OperatingSystem.IsWindows())

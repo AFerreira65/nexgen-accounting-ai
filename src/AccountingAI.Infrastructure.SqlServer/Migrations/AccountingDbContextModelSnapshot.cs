@@ -184,6 +184,58 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.ToTable("Journals", "accounting");
                 });
 
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.CostCenter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("CostCenters", "accounting");
+                });
+
             modelBuilder.Entity("AccountingAI.Domain.Accounting.DocumentNumberSeries", b =>
                 {
                     b.Property<Guid>("Id")
@@ -495,6 +547,9 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("CostCenterId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("Credit")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -521,6 +576,8 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CostCenterId");
 
                     b.HasIndex("PartyId");
 
@@ -1528,6 +1585,15 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.CostCenter", b =>
+                {
+                    b.HasOne("AccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AccountingAI.Domain.Accounting.EntryTemplate", b =>
                 {
                     b.HasOne("AccountingAI.Domain.Organizations.Company", null)
@@ -1590,6 +1656,11 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
 
             modelBuilder.Entity("AccountingAI.Domain.Accounting.JournalEntryLine", b =>
                 {
+                    b.HasOne("AccountingAI.Domain.Accounting.CostCenter", "CostCenter")
+                        .WithMany()
+                        .HasForeignKey("CostCenterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AccountingAI.Domain.Accounting.Party", "Party")
                         .WithMany()
                         .HasForeignKey("PartyId")
@@ -1615,6 +1686,8 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .IsRequired();
 
                     b.Navigation("Account");
+
+                    b.Navigation("CostCenter");
 
                     b.Navigation("JournalEntry");
 

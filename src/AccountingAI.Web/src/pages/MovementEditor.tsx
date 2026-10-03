@@ -1,6 +1,6 @@
 import { Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { euro, type EntryTemplateRow, type Movement, type PartyRow, type VatClassificationRow, type VatCodeRow } from '../app/demo-data'
+import { euro, type CostCenterRow, type EntryTemplateRow, type Movement, type PartyRow, type VatClassificationRow, type VatCodeRow } from '../app/demo-data'
 import { useWorkContext, type MovementLineInput } from '../app/WorkContext'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -8,7 +8,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 // como está escrito («500584095» ou «ES B12345678») e o nome para confirmação.
 type EditorLine = MovementLineInput & { partyText: string; partyName: string }
 
-const emptyLine = (): EditorLine => ({ accountCode: '', description: '', debit: 0, credit: 0, vatCode: '', partyText: '', partyName: '' })
+const emptyLine = (): EditorLine => ({ accountCode: '', description: '', debit: 0, credit: 0, vatCode: '', costCenter: '', partyText: '', partyName: '' })
 
 const partyText = (countryCode?: string | null, taxNumber?: string | null) =>
   taxNumber ? `${countryCode && countryCode !== 'PT' ? `${countryCode} ` : ''}${taxNumber}` : ''
@@ -151,11 +151,12 @@ function PartyField({ value, name, ariaLabel, search, onChange }: {
 }
 
 export function MovementEditor({ movement, duplicate = false, onClose }: { movement: Movement | null; duplicate?: boolean; onClose: () => void }) {
-  const { accountingSetup, activeCompany, applyEntryTemplate, createMovement, entryTemplates, parties, reviseMovement, source, user, vatClassification, vatCodes } = useWorkContext()
+  const { accountingSetup, activeCompany, applyEntryTemplate, costCenters, createMovement, entryTemplates, parties, reviseMovement, source, user, vatClassification, vatCodes } = useWorkContext()
   const companyId = activeCompany.companyId
   // Códigos de IVA ativos e a classificação por conta, que propõe o código.
   const [vatCodeList, setVatCodeList] = useState<VatCodeRow[]>([])
   const [accountVat, setAccountVat] = useState<VatClassificationRow[]>([])
+  const [costCenterList, setCostCenterList] = useState<CostCenterRow[]>([])
   // Lançamentos-tipo: escolhe-se o modelo e o valor, e as linhas ficam preenchidas.
   const [templateList, setTemplateList] = useState<EntryTemplateRow[]>([])
   const [templateCode, setTemplateCode] = useState('')
@@ -168,8 +169,9 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
     void vatCodes(companyId, false).then((rows) => { if (!cancelled) setVatCodeList(rows) }).catch(() => { /* coluna opcional */ })
     void vatClassification(companyId).then((rows) => { if (!cancelled) setAccountVat(rows) }).catch(() => { /* proposta opcional */ })
     void entryTemplates(companyId, false).then((rows) => { if (!cancelled) setTemplateList(rows) }).catch(() => { /* barra opcional */ })
+    void costCenters(companyId, false).then((rows) => { if (!cancelled) setCostCenterList(rows) }).catch(() => { /* coluna opcional */ })
     return () => { cancelled = true }
-  }, [companyId, entryTemplates, source, vatClassification, vatCodes])
+  }, [companyId, costCenters, entryTemplates, source, vatClassification, vatCodes])
   // O código proposto para uma conta: o único código ativo com a mesma taxa,
   // natureza e região da classificação dessa conta.
   const proposedVatCode = (accountCode: string) => {
@@ -217,7 +219,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
   const [notes, setNotes] = useState(movement?.notes ?? '')
   const [reviewed, setReviewed] = useState(isEdit && movement?.status === 'Conferido')
   const [lines, setLines] = useState<EditorLine[]>(
-    movement ? movement.lines.map((line) => ({ accountCode: line.account, description: line.description, debit: line.debit, credit: line.credit, vatCode: line.vatCode ?? '', partyText: partyText(line.partyCountryCode, line.partyTaxNumber), partyName: line.partyName ?? '' })) : [emptyLine(), emptyLine()],
+    movement ? movement.lines.map((line) => ({ accountCode: line.account, description: line.description, debit: line.debit, credit: line.credit, vatCode: line.vatCode ?? '', costCenter: line.costCenter ?? '', partyText: partyText(line.partyCountryCode, line.partyTaxNumber), partyName: line.partyName ?? '' })) : [emptyLine(), emptyLine()],
   )
   const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
   const [error, setError] = useState('')
@@ -272,6 +274,8 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
     focusNextField(key)
   }
 
+  // A coluna só aparece quando a empresa usa centros de custo (ou o lançamento já os traz).
+  const showCostCenters = costCenterList.length > 0 || lines.some((line) => line.costCenter)
   const totalDebit = lines.reduce((sum, line) => sum + (Number(line.debit) || 0), 0)
   const totalCredit = lines.reduce((sum, line) => sum + (Number(line.credit) || 0), 0)
   const difference = Math.round((totalDebit - totalCredit) * 100) / 100
@@ -311,7 +315,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
       // passa para a contrapartida (o cliente, o fornecedor).
       const party = lines.find((line) => line.partyText.trim())
       setLines(applied.lines.map((line) => ({
-        accountCode: line.accountCode, description: line.description, debit: line.debit, credit: line.credit, vatCode: line.vatCode ?? '',
+        accountCode: line.accountCode, description: line.description, debit: line.debit, credit: line.credit, vatCode: line.vatCode ?? '', costCenter: '',
         partyText: line.kind === 'Balance' ? party?.partyText ?? '' : '',
         partyName: line.kind === 'Balance' ? party?.partyName ?? '' : '',
       })))
@@ -340,7 +344,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
         reviewed,
         lines: lines
           .filter((line) => line.accountCode.trim())
-          .map((line): MovementLineInput => ({ accountCode: line.accountCode.trim().toUpperCase(), description: line.description, debit: Number(line.debit) || 0, credit: Number(line.credit) || 0, vatCode: line.vatCode || null, ...parsePartyText(line.partyText) })),
+          .map((line): MovementLineInput => ({ accountCode: line.accountCode.trim().toUpperCase(), description: line.description, debit: Number(line.debit) || 0, credit: Number(line.credit) || 0, vatCode: line.vatCode || null, costCenter: line.costCenter || null, ...parsePartyText(line.partyText) })),
       }
       if (isEdit) await reviseMovement(movement.id, payload)
       else await createMovement(payload)
@@ -373,7 +377,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
 
       <label className="field-block"><span>Observações <small>(opcional, uso interno)</small></span><textarea value={notes} rows={2} maxLength={2000} onChange={(event) => setNotes(event.target.value)} placeholder="Notas internas sobre este lançamento" /></label>
 
-      <div className="table-wrap"><table><thead><tr><th>Conta</th><th>Terceiro</th><th>IVA</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
+      <div className="table-wrap"><table><thead><tr><th>Conta</th><th>Terceiro</th><th>IVA</th>{showCostCenters && <th>C. custo</th>}<th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
         {lines.map((line, index) => <tr key={index}>
           <td><AccountField
             fieldKey={`line-${index}-account`}
@@ -397,12 +401,17 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
             {line.vatCode && !vatCodeList.some((code) => code.code === line.vatCode) && <option value={line.vatCode}>{line.vatCode}</option>}
             {vatCodeList.map((code) => <option key={code.code} value={code.code}>{code.code}</option>)}
           </select></td>
+          {showCostCenters && <td><select aria-label={`Centro de custo da linha ${index + 1}`} className="vat-code-select" value={line.costCenter ?? ''} title={costCenterList.find((center) => center.code === line.costCenter)?.name} onChange={(event) => patchLine(index, { costCenter: event.target.value })}>
+            <option value="">—</option>
+            {line.costCenter && !costCenterList.some((center) => center.code === line.costCenter) && <option value={line.costCenter}>{line.costCenter}</option>}
+            {costCenterList.map((center) => <option key={center.code} value={center.code}>{center.code}</option>)}
+          </select></td>}
           <td><input data-field-key={`line-${index}-description`} ref={register(`line-${index}-description`)} aria-label={`Descrição da linha ${index + 1}`} value={line.description} onChange={(event) => patchLine(index, { description: event.target.value })} /></td>
           <td className="numeric"><input data-field-key={`line-${index}-debit`} ref={register(`line-${index}-debit`)} aria-label={`Débito da linha ${index + 1}`} type="number" step="0.01" min="0" value={line.debit || ''} onChange={(event) => patchLine(index, { debit: Number(event.target.value), credit: 0 })} /></td>
           <td className="numeric"><input data-field-key={`line-${index}-credit`} ref={register(`line-${index}-credit`)} aria-label={`Crédito da linha ${index + 1}`} type="number" step="0.01" min="0" value={line.credit || ''} onChange={(event) => patchLine(index, { credit: Number(event.target.value), debit: 0 })} /></td>
           <td>{lines.length > 2 && <button className="icon-button" type="button" aria-label={`Remover linha ${index + 1}`} onClick={() => setLines((current) => current.filter((_, position) => position !== index))}><Trash2 size={16} /></button>}</td>
         </tr>)}
-      </tbody><tfoot><tr><td colSpan={4}><button className="button button-secondary" type="button" onClick={() => setLines((current) => [...current, emptyLine()])}><Plus size={16} /> Linha</button></td><td className="numeric strong">{euro.format(totalDebit)}</td><td className="numeric strong">{euro.format(totalCredit)}</td><td /></tr></tfoot></table></div>
+      </tbody><tfoot><tr><td colSpan={showCostCenters ? 5 : 4}><button className="button button-secondary" type="button" onClick={() => setLines((current) => [...current, emptyLine()])}><Plus size={16} /> Linha</button></td><td className="numeric strong">{euro.format(totalDebit)}</td><td className="numeric strong">{euro.format(totalCredit)}</td><td /></tr></tfoot></table></div>
 
       <footer className="settings-actions">
         <span className={`save-status ${difference === 0 ? 'success' : 'error'}`}>{difference === 0 ? 'Equilibrado' : `Diferença de ${euro.format(difference)}`}</span>

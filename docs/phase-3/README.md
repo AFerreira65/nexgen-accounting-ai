@@ -19,14 +19,14 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | A | **F3-02** | Linha de lançamento enriquecida (terceiro, código de IVA, base, documento externo) | **Concluído** — [`F3-02`](F3-02-ENRICHED-ENTRY-LINE.md); épico concluído: F3-02A (terceiro na linha), F3-02B (data do documento) e F3-02C (terceiro na importação de movimentos do SAF-T) |
 | A | **F3-03** | Códigos de IVA e lançamentos-tipo | **Concluído** — [`F3-03`](F3-03-VAT-CODES.md) ([`ADR-0012`](../architecture-decisions/ADR-0012-VAT-CODES-ON-ENTRY-LINES.md)); épico concluído: F3-03A (cadastro de códigos), F3-03B (código na linha), F3-03C (resumo de IVA a ler o código da linha) e F3-03D (lançamentos-tipo) |
 | A | **F3-04** | Tabelas fiscais por ano | **Em curso** — [`F3-04`](F3-04-FISCAL-TABLES.md); F3-04A (catálogo com fontes, consulta, estimativa de IRC e códigos de IVA) feito |
-| A | F3-05 | Contabilidade analítica | Por especificar |
+| A | **F3-05** | Contabilidade analítica | **Concluído (F3-05A)** — [`F3-05`](F3-05-ANALYTIC-ACCOUNTING.md): centros de custo, centro na linha do lançamento e mapa analítico |
 | B | F3-06 … F3-14 | Saídas sem a AT: SAF-T, demonstrações oficiais, IVA, recapitulativa, Modelo 22, IES, ativos fixos, retenções, dossier fiscal | Por especificar |
 | C | F3-15 … F3-17 | Comunicação com a AT | Depende da adesão — [`../ADESAO-AT.md`](../ADESAO-AT.md) |
 | D | F3-18 … F3-21 | Automação do lançamento | Por especificar |
 | E | F3-22 … F3-26 | Gestão: gráficos, rácios, orçamento, assistente com IA | Por especificar |
 | F | F3-27 … F3-28 | Gabinete: calendário de obrigações e painel | Por especificar |
 
-A ordem acordada: Bloco A primeiro; depois F3-06 e F3-07, com os gráficos
+O **Bloco A está fechado** (2026-10-03), salvo o F3-04B, que segue com o Modelo 22. A ordem acordada: Bloco A primeiro; depois F3-06 e F3-07, com os gráficos
 (F3-22/23) em paralelo; a seguir o resto do Bloco B; o Bloco C assim que houver
 certificado de testes.
 

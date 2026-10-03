@@ -8,6 +8,7 @@ export type MovementLine = {
   partyTaxNumber?: string | null
   partyName?: string | null
   vatCode?: string | null
+  costCenter?: string | null
 }
 
 export type Movement = {
@@ -641,6 +642,24 @@ export type AtCredentials = {
   periodicity: 'Mensal' | 'Trimestral'
   environment: 'Testes' | 'Producao'
   updatedAtUtc: string | null
+}
+
+export type CostCenterRow = { code: string; name: string; isActive: boolean }
+
+export type AnalyticReport = {
+  from: string | null
+  to: string | null
+  totalExpenses: number
+  totalIncome: number
+  totalResult: number
+  centers: {
+    code: string | null
+    name: string
+    expenses: number
+    income: number
+    result: number
+    accounts: { accountCode: string; accountName: string; debit: number; credit: number }[]
+  }[]
 }
 
 export type FiscalSource = { reference: string; status: 'Oficial' | 'Secundaria' }

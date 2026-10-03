@@ -14,6 +14,7 @@ import {
   DoorOpen,
   FileText,
   FileUp,
+  FolderTree,
   Landmark,
   LayoutTemplate,
   ListOrdered,
@@ -56,6 +57,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/balanco', label: 'Balanço', icon: Scale },
     { to: '/contas-correntes', label: 'Contas correntes', icon: Users },
     { to: '/saldos-terceiros', label: 'Saldos de terceiros', icon: Contact },
+    { to: '/mapa-analitico', label: 'Mapa analítico', icon: FolderTree },
   ] },
   { label: 'Fiscal', links: [
     { to: '/iva', label: 'Resumo de IVA', icon: Receipt },
@@ -80,6 +82,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/diarios', label: 'Diários', icon: Landmark },
     { to: '/documentos', label: 'Documentos', icon: FileText },
     { to: '/lancamentos-tipo', label: 'Lançamentos-tipo', icon: LayoutTemplate },
+    { to: '/centros-custo', label: 'Centros de custo', icon: FolderTree },
     { to: '/series', label: 'Séries', icon: ListOrdered },
     { to: '/taxonomias', label: 'Taxonomias', icon: Tags },
   ] },

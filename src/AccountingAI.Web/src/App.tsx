@@ -32,6 +32,7 @@ import { PartiesPage } from './pages/PartiesPage'
 import { PartyBalancesByPartyPage, PartyStatementPage } from './pages/PartyLedgerPages'
 import { VatCodesPage } from './pages/VatCodesPage'
 import { FiscalTablesPage } from './pages/FiscalTablesPage'
+import { AnalyticReportPage, CostCentersPage } from './pages/AnalyticPages'
 import { EntryTemplatesPage } from './pages/EntryTemplatesPage'
 import { RecordProvider } from './app/RecordContext'
 import { AuthGate } from './app/AuthGate'
@@ -53,6 +54,8 @@ export function App() {
             <Route path="/terceiros/:partyId" element={<PartyStatementPage />} />
             <Route path="/saldos-terceiros" element={<PartyBalancesByPartyPage />} />
             <Route path="/lancamentos-tipo" element={<EntryTemplatesPage />} />
+            <Route path="/centros-custo" element={<CostCentersPage />} />
+            <Route path="/mapa-analitico" element={<AnalyticReportPage />} />
             <Route path="/diarios" element={<JournalsPage />} />
             <Route path="/documentos" element={<DocumentTypesPage />} />
             <Route path="/series" element={<DocumentNumberSeriesPage />} />

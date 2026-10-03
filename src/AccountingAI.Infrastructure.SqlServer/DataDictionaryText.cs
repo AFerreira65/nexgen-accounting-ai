@@ -39,6 +39,7 @@ internal static class DataDictionaryText
         ["CompanyAtCredentials"] = "Credenciais e definições da AT de uma empresa: o subutilizador e a senha (cifrada) do perfil e-Fatura, a periodicidade da declaração periódica e o ambiente da AT.",
         ["AccountVatClassification"] = "Classificação de IVA de uma conta (taxa, natureza da operação, região) para a desagregação da declaração periódica.",
         ["IrcEstimateFiling"] = "Estimativa de IRC guardada por uma empresa (período, taxa e correções fiscais indicadas, fotografia do cálculo).",
+        ["CostCenters"] = "Centros de custo da empresa: a dimensão analítica indicada na linha do lançamento.",
         ["EntryTemplates"] = "Lançamentos-tipo da empresa: diário, tipo de documento e linhas de um lançamento repetitivo.",
         ["EntryTemplateLines"] = "Linhas de um lançamento-tipo: base, IVA ou contrapartida, com a conta, o lado e o código de IVA.",
         ["VatCodes"] = "Códigos de IVA da empresa: taxa, percentagem, natureza da operação e região, para indicar na linha do lançamento.",
@@ -214,6 +215,10 @@ internal static class DataDictionaryText
         ["VatCodes.IsActive"] = "Se o código está ativo.",
 
         ["JournalEntries.DocumentDate"] = "A data do documento de origem, quando indicada; pode diferir da data do lançamento.",
+        ["CostCenters.Code"] = "O código do centro de custo; único por empresa.",
+        ["CostCenters.Name"] = "O nome do centro de custo.",
+        ["CostCenters.IsActive"] = "Se o centro de custo está ativo.",
+        ["JournalEntryLines.CostCenterId"] = "O centro de custo da linha; vazio quando não foi indicado.",
         ["JournalEntryLines.VatCodeId"] = "O código de IVA da linha; vazio quando a linha é lida pela classificação da sua conta.",
         ["JournalEntryLines.PartyId"] = "O terceiro (cliente ou fornecedor) a que a linha diz respeito; vazio quando não se aplica.",
 

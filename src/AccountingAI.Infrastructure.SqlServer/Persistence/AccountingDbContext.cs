@@ -59,6 +59,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<EntryTemplate> EntryTemplates => Set<EntryTemplate>();
 
+    public DbSet<CostCenter> CostCenters => Set<CostCenter>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -90,6 +92,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new VatCodeConfiguration());
         modelBuilder.ApplyConfiguration(new EntryTemplateConfiguration());
         modelBuilder.ApplyConfiguration(new EntryTemplateLineConfiguration());
+        modelBuilder.ApplyConfiguration(new CostCenterConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

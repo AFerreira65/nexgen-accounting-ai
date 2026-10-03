@@ -40,6 +40,7 @@ internal static class AuditShadowProperties
         typeof(Party),
         typeof(VatCode),
         typeof(EntryTemplate),
+        typeof(CostCenter),
     ];
 
     public static void Apply(ModelBuilder modelBuilder)

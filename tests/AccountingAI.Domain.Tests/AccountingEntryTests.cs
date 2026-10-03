@@ -17,6 +17,22 @@ public sealed class AccountingEntryTests
     }
 
     [TestMethod]
+    public void CostCenterNormalizesItsCodeAndLinesCanCarryIt()
+    {
+        var center = CostCenter.Create(Guid.NewGuid(), " obra.01 ", "  Obra da Rua Nova ");
+        Assert.AreEqual("OBRA.01", center.Code);
+        Assert.AreEqual("Obra da Rua Nova", center.Name);
+        Assert.ThrowsExactly<ArgumentException>(() => CostCenter.Create(Guid.NewGuid(), "COM ESPAÇO", "Nome"));
+        Assert.ThrowsExactly<ArgumentException>(() => CostCenter.Create(Guid.NewGuid(), "ADM", " "));
+
+        var entry = CreateEntry();
+        entry.AddLine(Guid.NewGuid(), Guid.NewGuid(), "Gasto", 10m, 0m, costCenterId: center.Id);
+        Assert.AreEqual(center.Id, entry.Lines.Single().CostCenterId);
+        Assert.ThrowsExactly<ArgumentException>(() =>
+            CreateEntry().AddLine(Guid.NewGuid(), Guid.NewGuid(), "Gasto", 10m, 0m, costCenterId: Guid.Empty));
+    }
+
+    [TestMethod]
     public void DocumentDateIsOptionalAndIndependentFromTheEntryDate()
     {
         var withDate = new JournalEntry(

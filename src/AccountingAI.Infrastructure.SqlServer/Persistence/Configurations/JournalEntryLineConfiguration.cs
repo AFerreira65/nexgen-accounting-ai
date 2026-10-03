@@ -32,5 +32,9 @@ internal sealed class JournalEntryLineConfiguration : IEntityTypeConfiguration<J
             .WithMany()
             .HasForeignKey(item => item.VatCodeId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(item => item.CostCenter)
+            .WithMany()
+            .HasForeignKey(item => item.CostCenterId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

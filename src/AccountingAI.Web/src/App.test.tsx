@@ -748,6 +748,18 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the analytic screens (require the database)', () => {
+    window.history.pushState({}, '', '/centros-custo')
+    const { unmount } = render(<App />)
+    expect(screen.getByRole('heading', { name: 'Centros de custo', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    unmount()
+
+    window.history.pushState({}, '', '/mapa-analitico')
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'Mapa analítico', level: 1 })).toBeInTheDocument()
+  })
+
   it('shows the fiscal tables screen (requires the database)', () => {
     window.history.pushState({}, '', '/tabelas-fiscais')
     render(<App />)
