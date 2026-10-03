@@ -99,7 +99,7 @@ public static class StatementLineCatalog
 /// em nenhuma rubrica — sem taxonomia, ou com uma taxonomia que a AT não
 /// representa nas demonstrações — são listadas à parte, em vez de escondidas.
 /// </summary>
-public sealed class FinancialStatementsService(AccountingDbContext context)
+public sealed partial class FinancialStatementsService(AccountingDbContext context)
 {
     private const string ResultLine = "Resultado líquido do período";
 

@@ -2085,6 +2085,35 @@ if (applicationEndpointsAvailable)
         return statement is null ? Results.NotFound() : Results.Ok(statement);
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/statements/cash-flows", async (
+        Guid userId, Guid companyId, string? from, string? to, FinancialStatementsService statements, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) ||
+            !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) ||
+            end < start)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["from"] = ["Indique um período válido (aaaa-mm-dd)."] });
+        }
+
+        var statement = await statements.CashFlowsAsync(userId, companyId, start, end, cancellationToken).ConfigureAwait(false);
+        return statement is null ? Results.NotFound() : Results.Ok(statement);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/statements/equity-changes", async (
+        Guid userId, Guid companyId, string? from, string? to, FinancialStatementsService statements, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) ||
+            !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) ||
+            end < start ||
+            start.Year != end.Year)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["from"] = ["Indique um período válido dentro do mesmo exercício (aaaa-mm-dd)."] });
+        }
+
+        var statement = await statements.EquityChangesAsync(userId, companyId, start, end, cancellationToken).ConfigureAwait(false);
+        return statement is null ? Results.NotFound() : Results.Ok(statement);
+    });
+
     // Exportação do SAF-T (PT) de contabilidade de um exercício: primeiro a análise, depois o ficheiro.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/export-report", async (
         Guid userId, Guid companyId, int year, SaftExportService export, CancellationToken cancellationToken) =>

@@ -80,8 +80,74 @@ taxonomias do referencial `S`, 334 do `M`).
 - Os modelos das entidades do setor não lucrativo e das IFRS não estão
   cobertos: usam o modelo geral.
 
+### F3-07B — Fluxos de caixa e alterações no capital próprio (feito)
+
+Ao contrário do balanço e da demonstração de resultados, **a AT não publica
+uma tabela** que ligue as contas a estas duas demonstrações. A classificação
+é um **critério da aplicação**, feito pelas contas de contrapartida de cada
+lançamento segundo os códigos do plano de contas do SNC — e por isso cada
+rubrica dos fluxos de caixa mostra as contas que a formam.
+
+**Demonstração dos fluxos de caixa — método direto**
+(`FinancialStatementsService.CashFlowsAsync`)
+
+| Parte | Regra |
+|---|---|
+| Caixa | As contas cuja taxonomia cai em «Caixa e depósitos bancários»; sem taxonomia, as de código 11, 12 e 13. |
+| Fluxo | Cada lançamento não anulado que mexe em caixa é repartido pelas suas linhas de contrapartida (crédito − débito): a soma é exatamente a variação de caixa. As transferências entre contas de caixa anulam-se; os lançamentos de abertura não são fluxos. |
+| Operacionais | 21, 71, 72 → recebimentos de clientes; 22, 31, 62 → pagamentos a fornecedores; 23, 63 → pagamentos ao pessoal; 241 → imposto sobre o rendimento; **tudo o resto** → outros recebimentos / pagamentos. |
+| Investimento | 43, 453, 2711, 6871, 7871 → ativos fixos tangíveis; 44, 454 → intangíveis; 41, 451 → investimentos financeiros; 42, 452, 455, 46 → outros ativos; 593 → subsídios ao investimento; 79 → juros; 792 → dividendos. O sinal decide entre pagamentos e recebimentos. |
+| Financiamento | 25 → financiamentos obtidos; 51–54, 261, 262 → realizações (ou reduções) de capital; 69 → juros e gastos similares; 264, 265 → dividendos; 263, 266, 268 → outras operações. |
+| IVA | A linha de IVA (243) de uma compra ou venda a pronto segue a rubrica da maior linha do lançamento; um pagamento de IVA ao Estado fica em «outros». |
+| Caixa no fim | O saldo das contas de caixa à data — o mesmo do balanço; o do início é o do fim menos a variação. |
+
+**Demonstração das alterações no capital próprio**
+(`FinancialStatementsService.EquityChangesAsync`) — uma coluna por rubrica do
+capital próprio do balanço, e as linhas:
+
+| Linha | O que entra |
+|---|---|
+| Posição no início | Lançamentos de abertura e, num período que não começa em janeiro, tudo o que aconteceu antes. |
+| Aplicação de resultados e transferências | Lançamentos só entre contas de capital próprio (total zero). Numa aplicação com dividendos, o que vai para reservas e transitados fica aqui. |
+| Outras alterações reconhecidas | Movimentos de reservas, excedentes e ajustamentos contra outras contas. |
+| Resultado líquido do período | Calculado como na demonstração de resultados (o apuramento não conta duas vezes). |
+| Resultado integral | As duas anteriores. |
+| Realizações de capital e de prémios | Aumentos em capital, outros instrumentos e prémios de emissão. |
+| Distribuições | O que sai do capital próprio em lançamentos com as contas 264 ou 265, e os dividendos antecipados. |
+| Outras operações com detentores de capital | Reduções de capital e ações próprias. |
+| Posição no fim | A soma — **igual ao capital próprio do balanço** à mesma data. |
+
+- **API:** `GET .../statements/cash-flows?from=&to=` e
+  `GET .../statements/equity-changes?from=&to=` (dentro do mesmo exercício).
+- **PWA:** o ecrã «Demonstrações financeiras» ganha os separadores **Fluxos
+  de caixa** (cada rubrica abre as contas que a formam) e **Alterações no
+  capital próprio**.
+
+**Validação efetuada**
+
+- `AccountingAI.IntegrationTests`: `CashFlowAndEquityStatementsTests` — venda
+  a pronto com IVA, pagamento a fornecedor, empréstimo, compra de equipamento,
+  juros, dividendos, aumento de capital, transferência entre caixa e banco,
+  aplicação de resultados e apuramento: rubricas, comparativo, caixa inicial e
+  final; a posição final do capital próprio e a caixa final batem com o
+  balanço, que fecha; período a começar a meio do ano.
+- `AccountingAI.Api.Tests`: os dois endpoints e a recusa de um período em dois
+  exercícios (só leitura).
+- A suite completa: 236 testes .NET, 92 de interface.
+
+**Por verificar e pressupostos a confirmar com um contabilista**
+
+- Tudo com uma **empresa real**; em particular quanto fica em «Outros
+  recebimentos / pagamentos», que recebe tudo o que não tem regra.
+- As retenções e contribuições (242, 245) ficam em «outros», não em
+  «pagamentos ao pessoal».
+- Os fornecedores de investimentos (2711) contam todos como ativos fixos
+  tangíveis.
+- Os descobertos bancários contam como caixa negativa; não há linha de
+  diferenças de câmbio.
+- A demonstração das alterações no capital próprio é apresentada num só
+  período (sem o quadro do período anterior).
+
 ### A seguir
 
-- **F3-07B** — demonstração dos fluxos de caixa e das alterações no capital
-  próprio.
 - **F3-07C** — demonstração de resultados por funções e anexo.

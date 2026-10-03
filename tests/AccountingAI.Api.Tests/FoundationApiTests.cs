@@ -1468,6 +1468,11 @@ public sealed class FoundationApiTests
         var incomePayload = await income.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badDate = await client.GetAsync($"{basePath}/statements/balance-sheet?date=31-12-2026").ConfigureAwait(false);
         using var badPeriod = await client.GetAsync($"{basePath}/statements/income-statement?from=2026-12-31&to=2026-01-01").ConfigureAwait(false);
+        using var cash = await client.GetAsync($"{basePath}/statements/cash-flows?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
+        var cashPayload = await cash.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var equity = await client.GetAsync($"{basePath}/statements/equity-changes?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
+        var equityPayload = await equity.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var twoYears = await client.GetAsync($"{basePath}/statements/equity-changes?from=2025-01-01&to=2026-12-31").ConfigureAwait(false);
         using var unauthorized = await client
             .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/statements/balance-sheet?date=2026-12-31")
             .ConfigureAwait(false);
@@ -1479,6 +1484,11 @@ public sealed class FoundationApiTests
         StringAssert.Contains(incomePayload, "\"label\":\"Resultado antes de impostos\"");
         Assert.AreEqual(HttpStatusCode.BadRequest, badDate.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badPeriod.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, cash.StatusCode);
+        StringAssert.Contains(cashPayload, "\"label\":\"Caixa e seus equivalentes no fim do período\"");
+        Assert.AreEqual(HttpStatusCode.OK, equity.StatusCode);
+        StringAssert.Contains(equityPayload, "\"label\":\"Posição no fim do período\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, twoYears.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
     }
 

@@ -671,6 +671,26 @@ export type BalanceSheetStatement = {
   excluded: StatementExcludedAccount[]
   source: string
 }
+export type CashFlowLine = { section: string; label: string; amount: number; comparative: number; isTotal: boolean; accounts: { accountCode: string; accountName: string; amount: number }[] }
+export type CashFlowStatement = {
+  from: string
+  to: string
+  lines: CashFlowLine[]
+  operating: number
+  investing: number
+  financing: number
+  netChange: number
+  openingCash: number
+  closingCash: number
+}
+export type EquityChangesStatement = {
+  from: string
+  to: string
+  model: string
+  columns: string[]
+  rows: { label: string; amounts: number[]; total: number; isTotal: boolean }[]
+  closingEquity: number
+}
 export type IncomeStatementByNature = {
   from: string
   to: string
