@@ -58,6 +58,29 @@ public sealed record SaftTransaction(
     string? CustomerId = null,
     string? SupplierId = null);
 
+/// <summary>
+/// O resultado de ligar (ou analisar, com <see cref="Applied"/> falso) os
+/// terceiros de um SAF-T aos lançamentos que dele já foram importados. Só as
+/// linhas sem terceiro são preenchidas; nenhum valor nem conta é alterado.
+/// </summary>
+/// <param name="Applied">Se as ligações foram gravadas.</param>
+/// <param name="TransactionCount">Transações do ficheiro que indicam um cliente ou um fornecedor.</param>
+/// <param name="EntriesMatched">Dessas, as que têm um lançamento importado igual ao do ficheiro.</param>
+/// <param name="EntriesNotFound">As que não têm lançamento importado com essa referência.</param>
+/// <param name="EntriesChanged">As cujo lançamento já não tem as mesmas linhas do ficheiro (foi corrigido) e fica como está.</param>
+/// <param name="LinesLinked">Linhas que ficam (ou ficariam) com terceiro.</param>
+/// <param name="LinesAlreadyLinked">Linhas que já tinham terceiro e não se alteram.</param>
+/// <param name="TransactionsWithUnknownParty">Transações cujo terceiro ainda não existe na empresa.</param>
+public sealed record SaftPartyLinkResult(
+    bool Applied,
+    int TransactionCount,
+    int EntriesMatched,
+    int EntriesNotFound,
+    int EntriesChanged,
+    int LinesLinked,
+    int LinesAlreadyLinked,
+    int TransactionsWithUnknownParty);
+
 /// <summary>Uma transação do ficheiro que não foi importada e a razão (em pt-PT).</summary>
 public sealed record SaftEntrySkipped(string TransactionId, string Reason);
 

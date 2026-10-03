@@ -694,6 +694,17 @@ export type PartyRow = {
 
 export type PartyPage = { total: number; items: PartyRow[] }
 
+export type SaftPartyLinkResult = {
+  applied: boolean
+  transactionCount: number
+  entriesMatched: number
+  entriesNotFound: number
+  entriesChanged: number
+  linesLinked: number
+  linesAlreadyLinked: number
+  transactionsWithUnknownParty: number
+}
+
 export type PartyBalances = {
   total: number
   totalDebit: number

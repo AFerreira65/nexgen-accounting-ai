@@ -517,3 +517,9 @@ html[data-theme='dark'] .period-selector, html[data-theme='dark'] .icon-button, 
 .template-bar select { min-width: 240px; }
 .template-bar input:not([type='checkbox']) { width: 120px; flex: 0 0 auto; }
 html[data-theme='dark'] .template-bar { border-color: #29414a; }
+
+/* Ligação dos terceiros aos lançamentos já importados. */
+.party-link { margin: 4px 22px 16px; padding: 14px 16px; border: 1px solid #e2e9ec; border-radius: 12px; background: #f8fafb; }
+.party-link p { margin: 0 0 10px; color: #4d5f68; font-size: 11px; line-height: 1.5; }
+.party-link .builder-row { margin: 0; }
+html[data-theme='dark'] .party-link { background: #14262e; border-color: #29414a; }

@@ -1992,6 +1992,32 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Ligar os terceiros de um SAF-T aos lançamentos já importados: «preview» só analisa.
+    foreach (var (route, apply) in new[] { ("parties-link-preview", false), ("parties-link", true) })
+    {
+        app.MapPost($"/api/v1/development/users/{{userId:guid}}/companies/{{companyId:guid}}/saft/{route}", async (
+            Guid userId, Guid companyId, HttpRequest request, SaftEntriesImportService import, CancellationToken cancellationToken) =>
+        {
+            var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+            if (maxBodySize is { IsReadOnly: false })
+            {
+                maxBodySize.MaxRequestBodySize = null;
+            }
+
+            try
+            {
+                var result = await import
+                    .LinkPartiesAsync(userId, companyId, request.Body, apply, cancellationToken)
+                    .ConfigureAwait(false);
+                return result is null ? Results.NotFound() : Results.Ok(result);
+            }
+            catch (SaftFileFormatException exception)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["saft"] = [exception.Message] });
+            }
+        });
+    }
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/entry-templates", async (
         Guid userId, Guid companyId, bool? includeInactive, EntryTemplateService templates, CancellationToken cancellationToken) =>
     {

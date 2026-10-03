@@ -15,7 +15,7 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | Bloco | Épico | Título | Estado |
 |-------|-------|--------|--------|
 | — | **F3-00** | Moldura da aplicação: menu em grupos, recolhível, gaveta em ecrãs estreitos | **Concluído** — [`F3-00`](F3-00-APP-SHELL.md) |
-| A | **F3-01** | Terceiros | **Em curso** — [`F3-01`](F3-01-PARTIES.md); F3-01A (cadastro), F3-01B (importação do SAF-T e do e-Fatura) e F3-01C (saldos e extrato por terceiro) feitos |
+| A | **F3-01** | Terceiros | **Concluído** — [`F3-01`](F3-01-PARTIES.md); F3-01A (cadastro), F3-01B (importação do SAF-T e do e-Fatura), F3-01C (saldos e extrato por terceiro) e F3-01D (ligar os terceiros a lançamentos já importados) |
 | A | **F3-02** | Linha de lançamento enriquecida (terceiro, código de IVA, base, documento externo) | **Concluído** — [`F3-02`](F3-02-ENRICHED-ENTRY-LINE.md); épico concluído: F3-02A (terceiro na linha), F3-02B (data do documento) e F3-02C (terceiro na importação de movimentos do SAF-T) |
 | A | **F3-03** | Códigos de IVA e lançamentos-tipo | **Concluído** — [`F3-03`](F3-03-VAT-CODES.md) ([`ADR-0012`](../architecture-decisions/ADR-0012-VAT-CODES-ON-ENTRY-LINES.md)); épico concluído: F3-03A (cadastro de códigos), F3-03B (código na linha), F3-03C (resumo de IVA a ler o código da linha) e F3-03D (lançamentos-tipo) |
 | A | F3-04 | Tabelas fiscais por ano | Por especificar |

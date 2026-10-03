@@ -1,7 +1,7 @@
-import { Contact, Database, Download, FileUp, Plus, Receipt, Search, X } from 'lucide-react'
+import { Contact, Database, Download, FileUp, Link2, Plus, Receipt, Search, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { type PartyImportResult, type PartyRow } from '../app/demo-data'
+import { type PartyImportResult, type PartyRow, type SaftPartyLinkResult } from '../app/demo-data'
 import { Pager } from '../app/Pager'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext, type PartyListParams } from '../app/WorkContext'
@@ -95,17 +95,33 @@ const IMPORT_STATE_LABELS: Record<PartyImportResult['items'][number]['state'], s
 type ImportSource = { kind: 'saft'; file: File } | { kind: 'efatura' }
 
 function PartyImporter({ onImported, onClose }: { onImported: () => void; onClose: () => void }) {
-  const { activeCompany, importPartiesFromSaft, importPartiesFromEFatura } = useWorkContext()
+  const { activeCompany, importPartiesFromSaft, importPartiesFromEFatura, linkSaftParties } = useWorkContext()
   const companyId = activeCompany.companyId
   const fileInput = useRef<HTMLInputElement>(null)
   const [source, setSource] = useState<ImportSource | null>(null)
   const [result, setResult] = useState<PartyImportResult | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [link, setLink] = useState<SaftPartyLinkResult | null>(null)
+
+  // Depois de os terceiros existirem, liga-os aos lançamentos que já tinham
+  // sido importados deste ficheiro (as linhas sem terceiro).
+  const runLink = async (file: File, apply: boolean) => {
+    setBusy(true)
+    setError('')
+    try {
+      setLink(await linkSaftParties(companyId, file, apply))
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Não foi possível analisar os lançamentos.')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const run = async (from: ImportSource, apply: boolean) => {
     setBusy(true)
     setError('')
+    setLink(null)
     try {
       const value = from.kind === 'saft'
         ? await importPartiesFromSaft(companyId, from.file, apply)
@@ -151,6 +167,16 @@ function PartyImporter({ onImported, onClose }: { onImported: () => void; onClos
         </tr>)}</tbody>
       </table></div>}
       {result.items.length < result.newCount + result.updatedCount + result.unchangedCount && <p className="catalog-count">A mostrar os primeiros {result.items.length}; a importação abrange todos.</p>}
+      {source.kind === 'saft' && (result.applied || pending === 0) && <div className="party-link">
+        <p><strong>Lançamentos já importados deste ficheiro.</strong> Se os movimentos foram importados antes de os terceiros existirem, as linhas ficaram sem terceiro. Esta ligação preenche só as linhas sem terceiro, sem alterar valores nem contas.</p>
+        {link && <p className={`save-status ${link.applied ? 'success' : ''}`}>
+          {link.transactionCount} transações com cliente ou fornecedor: {link.linesLinked} {link.linesLinked === 1 ? 'linha' : 'linhas'} {link.applied ? 'ligadas' : 'a ligar'}, {link.linesAlreadyLinked} já com terceiro; {link.entriesNotFound} sem lançamento importado, {link.entriesChanged} com o lançamento entretanto alterado, {link.transactionsWithUnknownParty} com terceiro que não existe.
+        </p>}
+        <div className="builder-row">
+          <button className="button button-secondary" type="button" disabled={busy} onClick={() => void runLink(source.file, false)}><Link2 size={16} /> Analisar os lançamentos</button>
+          {link && !link.applied && link.linesLinked > 0 && <button className="button button-primary" type="button" disabled={busy} onClick={() => void runLink(source.file, true)}>Ligar {link.linesLinked} {link.linesLinked === 1 ? 'linha' : 'linhas'}</button>}
+        </div>
+      </div>}
       {!result.applied && <footer className="settings-actions">
         <button className="button button-secondary" type="button" onClick={onClose}>Cancelar</button>
         <button className="button button-primary" type="button" disabled={busy || pending === 0} onClick={() => void run(source, true)}><Download size={16} /> {pending === 0 ? 'Nada a importar' : `Importar ${pending} ${pending === 1 ? 'terceiro' : 'terceiros'}`}</button>

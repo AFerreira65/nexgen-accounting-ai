@@ -1633,6 +1633,14 @@ public sealed class FoundationApiTests
         using var efaturaPreview = await client.PostAsync($"{basePath}/efatura/parties-preview", null).ConfigureAwait(false);
         var efaturaPayload = await efaturaPreview.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+        using var linkPreview = await client
+            .PostAsync($"{basePath}/saft/parties-link-preview", new StringContent(saft, Encoding.UTF8, "application/xml"))
+            .ConfigureAwait(false);
+        var linkPayload = await linkPreview.Content.ReadAsStringAsync().ConfigureAwait(false);
+        Assert.AreEqual(HttpStatusCode.OK, linkPreview.StatusCode);
+        StringAssert.Contains(linkPayload, "\"applied\":false");
+        StringAssert.Contains(linkPayload, "\"linesLinked\":0");
+
         Assert.AreEqual(HttpStatusCode.OK, saftPreview.StatusCode);
         StringAssert.Contains(saftPayload, "\"applied\":false");
         StringAssert.Contains(saftPayload, "\"skippedCount\":1");

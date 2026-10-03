@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AppliedTemplate, type EntryTemplateRow, type VatCodeRow, type PartyBalances, type PartyStatement, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AppliedTemplate, type EntryTemplateRow, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -126,6 +126,7 @@ type WorkContextValue = WorkContextData & {
   updateParty: (companyId: string, partyId: string, input: PartyEditInput) => Promise<PartyRow>
   importPartiesFromSaft: (companyId: string, file: File, apply: boolean) => Promise<PartyImportResult>
   importPartiesFromEFatura: (companyId: string, apply: boolean) => Promise<PartyImportResult>
+  linkSaftParties: (companyId: string, file: File, apply: boolean) => Promise<SaftPartyLinkResult>
   vatSummary: (companyId: string, params: { from: string; to: string }) => Promise<VatSummary>
   ircEstimate: (companyId: string, params: { from: string; to: string }, input: { taxRate: number; adjustments: IrcAdjustment[] }) => Promise<IrcEstimate>
   savedIrcEstimate: (companyId: string, params: { from: string; to: string }) => Promise<IrcEstimateFilingView>
@@ -1000,6 +1001,15 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as PartyImportResult
+    },
+    linkSaftParties: async (companyId, file, apply) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/saft/${apply ? 'parties-link' : 'parties-link-preview'}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/xml' },
+        body: file,
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SaftPartyLinkResult
     },
     importPartiesFromEFatura: async (companyId, apply) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/efatura/${apply ? 'parties-import' : 'parties-preview'}`, { method: 'POST' })

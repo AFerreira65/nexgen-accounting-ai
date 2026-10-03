@@ -156,6 +156,145 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
     }
 
     /// <summary>
+    /// Liga os terceiros de um SAF-T aos lançamentos que dele já foram importados
+    /// — para os ficheiros importados antes de os terceiros existirem. Só preenche
+    /// linhas sem terceiro, e só em lançamentos importados (não anulados) cujas
+    /// linhas continuam iguais às do ficheiro: a mesma conta e o mesmo valor, pela
+    /// mesma ordem. Não altera valores nem contas, pelo que não depende de o
+    /// exercício estar apurado ou o período bloqueado. Com <paramref name="apply"/>
+    /// falso, só analisa.
+    /// </summary>
+    /// <returns><c>null</c> sem acesso à empresa.</returns>
+    public async Task<SaftPartyLinkResult?> LinkPartiesAsync(
+        Guid userId,
+        Guid companyId,
+        Stream content,
+        bool apply,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await HasAccessAsync(userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        var read = await entriesReader.ReadTransactionsAsync(content, cancellationToken).ConfigureAwait(false);
+        var withParty = read.Items
+            .Where(item => !string.IsNullOrWhiteSpace(item.CustomerId) || !string.IsNullOrWhiteSpace(item.SupplierId))
+            .ToList();
+
+        var partyIds = (await context.Parties
+                .AsNoTracking()
+                .Where(party => party.CompanyId == companyId)
+                .Select(party => new { party.Id, party.CountryCode, party.TaxRegistrationNumber })
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false))
+            .ToDictionary(party => (party.CountryCode, party.TaxRegistrationNumber), party => party.Id);
+        var fileParties = (read.Parties ?? [])
+            .Where(party => !string.IsNullOrWhiteSpace(party.SourceId))
+            .GroupBy(party => (party.Kind, party.SourceId), FilePartyKeyComparer.Instance)
+            .ToDictionary(group => group.Key, group => group.First(), FilePartyKeyComparer.Instance);
+
+        // As linhas de todos os lançamentos importados da empresa, por referência.
+        var importedLines = await context.JournalEntryLines
+            .AsNoTracking()
+            .Where(line => line.CompanyId == companyId &&
+                line.JournalEntry.Source == EntrySource.SaftImport &&
+                line.JournalEntry.Status != JournalEntryStatus.Voided)
+            .Select(line => new ImportedLine(
+                line.Id, line.JournalEntry.Reference, line.Sequence, line.Account.Code, line.Debit, line.Credit, line.PartyId))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var linesByReference = importedLines
+            .GroupBy(line => line.Reference, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.OrderBy(line => line.Sequence).ToList(), StringComparer.Ordinal);
+
+        var matched = 0;
+        var notFound = 0;
+        var changed = 0;
+        var alreadyLinked = 0;
+        var unknownParties = 0;
+        var toLink = new Dictionary<Guid, List<Guid>>();
+
+        foreach (var fileTransaction in withParty)
+        {
+            if (!linesByReference.TryGetValue(Normalize(fileTransaction.TransactionId), out var entryLines))
+            {
+                notFound++;
+                continue;
+            }
+
+            var sameLines = entryLines.Count == fileTransaction.Lines.Count &&
+                entryLines.Zip(fileTransaction.Lines).All(pair =>
+                    string.Equals(pair.First.AccountCode, Normalize(pair.Second.AccountCode), StringComparison.Ordinal) &&
+                    pair.First.Debit == decimal.Round(pair.Second.Debit, 2, MidpointRounding.AwayFromZero) &&
+                    pair.First.Credit == decimal.Round(pair.Second.Credit, 2, MidpointRounding.AwayFromZero));
+            if (!sameLines)
+            {
+                changed++;
+                continue;
+            }
+
+            matched++;
+            var lineParties = LinePartiesOf(fileTransaction, fileParties, partyIds, out var unknownParty);
+            if (unknownParty)
+            {
+                unknownParties++;
+            }
+
+            for (var index = 0; index < entryLines.Count; index++)
+            {
+                if (lineParties[index] is not { } partyId)
+                {
+                    continue;
+                }
+
+                if (entryLines[index].PartyId is not null)
+                {
+                    alreadyLinked++;
+                    continue;
+                }
+
+                if (!toLink.TryGetValue(partyId, out var ids))
+                {
+                    toLink[partyId] = ids = [];
+                }
+
+                ids.Add(entryLines[index].Id);
+            }
+        }
+
+        var linked = toLink.Values.Sum(ids => ids.Count);
+        if (apply && linked > 0)
+        {
+            var strategy = context.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await context.Database
+                    .BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+                foreach (var (partyId, ids) in toLink)
+                {
+                    foreach (var chunk in ids.Chunk(1000))
+                    {
+                        // A condição «sem terceiro» repete-se na escrita: nunca se substitui um terceiro.
+                        await context.JournalEntryLines
+                            .Where(line => line.CompanyId == companyId && chunk.Contains(line.Id) && line.PartyId == null)
+                            .ExecuteUpdateAsync(setters => setters.SetProperty(line => line.PartyId, partyId), cancellationToken)
+                            .ConfigureAwait(false);
+                    }
+                }
+
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            }).ConfigureAwait(false);
+        }
+
+        return new SaftPartyLinkResult(
+            apply, withParty.Count, matched, notFound, changed, linked, alreadyLinked, unknownParties);
+    }
+
+    private sealed record ImportedLine(
+        Guid Id, string Reference, int Sequence, string AccountCode, decimal Debit, decimal Credit, Guid? PartyId);
+
+    /// <summary>
     /// O terceiro de cada linha de uma transação. O SAF-T indica o cliente e/ou o
     /// fornecedor ao nível da transação; atribui-se às linhas da conta a que o
     /// ficheiro liga esse terceiro ou, na falta dela, às linhas das contas 21

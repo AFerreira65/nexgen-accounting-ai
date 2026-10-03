@@ -146,7 +146,43 @@ lançamentos sem terceiro.
 os terceiros existirem não têm terceiro nas linhas e não aparecem aqui. Ligar o
 terceiro a lançamentos já importados é o incremento seguinte (F3-01D).
 
-### F3-01D — Completar o terceiro em lançamentos já importados (a seguir)
+### F3-01D — Ligar os terceiros a lançamentos já importados (feito)
 
-Reler um SAF-T e preencher o terceiro nas linhas dos lançamentos que já
-existem, sem alterar valores nem contas.
+Para as empresas cujos movimentos foram importados de um SAF-T **antes** de os
+terceiros existirem: relê-se o mesmo ficheiro e preenche-se o terceiro nas
+linhas que ficaram sem ele.
+
+- **`SaftEntriesImportService.LinkPartiesAsync(…, apply)`** — para cada
+  transação do ficheiro com cliente ou fornecedor:
+  - procura o lançamento importado com a mesma referência (`TransactionID`),
+    não anulado e com origem «importado do SAF-T»;
+  - só lhe toca se as linhas **continuam iguais às do ficheiro** — a mesma
+    conta e o mesmo valor, pela mesma ordem; um lançamento entretanto
+    corrigido fica como está e é contado;
+  - atribui o terceiro pelas mesmas regras da importação (F3-02C) e **só às
+    linhas sem terceiro** — a condição repete-se na própria escrita, por isso
+    nunca substitui um terceiro já indicado.
+- **Não altera valores, contas nem datas.** Por isso não depende de o
+  exercício estar apurado nem de o período estar bloqueado: é informação
+  acrescentada, não um movimento.
+- **Resultado** (`SaftPartyLinkResult`): transações com terceiro, lançamentos
+  correspondentes, não encontrados e alterados, linhas ligadas, linhas que já
+  tinham terceiro, e transações cujo terceiro ainda não existe.
+- **API:** `POST .../saft/parties-link-preview` (só analisa) e
+  `POST .../saft/parties-link`, com o ficheiro no corpo.
+- **PWA:** no painel **«Importar»** do ecrã «Terceiros», depois de analisar ou
+  importar os terceiros de um SAF-T, a secção «Lançamentos já importados deste
+  ficheiro»: «Analisar os lançamentos» mostra as contagens e «Ligar N linhas»
+  grava.
+
+**Validação efetuada**
+
+- `AccountingAI.IntegrationTests`: `SaftPartyLinkTests` — importa sem
+  terceiros, cria o cliente, e ao reler: a análise não escreve; a ligação
+  preenche só a linha da conta do cliente sem mudar o valor; o lançamento com
+  linhas diferentes e a transação nunca importada são contados e não tocados;
+  o fornecedor ainda inexistente é contado; repetir não liga nada de novo.
+- `AccountingAI.Api.Tests`: a análise devolve `applied: false`.
+- A suite completa: 218 testes .NET, 88 de interface.
+- **Por verificar em direto:** a ligação numa empresa real já importada — é o
+  caso de uso para que isto existe, e convém começar pela análise.
