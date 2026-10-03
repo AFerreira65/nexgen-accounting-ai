@@ -74,7 +74,10 @@ public sealed partial class SaftExportService(AccountingDbContext context, ISaft
             issues.Add(new(true, $"O NIF da empresa ({company.TaxRegistrationNumber}) não é um NIF português válido."));
         }
 
-        issues.Add(new(false, "A morada da empresa não está registada: o cabeçalho sai com «Desconhecido»."));
+        if (company.AddressDetail is null || company.City is null || company.PostalCode is null)
+        {
+            issues.Add(new(false, "A morada da empresa está incompleta: o que falta sai no cabeçalho como «Desconhecido»."));
+        }
 
         var rows = await context.JournalEntryLines
             .AsNoTracking()
@@ -124,9 +127,9 @@ public sealed partial class SaftExportService(AccountingDbContext context, ISaft
             new SaftExportHeader(
                 company.TaxRegistrationNumber,
                 company.LegalName,
-                Unknown,
-                Unknown,
-                Unknown,
+                company.AddressDetail ?? Unknown,
+                company.City ?? Unknown,
+                company.PostalCode ?? Unknown,
                 "PT",
                 fiscalYear,
                 start,
@@ -279,6 +282,9 @@ public sealed partial class SaftExportService(AccountingDbContext context, ISaft
                     party.Name,
                     party.IsCustomer,
                     party.IsSupplier,
+                    party.AddressDetail,
+                    party.City,
+                    party.PostalCode,
                     CustomerAccount = context.Accounts.Where(account => account.Id == party.CustomerAccountId).Select(account => account.Code).FirstOrDefault(),
                     SupplierAccount = context.Accounts.Where(account => account.Id == party.SupplierAccountId).Select(account => account.Code).FirstOrDefault(),
                 })
@@ -328,7 +334,8 @@ public sealed partial class SaftExportService(AccountingDbContext context, ISaft
                         (!asSupplier, party.Id),
                         new SaftExportParty(
                             !asSupplier, key, (asSupplier ? party.SupplierAccount : party.CustomerAccount) ?? Unknown,
-                            party.TaxRegistrationNumber, party.Name, party.CountryCode));
+                            party.TaxRegistrationNumber, party.Name, party.CountryCode,
+                            party.AddressDetail, party.City, party.PostalCode));
                     if (asSupplier)
                     {
                         supplierId = key;

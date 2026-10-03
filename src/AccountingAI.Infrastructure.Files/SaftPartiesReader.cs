@@ -100,6 +100,15 @@ public sealed class SaftPartiesReader : ISaftPartiesReader
             string.IsNullOrWhiteSpace(accountId) ? null : accountId,
             Field(prefix + "TaxID") ?? string.Empty,
             Field("CompanyName") ?? string.Empty,
-            string.IsNullOrWhiteSpace(country) ? null : country);
+            string.IsNullOrWhiteSpace(country) ? null : country,
+            AddressField(billingAddress, "AddressDetail"),
+            AddressField(billingAddress, "City"),
+            AddressField(billingAddress, "PostalCode"));
+
+        string? AddressField(XElement? address, string name)
+        {
+            var value = address is null ? null : Child(address, name)?.Value.Trim();
+            return string.IsNullOrWhiteSpace(value) ? null : value;
+        }
     }
 }

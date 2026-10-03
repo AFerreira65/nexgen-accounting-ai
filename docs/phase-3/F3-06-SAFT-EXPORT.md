@@ -89,7 +89,42 @@ faturação: a aplicação não emite.
   períodos 13 a 16 nem os tipos `R` e `J`.
 - Os saldos das agregadoras como soma separada de devedores e credores.
 
-### F3-06B — Dados fiscais da empresa (a seguir)
+### F3-06B — Morada da empresa e dos terceiros (feito)
 
-Morada, código postal e localidade da empresa, para o cabeçalho deixar de
-sair com «Desconhecido»; e a morada dos terceiros.
+- **`Domain/Organizations/PostalAddress`** — as regras comuns: campos em
+  branco ficam por registar (`null`); limites do SAF-T (210 / 50 / 20).
+- **`Company`** e **`Party`** ganham `AddressDetail`, `City` e `PostalCode`,
+  opcionais, com `SetAddress`. O código postal da **empresa**, quando
+  indicado, tem de ter a forma `0000-000`; o de um terceiro é livre (pode ser
+  estrangeiro).
+- Migração aditiva `20261003205709_CompanyAndPartyAddress` (seis colunas
+  anuláveis).
+- **Empresa:** `PUT .../organization/companies/{id}` aceita os três campos —
+  omitido mantém o que está, em branco limpa — e a lista da organização
+  devolve-os. O editor de empresa em «Organização» tem os campos.
+- **Terceiros:** `PartyInput` / `PartyRow` e os pedidos da API com a morada; o
+  editor de terceiros tem os campos.
+- **Importação de terceiros do SAF-T:** o leitor passa a trazer a morada de
+  faturação (`BillingAddress`); a importação grava-a nos terceiros novos e
+  preenche-a nos existentes **só se ainda não tiverem nenhuma**. «Desconhecido»
+  não conta como morada.
+- **Exportação:** o cabeçalho leva a morada da empresa e cada cliente ou
+  fornecedor a sua; o que faltar continua a sair como «Desconhecido», e o
+  aviso só aparece quando a morada da empresa está incompleta.
+
+**Validação efetuada**
+
+- **XSD oficial:** um ficheiro com a morada da empresa, um cliente com morada
+  completa e um fornecedor estrangeiro sem código postal validou com zero
+  erros.
+- `AccountingAI.Domain.Tests`: morada opcional, limite, código postal
+  português na empresa e livre no terceiro.
+- `AccountingAI.Infrastructure.Files.Tests`: o leitor de terceiros traz a
+  morada.
+- `AccountingAI.IntegrationTests`: a importação grava a morada e ignora
+  «Desconhecido»; a edição de um terceiro guarda-a; a exportação leva a morada
+  do terceiro e, depois de registada a da empresa, o aviso desaparece e o
+  cabeçalho leva-a. `SqlServerMigrationTests` inclui a migração.
+- A suite completa: 232 testes .NET, 91 de interface.
+- **Por verificar em direto:** os campos novos nos editores de empresa e de
+  terceiro — só existem com a base real ligada.

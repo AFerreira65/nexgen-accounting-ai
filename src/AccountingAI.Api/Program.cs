@@ -274,6 +274,9 @@ if (applicationEndpointsAvailable)
                         company.BaseCurrency,
                         company.IsActive,
                         company.PostingLockDate,
+                        company.AddressDetail,
+                        company.City,
+                        company.PostalCode,
                         Users = company.UserMemberships
                             .OrderBy(membership => membership.User.DisplayName)
                             .Select(membership => new
@@ -1908,7 +1911,8 @@ if (applicationEndpointsAvailable)
                     userId, companyId, request.CountryCode, request.TaxRegistrationNumber ?? string.Empty,
                     new PartyInput(
                         request.Name ?? string.Empty, request.IsCustomer, request.IsSupplier,
-                        request.CustomerAccountCode, request.SupplierAccountCode),
+                        request.CustomerAccountCode, request.SupplierAccountCode,
+                        AddressDetail: request.AddressDetail, City: request.City, PostalCode: request.PostalCode),
                     cancellationToken)
                 .ConfigureAwait(false);
             return created is null ? Results.NotFound() : Results.Ok(created);
@@ -1929,7 +1933,8 @@ if (applicationEndpointsAvailable)
                     userId, companyId, partyId,
                     new PartyInput(
                         request.Name ?? string.Empty, request.IsCustomer, request.IsSupplier,
-                        request.CustomerAccountCode, request.SupplierAccountCode, request.IsActive),
+                        request.CustomerAccountCode, request.SupplierAccountCode, request.IsActive,
+                        request.AddressDetail, request.City, request.PostalCode),
                     cancellationToken)
                 .ConfigureAwait(false);
             return updated is null ? Results.NotFound() : Results.Ok(updated);
@@ -3354,7 +3359,9 @@ if (applicationEndpointsAvailable)
         try
         {
             var company = await admin
-                .UpdateCompanyAsync(companyId, request.LegalName, region, request.BaseCurrency, request.IsActive, postingLockDate, cancellationToken)
+                .UpdateCompanyAsync(
+                    companyId, request.LegalName, region, request.BaseCurrency, request.IsActive, postingLockDate, cancellationToken,
+                    request.AddressDetail, request.City, request.PostalCode)
                 .ConfigureAwait(false);
             return Results.Ok(company);
         }
@@ -3795,7 +3802,10 @@ public sealed record CreatePartyRequest(
     bool IsCustomer,
     bool IsSupplier,
     string? CustomerAccountCode = null,
-    string? SupplierAccountCode = null);
+    string? SupplierAccountCode = null,
+    string? AddressDetail = null,
+    string? City = null,
+    string? PostalCode = null);
 
 public sealed record UpdatePartyRequest(
     string? Name,
@@ -3803,7 +3813,10 @@ public sealed record UpdatePartyRequest(
     bool IsSupplier,
     string? CustomerAccountCode = null,
     string? SupplierAccountCode = null,
-    bool IsActive = true);
+    bool IsActive = true,
+    string? AddressDetail = null,
+    string? City = null,
+    string? PostalCode = null);
 
 public sealed record IrcAdjustmentRequest(string? Description, decimal Amount);
 
@@ -3830,7 +3843,10 @@ public sealed record UpdateOrganizationCompanyRequest(
     string TaxRegion,
     string BaseCurrency,
     bool IsActive,
-    string? PostingLockDate = null);
+    string? PostingLockDate = null,
+    string? AddressDetail = null,
+    string? City = null,
+    string? PostalCode = null);
 
 public sealed record CreateOrganizationUserRequest(string DisplayName, string Email);
 

@@ -82,9 +82,9 @@ public sealed class SaftAccountingWriter : ISaftAccountingWriter
             await ElementAsync(writer, prefix + "TaxID", Text(party.TaxId, 30)).ConfigureAwait(false);
             await ElementAsync(writer, "CompanyName", Text(party.Name, 100)).ConfigureAwait(false);
             await writer.WriteStartElementAsync(null, "BillingAddress", Namespace).ConfigureAwait(false);
-            await ElementAsync(writer, "AddressDetail", Unknown).ConfigureAwait(false);
-            await ElementAsync(writer, "City", Unknown).ConfigureAwait(false);
-            await ElementAsync(writer, "PostalCode", Unknown).ConfigureAwait(false);
+            await ElementAsync(writer, "AddressDetail", Text(party.AddressDetail, 210)).ConfigureAwait(false);
+            await ElementAsync(writer, "City", Text(party.City, 50)).ConfigureAwait(false);
+            await ElementAsync(writer, "PostalCode", Text(party.PostalCode, 20)).ConfigureAwait(false);
             await ElementAsync(writer, "Country", party.Country).ConfigureAwait(false);
             await writer.WriteEndElementAsync().ConfigureAwait(false);
             await ElementAsync(writer, "SelfBillingIndicator", "0").ConfigureAwait(false);

@@ -734,6 +734,9 @@ export type PartyRow = {
   customerAccountCode: string | null
   supplierAccountCode: string | null
   isActive: boolean
+  addressDetail?: string | null
+  city?: string | null
+  postalCode?: string | null
 }
 
 export type PartyPage = { total: number; items: PartyRow[] }

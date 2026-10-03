@@ -74,7 +74,10 @@ public sealed class PartyImportService(ISaftPartiesReader partiesReader, Account
             party.Kind == SaftPartyKind.Customer,
             party.Kind == SaftPartyKind.Supplier,
             party.Kind == SaftPartyKind.Customer ? party.AccountId : null,
-            party.Kind == SaftPartyKind.Supplier ? party.AccountId : null));
+            party.Kind == SaftPartyKind.Supplier ? party.AccountId : null,
+            party.AddressDetail,
+            party.City,
+            party.PostalCode));
 
         return await RunAsync(companyId, candidates, source.Count, apply, cancellationToken).ConfigureAwait(false);
     }
@@ -96,7 +99,7 @@ public sealed class PartyImportService(ISaftPartiesReader partiesReader, Account
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
         var candidates = suppliers.Select(supplier => new Candidate(
-            Party.DefaultCountryCode, supplier.TaxId, supplier.Name ?? string.Empty, false, true, null, null));
+            Party.DefaultCountryCode, supplier.TaxId, supplier.Name ?? string.Empty, false, true, null, null, null, null, null));
 
         return await RunAsync(companyId, candidates, suppliers.Count, apply, cancellationToken).ConfigureAwait(false);
     }
@@ -123,6 +126,9 @@ public sealed class PartyImportService(ISaftPartiesReader partiesReader, Account
                     IsSupplier = current.IsSupplier || normalized.IsSupplier,
                     CustomerAccountCode = current.CustomerAccountCode ?? normalized.CustomerAccountCode,
                     SupplierAccountCode = current.SupplierAccountCode ?? normalized.SupplierAccountCode,
+                    AddressDetail = current.AddressDetail ?? normalized.AddressDetail,
+                    City = current.City ?? normalized.City,
+                    PostalCode = current.PostalCode ?? normalized.PostalCode,
                 }
                 : normalized;
         }
@@ -152,13 +158,20 @@ public sealed class PartyImportService(ISaftPartiesReader partiesReader, Account
                 var isSupplier = party.IsSupplier || candidate.IsSupplier;
                 var customerAccount = party.CustomerAccountId ?? customerAccountId;
                 var supplierAccount = party.SupplierAccountId ?? supplierAccountId;
+                // A morada só se preenche num terceiro que ainda não tem nenhuma.
+                var fillAddress = party.AddressDetail is null && party.City is null && party.PostalCode is null &&
+                    (candidate.AddressDetail ?? candidate.City ?? candidate.PostalCode) is not null;
                 var changed = isCustomer != party.IsCustomer || isSupplier != party.IsSupplier ||
-                    customerAccount != party.CustomerAccountId || supplierAccount != party.SupplierAccountId;
+                    customerAccount != party.CustomerAccountId || supplierAccount != party.SupplierAccountId || fillAddress;
                 state = changed ? PartyImportState.Updated : PartyImportState.Unchanged;
                 if (changed && apply)
                 {
                     party.SetRoles(isCustomer, isSupplier);
                     party.LinkAccounts(customerAccount, supplierAccount);
+                    if (fillAddress)
+                    {
+                        party.SetAddress(candidate.AddressDetail, candidate.City, candidate.PostalCode);
+                    }
                 }
 
                 items.Add((state, new PartyImportItem(
@@ -173,6 +186,7 @@ public sealed class PartyImportService(ISaftPartiesReader partiesReader, Account
                 var created = Party.Create(companyId, candidate.Country, candidate.TaxId, candidate.Name);
                 created.SetRoles(candidate.IsCustomer, candidate.IsSupplier);
                 created.LinkAccounts(customerAccountId, supplierAccountId);
+                created.SetAddress(candidate.AddressDetail, candidate.City, candidate.PostalCode);
                 context.Parties.Add(created);
             }
 
@@ -213,7 +227,7 @@ public sealed class PartyImportService(ISaftPartiesReader partiesReader, Account
     public static (string Country, string TaxNumber)? KeyOf(SaftParty party)
     {
         ArgumentNullException.ThrowIfNull(party);
-        var candidate = new Candidate(party.Country, party.TaxId, string.IsNullOrWhiteSpace(party.Name) ? "-" : party.Name, false, false, null, null);
+        var candidate = new Candidate(party.Country, party.TaxId, string.IsNullOrWhiteSpace(party.Name) ? "-" : party.Name, false, false, null, null, null, null, null);
         return TryNormalize(candidate, out var normalized, out _) ? (normalized.Country!, normalized.TaxId) : null;
     }
 
@@ -268,8 +282,23 @@ public sealed class PartyImportService(ISaftPartiesReader partiesReader, Account
             Country = country,
             TaxId = taxId,
             Name = name.Length > Party.NameMaxLength ? name[..Party.NameMaxLength] : name,
+            AddressDetail = Clean(candidate.AddressDetail, AccountingAI.Domain.Organizations.PostalAddress.AddressDetailMaxLength),
+            City = Clean(candidate.City, AccountingAI.Domain.Organizations.PostalAddress.CityMaxLength),
+            PostalCode = Clean(candidate.PostalCode, AccountingAI.Domain.Organizations.PostalAddress.PostalCodeMaxLength),
         };
         return true;
+    }
+
+    /// <summary>Um campo de morada do ficheiro: «Desconhecido» e os vazios não contam; corta ao máximo.</summary>
+    private static string? Clean(string? value, int maxLength)
+    {
+        var text = value?.Trim();
+        if (string.IsNullOrEmpty(text) || text.Equals("Desconhecido", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return text.Length > maxLength ? text[..maxLength] : text;
     }
 
     private static Guid? Resolve(Dictionary<string, Guid> postingAccounts, string? accountCode) =>
@@ -294,5 +323,8 @@ public sealed class PartyImportService(ISaftPartiesReader partiesReader, Account
         bool IsCustomer,
         bool IsSupplier,
         string? CustomerAccountCode,
-        string? SupplierAccountCode);
+        string? SupplierAccountCode,
+        string? AddressDetail,
+        string? City,
+        string? PostalCode);
 }

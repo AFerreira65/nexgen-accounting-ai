@@ -19,7 +19,10 @@ public sealed record SaftParty(
     string? AccountId,
     string TaxId,
     string Name,
-    string? Country);
+    string? Country,
+    string? AddressDetail = null,
+    string? City = null,
+    string? PostalCode = null);
 
 /// <summary>
 /// Fronteira para leitura dos clientes e fornecedores (<c>MasterFiles/Customer</c>

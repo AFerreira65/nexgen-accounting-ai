@@ -51,7 +51,10 @@ public sealed record SaftExportParty(
     string AccountId,
     string TaxId,
     string Name,
-    string Country);
+    string Country,
+    string? AddressDetail = null,
+    string? City = null,
+    string? PostalCode = null);
 
 public sealed record SaftExportLine(
     string RecordId,

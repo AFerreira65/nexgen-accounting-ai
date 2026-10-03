@@ -668,6 +668,14 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AddressDetail")
+                        .HasMaxLength(210)
+                        .HasColumnType("nvarchar(210)");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uniqueidentifier");
 
@@ -709,6 +717,10 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -992,11 +1004,19 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.Property<int>("AccountingStandard")
                         .HasColumnType("int");
 
+                    b.Property<string>("AddressDetail")
+                        .HasMaxLength(210)
+                        .HasColumnType("nvarchar(210)");
+
                     b.Property<string>("BaseCurrency")
                         .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("nchar(3)")
                         .IsFixedLength();
+
+                    b.Property<string>("City")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTimeOffset>("CreatedAtUtc")
                         .ValueGeneratedOnAdd()
@@ -1019,6 +1039,10 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
 
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateOnly?>("PostingLockDate")
                         .HasColumnType("date");

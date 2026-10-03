@@ -17,6 +17,9 @@ internal sealed class PartyConfiguration : IEntityTypeConfiguration<Party>
             .IsRequired();
         builder.Property(item => item.Name).HasMaxLength(Party.NameMaxLength).IsRequired();
         builder.Property(item => item.IsActive).HasDefaultValue(true);
+        builder.Property(item => item.AddressDetail).HasMaxLength(210);
+        builder.Property(item => item.City).HasMaxLength(50);
+        builder.Property(item => item.PostalCode).HasMaxLength(20);
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.HasIndex(item => new { item.CompanyId, item.CountryCode, item.TaxRegistrationNumber }).IsUnique();
         builder.HasIndex(item => new { item.CompanyId, item.Name });

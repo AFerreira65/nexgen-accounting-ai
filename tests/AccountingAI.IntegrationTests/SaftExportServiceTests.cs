@@ -76,6 +76,7 @@ public sealed class SaftExportServiceTests
             var customer = Party.Create(companyId, "PT", "509999999", "Cliente A, Lda.");
             customer.SetRoles(isCustomer: true, isSupplier: false);
             customer.LinkAccounts(ids["21111"], null);
+            customer.SetAddress("Rua do Cliente, 5", "Porto", "4000-001");
             context.Add(customer);
 
             JournalEntry Entry(Guid journal, string reference, DateOnly date, EntrySource source, params (string Account, decimal Debit, decimal Credit, Guid? Party)[] lines)
@@ -122,6 +123,7 @@ public sealed class SaftExportServiceTests
             Assert.AreEqual(250m, report.TotalCredit);
             Assert.AreEqual(1, report.PartyCount);
             Assert.IsTrue(report.Issues.Any(issue => !issue.Blocking && issue.Message.Contains("morada", StringComparison.Ordinal)));
+            Assert.AreEqual("Desconhecido", writer.Model!.Header.City);
 
             var model = writer.Model!;
             Assert.AreEqual("S", model.TaxonomyReference);
@@ -162,6 +164,17 @@ public sealed class SaftExportServiceTests
             var party = model.Parties.Single();
             Assert.IsTrue(party.IsCustomer);
             Assert.AreEqual("21111", party.AccountId);
+            Assert.AreEqual("Porto", party.City);
+
+            // Com a morada da empresa registada, o aviso desaparece e o cabeçalho leva-a.
+            var companyEntity = await context.Companies.SingleAsync(item => item.Id == companyId).ConfigureAwait(false);
+            companyEntity.SetAddress("Avenida Central, 1", "Lisboa", "1000-001");
+            await context.SaveChangesAsync().ConfigureAwait(false);
+            context.ChangeTracker.Clear();
+            var withAddress = await service.ExportAsync(userId, companyId, 2026, output, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsFalse(withAddress!.Issues.Any(issue => issue.Message.Contains("morada", StringComparison.Ordinal)));
+            Assert.AreEqual("Lisboa", writer.Model!.Header.City);
+            Assert.AreEqual("1000-001", writer.Model.Header.PostalCode);
 
             // Problemas bloqueantes: conta com movimento sem taxonomia.
             context.Add(Entry(journalId, "VENDAS-2026-00003", new DateOnly(2026, 6, 1), EntrySource.Manual,

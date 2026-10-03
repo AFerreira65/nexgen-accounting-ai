@@ -70,7 +70,7 @@ public sealed class PartyImportServiceTests
             [
                 new SaftParty(SaftPartyKind.Customer, "C1", "21111", "500 584 095", "Cliente A, Lda.", "PT"),
                 new SaftParty(SaftPartyKind.Supplier, "F1", "22111", "500584095", "Cliente A, Lda.", "Desconhecido"),
-                new SaftParty(SaftPartyKind.Supplier, "F2", "22999", "B12345678", "Proveedor B, S.L.", "ES"),
+                new SaftParty(SaftPartyKind.Supplier, "F2", "22999", "B12345678", "Proveedor B, S.L.", "ES", "Calle Mayor, 1", "Madrid", "Desconhecido"),
                 new SaftParty(SaftPartyKind.Customer, "C2", null, "999999990", "Consumidor final", null),
                 new SaftParty(SaftPartyKind.Customer, "C3", null, "123456780", "NIF inválido", "PT"),
                 new SaftParty(SaftPartyKind.Customer, "C4", null, "", "Sem contribuinte", "PT"),
@@ -95,6 +95,10 @@ public sealed class PartyImportServiceTests
             Assert.AreEqual("New", imported.Items[0].State);
             Assert.AreEqual("B12345678", imported.Items[0].TaxRegistrationNumber);
             Assert.IsNull(imported.Items[0].SupplierAccountCode, "A conta 22999 não existe na empresa.");
+            var withAddress = await context.Parties.AsNoTracking().SingleAsync(party => party.TaxRegistrationNumber == "B12345678").ConfigureAwait(false);
+            Assert.AreEqual("Calle Mayor, 1", withAddress.AddressDetail);
+            Assert.AreEqual("Madrid", withAddress.City);
+            Assert.IsNull(withAddress.PostalCode, "«Desconhecido» não é uma morada.");
             CollectionAssert.AreEquivalent(
                 new[] { "Consumidor final (999999990)", "NIF português inválido", "Sem número de contribuinte" },
                 imported.Skipped.Select(item => item.Reason).ToArray());

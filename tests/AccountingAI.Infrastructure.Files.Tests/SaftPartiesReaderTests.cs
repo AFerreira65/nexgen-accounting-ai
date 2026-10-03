@@ -56,7 +56,7 @@ public sealed class SaftPartiesReaderTests
         var parties = await new SaftPartiesReader().ReadAsync(content).ConfigureAwait(false);
 
         Assert.AreEqual(3, parties.Count);
-        Assert.AreEqual(new SaftParty(SaftPartyKind.Customer, "C1", "21111", "500584095", "Cliente A, Lda.", "PT"), parties[0]);
+        Assert.AreEqual(new SaftParty(SaftPartyKind.Customer, "C1", "21111", "500584095", "Cliente A, Lda.", "PT", "Rua", "Lisboa"), parties[0]);
         Assert.AreEqual(new SaftParty(SaftPartyKind.Customer, "C2", "Desconhecido", "999999990", "Consumidor final", null), parties[1]);
         Assert.AreEqual(new SaftParty(SaftPartyKind.Supplier, "F1", "22111", "B12345678", "Proveedor B, S.L.", "ES"), parties[2]);
     }

@@ -30,6 +30,9 @@ function PartyEditor({ party, onSaved, onClose }: { party: PartyRow | null; onSa
   const [customerAccountCode, setCustomerAccountCode] = useState(party?.customerAccountCode ?? '')
   const [supplierAccountCode, setSupplierAccountCode] = useState(party?.supplierAccountCode ?? '')
   const [isActive, setIsActive] = useState(party?.isActive ?? true)
+  const [addressDetail, setAddressDetail] = useState(party?.addressDetail ?? '')
+  const [city, setCity] = useState(party?.city ?? '')
+  const [postalCode, setPostalCode] = useState(party?.postalCode ?? '')
   const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
   const [error, setError] = useState('')
 
@@ -48,6 +51,9 @@ function PartyEditor({ party, onSaved, onClose }: { party: PartyRow | null; onSa
       customerAccountCode: customerAccountCode.trim() || null,
       supplierAccountCode: supplierAccountCode.trim() || null,
       isActive,
+      addressDetail: addressDetail.trim() || null,
+      city: city.trim() || null,
+      postalCode: postalCode.trim() || null,
     }
     try {
       if (isCreate) await createParty(activeCompany.companyId, { ...input, countryCode, taxRegistrationNumber })
@@ -74,6 +80,9 @@ function PartyEditor({ party, onSaved, onClose }: { party: PartyRow | null; onSa
       <label className="toggle-field"><input type="checkbox" checked={isSupplier} onChange={(event) => setIsSupplier(event.target.checked)} /><span><strong>Fornecedor</strong><small>Aparece nas compras e nas retenções.</small></span></label>
       <label><span>Subconta de cliente</span><input list="party-customer-accounts" value={customerAccountCode} onChange={(event) => setCustomerAccountCode(event.target.value)} placeholder="Opcional — ex.: 21111" /></label>
       <label><span>Subconta de fornecedor</span><input list="party-supplier-accounts" value={supplierAccountCode} onChange={(event) => setSupplierAccountCode(event.target.value)} placeholder="Opcional — ex.: 22111" /></label>
+      <label><span>Morada</span><input value={addressDetail} onChange={(event) => setAddressDetail(event.target.value)} maxLength={210} placeholder="Opcional — rua, número, andar" /></label>
+      <label><span>Código postal</span><input value={postalCode} onChange={(event) => setPostalCode(event.target.value)} maxLength={20} placeholder="Opcional" /></label>
+      <label><span>Localidade</span><input value={city} onChange={(event) => setCity(event.target.value)} maxLength={50} placeholder="Opcional" /></label>
       <datalist id="party-customer-accounts">{customerAccounts.slice(0, 500).map((account) => <option key={account.code} value={account.code}>{account.name}</option>)}</datalist>
       <datalist id="party-supplier-accounts">{supplierAccounts.slice(0, 500).map((account) => <option key={account.code} value={account.code}>{account.name}</option>)}</datalist>
       {!isCreate && <label className="toggle-field"><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /><span><strong>Terceiro ativo</strong><small>Desative para o retirar das novas seleções.</small></span></label>}

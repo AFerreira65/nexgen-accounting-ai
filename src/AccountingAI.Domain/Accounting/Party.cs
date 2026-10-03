@@ -49,6 +49,13 @@ public sealed class Party
     /// <summary>A subconta de fornecedores (22) deste terceiro, se houver.</summary>
     public Guid? SupplierAccountId { get; private set; }
 
+    /// <summary>A morada (rua, número, andar); `null` quando não está registada.</summary>
+    public string? AddressDetail { get; private set; }
+
+    public string? City { get; private set; }
+
+    public string? PostalCode { get; private set; }
+
     public bool IsActive { get; private set; }
 
     public byte[] RowVersion { get; private set; } = [];
@@ -80,6 +87,14 @@ public sealed class Party
     {
         CustomerAccountId = customerAccountId;
         SupplierAccountId = supplierAccountId;
+    }
+
+    /// <summary>Define a morada de faturação; os campos em branco ficam por registar.</summary>
+    public void SetAddress(string? addressDetail, string? city, string? postalCode)
+    {
+        AddressDetail = Organizations.PostalAddress.Normalize(addressDetail, Organizations.PostalAddress.AddressDetailMaxLength, nameof(addressDetail));
+        City = Organizations.PostalAddress.Normalize(city, Organizations.PostalAddress.CityMaxLength, nameof(city));
+        PostalCode = Organizations.PostalAddress.Normalize(postalCode, Organizations.PostalAddress.PostalCodeMaxLength, nameof(postalCode));
     }
 
     public void SetActive(bool isActive) => IsActive = isActive;

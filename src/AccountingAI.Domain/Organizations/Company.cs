@@ -81,6 +81,13 @@ public sealed class Company
     /// </summary>
     public DateOnly? PostingLockDate { get; private set; }
 
+    /// <summary>A morada (rua, número, andar); `null` quando não está registada.</summary>
+    public string? AddressDetail { get; private set; }
+
+    public string? City { get; private set; }
+
+    public string? PostalCode { get; private set; }
+
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
     public byte[] RowVersion { get; private set; } = [];
@@ -143,6 +150,23 @@ public sealed class Company
     public void Deactivate() => IsActive = false;
 
     public void Reactivate() => IsActive = true;
+
+    /// <summary>
+    /// Define a morada da sede. Os campos em branco ficam por registar; o código
+    /// postal, quando indicado, tem de ter a forma portuguesa 0000-000.
+    /// </summary>
+    public void SetAddress(string? addressDetail, string? city, string? postalCode)
+    {
+        var normalizedPostalCode = PostalAddress.Normalize(postalCode, PostalAddress.PostalCodeMaxLength, nameof(postalCode));
+        if (normalizedPostalCode is not null && !PostalAddress.IsPortuguesePostalCode(normalizedPostalCode))
+        {
+            throw new ArgumentException("O código postal tem de ter a forma 0000-000.", nameof(postalCode));
+        }
+
+        AddressDetail = PostalAddress.Normalize(addressDetail, PostalAddress.AddressDetailMaxLength, nameof(addressDetail));
+        City = PostalAddress.Normalize(city, PostalAddress.CityMaxLength, nameof(city));
+        PostalCode = normalizedPostalCode;
+    }
 
     /// <summary>Define ou remove (com `null`) a data de bloqueio de lançamentos.</summary>
     public void SetPostingLockDate(DateOnly? lockDate)

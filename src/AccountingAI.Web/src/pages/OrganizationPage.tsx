@@ -4,7 +4,7 @@ import { ACCOUNTING_STANDARDS, accountingStandardName } from '../app/accountingS
 import { useWorkContext } from '../app/WorkContext'
 
 type OrgUser = { userId: string; displayName: string; email: string; role: string; isActive: boolean }
-type OrgCompany = { id: string; legalName: string; taxRegistrationNumber: string; region: string; baseCurrency: string; isActive: boolean; postingLockDate: string | null; users: OrgUser[] }
+type OrgCompany = { id: string; legalName: string; taxRegistrationNumber: string; region: string; baseCurrency: string; isActive: boolean; postingLockDate: string | null; addressDetail?: string | null; city?: string | null; postalCode?: string | null; users: OrgUser[] }
 type OrgFirm = { id: string; name: string; slug: string; companies: OrgCompany[] }
 
 const REGION_LABELS: Record<string, string> = { Mainland: 'Continente', Azores: 'Açores', Madeira: 'Madeira' }
@@ -124,6 +124,9 @@ function CompanyEditor({ company, firmId, onDone, onCancel }: { company: OrgComp
   const [baseCurrency, setBaseCurrency] = useState(company?.baseCurrency ?? 'EUR')
   const [isActive, setIsActive] = useState(company?.isActive ?? true)
   const [postingLockDate, setPostingLockDate] = useState(company?.postingLockDate ?? '')
+  const [addressDetail, setAddressDetail] = useState(company?.addressDetail ?? '')
+  const [city, setCity] = useState(company?.city ?? '')
+  const [postalCode, setPostalCode] = useState(company?.postalCode ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -133,7 +136,7 @@ function CompanyEditor({ company, firmId, onDone, onCancel }: { company: OrgComp
     try {
       const response = isCreate
         ? await fetch('/api/v1/development/organization/companies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accountingFirmId: firmId, legalName, taxRegistrationNumber, taxRegion, accountingStandard, baseCurrency }) })
-        : await fetch(`/api/v1/development/organization/companies/${company.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ legalName, taxRegion, baseCurrency, isActive, postingLockDate: postingLockDate || null }) })
+        : await fetch(`/api/v1/development/organization/companies/${company.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ legalName, taxRegion, baseCurrency, isActive, postingLockDate: postingLockDate || null, addressDetail, city, postalCode }) })
       if (!response.ok) throw new Error(await problem(response))
       onDone()
     } catch (submitError) {
@@ -156,6 +159,11 @@ function CompanyEditor({ company, firmId, onDone, onCancel }: { company: OrgComp
       </select>
     </label> : null}
     <label><span>Moeda base</span><input value={baseCurrency} maxLength={3} onChange={(event) => setBaseCurrency(event.target.value)} /></label>
+    {isCreate ? null : <>
+      <label><span>Morada da sede</span><input value={addressDetail} onChange={(event) => setAddressDetail(event.target.value)} maxLength={210} placeholder="Rua, número, andar" /></label>
+      <label><span>Código postal</span><input value={postalCode} onChange={(event) => setPostalCode(event.target.value)} maxLength={8} placeholder="0000-000" /></label>
+      <label><span>Localidade</span><input value={city} onChange={(event) => setCity(event.target.value)} maxLength={50} /></label>
+    </>}
     {isCreate ? null : <label><span>Data de bloqueio de lançamentos</span><input type="date" value={postingLockDate} onChange={(event) => setPostingLockDate(event.target.value)} /></label>}
     {isCreate ? null : <label className="toggle-field"><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /><span><strong>Empresa ativa</strong></span></label>}
   </EditorShell>

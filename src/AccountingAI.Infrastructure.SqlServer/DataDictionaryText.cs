@@ -222,6 +222,12 @@ internal static class DataDictionaryText
         ["JournalEntryLines.VatCodeId"] = "O código de IVA da linha; vazio quando a linha é lida pela classificação da sua conta.",
         ["JournalEntryLines.PartyId"] = "O terceiro (cliente ou fornecedor) a que a linha diz respeito; vazio quando não se aplica.",
 
+        ["Companies.AddressDetail"] = "A morada da sede da empresa (rua, número, andar); vai no cabeçalho do SAF-T.",
+        ["Companies.City"] = "A localidade da sede.",
+        ["Companies.PostalCode"] = "O código postal da sede, na forma 0000-000.",
+        ["Parties.AddressDetail"] = "A morada de faturação do terceiro.",
+        ["Parties.City"] = "A localidade do terceiro.",
+        ["Parties.PostalCode"] = "O código postal do terceiro.",
         ["Parties.CountryCode"] = "O país do contribuinte (código ISO de duas letras; PT por omissão).",
         ["Parties.TaxRegistrationNumber"] = "O número de contribuinte; único por empresa e país. Um NIF português é validado pelo dígito de controlo.",
         ["Parties.Name"] = "O nome ou a designação social do terceiro.",

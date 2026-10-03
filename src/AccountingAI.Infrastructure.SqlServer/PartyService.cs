@@ -15,7 +15,10 @@ public sealed record PartyRow(
     bool IsSupplier,
     string? CustomerAccountCode,
     string? SupplierAccountCode,
-    bool IsActive);
+    bool IsActive,
+    string? AddressDetail = null,
+    string? City = null,
+    string? PostalCode = null);
 
 /// <summary>Uma página de terceiros e o total do conjunto filtrado.</summary>
 public sealed record PartyPage(int Total, IReadOnlyList<PartyRow> Items);
@@ -35,7 +38,10 @@ public sealed record PartyInput(
     bool IsSupplier,
     string? CustomerAccountCode,
     string? SupplierAccountCode,
-    bool IsActive = true);
+    bool IsActive = true,
+    string? AddressDetail = null,
+    string? City = null,
+    string? PostalCode = null);
 
 /// <summary>
 /// Mantém os terceiros (<see cref="Party"/>) de uma empresa: lista paginada com
@@ -163,6 +169,7 @@ public sealed class PartyService(AccountingDbContext context)
     private async Task ApplyAsync(Party party, PartyInput input, CancellationToken cancellationToken)
     {
         party.SetRoles(input.IsCustomer, input.IsSupplier);
+        party.SetAddress(input.AddressDetail, input.City, input.PostalCode);
         party.LinkAccounts(
             await ResolveAccountAsync(party.CompanyId, input.CustomerAccountCode, "de cliente", cancellationToken).ConfigureAwait(false),
             await ResolveAccountAsync(party.CompanyId, input.SupplierAccountCode, "de fornecedor", cancellationToken).ConfigureAwait(false));
@@ -210,7 +217,10 @@ public sealed class PartyService(AccountingDbContext context)
             party.IsSupplier,
             context.Accounts.Where(account => account.Id == party.CustomerAccountId).Select(account => account.Code).FirstOrDefault(),
             context.Accounts.Where(account => account.Id == party.SupplierAccountId).Select(account => account.Code).FirstOrDefault(),
-            party.IsActive));
+            party.IsActive,
+            party.AddressDetail,
+            party.City,
+            party.PostalCode));
 
     private Task<bool> HasAccessAsync(Guid userId, Guid companyId, CancellationToken cancellationToken) =>
         context.Companies

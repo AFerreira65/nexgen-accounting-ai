@@ -14,7 +14,10 @@ public sealed record CompanyAdminData(
     string AccountingStandard,
     string? AccountingSetupVersion,
     bool IsActive,
-    DateOnly? PostingLockDate);
+    DateOnly? PostingLockDate,
+    string? AddressDetail = null,
+    string? City = null,
+    string? PostalCode = null);
 
 public sealed record UserAdminData(
     Guid Id,
@@ -118,7 +121,10 @@ public sealed class OrganizationAdminService(
         string baseCurrency,
         bool isActive,
         DateOnly? postingLockDate,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? addressDetail = null,
+        string? city = null,
+        string? postalCode = null)
     {
         var company = await context.Companies
             .SingleOrDefaultAsync(item => item.Id == companyId, cancellationToken)
@@ -129,6 +135,12 @@ public sealed class OrganizationAdminService(
         company.ChangeTaxRegion(taxRegion);
         company.ChangeBaseCurrency(baseCurrency);
         company.SetPostingLockDate(postingLockDate);
+        // Um campo de morada omitido (`null`) mantém o que está; em branco, limpa.
+        if (addressDetail is not null || city is not null || postalCode is not null)
+        {
+            company.SetAddress(addressDetail ?? company.AddressDetail, city ?? company.City, postalCode ?? company.PostalCode);
+        }
+
         if (isActive)
         {
             company.Reactivate();
@@ -256,5 +268,8 @@ public sealed class OrganizationAdminService(
         company.AccountingStandard.ToString(),
         company.AccountingSetupVersion,
         company.IsActive,
-        company.PostingLockDate);
+        company.PostingLockDate,
+        company.AddressDetail,
+        company.City,
+        company.PostalCode);
 }

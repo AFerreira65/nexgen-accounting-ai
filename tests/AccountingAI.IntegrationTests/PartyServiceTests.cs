@@ -108,7 +108,7 @@ public sealed class PartyServiceTests
 
             // Edição: passa a fornecedor também, desliga a conta e fica inativo.
             var updated = await service
-                .UpdateAsync(userId, companyId, customer.Id, new PartyInput("Cliente A, S.A.", true, true, null, "22111", IsActive: false), CancellationToken.None)
+                .UpdateAsync(userId, companyId, customer.Id, new PartyInput("Cliente A, S.A.", true, true, null, "22111", IsActive: false, AddressDetail: "Rua Nova, 10", City: "Lisboa", PostalCode: "1000-001"), CancellationToken.None)
                 .ConfigureAwait(false);
             Assert.IsNotNull(updated);
             Assert.AreEqual("Cliente A, S.A.", updated!.Name);
@@ -116,6 +116,8 @@ public sealed class PartyServiceTests
             Assert.IsNull(updated.CustomerAccountCode);
             Assert.AreEqual("22111", updated.SupplierAccountCode);
             Assert.IsFalse(updated.IsActive);
+            Assert.AreEqual("Rua Nova, 10", updated.AddressDetail);
+            Assert.AreEqual("1000-001", updated.PostalCode);
 
             var active = await service.ListAsync(userId, companyId, null, PartyRoleFilter.Todos, false, 1, 50, CancellationToken.None).ConfigureAwait(false);
             Assert.AreEqual(1, active!.Total, "Os inativos só aparecem a pedido.");
