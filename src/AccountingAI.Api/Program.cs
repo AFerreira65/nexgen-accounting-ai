@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting.WindowsServices;
 
 // Ferramenta de linha de comandos: cifra um valor da configuração da AT.
 //   dotnet run --project src/AccountingAI.Api -- protect-at-secret "<valor>"
@@ -43,6 +44,11 @@ if (args is ["protect-at-secret", ..])
 }
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Sem efeito fora do Windows e fora de um serviço (ex.: `dotnet run` local) —
+// só muda o comportamento quando o processo é mesmo controlado pelo Service
+// Control Manager (F2-11B: publicar + `sc.exe create`, ver scripts/publish-service.ps1).
+builder.Host.UseWindowsService(options => options.ServiceName = "AccountingAI");
 
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
@@ -87,6 +93,12 @@ builder.Services.AddAuthorization(options =>
 var app = builder.Build();
 
 app.UseExceptionHandler();
+// Ficheiros estáticos da PWA (F2-11B) — servidos do `wwwroot` do próprio
+// processo, para o serviço do Windows não depender de um segundo servidor
+// (o Vite é só de desenvolvimento). Middleware, não endpoint: não passa pela
+// autorização, tal como o `index.html` tem de ser servível sem sessão para
+// mostrar o ecrã de login. Vazio em desenvolvimento até se publicar.
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -221,7 +233,14 @@ app.MapGet("/api/v1/auth/me", (HttpContext context) => Results.Ok(new
     email = context.User.FindFirstValue(ClaimTypes.Email),
 }));
 
-if (app.Environment.IsDevelopment())
+// Até à F2-11A este bloco só existia em Development — a única barreira de
+// toda a API, sem autenticação nenhuma (ver ADR-0011). A sessão de F2-11A
+// tornou essa barreira desnecessária: os endpoints ficam sempre disponíveis,
+// agora protegidos por login (FallbackPolicy) em vez de por ambiente — o que
+// deixa também de impedir correr fora de Development (ex.: como serviço do
+// Windows, F2-11B).
+var applicationEndpointsAvailable = true;
+if (applicationEndpointsAvailable)
 {
     app.MapGet("/api/v1/development/organization", async (
         AccountingDbContext context,
@@ -3020,6 +3039,13 @@ if (app.Environment.IsDevelopment())
         }
     });
 }
+
+// Serve o `index.html` da PWA para qualquer pedido que não caia em nenhuma
+// API nem em nenhum ficheiro estático — o encaminhamento das rotas da SPA
+// (`/movimentos`, etc.) é do `react-router-dom`, do lado do cliente. Aberto
+// a quem não tem sessão: é a própria página de login. Sem `wwwroot/index.html`
+// (nenhum `npm run build` publicado ainda), devolve 404 em vez de rebentar.
+app.MapFallbackToFile("index.html").AllowAnonymous();
 
 await app.RunAsync().ConfigureAwait(false);
 
