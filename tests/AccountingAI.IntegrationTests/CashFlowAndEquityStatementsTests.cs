@@ -181,6 +181,25 @@ public sealed class CashFlowAndEquityStatementsTests
                 second!.Rows[0].Amounts.ToArray());
             Assert.AreEqual(1320m, second.ClosingEquity);
 
+            // Evolução mensal: movimentos do mês sem o apuramento, saldos no fim do mês.
+            var evolution = await service.MonthlyEvolutionAsync(userId, companyId, 2026, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsNotNull(evolution);
+            Assert.AreEqual(12, evolution!.Months.Count);
+            Assert.AreEqual(12, evolution.LastMonth);
+            var april = evolution.Months[3];
+            Assert.AreEqual(100m, april.Income);
+            Assert.AreEqual(200m, april.Expenses);
+            Assert.AreEqual(-100m, april.Result);
+            Assert.AreEqual(1050m - 20m + 123m - 246m, april.Cash);
+            Assert.AreEqual(0m, april.Payables, "A fatura do fornecedor foi paga no mesmo mês.");
+            Assert.AreEqual(50m, evolution.Months[5].PreviousIncome, "A venda de junho de 2025.");
+            var december = evolution.Months[11];
+            Assert.AreEqual(0m, december.Income, "O apuramento não é rendimento nem gasto.");
+            Assert.AreEqual(0m, december.Expenses);
+            Assert.AreEqual(1405m, december.Cash);
+            Assert.AreEqual(-110m, evolution.Months.Sum(month => month.Result));
+            Assert.IsNull(await service.MonthlyEvolutionAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
+
             Assert.IsNull(await service.CashFlowsAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
             Assert.IsNull(await service.EquityChangesAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
         }

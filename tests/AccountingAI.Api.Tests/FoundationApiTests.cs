@@ -1473,6 +1473,9 @@ public sealed class FoundationApiTests
         using var equity = await client.GetAsync($"{basePath}/statements/equity-changes?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
         var equityPayload = await equity.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var twoYears = await client.GetAsync($"{basePath}/statements/equity-changes?from=2025-01-01&to=2026-12-31").ConfigureAwait(false);
+        using var evolution = await client.GetAsync($"{basePath}/management/monthly-evolution?year=2026").ConfigureAwait(false);
+        var evolutionPayload = await evolution.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badYear = await client.GetAsync($"{basePath}/management/monthly-evolution?year=12").ConfigureAwait(false);
         using var unauthorized = await client
             .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/statements/balance-sheet?date=2026-12-31")
             .ConfigureAwait(false);
@@ -1489,6 +1492,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, equity.StatusCode);
         StringAssert.Contains(equityPayload, "\"label\":\"Posição no fim do período\"");
         Assert.AreEqual(HttpStatusCode.BadRequest, twoYears.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, evolution.StatusCode);
+        StringAssert.Contains(evolutionPayload, "\"month\":12");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badYear.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
     }
 

@@ -764,6 +764,16 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the monthly evolution charts with sample data in demonstration mode', () => {
+    window.history.pushState({}, '', '/evolucao')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Evolução mensal', level: 1 })).toBeInTheDocument()
+    expect(screen.getByText(/dados de exemplo/i)).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Rendimentos, gastos e resultado por mês/ })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Saldo de caixa e bancos/ })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)

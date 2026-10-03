@@ -12,6 +12,7 @@ import {
   ArrowLeftRight,
   ClipboardCheck,
   DoorOpen,
+  ChartLine,
   FileDown,
   FileText,
   FileUp,
@@ -71,6 +72,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/comunicacao-at', label: 'Comunicação com a AT', icon: ShieldCheck },
   ] },
   { label: 'Gestão', links: [
+    { to: '/evolucao', label: 'Evolução mensal', icon: ChartLine },
     { to: '/analises', label: 'Análises', icon: BarChart3 },
     { to: '/relatorios-gestao', label: 'Relatórios de gestão', icon: Sparkles },
   ] },

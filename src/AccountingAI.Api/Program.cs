@@ -2114,6 +2114,19 @@ if (applicationEndpointsAvailable)
         return statement is null ? Results.NotFound() : Results.Ok(statement);
     });
 
+    // Evolução mensal de um exercício, para os gráficos de gestão.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/monthly-evolution", async (
+        Guid userId, Guid companyId, int year, FinancialStatementsService statements, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        var evolution = await statements.MonthlyEvolutionAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        return evolution is null ? Results.NotFound() : Results.Ok(evolution);
+    });
+
     // Exportação do SAF-T (PT) de contabilidade de um exercício: primeiro a análise, depois o ficheiro.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/export-report", async (
         Guid userId, Guid companyId, int year, SaftExportService export, CancellationToken cancellationToken) =>

@@ -25,7 +25,8 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | B | F3-08 … F3-14 | Saídas sem a AT: IVA, recapitulativa, Modelo 22, IES, ativos fixos, retenções, dossier fiscal | Por especificar |
 | C | F3-15 … F3-17 | Comunicação com a AT | Depende da adesão — [`../ADESAO-AT.md`](../ADESAO-AT.md) |
 | D | F3-18 … F3-21 | Automação do lançamento | Por especificar |
-| E | F3-22 … F3-26 | Gestão: gráficos, rácios, orçamento, assistente com IA | Por especificar |
+| E | **F3-22** | Gráficos | **Em curso** — [`F3-22`](F3-22-CHARTS.md); F3-22A (componente de gráficos e ecrã «Evolução mensal») feito; faltam os gráficos na visão geral e nos relatórios |
+| E | F3-23 … F3-26 | Gestão: rácios, orçamento, assistente com IA | Por especificar |
 | F | F3-27 … F3-28 | Gabinete: calendário de obrigações e painel | Por especificar |
 
 O **Bloco A está fechado** (2026-10-03), salvo o F3-04B, que segue com o Modelo 22. A ordem acordada: Bloco A primeiro; depois F3-06 e F3-07, com os gráficos

@@ -671,6 +671,11 @@ export type BalanceSheetStatement = {
   excluded: StatementExcludedAccount[]
   source: string
 }
+export type MonthlyEvolution = {
+  year: number
+  lastMonth: number
+  months: { month: number; income: number; expenses: number; result: number; previousIncome: number; previousExpenses: number; previousResult: number; cash: number; receivables: number; payables: number }[]
+}
 export type CashFlowLine = { section: string; label: string; amount: number; comparative: number; isTotal: boolean; accounts: { accountCode: string; accountName: string; amount: number }[] }
 export type CashFlowStatement = {
   from: string
