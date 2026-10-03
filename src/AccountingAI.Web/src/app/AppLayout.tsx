@@ -12,6 +12,7 @@ import {
   ArrowLeftRight,
   ClipboardCheck,
   DoorOpen,
+  FileDown,
   FileText,
   FileUp,
   FolderTree,
@@ -88,6 +89,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
   ] },
   { label: 'Dados', links: [
     { to: '/importar', label: 'Importar SAF-T', icon: FileUp },
+    { to: '/exportar-saft', label: 'Exportar SAF-T', icon: FileDown },
     { to: '/compras-efatura', label: 'Compras e-Fatura', icon: Receipt },
     { to: '/cruzamento', label: 'Cruzamento', icon: ArrowLeftRight },
   ] },

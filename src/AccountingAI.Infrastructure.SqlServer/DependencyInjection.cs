@@ -70,6 +70,7 @@ public static class DependencyInjection
         services.AddScoped<VatCodeService>();
         services.AddScoped<EntryTemplateService>();
         services.AddScoped<CostCenterService>();
+        services.AddScoped<SaftExportService>();
         services.AddScoped<PartyImportService>();
         services.AddScoped<PartyLedgerService>();
         services.AddScoped<VatSummaryService>();

@@ -33,6 +33,7 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/diarios': { schema: 'accounting', name: 'Journals' },
   '/documentos': { schema: 'accounting', name: 'AccountingDocumentTypes' },
   '/series': { schema: 'accounting', name: 'DocumentNumberSeries' },
+  '/exportar-saft': { schema: 'accounting', name: 'JournalEntries' },
   '/importar': { schema: 'accounting', name: 'SaftValidationRun' },
   '/compras-efatura': { schema: 'accounting', name: 'EFaturaPurchase' },
   '/cruzamento': { schema: 'accounting', name: 'EFaturaPurchase' },

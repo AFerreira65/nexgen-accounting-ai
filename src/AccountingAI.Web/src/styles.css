@@ -533,3 +533,9 @@ html[data-theme='dark'] .party-link { background: #14262e; border-color: #29414a
 tr.detail-row td { padding-top: 6px; padding-bottom: 6px; background: #f8fafb; font-size: 11px; }
 tr.detail-row td:first-child { padding-left: 42px; }
 html[data-theme='dark'] tr.detail-row td { background: #14262e; }
+
+/* Lista de problemas da exportação do SAF-T. */
+.issue-list { display: grid; gap: 8px; margin: 0; padding: 4px 22px 16px; list-style: none; color: #4d5f68; font-size: 12px; }
+.issue-list li { display: flex; align-items: flex-start; gap: 8px; line-height: 1.45; }
+.issue-list li svg { flex: 0 0 auto; margin-top: 2px; }
+.issue-list li.error { color: #b24452; font-weight: 600; }

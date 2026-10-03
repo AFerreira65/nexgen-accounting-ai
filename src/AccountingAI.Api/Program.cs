@@ -2053,6 +2053,44 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Exportação do SAF-T (PT) de contabilidade de um exercício: primeiro a análise, depois o ficheiro.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/export-report", async (
+        Guid userId, Guid companyId, int year, SaftExportService export, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        var report = await export.ReportAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        return report is null ? Results.NotFound() : Results.Ok(report);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/export", async (
+        Guid userId, Guid companyId, int year, SaftExportService export, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        // O ficheiro é montado em memória para só ser servido se não houver problemas bloqueantes.
+        var buffer = new MemoryStream();
+        var report = await export.ExportAsync(userId, companyId, year, buffer, cancellationToken).ConfigureAwait(false);
+        if (report is null)
+        {
+            return Results.NotFound();
+        }
+
+        if (!report.CanExport)
+        {
+            return Results.Json(report, statusCode: StatusCodes.Status409Conflict);
+        }
+
+        buffer.Position = 0;
+        return Results.File(buffer, "application/xml", $"SAFT-PT-contabilidade-{year}.xml");
+    });
+
     // Ligar os terceiros de um SAF-T aos lançamentos já importados: «preview» só analisa.
     foreach (var (route, apply) in new[] { ("parties-link-preview", false), ("parties-link", true) })
     {

@@ -644,6 +644,17 @@ export type AtCredentials = {
   updatedAtUtc: string | null
 }
 
+export type SaftExportReport = {
+  fiscalYear: number
+  accountCount: number
+  partyCount: number
+  transactionCount: number
+  totalDebit: number
+  totalCredit: number
+  issues: { blocking: boolean; message: string; count: number }[]
+  canExport: boolean
+}
+
 export type CostCenterRow = { code: string; name: string; isActive: boolean }
 
 export type AnalyticReport = {
