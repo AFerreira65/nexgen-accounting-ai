@@ -96,7 +96,8 @@ public sealed class JournalEntry
         Guid accountId,
         string description,
         decimal debit,
-        decimal credit)
+        decimal credit,
+        Guid? partyId = null)
     {
         if (lineId == Guid.Empty)
         {
@@ -106,6 +107,11 @@ public sealed class JournalEntry
         if (accountId == Guid.Empty)
         {
             throw new ArgumentException("The account identifier is required.", nameof(accountId));
+        }
+
+        if (partyId == Guid.Empty)
+        {
+            throw new ArgumentException("The party identifier cannot be empty.", nameof(partyId));
         }
 
         ArgumentException.ThrowIfNullOrWhiteSpace(description);
@@ -135,7 +141,8 @@ public sealed class JournalEntry
             Lines.Count + 1,
             description.Trim(),
             debit,
-            credit));
+            credit,
+            partyId));
     }
 
     public void Complete(JournalEntryStatus status)

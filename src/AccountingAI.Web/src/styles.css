@@ -502,3 +502,7 @@ html[data-theme='dark'] .period-selector, html[data-theme='dark'] .icon-button, 
 .party-import-skipped { margin: 0 22px 12px; padding-left: 18px; color: #75858c; font-size: 11px; }
 .settings-panel > .save-status { display: flex; margin: 12px 22px; }
 .settings-panel > .catalog-count { display: block; margin: 8px 22px 14px; }
+
+/* Terceiro na linha do lançamento. */
+.party-field { min-width: 150px; }
+.party-field .party-name { display: block; max-width: 190px; margin-top: 2px; overflow: hidden; color: #75858c; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }

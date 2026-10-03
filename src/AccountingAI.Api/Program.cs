@@ -450,6 +450,8 @@ if (applicationEndpointsAvailable)
             .Include(item => item.DocumentType)
             .Include(item => item.Lines)
                 .ThenInclude(item => item.Account)
+            .Include(item => item.Lines)
+                .ThenInclude(item => item.Party)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(documentType))
@@ -570,7 +572,10 @@ if (applicationEndpointsAvailable)
                     AccountName = line.Account.Name,
                     line.Description,
                     line.Debit,
-                    line.Credit
+                    line.Credit,
+                    PartyCountryCode = line.Party?.CountryCode,
+                    PartyTaxNumber = line.Party?.TaxRegistrationNumber,
+                    PartyName = line.Party?.Name
                 })
         };
     }
@@ -685,6 +690,8 @@ if (applicationEndpointsAvailable)
             .Include(item => item.DocumentType)
             .Include(item => item.Lines)
                 .ThenInclude(item => item.Account)
+            .Include(item => item.Lines)
+                .ThenInclude(item => item.Party)
             .SingleOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -711,7 +718,9 @@ if (applicationEndpointsAvailable)
                     line.AccountCode,
                     line.Description,
                     line.Debit,
-                    line.Credit))
+                    line.Credit,
+                    line.PartyTaxNumber,
+                    line.PartyCountryCode))
                 .ToList();
 
             var movement = await posting
@@ -756,7 +765,8 @@ if (applicationEndpointsAvailable)
         try
         {
             var lines = (request.Lines ?? [])
-                .Select(line => new JournalEntryLineInput(line.AccountCode, line.Description, line.Debit, line.Credit))
+                .Select(line => new JournalEntryLineInput(
+                    line.AccountCode, line.Description, line.Debit, line.Credit, line.PartyTaxNumber, line.PartyCountryCode))
                 .ToList();
             var movement = await posting
                 .ReviseAsync(companyId, reference, request.JournalCode, request.EntryDate,
@@ -3163,7 +3173,10 @@ public partial class Program
             line.AccountName,
             line.Description,
             line.Debit,
-            line.Credit
+            line.Credit,
+            line.PartyCountryCode,
+            line.PartyTaxNumber,
+            line.PartyName
         })
     };
 
@@ -3518,7 +3531,13 @@ public sealed record SetMembershipRequest(string Role, bool IsActive);
 
 public sealed record LoginRequest(string? Email, string? Password);
 
-public sealed record MovementLineRequest(string AccountCode, string Description, decimal Debit, decimal Credit);
+public sealed record MovementLineRequest(
+    string AccountCode,
+    string Description,
+    decimal Debit,
+    decimal Credit,
+    string? PartyTaxNumber = null,
+    string? PartyCountryCode = null);
 
 public sealed record CreateMovementRequest(
     string JournalCode,

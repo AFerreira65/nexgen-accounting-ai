@@ -4,6 +4,9 @@ export type MovementLine = {
   description: string
   debit: number
   credit: number
+  partyCountryCode?: string | null
+  partyTaxNumber?: string | null
+  partyName?: string | null
 }
 
 export type Movement = {

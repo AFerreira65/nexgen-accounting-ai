@@ -11,7 +11,7 @@ export type DocumentTypeEditInput = { name: string; defaultJournalCode: string; 
 export type PartyListParams = { search: string; role: 'Todos' | 'Clientes' | 'Fornecedores'; includeInactive: boolean; page: number; pageSize: number }
 export type PartyEditInput = { name: string; isCustomer: boolean; isSupplier: boolean; customerAccountCode: string | null; supplierAccountCode: string | null; isActive: boolean }
 export type NewPartyInput = PartyEditInput & { countryCode: string; taxRegistrationNumber: string }
-export type MovementLineInput = { accountCode: string; description: string; debit: number; credit: number }
+export type MovementLineInput = { accountCode: string; description: string; debit: number; credit: number; partyTaxNumber?: string | null; partyCountryCode?: string | null }
 export type MovementInput = { journalCode: string; entryDate: string; documentReference: string; description: string; reviewed: boolean; lines: MovementLineInput[]; documentTypeCode?: string | null; notes?: string | null }
 
 export async function problemMessage(response: Response) {

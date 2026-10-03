@@ -189,6 +189,8 @@ internal static class DataDictionaryText
         ["AccountVatClassification.Nature"] = "A natureza da operação de IVA (transmissões internas, prestações de serviços, aquisições intracomunitárias, …).",
         ["AccountVatClassification.Region"] = "A região (Continente / Açores / Madeira).",
 
+        ["JournalEntryLines.PartyId"] = "O terceiro (cliente ou fornecedor) a que a linha diz respeito; vazio quando não se aplica.",
+
         ["Parties.CountryCode"] = "O país do contribuinte (código ISO de duas letras; PT por omissão).",
         ["Parties.TaxRegistrationNumber"] = "O número de contribuinte; único por empresa e país. Um NIF português é validado pelo dígito de controlo.",
         ["Parties.Name"] = "O nome ou a designação social do terceiro.",

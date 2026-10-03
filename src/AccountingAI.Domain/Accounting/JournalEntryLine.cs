@@ -14,7 +14,8 @@ public sealed class JournalEntryLine
         int sequence,
         string description,
         decimal debit,
-        decimal credit)
+        decimal credit,
+        Guid? partyId = null)
     {
         Id = id;
         CompanyId = companyId;
@@ -24,6 +25,7 @@ public sealed class JournalEntryLine
         Description = description;
         Debit = debit;
         Credit = credit;
+        PartyId = partyId;
     }
 
     public Guid Id { get; private set; }
@@ -42,7 +44,12 @@ public sealed class JournalEntryLine
 
     public decimal Credit { get; private set; }
 
+    /// <summary>O terceiro (cliente, fornecedor) a que a linha diz respeito, se houver.</summary>
+    public Guid? PartyId { get; private set; }
+
     public JournalEntry JournalEntry { get; private set; } = null!;
 
     public LedgerAccount Account { get; private set; } = null!;
+
+    public Party? Party { get; private set; }
 }

@@ -4,14 +4,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AccountingAI.Infrastructure.SqlServer;
 
-public sealed record JournalEntryLineInput(string AccountCode, string Description, decimal Debit, decimal Credit);
+/// <summary>
+/// Uma linha a lançar. O terceiro é opcional e identifica-se pelo número de
+/// contribuinte (e pelo país, quando não é Portugal).
+/// </summary>
+public sealed record JournalEntryLineInput(
+    string AccountCode,
+    string Description,
+    decimal Debit,
+    decimal Credit,
+    string? PartyTaxNumber = null,
+    string? PartyCountryCode = null);
 
 public sealed record PostedMovementLine(
     string AccountCode,
     string AccountName,
     string Description,
     decimal Debit,
-    decimal Credit);
+    decimal Credit,
+    string? PartyCountryCode = null,
+    string? PartyTaxNumber = null,
+    string? PartyName = null);
 
 public sealed record PostedMovement(
     string Reference,
@@ -59,6 +72,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
             await EnsurePeriodIsOpenAsync(companyId, entryDate, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var (journal, prefix, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
+            var parties = await ResolvePartiesAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
             var reference = await NextReferenceAsync(companyId, prefix, entryDate.Year, cancellationToken).ConfigureAwait(false);
 
             var entry = new JournalEntry(
@@ -66,13 +80,15 @@ public sealed class JournalPostingService(AccountingDbContext context)
             entry.SetSource(source);
             foreach (var line in lines)
             {
-                entry.AddLine(Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit);
+                entry.AddLine(
+                    Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit,
+                    PartyKeyOf(line) is { } key ? parties[key].Id : null);
             }
 
             entry.Complete(reviewed ? JournalEntryStatus.Reviewed : JournalEntryStatus.PendingReview);
             context.JournalEntries.Add(entry);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            result = Project(entry, journal, accounts, documentType);
+            result = Project(entry, journal, accounts, documentType, parties.Values);
         }, cancellationToken).ConfigureAwait(false);
 
         return result!;
@@ -115,6 +131,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
 
             var (journal, _, documentType) = await ResolveJournalAndPrefixAsync(companyId, journalCode, documentTypeCode, cancellationToken).ConfigureAwait(false);
             var accounts = await ResolveAccountsAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
+            var parties = await ResolvePartiesAsync(companyId, lines, cancellationToken).ConfigureAwait(false);
 
             // Corrigir é substituir: remove o lançamento e recria-o com a mesma referência e origem.
             var originalSource = existing.Source;
@@ -126,13 +143,15 @@ public sealed class JournalPostingService(AccountingDbContext context)
             entry.SetSource(originalSource);
             foreach (var line in lines)
             {
-                entry.AddLine(Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit);
+                entry.AddLine(
+                    Guid.NewGuid(), accounts[Normalize(line.AccountCode)].Id, line.Description, line.Debit, line.Credit,
+                    PartyKeyOf(line) is { } key ? parties[key].Id : null);
             }
 
             entry.Complete(reviewed ? JournalEntryStatus.Reviewed : JournalEntryStatus.PendingReview);
             context.JournalEntries.Add(entry);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            result = Project(entry, journal, accounts, documentType);
+            result = Project(entry, journal, accounts, documentType, parties.Values);
         }, cancellationToken).ConfigureAwait(false);
 
         return result!;
@@ -174,6 +193,8 @@ public sealed class JournalPostingService(AccountingDbContext context)
                 .Include(item => item.DocumentType)
                 .Include(item => item.Lines)
                     .ThenInclude(item => item.Account)
+                .Include(item => item.Lines)
+                    .ThenInclude(item => item.Party)
                 .SingleOrDefaultAsync(
                     item => item.CompanyId == companyId && item.Reference == normalizedReference,
                     cancellationToken)
@@ -196,7 +217,9 @@ public sealed class JournalPostingService(AccountingDbContext context)
                 .Select(line => line.Account)
                 .DistinctBy(account => account.Id)
                 .ToDictionary(account => account.Code, StringComparer.Ordinal);
-            result = Project(entry, entry.Journal, accountsByCode);
+            result = Project(
+                entry, entry.Journal, accountsByCode,
+                parties: entry.Lines.Where(line => line.Party is not null).Select(line => line.Party!).DistinctBy(party => party.Id));
         }, cancellationToken).ConfigureAwait(false);
 
         return result!;
@@ -400,9 +423,11 @@ public sealed class JournalPostingService(AccountingDbContext context)
         JournalEntry entry,
         AccountingJournal journal,
         IReadOnlyDictionary<string, LedgerAccount> accountsByCode,
-        AccountingDocumentType? documentType = null)
+        AccountingDocumentType? documentType = null,
+        IEnumerable<Party>? parties = null)
     {
         var byId = accountsByCode.Values.ToDictionary(account => account.Id);
+        var partiesById = (parties ?? []).ToDictionary(party => party.Id);
         var type = documentType ?? entry.DocumentType;
         return new PostedMovement(
             entry.Reference,
@@ -427,9 +452,52 @@ public sealed class JournalPostingService(AccountingDbContext context)
                 .Select(line =>
                 {
                     var account = byId[line.AccountId];
-                    return new PostedMovementLine(account.Code, account.Name, line.Description, line.Debit, line.Credit);
+                    var party = line.PartyId is { } partyId ? partiesById.GetValueOrDefault(partyId) : null;
+                    return new PostedMovementLine(
+                        account.Code, account.Name, line.Description, line.Debit, line.Credit,
+                        party?.CountryCode, party?.TaxRegistrationNumber, party?.Name);
                 })
                 .ToList());
+    }
+
+    /// <summary>A chave (país, contribuinte) do terceiro de uma linha, ou <c>null</c> se a linha não tem terceiro.</summary>
+    private static (string Country, string TaxNumber)? PartyKeyOf(JournalEntryLineInput line) =>
+        string.IsNullOrWhiteSpace(line.PartyTaxNumber)
+            ? null
+            : (Party.NormalizeCountryCode(line.PartyCountryCode), Party.NormalizeTaxRegistrationNumber(line.PartyTaxNumber));
+
+    private async Task<Dictionary<(string Country, string TaxNumber), Party>> ResolvePartiesAsync(
+        Guid companyId,
+        IReadOnlyList<JournalEntryLineInput> lines,
+        CancellationToken cancellationToken)
+    {
+        var keys = lines.Select(PartyKeyOf).OfType<(string Country, string TaxNumber)>().Distinct().ToList();
+        if (keys.Count == 0)
+        {
+            return [];
+        }
+
+        var taxNumbers = keys.Select(key => key.TaxNumber).Distinct().ToList();
+        var candidates = await context.Parties
+            .Where(item => item.CompanyId == companyId && taxNumbers.Contains(item.TaxRegistrationNumber))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var parties = candidates.ToDictionary(item => (item.CountryCode, item.TaxRegistrationNumber));
+
+        foreach (var key in keys)
+        {
+            if (!parties.TryGetValue(key, out var party))
+            {
+                throw new ArgumentException($"O terceiro {key.Country} {key.TaxNumber} não existe na empresa.");
+            }
+
+            if (!party.IsActive)
+            {
+                throw new ArgumentException($"O terceiro {key.Country} {key.TaxNumber} está inativo.");
+            }
+        }
+
+        return keys.ToDictionary(key => key, key => parties[key]);
     }
 
     private static void RequireLines(IReadOnlyList<JournalEntryLineInput> lines)

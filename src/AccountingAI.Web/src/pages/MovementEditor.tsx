@@ -1,10 +1,27 @@
 import { Plus, Trash2, X } from 'lucide-react'
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { euro, type Movement } from '../app/demo-data'
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { euro, type Movement, type PartyRow } from '../app/demo-data'
 import { useWorkContext, type MovementLineInput } from '../app/WorkContext'
 
 const today = () => new Date().toISOString().slice(0, 10)
-const emptyLine = (): MovementLineInput => ({ accountCode: '', description: '', debit: 0, credit: 0 })
+// A linha no editor: além do que segue para a API, o texto do terceiro tal
+// como está escrito («500584095» ou «ES B12345678») e o nome para confirmação.
+type EditorLine = MovementLineInput & { partyText: string; partyName: string }
+
+const emptyLine = (): EditorLine => ({ accountCode: '', description: '', debit: 0, credit: 0, partyText: '', partyName: '' })
+
+const partyText = (countryCode?: string | null, taxNumber?: string | null) =>
+  taxNumber ? `${countryCode && countryCode !== 'PT' ? `${countryCode} ` : ''}${taxNumber}` : ''
+
+// «ES B12345678» → país ES; só o contribuinte → Portugal.
+function parsePartyText(text: string): { partyTaxNumber: string | null; partyCountryCode: string | null } {
+  const trimmed = text.trim()
+  if (!trimmed) return { partyTaxNumber: null, partyCountryCode: null }
+  const foreign = /^([A-Za-z]{2})\s+(\S.*)$/.exec(trimmed)
+  return foreign
+    ? { partyTaxNumber: foreign[2], partyCountryCode: foreign[1].toUpperCase() }
+    : { partyTaxNumber: trimmed, partyCountryCode: 'PT' }
+}
 
 type PostingAccount = { code: string; name: string }
 
@@ -71,8 +88,77 @@ function AccountField({ value, accounts, fieldKey, register, ariaLabel, invalid,
   </div>
 }
 
+// Campo de terceiro com sugestões pedidas ao servidor (nome ou contribuinte).
+// Fica fora da navegação por Enter: chega-se com Tab, e é opcional.
+function PartyField({ value, name, ariaLabel, search, onChange }: {
+  value: string
+  name: string
+  ariaLabel: string
+  search: ((term: string) => Promise<PartyRow[]>) | null
+  onChange: (text: string, name: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(0)
+  const [matches, setMatches] = useState<PartyRow[]>([])
+  const term = value.trim()
+
+  useEffect(() => {
+    if (!search || !open || term.length < 2) { setMatches([]); return }
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      void search(term).then((rows) => { if (!cancelled) { setMatches(rows); setActive(0) } }).catch(() => { /* sugestões opcionais */ })
+    }, 200)
+    return () => { cancelled = true; window.clearTimeout(timer) }
+  }, [search, open, term])
+
+  const showList = open && matches.length > 0
+  const pick = (party: PartyRow) => { onChange(partyText(party.countryCode, party.taxRegistrationNumber), party.name); setOpen(false) }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'ArrowDown') { event.preventDefault(); setOpen(true); setActive((index) => Math.min(index + 1, matches.length - 1)) }
+    else if (event.key === 'ArrowUp') { event.preventDefault(); setActive((index) => Math.max(index - 1, 0)) }
+    else if (event.key === 'Escape') { setOpen(false) }
+    else if (event.key === 'Enter' && showList && matches[active]) {
+      event.preventDefault()
+      event.stopPropagation() // o formulário não trata este Enter
+      pick(matches[active])
+    }
+  }
+
+  return <div className="account-field party-field">
+    <input
+      aria-label={ariaLabel}
+      role="combobox"
+      aria-expanded={showList}
+      autoComplete="off"
+      placeholder="NIF ou nome"
+      title={name || undefined}
+      value={value}
+      onChange={(event) => { onChange(event.target.value, ''); setOpen(true) }}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+      onKeyDown={handleKeyDown}
+    />
+    {name && <small className="party-name">{name}</small>}
+    {showList && <ul className="account-suggest">
+      {matches.map((party, index) => <li
+        key={party.id}
+        aria-selected={index === active}
+        onMouseDown={(event) => { event.preventDefault(); pick(party) }}
+      ><span className="code">{partyText(party.countryCode, party.taxRegistrationNumber)}</span><span className="name">{party.name}</span></li>)}
+    </ul>}
+  </div>
+}
+
 export function MovementEditor({ movement, duplicate = false, onClose }: { movement: Movement | null; duplicate?: boolean; onClose: () => void }) {
-  const { accountingSetup, activeCompany, createMovement, reviseMovement, source, user } = useWorkContext()
+  const { accountingSetup, activeCompany, createMovement, parties, reviseMovement, source, user } = useWorkContext()
+  const companyId = activeCompany.companyId
+  const searchParties = useMemo(
+    () => source === 'database'
+      ? (term: string) => parties(companyId, { search: term, role: 'Todos', includeInactive: false, page: 1, pageSize: 8 }).then((result) => result.items)
+      : null,
+    [companyId, parties, source],
+  )
   const isEdit = movement !== null && !duplicate
   // Em duplicação, o movimento de origem semeia os campos mas o lançamento é novo.
   const template = duplicate ? movement : null
@@ -104,8 +190,8 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
   const [description, setDescription] = useState(movement?.description ?? '')
   const [notes, setNotes] = useState(movement?.notes ?? '')
   const [reviewed, setReviewed] = useState(isEdit && movement?.status === 'Conferido')
-  const [lines, setLines] = useState<MovementLineInput[]>(
-    movement ? movement.lines.map((line) => ({ accountCode: line.account, description: line.description, debit: line.debit, credit: line.credit })) : [emptyLine(), emptyLine()],
+  const [lines, setLines] = useState<EditorLine[]>(
+    movement ? movement.lines.map((line) => ({ accountCode: line.account, description: line.description, debit: line.debit, credit: line.credit, partyText: partyText(line.partyCountryCode, line.partyTaxNumber), partyName: line.partyName ?? '' })) : [emptyLine(), emptyLine()],
   )
   const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
   const [error, setError] = useState('')
@@ -169,7 +255,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
   const yearClosed = closedYears.includes(entryYear)
   const periodLocked = postingLockDate !== null && entryDate <= postingLockDate
 
-  function patchLine(index: number, patch: Partial<MovementLineInput>) {
+  function patchLine(index: number, patch: Partial<EditorLine>) {
     setLines((current) => current.map((line, position) => position === index ? { ...line, ...patch } : line))
   }
 
@@ -188,7 +274,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
         reviewed,
         lines: lines
           .filter((line) => line.accountCode.trim())
-          .map((line) => ({ ...line, accountCode: line.accountCode.trim().toUpperCase(), debit: Number(line.debit) || 0, credit: Number(line.credit) || 0 })),
+          .map((line): MovementLineInput => ({ accountCode: line.accountCode.trim().toUpperCase(), description: line.description, debit: Number(line.debit) || 0, credit: Number(line.credit) || 0, ...parsePartyText(line.partyText) })),
       }
       if (isEdit) await reviseMovement(movement.id, payload)
       else await createMovement(payload)
@@ -213,7 +299,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
 
       <label className="field-block"><span>Observações <small>(opcional, uso interno)</small></span><textarea value={notes} rows={2} maxLength={2000} onChange={(event) => setNotes(event.target.value)} placeholder="Notas internas sobre este lançamento" /></label>
 
-      <div className="table-wrap"><table><thead><tr><th>Conta</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
+      <div className="table-wrap"><table><thead><tr><th>Conta</th><th>Terceiro</th><th>Descrição</th><th className="numeric">Débito</th><th className="numeric">Crédito</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
         {lines.map((line, index) => <tr key={index}>
           <td><AccountField
             fieldKey={`line-${index}-account`}
@@ -225,12 +311,19 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
             onChange={(code) => patchLine(index, { accountCode: code })}
             onCommit={() => focusNextField(`line-${index}-account`)}
           /></td>
+          <td><PartyField
+            ariaLabel={`Terceiro da linha ${index + 1}`}
+            search={searchParties}
+            value={line.partyText}
+            name={line.partyName}
+            onChange={(text, name) => patchLine(index, { partyText: text, partyName: name })}
+          /></td>
           <td><input data-field-key={`line-${index}-description`} ref={register(`line-${index}-description`)} aria-label={`Descrição da linha ${index + 1}`} value={line.description} onChange={(event) => patchLine(index, { description: event.target.value })} /></td>
           <td className="numeric"><input data-field-key={`line-${index}-debit`} ref={register(`line-${index}-debit`)} aria-label={`Débito da linha ${index + 1}`} type="number" step="0.01" min="0" value={line.debit || ''} onChange={(event) => patchLine(index, { debit: Number(event.target.value), credit: 0 })} /></td>
           <td className="numeric"><input data-field-key={`line-${index}-credit`} ref={register(`line-${index}-credit`)} aria-label={`Crédito da linha ${index + 1}`} type="number" step="0.01" min="0" value={line.credit || ''} onChange={(event) => patchLine(index, { credit: Number(event.target.value), debit: 0 })} /></td>
           <td>{lines.length > 2 && <button className="icon-button" type="button" aria-label={`Remover linha ${index + 1}`} onClick={() => setLines((current) => current.filter((_, position) => position !== index))}><Trash2 size={16} /></button>}</td>
         </tr>)}
-      </tbody><tfoot><tr><td colSpan={2}><button className="button button-secondary" type="button" onClick={() => setLines((current) => [...current, emptyLine()])}><Plus size={16} /> Linha</button></td><td className="numeric strong">{euro.format(totalDebit)}</td><td className="numeric strong">{euro.format(totalCredit)}</td><td /></tr></tfoot></table></div>
+      </tbody><tfoot><tr><td colSpan={3}><button className="button button-secondary" type="button" onClick={() => setLines((current) => [...current, emptyLine()])}><Plus size={16} /> Linha</button></td><td className="numeric strong">{euro.format(totalDebit)}</td><td className="numeric strong">{euro.format(totalCredit)}</td><td /></tr></tfoot></table></div>
 
       <footer className="settings-actions">
         <span className={`save-status ${difference === 0 ? 'success' : 'error'}`}>{difference === 0 ? 'Equilibrado' : `Diferença de ${euro.format(difference)}`}</span>

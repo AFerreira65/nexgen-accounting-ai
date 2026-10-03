@@ -403,10 +403,15 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.Property<Guid>("JournalEntryId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("PartyId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Sequence")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PartyId");
 
                     b.HasIndex("CompanyId", "AccountId");
 
@@ -1367,6 +1372,11 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
 
             modelBuilder.Entity("AccountingAI.Domain.Accounting.JournalEntryLine", b =>
                 {
+                    b.HasOne("AccountingAI.Domain.Accounting.Party", "Party")
+                        .WithMany()
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AccountingAI.Domain.Accounting.LedgerAccount", "Account")
                         .WithMany("EntryLines")
                         .HasForeignKey("CompanyId", "AccountId")
@@ -1384,6 +1394,8 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.Navigation("Account");
 
                     b.Navigation("JournalEntry");
+
+                    b.Navigation("Party");
                 });
 
             modelBuilder.Entity("AccountingAI.Domain.Accounting.LedgerAccount", b =>

@@ -16,7 +16,7 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 |-------|-------|--------|--------|
 | — | **F3-00** | Moldura da aplicação: menu em grupos, recolhível, gaveta em ecrãs estreitos | **Concluído** — [`F3-00`](F3-00-APP-SHELL.md) |
 | A | **F3-01** | Terceiros | **Em curso** — [`F3-01`](F3-01-PARTIES.md); F3-01A (cadastro) e F3-01B (importação do SAF-T e do e-Fatura) feitos |
-| A | F3-02 | Linha de lançamento enriquecida (terceiro, código de IVA, base, documento externo) | Por especificar |
+| A | **F3-02** | Linha de lançamento enriquecida (terceiro, código de IVA, base, documento externo) | **Em curso** — [`F3-02`](F3-02-ENRICHED-ENTRY-LINE.md); F3-02A (terceiro na linha) feito |
 | A | F3-03 | Códigos de IVA e lançamentos-tipo | Por especificar |
 | A | F3-04 | Tabelas fiscais por ano | Por especificar |
 | A | F3-05 | Contabilidade analítica | Por especificar |

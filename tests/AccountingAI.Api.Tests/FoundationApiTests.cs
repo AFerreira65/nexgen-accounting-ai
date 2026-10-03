@@ -1447,6 +1447,36 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task MovementWithUnknownPartyIsRejectedBeforeWriting()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+        const string body =
+            "{\"journalCode\":\"COMPRAS\",\"entryDate\":\"2026-03-10\",\"documentReference\":\"TESTE\",\"description\":\"Terceiro desconhecido\"," +
+            "\"reviewed\":false,\"lines\":[" +
+            "{\"accountCode\":\"6221\",\"description\":\"A\",\"debit\":1,\"credit\":0,\"partyTaxNumber\":\"ZZ-NAO-EXISTE\",\"partyCountryCode\":\"ZZ\"}," +
+            "{\"accountCode\":\"6221\",\"description\":\"B\",\"debit\":0,\"credit\":1}]}";
+
+        using var response = await client
+            .PostAsync($"{basePath}/accounting/movements", new StringContent(body, Encoding.UTF8, "application/json"))
+            .ConfigureAwait(false);
+        var payload = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+        StringAssert.Contains(payload, "O terceiro ZZ ZZ-NAO-EXISTE");
+    }
+
+    [TestMethod]
     public async Task PartiesImportPreviewsAnalyseWithoutWriting()
     {
         if (!OperatingSystem.IsWindows())

@@ -17,6 +17,20 @@ public sealed class AccountingEntryTests
     }
 
     [TestMethod]
+    public void LineCanCarryAPartyButNotAnEmptyOne()
+    {
+        var entry = CreateEntry();
+        var partyId = Guid.NewGuid();
+        entry.AddLine(Guid.NewGuid(), Guid.NewGuid(), "Cliente", 100m, 0m, partyId);
+        entry.AddLine(Guid.NewGuid(), Guid.NewGuid(), "Venda", 0m, 100m);
+
+        Assert.AreEqual(partyId, entry.Lines.First().PartyId);
+        Assert.IsNull(entry.Lines.Last().PartyId);
+        Assert.ThrowsExactly<ArgumentException>(() =>
+            CreateEntry().AddLine(Guid.NewGuid(), Guid.NewGuid(), "Cliente", 100m, 0m, Guid.Empty));
+    }
+
+    [TestMethod]
     public void BalancedEntryStoresTotalAndReviewStatus()
     {
         var entry = CreateEntry();

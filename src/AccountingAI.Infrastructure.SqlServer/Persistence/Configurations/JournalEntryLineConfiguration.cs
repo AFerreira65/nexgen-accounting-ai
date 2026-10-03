@@ -24,5 +24,9 @@ internal sealed class JournalEntryLineConfiguration : IEntityTypeConfiguration<J
             .HasForeignKey(item => new { item.CompanyId, item.AccountId })
             .HasPrincipalKey(item => new { item.CompanyId, item.Id })
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(item => item.Party)
+            .WithMany()
+            .HasForeignKey(item => item.PartyId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
