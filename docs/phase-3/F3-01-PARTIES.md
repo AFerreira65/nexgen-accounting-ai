@@ -94,7 +94,59 @@ lançamentos automáticos a partir do e-Fatura.
 - **Por verificar em direto:** o painel «Importar» no navegador — o ecrã exige
   a base real e uma sessão iniciada pelo utilizador.
 
-### F3-01C — Contas correntes por terceiro
+### F3-01C — Saldos e extrato por terceiro (feito)
 
-O ecrã «Contas correntes» passa a mostrar o terceiro ligado a cada subconta.
-A ligação do terceiro à linha do lançamento é o F3-02.
+Com o terceiro na linha do lançamento (F3-02), o saldo de um terceiro deixa de
+depender de ele ter uma subconta própria.
+
+- **`PartyLedgerService`** — só lê, sem os lançamentos anulados; o saldo é
+  débito menos crédito (positivo a receber, negativo a pagar).
+  - `BalancesAsync` — por terceiro com movimento: débito, crédito e saldo até
+    uma data, com pesquisa, paginação no servidor e os totais do conjunto
+    filtrado inteiro.
+  - `StatementAsync` — o extrato de um terceiro: saldo anterior ao período, as
+    linhas (data, movimento, documento, conta, descrição) com o **saldo
+    acumulado**, e os totais do período. O acumulado de uma página parte do
+    saldo anterior mais o movimento das páginas que a precedem.
+- **`PartyService.ListAsync`** — filtro opcional por `accountCode`: os
+  terceiros ligados a uma subconta.
+- **API:** `GET .../parties/balances?to=&search=&page=&pageSize=`,
+  `GET .../parties/{id}/statement?from=&to=&page=&pageSize=`, e
+  `accountCode` em `GET .../parties`.
+- **PWA:**
+  - ecrã **«Saldos de terceiros»** (`/saldos-terceiros`, grupo «Mapas») —
+    pesquisa, data de corte, totais e CSV; cada terceiro abre o extrato;
+  - ecrã **«Extrato de terceiro»** (`/terceiros/{id}`) — período com os
+    atalhos habituais, saldo anterior, movimento e saldo final, linhas com
+    ligação ao movimento e à conta, CSV; também se chega pelo nome na lista de
+    «Terceiros»;
+  - no **editor de lançamentos**, ao escolher uma subconta 21 ou 22, o
+    terceiro ligado a essa conta é **proposto** — só quando é um único e a
+    linha ainda não tem terceiro.
+
+O ecrã «Contas correntes» (saldo por subconta, a partir do balancete) fica como
+está: responde a outra pergunta, e continua a ser o único que mostra os
+lançamentos sem terceiro.
+
+**Validação efetuada**
+
+- `AccountingAI.IntegrationTests`: `PartyLedgerServiceTests` — saldos sem o
+  lançamento anulado, até uma data, com pesquisa e segunda página; extrato de
+  um mês com saldo anterior e acumulado; segunda página a continuar o
+  acumulado; terceiro sem movimento, desconhecido e sem acesso; terceiros por
+  subconta.
+- `AccountingAI.Api.Tests`: `PartyLedgerReturnsBalancesAndRejectsUnknownParties`.
+- `AccountingAI.Web`: `tsc`, `eslint`, os 88 testes; os dois ecrãs foram
+  abertos no navegador em modo de demonstração.
+- A suite completa: 217 testes .NET.
+- **Por verificar em direto:** os saldos e o extrato com dados reais, e a
+  proposta do terceiro no editor.
+
+**Limite a ter presente:** os lançamentos importados de um SAF-T **antes** de
+os terceiros existirem não têm terceiro nas linhas e não aparecem aqui. Ligar o
+terceiro a lançamentos já importados é o incremento seguinte (F3-01D).
+
+### F3-01D — Completar o terceiro em lançamentos já importados (a seguir)
+
+Reler um SAF-T e preencher o terceiro nas linhas dos lançamentos que já
+existem, sem alterar valores nem contas.

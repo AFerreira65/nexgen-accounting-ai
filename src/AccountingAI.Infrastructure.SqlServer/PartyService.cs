@@ -51,7 +51,7 @@ public sealed class PartyService(AccountingDbContext context)
     /// <returns><c>null</c> sem acesso à empresa.</returns>
     public async Task<PartyPage?> ListAsync(
         Guid userId, Guid companyId, string? search, PartyRoleFilter role, bool includeInactive,
-        int page, int pageSize, CancellationToken cancellationToken = default)
+        int page, int pageSize, CancellationToken cancellationToken = default, string? accountCode = null)
     {
         if (!await HasAccessAsync(userId, companyId, cancellationToken).ConfigureAwait(false))
         {
@@ -59,6 +59,16 @@ public sealed class PartyService(AccountingDbContext context)
         }
 
         var query = context.Parties.AsNoTracking().Where(party => party.CompanyId == companyId);
+        if (!string.IsNullOrWhiteSpace(accountCode))
+        {
+            // Os terceiros ligados a uma subconta: serve o editor de lançamentos
+            // para propor o terceiro ao escolher a conta.
+            var code = accountCode.Trim().ToUpperInvariant();
+            query = query.Where(party =>
+                context.Accounts.Any(account => account.CompanyId == companyId && account.Code == code &&
+                    (account.Id == party.CustomerAccountId || account.Id == party.SupplierAccountId)));
+        }
+
         if (!includeInactive)
         {
             query = query.Where(party => party.IsActive);

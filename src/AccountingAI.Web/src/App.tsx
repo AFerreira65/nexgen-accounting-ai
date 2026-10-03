@@ -29,6 +29,7 @@ import { AtCommunicationPage } from './pages/AtCommunicationPage'
 import { VatClassificationPage } from './pages/VatClassificationPage'
 import { IrcEstimatePage } from './pages/IrcEstimatePage'
 import { PartiesPage } from './pages/PartiesPage'
+import { PartyBalancesByPartyPage, PartyStatementPage } from './pages/PartyLedgerPages'
 import { VatCodesPage } from './pages/VatCodesPage'
 import { EntryTemplatesPage } from './pages/EntryTemplatesPage'
 import { RecordProvider } from './app/RecordContext'
@@ -48,6 +49,8 @@ export function App() {
             <Route path="/diarios/:journalId" element={<JournalPage />} />
             <Route path="/contas" element={<AccountsPage />} />
             <Route path="/terceiros" element={<PartiesPage />} />
+            <Route path="/terceiros/:partyId" element={<PartyStatementPage />} />
+            <Route path="/saldos-terceiros" element={<PartyBalancesByPartyPage />} />
             <Route path="/lancamentos-tipo" element={<EntryTemplatesPage />} />
             <Route path="/diarios" element={<JournalsPage />} />
             <Route path="/documentos" element={<DocumentTypesPage />} />

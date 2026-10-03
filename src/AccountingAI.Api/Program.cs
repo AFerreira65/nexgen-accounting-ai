@@ -1842,7 +1842,7 @@ if (applicationEndpointsAvailable)
     });
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/parties", async (
-        Guid userId, Guid companyId, string? search, string? role, bool? includeInactive, int? page, int? pageSize,
+        Guid userId, Guid companyId, string? search, string? role, bool? includeInactive, int? page, int? pageSize, string? accountCode,
         PartyService parties, CancellationToken cancellationToken) =>
     {
         var roleFilter = PartyRoleFilter.Todos;
@@ -1853,7 +1853,37 @@ if (applicationEndpointsAvailable)
         }
 
         var result = await parties
-            .ListAsync(userId, companyId, search, roleFilter, includeInactive ?? false, page ?? 1, pageSize ?? 50, cancellationToken)
+            .ListAsync(userId, companyId, search, roleFilter, includeInactive ?? false, page ?? 1, pageSize ?? 50, cancellationToken, accountCode)
+            .ConfigureAwait(false);
+        return result is null ? Results.NotFound() : Results.Ok(result);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/parties/balances", async (
+        Guid userId, Guid companyId, string? to, string? search, int? page, int? pageSize,
+        PartyLedgerService ledger, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(null, to, out _, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        var result = await ledger
+            .BalancesAsync(userId, companyId, toDate, search, page ?? 1, pageSize ?? 50, cancellationToken)
+            .ConfigureAwait(false);
+        return result is null ? Results.NotFound() : Results.Ok(result);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/parties/{partyId:guid}/statement", async (
+        Guid userId, Guid companyId, Guid partyId, string? from, string? to, int? page, int? pageSize,
+        PartyLedgerService ledger, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        var result = await ledger
+            .StatementAsync(userId, companyId, partyId, fromDate, toDate, page ?? 1, pageSize ?? 50, cancellationToken)
             .ConfigureAwait(false);
         return result is null ? Results.NotFound() : Results.Ok(result);
     });

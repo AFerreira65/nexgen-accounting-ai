@@ -1447,6 +1447,40 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task PartyLedgerReturnsBalancesAndRejectsUnknownParties()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var balances = await client.GetAsync($"{basePath}/parties/balances?to=2026-12-31&pageSize=5").ConfigureAwait(false);
+        var balancesPayload = await balances.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badDate = await client.GetAsync($"{basePath}/parties/balances?to=31-12-2026").ConfigureAwait(false);
+        using var unknown = await client
+            .GetAsync($"{basePath}/parties/99999999-9999-9999-9999-999999999999/statement")
+            .ConfigureAwait(false);
+        using var byAccount = await client.GetAsync($"{basePath}/parties?accountCode=ZZ-NAO-HA").ConfigureAwait(false);
+        var byAccountPayload = await byAccount.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, balances.StatusCode);
+        StringAssert.Contains(balancesPayload, "\"totalBalance\"");
+        StringAssert.Contains(balancesPayload, "\"items\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badDate.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unknown.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, byAccount.StatusCode);
+        StringAssert.Contains(byAccountPayload, "\"total\":0");
+    }
+
+    [TestMethod]
     public async Task EntryTemplatesListAndValidateInput()
     {
         if (!OperatingSystem.IsWindows())

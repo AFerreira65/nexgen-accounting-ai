@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AppliedTemplate, type EntryTemplateRow, type VatCodeRow, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AppliedTemplate, type EntryTemplateRow, type VatCodeRow, type PartyBalances, type PartyStatement, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -10,7 +10,7 @@ export type NewDocumentTypeInput = { code: string; name: string; defaultJournalC
 export type DocumentTypeEditInput = { name: string; defaultJournalCode: string; isActive: boolean }
 export type EntryTemplateInput = { name: string; journalCode: string; documentTypeCode: string | null; description: string | null; isActive: boolean; lines: { kind: string; side: string; accountCode: string; vatCode: string | null; description: string | null }[] }
 export type VatCodeInput = { code: string; name: string; rate: string; percentage: number; nature: string; region: string; isActive: boolean }
-export type PartyListParams = { search: string; role: 'Todos' | 'Clientes' | 'Fornecedores'; includeInactive: boolean; page: number; pageSize: number }
+export type PartyListParams = { search: string; role: 'Todos' | 'Clientes' | 'Fornecedores'; includeInactive: boolean; page: number; pageSize: number; accountCode?: string }
 export type PartyEditInput = { name: string; isCustomer: boolean; isSupplier: boolean; customerAccountCode: string | null; supplierAccountCode: string | null; isActive: boolean }
 export type NewPartyInput = PartyEditInput & { countryCode: string; taxRegistrationNumber: string }
 export type MovementLineInput = { accountCode: string; description: string; debit: number; credit: number; partyTaxNumber?: string | null; partyCountryCode?: string | null; vatCode?: string | null }
@@ -120,6 +120,8 @@ type WorkContextValue = WorkContextData & {
   saveVatCode: (companyId: string, input: VatCodeInput, isNew: boolean) => Promise<VatCodeRow>
   createDefaultVatCodes: (companyId: string) => Promise<number>
   parties: (companyId: string, params: PartyListParams) => Promise<PartyPage>
+  partyBalances: (companyId: string, params: { to: string; search: string; page: number; pageSize: number }) => Promise<PartyBalances>
+  partyStatement: (companyId: string, partyId: string, params: { from: string; to: string; page: number; pageSize: number }) => Promise<PartyStatement>
   createParty: (companyId: string, input: NewPartyInput) => Promise<PartyRow>
   updateParty: (companyId: string, partyId: string, input: PartyEditInput) => Promise<PartyRow>
   importPartiesFromSaft: (companyId: string, file: File, apply: boolean) => Promise<PartyImportResult>
@@ -948,12 +950,29 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       const body = await response.json() as { created: number }
       return body.created
     },
-    parties: async (companyId, { search, role, includeInactive, page, pageSize }) => {
+    parties: async (companyId, { search, role, includeInactive, page, pageSize, accountCode }) => {
       const params = new URLSearchParams({ role, includeInactive: String(includeInactive), page: String(page), pageSize: String(pageSize) })
       if (search) params.set('search', search)
+      if (accountCode) params.set('accountCode', accountCode)
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/parties?${params}`)
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as PartyPage
+    },
+    partyBalances: async (companyId, { to, search, page, pageSize }) => {
+      const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+      if (to) params.set('to', to)
+      if (search) params.set('search', search)
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/parties/balances?${params}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as PartyBalances
+    },
+    partyStatement: async (companyId, partyId, { from, to, page, pageSize }) => {
+      const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+      if (from) params.set('from', from)
+      if (to) params.set('to', to)
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/parties/${partyId}/statement?${params}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as PartyStatement
     },
     createParty: async (companyId, input) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/parties`, {

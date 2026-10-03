@@ -55,6 +55,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/resultados', label: 'Resultados', icon: TrendingUp },
     { to: '/balanco', label: 'Balanço', icon: Scale },
     { to: '/contas-correntes', label: 'Contas correntes', icon: Users },
+    { to: '/saldos-terceiros', label: 'Saldos de terceiros', icon: Contact },
   ] },
   { label: 'Fiscal', links: [
     { to: '/iva', label: 'Resumo de IVA', icon: Receipt },

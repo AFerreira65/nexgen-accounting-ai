@@ -281,6 +281,23 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
   const yearClosed = closedYears.includes(entryYear)
   const periodLocked = postingLockDate !== null && entryDate <= postingLockDate
 
+  // Ao escolher uma subconta de terceiros (21/22), propõe o terceiro que lhe
+  // está ligado — só quando é um único e a linha ainda não tem terceiro.
+  function proposeParty(index: number, accountCode: string) {
+    const code = accountCode.trim().toUpperCase()
+    if (source !== 'database' || !/^2[12]\d{2,}/.test(code) || !postingAccounts.some((account) => account.code === code)) return
+    void parties(companyId, { search: '', role: 'Todos', includeInactive: false, page: 1, pageSize: 2, accountCode: code })
+      .then((result) => {
+        if (result.items.length !== 1) return
+        const party = result.items[0]
+        setLines((current) => current.map((line, position) => (
+          position === index && line.accountCode.trim().toUpperCase() === code && !line.partyText.trim()
+            ? { ...line, partyText: partyText(party.countryCode, party.taxRegistrationNumber), partyName: party.name }
+            : line)))
+      })
+      .catch(() => { /* proposta opcional */ })
+  }
+
   async function fillFromTemplate() {
     const amount = Number(templateAmount.replace(',', '.'))
     if (!templateCode || !(amount > 0)) { setTemplateError('Escolha o lançamento-tipo e indique um valor positivo.'); return }
@@ -365,7 +382,7 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
             accounts={postingAccounts}
             value={line.accountCode}
             invalid={isInvalidAccount(line.accountCode)}
-            onChange={(code) => patchLine(index, line.vatCode ? { accountCode: code } : { accountCode: code, vatCode: proposedVatCode(code) })}
+            onChange={(code) => { patchLine(index, line.vatCode ? { accountCode: code } : { accountCode: code, vatCode: proposedVatCode(code) }); proposeParty(index, code) }}
             onCommit={() => focusNextField(`line-${index}-account`)}
           /></td>
           <td><PartyField

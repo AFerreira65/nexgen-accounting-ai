@@ -229,7 +229,7 @@ export function PartiesPage() {
         <thead><tr><th>Contribuinte</th><th>Nome</th><th>Função</th><th>Conta de cliente</th><th>Conta de fornecedor</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead>
         <tbody>{rows.map((party) => <tr key={party.id}>
           <td><span className="primary-cell">{party.countryCode !== 'PT' && `${party.countryCode} `}{party.taxRegistrationNumber}</span></td>
-          <td>{party.name}</td>
+          <td><Link className="primary-cell" to={`/terceiros/${party.id}`}>{party.name}</Link></td>
           <td>{roleLabel(party)}</td>
           <td>{party.customerAccountCode ? <Link className="primary-cell" to={`/contas/${party.customerAccountCode}`}>{party.customerAccountCode}</Link> : <span className="muted-value">—</span>}</td>
           <td>{party.supplierAccountCode ? <Link className="primary-cell" to={`/contas/${party.supplierAccountCode}`}>{party.supplierAccountCode}</Link> : <span className="muted-value">—</span>}</td>

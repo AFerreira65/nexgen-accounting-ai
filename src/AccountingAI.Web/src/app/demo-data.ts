@@ -694,6 +694,29 @@ export type PartyRow = {
 
 export type PartyPage = { total: number; items: PartyRow[] }
 
+export type PartyBalances = {
+  total: number
+  totalDebit: number
+  totalCredit: number
+  totalBalance: number
+  items: { partyId: string; countryCode: string; taxRegistrationNumber: string; name: string; debit: number; credit: number; balance: number }[]
+}
+
+export type PartyStatement = {
+  partyId: string
+  countryCode: string
+  taxRegistrationNumber: string
+  name: string
+  from: string | null
+  to: string | null
+  openingBalance: number
+  periodDebit: number
+  periodCredit: number
+  closingBalance: number
+  total: number
+  lines: { date: string; reference: string; documentReference: string; accountCode: string; description: string; debit: number; credit: number; balance: number }[]
+}
+
 export type PartyImportItem = Omit<PartyRow, 'id' | 'isActive'> & { state: 'New' | 'Updated' | 'Unchanged' }
 
 export type PartyImportResult = {

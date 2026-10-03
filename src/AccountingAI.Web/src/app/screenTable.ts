@@ -25,6 +25,7 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/abertura': { schema: 'accounting', name: 'JournalEntries' },
   '/contas': { schema: 'accounting', name: 'Accounts' },
   '/lancamentos-tipo': { schema: 'accounting', name: 'EntryTemplates' },
+  '/saldos-terceiros': { schema: 'accounting', name: 'JournalEntryLines' },
   '/terceiros': { schema: 'accounting', name: 'Parties' },
   '/taxonomias': { schema: 'accounting', name: 'Accounts' },
   '/diarios': { schema: 'accounting', name: 'Journals' },
@@ -41,6 +42,7 @@ const EXACT: Record<string, ScreenTable | null> = {
 const PREFIX: { prefix: string; table: ScreenTable }[] = [
   { prefix: '/movimentos/', table: { schema: 'accounting', name: 'JournalEntries' } },
   { prefix: '/contas/', table: { schema: 'accounting', name: 'Accounts' } },
+  { prefix: '/terceiros/', table: { schema: 'accounting', name: 'Parties' } },
   { prefix: '/diarios/', table: { schema: 'accounting', name: 'Journals' } },
 ]
 
