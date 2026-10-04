@@ -33,7 +33,8 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | D | F3-18 … F3-21 | Automação do lançamento | Por especificar |
 | E | **F3-22** | Gráficos | **Em curso** — [`F3-22`](F3-22-CHARTS.md); F3-22A (componente de gráficos e ecrã «Evolução mensal») e F3-22B (gráficos de estrutura e gráfico na visão geral) feitos; faltam os gráficos nos relatórios de gestão |
 | E | **F3-23** | Mapa de exploração e rácios | **Concluído** — [`F3-23`](F3-23-RATIOS-OPERATING-MAP.md); F3-23A (mapa de exploração mensal e rácios com fórmula e período homólogo) e F3-23B (idade de saldos de clientes e fornecedores) feitos |
-| E | F3-24 … F3-26 | Gestão: orçamento, assistente com IA, relatório para o empresário | Por especificar |
+| E | **F3-24** | Orçamento | **Em curso** — [`F3-24`](F3-24-BUDGET.md); F3-24A (orçamento anual por conta e centro de custo, com desvios) feito; faltam os valores por mês e a cópia de exercícios |
+| E | F3-25, F3-26 | Gestão: assistente com IA, relatório para o empresário | Por especificar |
 | F | F3-27 … F3-28 | Gabinete: calendário de obrigações e painel | Por especificar |
 
 O **Bloco A está fechado** (2026-10-03); o F3-04B ficou resolvido no Modelo 22 (F3-10B). A ordem acordada: Bloco A primeiro; depois F3-06 e F3-07, com os gráficos

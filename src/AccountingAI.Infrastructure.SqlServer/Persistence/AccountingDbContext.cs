@@ -67,6 +67,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<FiscalDossierItem> FiscalDossierItems => Set<FiscalDossierItem>();
 
+    public DbSet<BudgetLine> BudgetLines => Set<BudgetLine>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -102,6 +104,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new FixedAssetConfiguration());
         modelBuilder.ApplyConfiguration(new IrcReturnValueConfiguration());
         modelBuilder.ApplyConfiguration(new FiscalDossierItemConfiguration());
+        modelBuilder.ApplyConfiguration(new BudgetLineConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

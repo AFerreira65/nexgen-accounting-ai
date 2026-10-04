@@ -857,6 +857,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the budget screen (requires the database)', () => {
+    window.history.pushState({}, '', '/orcamento')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Orçamento', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)

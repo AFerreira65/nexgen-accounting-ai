@@ -2392,6 +2392,40 @@ if (applicationEndpointsAvailable)
         return evolution is null ? Results.NotFound() : Results.Ok(evolution);
     });
 
+    // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
+        Guid userId, Guid companyId, int year, int? month, BudgetService budget, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999 || month is < 1 or > 12)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício e um mês válidos."] });
+        }
+
+        var report = await budget.ReportAsync(userId, companyId, year, month ?? 12, cancellationToken).ConfigureAwait(false);
+        return report is null ? Results.NotFound() : Results.Ok(report);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
+        Guid userId, Guid companyId, int year, int? month, BudgetLineRequest request, BudgetService budget, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var saved = await budget
+                .SetAsync(userId, companyId, year, request?.AccountCode ?? string.Empty, request?.CostCenterCode, request?.AnnualAmount ?? 0m, cancellationToken)
+                .ConfigureAwait(false);
+            if (saved is null)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(await budget.ReportAsync(userId, companyId, year, month ?? 12, cancellationToken).ConfigureAwait(false));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["orcamento"] = [exception.Message] });
+        }
+    });
+
     // Estrutura do exercício: gastos e rendimentos por natureza, maiores clientes e fornecedores.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/structure", async (
         Guid userId, Guid companyId, int year, FinancialStatementsService statements, CancellationToken cancellationToken) =>
@@ -4172,6 +4206,8 @@ public sealed record ApplyEntryTemplateRequest(decimal Amount, bool AmountInclud
 public sealed record CostCenterRequest(string? Code, string? Name, bool IsActive = true);
 
 public sealed record FiscalDossierItemRequest(string? Status, string? Note);
+
+public sealed record BudgetLineRequest(string? AccountCode, string? CostCenterCode, decimal AnnualAmount);
 
 public sealed record VatCodeRequest(
     string? Code,
