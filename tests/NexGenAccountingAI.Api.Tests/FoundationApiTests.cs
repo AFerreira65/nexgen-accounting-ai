@@ -1500,6 +1500,9 @@ public sealed class FoundationApiTests
         using var notBankBody = new StringContent("a;b\n1;2\n", System.Text.Encoding.UTF8, "text/csv");
         using var notBank = await client.PostAsync($"{basePath}/bank-statements/import?accountCode=12&dryRun=true", notBankBody).ConfigureAwait(false);
         using var wrongBankAccount = await client.GetAsync($"{basePath}/bank-statements/lines?accountCode=2111&from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
+        using var ownerReport = await client.GetAsync($"{basePath}/management/owner-report?year=2026&month=3").ConfigureAwait(false);
+        var ownerReportPayload = await ownerReport.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badOwnerReport = await client.GetAsync($"{basePath}/management/owner-report?year=2026&month=0").ConfigureAwait(false);
         using var map = await client.GetAsync($"{basePath}/management/operating-map?year=2026").ConfigureAwait(false);
         var mapPayload = await map.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var ratios = await client.GetAsync($"{basePath}/management/ratios?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
@@ -1558,6 +1561,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.BadRequest, emptyBankPost.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, notBank.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, wrongBankAccount.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, ownerReport.StatusCode);
+        StringAssert.Contains(ownerReportPayload, "\"monthLabel\":\"Março de 2026\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badOwnerReport.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, map.StatusCode);
         StringAssert.Contains(mapPayload, "\"label\":\"Resultado líquido do período\"");
         Assert.AreEqual(HttpStatusCode.OK, ratios.StatusCode);

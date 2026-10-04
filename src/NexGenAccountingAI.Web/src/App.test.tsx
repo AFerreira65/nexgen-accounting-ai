@@ -890,6 +890,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
+  it('shows the owner report screen (requires the database)', () => {
+    window.history.pushState({}, '', '/relatorio-empresario')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Relatório do mês', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)

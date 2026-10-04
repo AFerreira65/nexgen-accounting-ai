@@ -863,6 +863,21 @@ export type InvoiceQrCode = { issuerTaxId: string; buyerTaxId: string | null; do
 export type InvoiceQrLookup = { qr: InvoiceQrCode; isSale: boolean; eFaturaPurchaseId: string | null; eFaturaPurchaseEntryReference: string | null; salesDocumentId: string | null; entryReferences: string[]; attachmentIds: string[] }
 export type ClassificationChoice = { code: string; name: string; count: number }
 export type SupplierClassificationProposal = { supplierTaxId: string; supplierName: string; entryCount: number; account: ClassificationChoice; vatCode: ClassificationChoice | null; vatAccount: ClassificationChoice | null; supplierAccount: ClassificationChoice | null; journalCode: string; confidence: number; explanation: string; source: 'historico' | 'ia' }
+export type OwnerReportFigure = { label: string; value: number; comparative: number | null; note: string | null }
+export type OwnerReport = {
+  year: number
+  month: number
+  monthLabel: string
+  monthFigures: OwnerReportFigure[]
+  yearFigures: OwnerReportFigure[]
+  position: OwnerReportFigure[]
+  highlights: string[]
+  alerts: { severity: 'aviso' | 'info'; text: string }[]
+  evolution: MonthlyEvolution
+  receivables: PartyAging
+  payables: PartyAging
+  budget: BudgetReport | null
+}
 export type SupplierEntryRuleRow = { supplierTaxId: string; supplierName: string | null; entryTemplateCode: string; entryTemplateName: string; description: string | null; isActive: boolean }
 export type StructureItem = { label: string; amount: number; share: number }
 export type ExerciseStructure = { year: number; expenses: StructureItem[]; income: StructureItem[]; topCustomers: StructureItem[]; topSuppliers: StructureItem[] }

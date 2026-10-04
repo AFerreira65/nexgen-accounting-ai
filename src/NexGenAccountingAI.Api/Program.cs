@@ -2395,6 +2395,21 @@ if (applicationEndpointsAvailable)
         return evolution is null ? Results.NotFound() : Results.Ok(evolution);
     });
 
+    // Relatório para o empresário (F3-26A): o mês em números, frases e alertas, sem IA.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/owner-report", async (
+        Guid userId, Guid companyId, int year, int month, OwnerReportService reports, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var report = await reports.BuildAsync(userId, companyId, year, month, cancellationToken).ConfigureAwait(false);
+            return report is null ? Results.NotFound() : Results.Ok(report);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = [exception.Message] });
+        }
+    });
+
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
         Guid userId, Guid companyId, int year, int? month, BudgetService budget, CancellationToken cancellationToken) =>
