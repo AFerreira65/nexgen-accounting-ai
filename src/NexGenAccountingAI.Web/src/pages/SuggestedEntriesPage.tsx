@@ -1,4 +1,4 @@
-import { CircleAlert, CircleCheck, Database, Download, Trash2, WandSparkles } from 'lucide-react'
+import { Ban, CircleAlert, CircleCheck, Database, Download, FileQuestion, RotateCcw, Trash2, WandSparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
@@ -46,7 +46,7 @@ export function SuggestedEntriesPage() {
 
 /** O separador «Compras»: faturas do e-Fatura, com regra por fornecedor. */
 function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: string }) {
-  const { activeCompany, suggestedEntries, finalizeSuggestedEntries, supplierEntryRules, saveSupplierEntryRule, deleteSupplierEntryRule, entryTemplates } = useWorkContext()
+  const { activeCompany, suggestedEntries, finalizeSuggestedEntries, dismissPurchases, restorePurchases, supplierEntryRules, saveSupplierEntryRule, deleteSupplierEntryRule, entryTemplates } = useWorkContext()
   const companyId = activeCompany.companyId
   const [report, setReport] = useState<SuggestedEntriesReport | null>(null)
   const [rules, setRules] = useState<SupplierEntryRuleRow[]>([])
@@ -54,6 +54,7 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [ruleTemplate, setRuleTemplate] = useState<Record<string, string>>({})
   const [outcomes, setOutcomes] = useState<SuggestedEntryOutcome[]>([])
+  const [dismissReason, setDismissReason] = useState('')
   const [reload, setReload] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -93,10 +94,41 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
     }
   }
 
+  const readyIds = new Set(items.filter((item) => item.ready).map((item) => item.purchaseId))
+  const selectedReady = [...selected].filter((id) => readyIds.has(id))
+
   const finalize = () => void run(async () => {
-    setOutcomes(await finalizeSuggestedEntries(companyId, [...selected]))
+    setOutcomes(await finalizeSuggestedEntries(companyId, selectedReady))
     setReload((value) => value + 1)
   }, 'Não foi possível criar os lançamentos.')
+
+  const dismiss = () => void run(async () => {
+    if (dismissReason.trim() === '') throw new Error('Indique porque é que as faturas não se lançam.')
+    await dismissPurchases(companyId, [...selected], dismissReason.trim())
+    setDismissReason('')
+    setReload((value) => value + 1)
+  }, 'Não foi possível dispensar as faturas.')
+
+  const restore = (purchaseId: string) => void run(async () => {
+    await restorePurchases(companyId, [purchaseId])
+    setReload((value) => value + 1)
+  }, 'Não foi possível repor a fatura.')
+
+  // O mapa de documentos em falta: as faturas por lançar agrupadas por fornecedor, para pedir ao cliente.
+  const exportMissing = () => {
+    const bySupplier = new Map<string, SuggestedEntry[]>()
+    for (const item of items) bySupplier.set(item.supplierTaxId, [...(bySupplier.get(item.supplierTaxId) ?? []), item])
+    const total = (group: SuggestedEntry[]) => Math.round(group.reduce((sum, item) => sum + item.grossTotal, 0) * 100) / 100
+    downloadCsv(
+      csvFilename(`documentos-em-falta-${fromDate}-${toDate}`, activeCompany.legalName),
+      toCsv([
+        ['NIF', 'Fornecedor', 'Faturas', 'Total', 'Documentos'],
+        ...[...bySupplier.values()]
+          .sort((left, right) => total(right) - total(left))
+          .map((group) => [group[0].supplierTaxId, group[0].supplierName, group.length, total(group), group.map((item) => `${item.invoiceNo} (${item.invoiceDate})`).join('; ')]),
+      ]),
+    )
+  }
 
   const createRule = (supplierTaxId: string) => void run(async () => {
     const code = ruleTemplate[supplierTaxId] ?? ''
@@ -160,13 +192,19 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
     {items.length > 0 && <section className="panel">
       <div className="panel-heading"><div><h2>Faturas por lançar</h2><p>{ready.length === items.length ? 'Todas com sugestão pronta.' : `${ready.length} de ${items.length} com sugestão pronta.`} As notas de crédito invertem os lados do lançamento-tipo.</p></div></div>
       <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
-        <button className="button button-primary" type="button" onClick={finalize} disabled={busy || selected.size === 0}><WandSparkles size={16} /> {busy ? 'A lançar…' : `Finalizar ${selected.size} ${selected.size === 1 ? 'selecionado' : 'selecionados'}`}</button>
+        <button className="button button-primary" type="button" onClick={finalize} disabled={busy || selectedReady.length === 0}><WandSparkles size={16} /> {busy ? 'A lançar…' : `Finalizar ${selectedReady.length} ${selectedReady.length === 1 ? 'selecionado' : 'selecionados'}`}</button>
         <button className="button button-secondary" type="button" onClick={exportCsv}><Download size={16} /> Exportar CSV</button>
+        <button className="button button-secondary" type="button" onClick={exportMissing} title="As faturas por lançar agrupadas por fornecedor, para pedir os documentos"><FileQuestion size={16} /> Documentos em falta</button>
+      </div>
+      <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
+        <label className="inline-check">Motivo <input aria-label="Motivo para não lançar" list="motivos-nao-lancar" value={dismissReason} onChange={(event) => setDismissReason(event.target.value)} placeholder="ex.: despesa particular" /></label>
+        <datalist id="motivos-nao-lancar"><option value="Despesa particular" /><option value="Documento em duplicado" /><option value="Lançado noutro documento" /><option value="Não é desta empresa" /></datalist>
+        <button className="button button-secondary" type="button" onClick={dismiss} disabled={busy || selected.size === 0 || dismissReason.trim() === ''}><Ban size={16} /> Não lançar os selecionados</button>
       </div>
       <div className="table-wrap"><table>
         <thead><tr><th><span className="sr-only">Selecionar</span></th><th>Data</th><th>Fornecedor</th><th>Documento</th><th className="numeric">Total</th><th>Lançamento proposto</th></tr></thead>
         <tbody>{items.map((item) => <tr key={item.purchaseId}>
-          <td><input type="checkbox" aria-label={`Selecionar ${item.invoiceNo}`} disabled={!item.ready} checked={selected.has(item.purchaseId)} onChange={() => toggle(item.purchaseId)} /></td>
+          <td><input type="checkbox" aria-label={`Selecionar ${item.invoiceNo}`} checked={selected.has(item.purchaseId)} onChange={() => toggle(item.purchaseId)} /></td>
           <td>{formatMovementDate(item.invoiceDate)}</td>
           <td>{item.supplierName}<br /><small>NIF {item.supplierTaxId}</small></td>
           <td>{item.invoiceNo}<br /><small>{item.invoiceType}{item.isCreditNote ? <span className="badge warning">nota de crédito</span> : null}</small></td>
@@ -174,6 +212,21 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
           <td>{item.ready
             ? <><strong>{item.entryTemplateCode}</strong> <small>{item.journalCode}{item.documentTypeCode ? ` · ${item.documentTypeCode}` : ''} · {item.description}</small><SuggestionLines lines={item.lines} />{item.warning && <span className="suggestion-note"><CircleAlert size={13} /> {item.warning}</span>}</>
             : <span className="suggestion-problem">{item.problem}</span>}</td>
+        </tr>)}</tbody>
+      </table></div>
+    </section>}
+
+    {report && report.dismissed.length > 0 && <section className="panel">
+      <div className="panel-heading"><div><h2>Não lançar</h2><p>Faturas do período que não entram na contabilidade, com o motivo. Não contam nas sugestões nem no cruzamento.</p></div><span className="attention-count">{report.dismissed.length}</span></div>
+      <div className="table-wrap"><table>
+        <thead><tr><th>Data</th><th>Fornecedor</th><th>Documento</th><th className="numeric">Total</th><th>Motivo</th><th /></tr></thead>
+        <tbody>{report.dismissed.map((item) => <tr key={item.purchaseId}>
+          <td>{formatMovementDate(item.invoiceDate)}</td>
+          <td>{item.supplierName}<br /><small>NIF {item.supplierTaxId}</small></td>
+          <td>{item.invoiceNo}</td>
+          <td className="numeric">{euro.format(item.grossTotal)}</td>
+          <td>{item.reason}</td>
+          <td><button className="icon-button" type="button" aria-label={`Repor ${item.invoiceNo}`} title="Repor nas sugestões" disabled={busy} onClick={() => restore(item.purchaseId)}><RotateCcw size={16} /></button></td>
         </tr>)}</tbody>
       </table></div>
     </section>}
@@ -192,6 +245,6 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
       </table></div>
     </section>}
 
-    <p className="statement-note">Uma fatura conta como lançada quando tem um lançamento criado daqui que não foi anulado, ou quando o <Link to="/cruzamento">cruzamento</Link> lhe encontra um lançamento de compra pelo número do documento. As faturas anuladas no Portal não são sugeridas. Os lançamentos ficam por conferir, com a origem «Sugerido do e-Fatura».</p>
+    <p className="statement-note">Uma fatura conta como lançada quando tem um lançamento criado daqui que não foi anulado, ou quando o <Link to="/cruzamento">cruzamento</Link> lhe encontra um lançamento de compra pelo número do documento. As faturas anuladas no Portal não são sugeridas, e as marcadas «não lançar» saem também do cruzamento. «Documentos em falta» exporta as faturas por lançar agrupadas por fornecedor, para pedir os documentos. Os lançamentos ficam por conferir, com a origem «Sugerido do e-Fatura».</p>
   </>
 }

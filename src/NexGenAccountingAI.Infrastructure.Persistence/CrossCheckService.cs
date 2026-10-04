@@ -6,7 +6,8 @@ using Microsoft.EntityFrameworkCore;
 namespace NexGenAccountingAI.Infrastructure.Persistence;
 
 /// <summary>
-/// Junta as faturas de compra do e-Fatura persistidas com os lançamentos da
+/// Junta as faturas de compra do e-Fatura persistidas (sem as dispensadas, que
+/// não se lançam) com os lançamentos da
 /// contabilidade do período e produz o <see cref="CrossCheckReport"/>. Só lê;
 /// a lógica de correspondência e de agregação vive em
 /// <see cref="CrossCheckBuilder"/>.
@@ -36,6 +37,7 @@ public sealed class CrossCheckService(AccountingDbContext context) : ICrossCheck
         var invoices = await context.EFaturaPurchases
             .AsNoTracking()
             .Where(item => item.CompanyId == companyId &&
+                item.DismissedReason == null &&
                 item.InvoiceDate >= from &&
                 item.InvoiceDate <= to)
             .Select(item => new CrossCheckInvoiceInput(

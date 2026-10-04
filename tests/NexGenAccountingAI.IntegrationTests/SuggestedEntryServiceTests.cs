@@ -130,7 +130,7 @@ public sealed class SuggestedEntryServiceTests
             Assert.IsNotNull(outcomes!.Single(item => item.DocumentId == invoice.Id).Reference);
             Assert.IsNotNull(outcomes.Single(item => item.DocumentId == creditNote.Id).Reference);
             Assert.AreEqual("O fornecedor não tem regra de lançamento.", outcomes.Single(item => item.DocumentId == noRule.Id).Error);
-            Assert.AreEqual("A fatura já tem lançamento ou está anulada.", outcomes.Single(item => item.DocumentId == alreadyBooked.Id).Error);
+            Assert.AreEqual("A fatura já tem lançamento, está anulada ou foi dispensada.", outcomes.Single(item => item.DocumentId == alreadyBooked.Id).Error);
             context.ChangeTracker.Clear();
 
             var reference = outcomes.Single(item => item.DocumentId == invoice.Id).Reference!;
@@ -152,6 +152,22 @@ public sealed class SuggestedEntryServiceTests
             context.ChangeTracker.Clear();
             var afterVoid = await service.ListAsync(userId, companyId, from, to, CancellationToken.None).ConfigureAwait(false);
             CollectionAssert.AreEqual(new[] { "FT A/1", "FT B/9" }, afterVoid!.Items.Select(item => item.InvoiceNo).ToArray());
+
+            // Dispensar («não lançar»): sai das sugestões e do cruzamento, com o motivo; repor devolve-a.
+            Assert.AreEqual(1, await service.DismissAsync(userId, companyId, [noRule.Id], " Despesa particular ", CancellationToken.None).ConfigureAwait(false));
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => service
+                .DismissAsync(userId, companyId, [creditNote.Id], "Duplicado", CancellationToken.None)).ConfigureAwait(false);
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => service
+                .DismissAsync(userId, companyId, [invoice.Id], " ", CancellationToken.None)).ConfigureAwait(false);
+            context.ChangeTracker.Clear();
+            var afterDismiss = await service.ListAsync(userId, companyId, from, to, CancellationToken.None).ConfigureAwait(false);
+            CollectionAssert.AreEqual(new[] { "FT A/1" }, afterDismiss!.Items.Select(item => item.InvoiceNo).ToArray());
+            Assert.AreEqual("Despesa particular", afterDismiss.Dismissed.Single().Reason);
+            var crossCheck = await new CrossCheckService(context).BuildAsync(userId, companyId, from, to, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsFalse(crossCheck!.Purchases.EfaturaWithoutAccounting.Any(item => item.InvoiceNo == "FT B/9"), "O cruzamento ignora as dispensadas.");
+            Assert.AreEqual(1, await service.RestoreAsync(userId, companyId, [noRule.Id], CancellationToken.None).ConfigureAwait(false));
+            context.ChangeTracker.Clear();
+            Assert.AreEqual(2, (await service.ListAsync(userId, companyId, from, to, CancellationToken.None).ConfigureAwait(false))!.Items.Count);
 
             // Regras: lista, apagar; sem acesso.
             Assert.AreEqual(1, (await service.ListRulesAsync(userId, companyId, CancellationToken.None).ConfigureAwait(false))!.Count);

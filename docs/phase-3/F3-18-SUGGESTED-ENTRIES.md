@@ -147,9 +147,44 @@ a fatura.
 - `NexGenAccountingAI.Api.Tests`: lista, regras, regra com lançamento-tipo
   inexistente e corpo que não é XML.
 
-### Por fazer
+### F3-18C — «Não lançar» e documentos em falta (feito)
 
-- **F3-18C**: o mapa de documentos em falta, ou seja, os lançamentos de
-  compra sem fatura no e-Fatura (o inverso desta lista), com o seguimento de
-  cada um.
+- **`EFaturaPurchase.DismissedReason` / `DismissedAtUtc`**: uma fatura do
+  e-Fatura pode marcar-se «não lançar» com um motivo, por exemplo uma despesa
+  particular, um duplicado ou um documento lançado noutro. Migração aditiva
+  `20261004223551_EFaturaDismissal`, com duas colunas anuláveis.
+- **Efeito:** uma fatura dispensada sai das sugestões e também do
+  **cruzamento**, que deixa de a contar nos totais e na lista de faturas sem
+  lançamento. Assim também sai das «Tarefas».
+- **Regras:**
+  - uma fatura com lançamento por anular não se dispensa;
+  - o motivo é obrigatório;
+  - repor devolve a fatura às sugestões e ao cruzamento.
+- **API:** `POST .../suggested-entries/dismiss` (`{ purchaseIds, reason }`)
+  e `POST .../suggested-entries/restore` (`{ purchaseIds }`). A lista
+  `GET .../suggested-entries` traz as dispensadas do período (`dismissed`).
+- **PWA**, no separador «Compras»:
+  - selecionar qualquer fatura, mesmo sem sugestão pronta, e marcá-la «não
+    lançar» com um motivo (há motivos propostos);
+  - o painel «Não lançar», com o botão para repor;
+  - o CSV **«Documentos em falta»**: as faturas por lançar agrupadas por
+    fornecedor (NIF, número de faturas, total e a lista de documentos),
+    ordenadas pelo total, para pedir ao cliente.
+
+**Validação efetuada**
+
+- `SuggestedEntryServiceTests` cobre:
+  - dispensar com o motivo normalizado;
+  - recusar a dispensa de uma fatura com lançamento;
+  - motivo vazio;
+  - a fatura sai das sugestões e do cruzamento;
+  - repor.
+- `NexGenAccountingAI.Api.Tests`: dispensar sem faturas.
+
+O épico F3-18 fica concluído.
+
+### Ideias para depois
+
 - Regras por conta ou por setor do e-Fatura, além do NIF.
+- Os lançamentos de compra sem fatura no e-Fatura, que o cruzamento já lista,
+  com o seguimento de cada um.

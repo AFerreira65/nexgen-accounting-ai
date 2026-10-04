@@ -110,6 +110,39 @@ public sealed class EFaturaPurchase
         JournalEntryReference = journalEntryReference.Trim();
     }
 
+    public const int DismissedReasonMaxLength = 200;
+
+    /// <summary>
+    /// Porque é que a fatura não se lança (uma despesa particular, um duplicado);
+    /// `null` enquanto conta. Uma fatura dispensada sai das sugestões e do cruzamento.
+    /// </summary>
+    public string? DismissedReason { get; private set; }
+
+    public DateTimeOffset? DismissedAtUtc { get; private set; }
+
+    public void Dismiss(string reason)
+    {
+        var normalized = (reason ?? string.Empty).Trim();
+        if (normalized.Length == 0)
+        {
+            throw new ArgumentException("Indique porque é que a fatura não se lança.", nameof(reason));
+        }
+
+        if (normalized.Length > DismissedReasonMaxLength)
+        {
+            throw new ArgumentException($"O motivo não pode ter mais de {DismissedReasonMaxLength} caracteres.", nameof(reason));
+        }
+
+        DismissedReason = normalized;
+        DismissedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void Restore()
+    {
+        DismissedReason = null;
+        DismissedAtUtc = null;
+    }
+
     public static bool IsCreditNoteType(string? invoiceType)
     {
         var type = (invoiceType ?? string.Empty).Trim();

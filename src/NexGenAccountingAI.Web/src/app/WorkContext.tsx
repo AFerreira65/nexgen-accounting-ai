@@ -131,6 +131,8 @@ type WorkContextValue = WorkContextData & {
   copyBudget: (companyId: string, year: number, month: number, input: { source: 'orcamento' | 'realizado'; sourceYear: number; adjustmentPercent: number }) => Promise<BudgetReport>
   suggestedEntries: (companyId: string, range: { from: string; to: string }) => Promise<SuggestedEntriesReport>
   finalizeSuggestedEntries: (companyId: string, purchaseIds: string[]) => Promise<SuggestedEntryOutcome[]>
+  dismissPurchases: (companyId: string, purchaseIds: string[], reason: string) => Promise<void>
+  restorePurchases: (companyId: string, purchaseIds: string[]) => Promise<void>
   supplierEntryRules: (companyId: string) => Promise<SupplierEntryRuleRow[]>
   saveSupplierEntryRule: (companyId: string, supplierTaxId: string, input: { entryTemplateCode: string; description: string | null; isActive: boolean }) => Promise<SupplierEntryRuleRow>
   deleteSupplierEntryRule: (companyId: string, supplierTaxId: string) => Promise<void>
@@ -1074,6 +1076,22 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as SuggestedEntryOutcome[]
+    },
+    dismissPurchases: async (companyId, purchaseIds, reason) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/suggested-entries/dismiss`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ purchaseIds, reason }),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+    },
+    restorePurchases: async (companyId, purchaseIds) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/suggested-entries/restore`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ purchaseIds }),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
     },
     supplierEntryRules: async (companyId) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/supplier-entry-rules`)

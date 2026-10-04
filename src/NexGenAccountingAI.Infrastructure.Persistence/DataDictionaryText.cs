@@ -226,6 +226,8 @@ internal static class DataDictionaryText
         ["SupplierEntryRules.EntryTemplateId"] = "O lançamento-tipo usado para sugerir as faturas deste fornecedor.",
         ["SupplierEntryRules.Description"] = "A descrição dos lançamentos sugeridos; vazia para usar a do lançamento-tipo ou o nome do fornecedor.",
         ["SupplierEntryRules.IsActive"] = "Se a regra está ativa.",
+        ["EFaturaPurchase.DismissedReason"] = "Porque é que a fatura não se lança (despesa particular, duplicado…); vazio enquanto conta para as sugestões e o cruzamento.",
+        ["EFaturaPurchase.DismissedAtUtc"] = "Quando a fatura foi dispensada.",
         ["EFaturaPurchase.JournalEntryReference"] = "A referência do lançamento criado a partir da fatura (lançamento sugerido finalizado).",
         ["SalesEntryRules.TaxPercentage"] = "A percentagem de IVA a que a regra se aplica.",
         ["SalesEntryRules.EntryTemplateId"] = "O lançamento-tipo usado para a parte dos documentos a esta taxa.",

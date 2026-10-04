@@ -811,7 +811,8 @@ export type SuggestedEntry = {
   warning: string | null
   ready: boolean
 }
-export type SuggestedEntriesReport = { from: string; to: string; purchaseCount: number; bookedCount: number; cancelledCount: number; readyCount: number; withoutRuleCount: number; items: SuggestedEntry[] }
+export type DismissedPurchase = { purchaseId: string; supplierTaxId: string; supplierName: string; invoiceNo: string; invoiceDate: string; grossTotal: number; reason: string }
+export type SuggestedEntriesReport = { from: string; to: string; purchaseCount: number; bookedCount: number; cancelledCount: number; readyCount: number; withoutRuleCount: number; items: SuggestedEntry[]; dismissed: DismissedPurchase[] }
 export type SuggestedEntryOutcome = { documentId: string; reference: string | null; error: string | null }
 export type SalesDocumentsImportResult = { batchId: string | null; read: number; imported: number; alreadyExisted: number; voided: number; from: string | null; to: string | null; warnings: string[] }
 export type SalesSuggestedEntry = {

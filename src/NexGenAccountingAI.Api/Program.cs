@@ -2495,6 +2495,30 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // «Não lançar» (F3-18C): a fatura sai das sugestões e do cruzamento, com o motivo.
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/suggested-entries/dismiss", async (
+        Guid userId, Guid companyId, DismissPurchasesRequest request, SuggestedEntryService suggestions, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var changed = await suggestions
+                .DismissAsync(userId, companyId, request?.PurchaseIds ?? [], request?.Reason ?? string.Empty, cancellationToken)
+                .ConfigureAwait(false);
+            return changed is null ? Results.NotFound() : Results.Ok(new { changed });
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["faturas"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/suggested-entries/restore", async (
+        Guid userId, Guid companyId, FinalizeSuggestedEntriesRequest request, SuggestedEntryService suggestions, CancellationToken cancellationToken) =>
+    {
+        var changed = await suggestions.RestoreAsync(userId, companyId, request?.PurchaseIds ?? [], cancellationToken).ConfigureAwait(false);
+        return changed is null ? Results.NotFound() : Results.Ok(new { changed });
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/supplier-entry-rules", async (
         Guid userId, Guid companyId, SuggestedEntryService suggestions, CancellationToken cancellationToken) =>
     {
@@ -4416,6 +4440,8 @@ public sealed record BudgetLineRequest(string? AccountCode, string? CostCenterCo
 public sealed record BudgetCopyRequest(string? Source, int SourceYear, decimal? AdjustmentPercent);
 
 public sealed record FinalizeSuggestedEntriesRequest(IReadOnlyList<Guid>? PurchaseIds);
+
+public sealed record DismissPurchasesRequest(IReadOnlyList<Guid>? PurchaseIds, string? Reason);
 
 public sealed record SupplierEntryRuleRequest(string? EntryTemplateCode, string? Description, bool IsActive = true);
 

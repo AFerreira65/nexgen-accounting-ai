@@ -1467,6 +1467,8 @@ public sealed class FoundationApiTests
         using var badSuggested = await client.GetAsync($"{basePath}/suggested-entries?from=2026-12-31&to=2026-01-01").ConfigureAwait(false);
         using var emptyFinalizeBody = new StringContent("{\"purchaseIds\":[]}", System.Text.Encoding.UTF8, "application/json");
         using var emptyFinalize = await client.PostAsync($"{basePath}/suggested-entries/finalize", emptyFinalizeBody).ConfigureAwait(false);
+        using var emptyDismissBody = new StringContent("{\"purchaseIds\":[],\"reason\":\"Duplicado\"}", System.Text.Encoding.UTF8, "application/json");
+        using var emptyDismiss = await client.PostAsync($"{basePath}/suggested-entries/dismiss", emptyDismissBody).ConfigureAwait(false);
         using var rules = await client.GetAsync($"{basePath}/supplier-entry-rules").ConfigureAwait(false);
         using var badRuleBody = new StringContent("{\"entryTemplateCode\":\"NAO-HA\"}", System.Text.Encoding.UTF8, "application/json");
         using var badRule = await client.PutAsync($"{basePath}/supplier-entry-rules/500584095", badRuleBody).ConfigureAwait(false);
@@ -1514,6 +1516,7 @@ public sealed class FoundationApiTests
         StringAssert.Contains(suggestedPayload, "\"readyCount\":");
         Assert.AreEqual(HttpStatusCode.BadRequest, badSuggested.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, emptyFinalize.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, emptyDismiss.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, rules.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badRule.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, missingRule.StatusCode);

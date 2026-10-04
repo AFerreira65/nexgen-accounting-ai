@@ -54,13 +54,24 @@ public sealed record SuggestedEntry(
     public bool Ready => Problem is null && Lines.Count > 0;
 }
 
+/// <summary>Uma fatura que não se lança, com o motivo.</summary>
+public sealed record DismissedPurchase(
+    Guid PurchaseId,
+    string SupplierTaxId,
+    string SupplierName,
+    string InvoiceNo,
+    DateOnly InvoiceDate,
+    decimal GrossTotal,
+    string Reason);
+
 public sealed record SuggestedEntriesReport(
     DateOnly From,
     DateOnly To,
     int PurchaseCount,
     int BookedCount,
     int CancelledCount,
-    IReadOnlyList<SuggestedEntry> Items)
+    IReadOnlyList<SuggestedEntry> Items,
+    IReadOnlyList<DismissedPurchase> Dismissed)
 {
     public int ReadyCount => Items.Count(item => item.Ready);
 
@@ -77,7 +88,8 @@ public sealed record SuggestedEntryOutcome(Guid DocumentId, string? Reference, s
 /// <see cref="JournalPostingService"/>, com origem <see cref="EntrySource.EFatura"/>,
 /// e guarda a referência na fatura. Uma fatura conta como lançada quando tem um
 /// lançamento ligado que não está anulado ou quando o cruzamento lhe encontra um
-/// lançamento de compra (<see cref="CrossCheckBuilder.BookedInvoiceIds"/>).
+/// lançamento de compra (<see cref="CrossCheckBuilder.BookedInvoiceIds"/>); uma
+/// fatura dispensada (F3-18C, «não lançar») fica de fora, com o motivo.
 /// </summary>
 public sealed class SuggestedEntryService(AccountingDbContext context, JournalPostingService posting)
 {
@@ -201,7 +213,78 @@ public sealed class SuggestedEntryService(AccountingDbContext context, JournalPo
 
         var (pending, booked, cancelled) = await SplitAsync(companyId, purchases, from, to, cancellationToken).ConfigureAwait(false);
         var items = await SuggestAsync(companyId, pending, cancellationToken).ConfigureAwait(false);
-        return new SuggestedEntriesReport(from, to, purchases.Count, booked, cancelled, items);
+        var dismissed = purchases
+            .Where(item => item.DismissedReason is not null)
+            .Select(item => new DismissedPurchase(
+                item.Id, item.SupplierTaxId, item.SupplierName, item.InvoiceNo, item.InvoiceDate, item.GrossTotal, item.DismissedReason!))
+            .ToList();
+        return new SuggestedEntriesReport(from, to, purchases.Count, booked, cancelled, items, dismissed);
+    }
+
+    /// <summary>
+    /// Marca as faturas como «não lançar», com o motivo: saem das sugestões e do
+    /// cruzamento. Uma fatura já lançada não se dispensa. Devolve quantas mudaram.
+    /// </summary>
+    public async Task<int?> DismissAsync(
+        Guid userId, Guid companyId, IReadOnlyCollection<Guid> purchaseIds, string reason, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(purchaseIds);
+        if (!await HasAccessAsync(userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        var ids = purchaseIds.Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            throw new ArgumentException("Indique pelo menos uma fatura.", nameof(purchaseIds));
+        }
+
+        var purchases = await context.EFaturaPurchases
+            .Where(item => item.CompanyId == companyId && ids.Contains(item.Id))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var booked = purchases.Where(item => item.JournalEntryReference is not null).Select(item => item.JournalEntryReference!).ToList();
+        var live = await context.JournalEntries
+            .AsNoTracking()
+            .AnyAsync(entry => entry.CompanyId == companyId && booked.Contains(entry.Reference) && entry.Status != JournalEntryStatus.Voided, cancellationToken)
+            .ConfigureAwait(false);
+        if (live)
+        {
+            throw new InvalidOperationException("Uma das faturas já tem lançamento: anule o lançamento antes de a dispensar.");
+        }
+
+        foreach (var purchase in purchases)
+        {
+            purchase.Dismiss(reason);
+        }
+
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return purchases.Count;
+    }
+
+    /// <summary>Devolve as faturas dispensadas às sugestões e ao cruzamento.</summary>
+    public async Task<int?> RestoreAsync(
+        Guid userId, Guid companyId, IReadOnlyCollection<Guid> purchaseIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(purchaseIds);
+        if (!await HasAccessAsync(userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        var ids = purchaseIds.Distinct().ToList();
+        var purchases = await context.EFaturaPurchases
+            .Where(item => item.CompanyId == companyId && ids.Contains(item.Id) && item.DismissedReason != null)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        foreach (var purchase in purchases)
+        {
+            purchase.Restore();
+        }
+
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return purchases.Count;
     }
 
     /// <summary>
@@ -250,7 +333,7 @@ public sealed class SuggestedEntryService(AccountingDbContext context, JournalPo
         {
             if (!suggestions.TryGetValue(purchase.Id, out var suggestion))
             {
-                outcomes.Add(new SuggestedEntryOutcome(purchase.Id, null, "A fatura já tem lançamento ou está anulada."));
+                outcomes.Add(new SuggestedEntryOutcome(purchase.Id, null, "A fatura já tem lançamento, está anulada ou foi dispensada."));
                 continue;
             }
 
@@ -338,6 +421,10 @@ public sealed class SuggestedEntryService(AccountingDbContext context, JournalPo
             if (purchase.IsCancelled)
             {
                 cancelled++;
+            }
+            else if (purchase.DismissedReason is not null)
+            {
+                // Dispensada: listada à parte, não conta como lançada nem por lançar.
             }
             else if ((purchase.JournalEntryReference is { } reference && liveReferences.Contains(reference)) ||
                 matched.Contains(purchase.Id))
