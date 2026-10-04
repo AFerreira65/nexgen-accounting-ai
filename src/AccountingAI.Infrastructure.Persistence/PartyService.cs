@@ -90,7 +90,8 @@ public sealed class PartyService(AccountingDbContext context)
         var term = search?.Trim();
         if (!string.IsNullOrEmpty(term))
         {
-            query = query.Where(party => party.Name.Contains(term) || party.TaxRegistrationNumber.Contains(term));
+            var pattern = TextSearch.ContainsPattern(term);
+            query = query.Where(party => EF.Functions.ILike(party.Name, pattern) || EF.Functions.ILike(party.TaxRegistrationNumber, pattern));
         }
 
         var total = await query.CountAsync(cancellationToken).ConfigureAwait(false);

@@ -90,7 +90,7 @@ public sealed class Company
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public AccountingFirm AccountingFirm { get; private set; } = null!;
 

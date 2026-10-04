@@ -6,12 +6,12 @@ Monitor Windows em C#/.NET para leitura e análise de ficheiros SAF-T (PT).
 
 Sobre a fundação F1-01 foi criada a primeira experiência contabilística local:
 
-- monólito modular .NET 10 (`Domain`, `Application`, `Infrastructure.SqlServer`, `Api` e `Worker`);
+- monólito modular .NET 10 (`Domain`, `Application`, `Infrastructure.Persistence`, `Api` e `Worker`);
 - PWA React/TypeScript;
-- SQL Server com migrações versionadas;
+- PostgreSQL com migrações versionadas (ADR-0013; até 2026-10-04 era SQL Server);
 - health checks, correlação e logs estruturados;
-- cadastro base de gabinete e empresa em SQL Server local;
-- base `accountingAI` em SQL Server Express, criada e atualizada por migrações no arranque;
+- cadastro base de gabinete e empresa em PostgreSQL local;
+- base `accounting` em PostgreSQL (mesmo servidor do NexGen ERP, base própria), criada e atualizada por migrações no arranque;
 - utilizadores associados a uma ou mais empresas, com função e preferências próprias em cada empresa;
 - seletor de empresa ligado à API e ecrã para editar preferências próprias do utilizador na empresa ativa (idioma, fuso, tema, densidade, linhas por página e tamanho do texto); uma empresa nova ainda sem preferências gravadas abre com as preferências por omissão em vez de deixar o ecrã em branco; seletor de exercício na barra de topo que grava a preferência e acerta logo os atalhos de período e os valores por omissão de todos os ecrãs; os menus da barra de topo fecham ao clicar fora ou com Escape; pesquisa rápida na barra de topo (Ctrl+K) que salta para uma conta, diário ou movimento a partir dos dados já carregados;
 - plano de contas, diários, movimentos e linhas contabilísticas persistidos no schema `accounting`;
@@ -32,7 +32,7 @@ Sobre a fundação F1-01 foi criada a primeira experiência contabilística loca
 - ecrã de lançamento de movimentos com linhas repetíveis compactas, totais e validação de equilíbrio, campo de conta com sugestões de contas de movimento e recusa de contas de integração, navegação por Enter entre campos (e criação de linha no último campo da última linha), filtros por pesquisa, diário, estado, origem (manual, importado do SAF-T, abertura, apuramento) e intervalo de datas (a arrancar no exercício da empresa, com atalhos de mês, trimestre e ano e «Limpar datas» para abrir tudo) na lista, paginada pelo tamanho de página das preferências da empresa, exportação CSV do que está filtrado (a lista inteira, não só a página visível), e ações para conferir, reabrir (devolve um lançamento conferido a "por conferir" para poder ser corrigido, exceto em exercício apurado, período bloqueado ou lançamentos de apuramento/abertura), corrigir, anular e duplicar (novo lançamento pré-preenchido a partir de um existente); campo de observações internas por lançamento, editável e visível no detalhe do movimento, assinalado na lista de movimentos e na razão de conta e pesquisável na lista;
 - balancete, razão de conta e livro diário, filtrados por empresa, diário, tipo de documento, exercício, intervalo de datas e (no livro diário e na razão) conta movimentada e origem, sem os lançamentos anulados, com saldo de abertura por conta no balancete e na razão quando há data inicial, atalhos de período (mês, trimestre, ano) nos relatórios, razão das contas de integração a somar as subcontas de movimento, agrupamento opcional do balancete por classe SNC ou por código de taxonomia com subtotais, comparação opcional do balancete, da demonstração de resultados e do balanço com o período homólogo, e exportação CSV do que está no ecrã; na razão, o filtro de origem só restringe as linhas mostradas — o saldo de abertura e o saldo atual continuam a somar todas as origens; a razão de conta, o livro diário e o balancete são paginados pelo tamanho de página das preferências da empresa, mantendo os totais e saldos do conjunto filtrado inteiro (o balancete agrupado por classe ou taxonomia, e o balanço, mostram só os subtotais quando há contas a mais; no balancete, cada grupo pode ser expandido para ver as suas contas, paginadas dentro do grupo); a lista de movimentos, a razão de conta, a demonstração de resultados e o resumo de IVA arrancam no exercício da empresa (como o livro diário), com «Limpar datas» para ver tudo;
 - numeração dos lançamentos por tipo de documento, além da numeração por diário, com o tipo persistido no lançamento e filtro de movimentos por tipo, e um contador persistido por empresa, série e exercício com largura de preenchimento configurável;
-- emissão simultânea protegida no SQL Server, sem referências duplicadas, e ecrã de controlo das séries com último número, próximo número e avanço seguro sem recuos;
+- emissão simultânea protegida na base de dados, sem referências duplicadas, e ecrã de controlo das séries com último número, próximo número e avanço seguro sem recuos;
 - demonstração de resultados sintética por naturezas (classe 7 menos classe 6, por subclasse, com resultado líquido do período e comparação opcional com o período homólogo) e balanço sintético (ativo, passivo e capital próprio por subclasse, com o controlo Ativo = Passivo + Capital próprio), ambos a partir do balancete; resumo de IVA por período (contas 24.3: liquidado, dedutível e posição a entregar/a recuperar) e contas correntes de clientes (21) e fornecedores (22) com data de corte e cada painel paginado, também a partir do balancete;
 - apuramento de resultados do exercício (fecha as classes 6 e 7 contra a conta 81) e abertura do exercício seguinte (transporta os saldos de balanço e leva o resultado a 56), cada um uma vez por exercício e no respetivo diário, com reabertura (anulação do lançamento de fecho) das camadas de dentro para fora, e recusa de lançar, corrigir ou anular movimentos num exercício apurado, com aviso no editor de movimentos e botões de corrigir/anular desativados na lista de movimentos para os lançamentos de um exercício apurado ou período bloqueado;
 - dashboard com resultado, total do ativo e posição financeira (caixa e bancos, saldo de clientes e de fornecedores, posição de IVA, com ligação ao ecrã respetivo) da empresa, além dos movimentos; razão de conta (com saldo de abertura e movimentos da API) e diário alimentados pela API e filtrados pela empresa ativa; uma data de referência opcional (com os mesmos atalhos de período dos relatórios, guardada por empresa no navegador) recua esses indicadores de posição e o resultado para o que existia até essa data, sem afetar as contagens de movimentos e por conferir;
@@ -57,9 +57,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
 
 A aplicação abre em `http://127.0.0.1:5173/`. O ficheiro `src/AccountingAI.Web/index.html` não deve ser usado como aplicação através de `file://`; se for aberto diretamente, apresenta agora a instrução correta em vez de uma página branca.
 
-### SQL Server Express local
+### PostgreSQL local
 
-No perfil de desenvolvimento, a aplicação aplica automaticamente as migrações em falta, cria as tabelas na base `accountingAI` e repõe de forma idempotente os dados sintéticos em falta. A configuração versionada usa autenticação integrada. Quando for necessário login SQL, guarde a ligação apenas no secret store local:
+A aplicação usa o PostgreSQL local (o mesmo servidor do NexGen ERP), numa base própria `accounting`. Prepare-a uma vez, como superutilizador:
+
+```powershell
+psql -U postgres -h localhost -f .\scripts\postgres\local-setup.sql
+```
+
+O script cria o papel de desenvolvimento `accounting` (com `CREATEDB`, para os testes de integração criarem bases descartáveis) e as bases `accounting` e `accounting_test`. No perfil de desenvolvimento, a aplicação aplica automaticamente as migrações em falta e repõe de forma idempotente os dados sintéticos em falta. Os testes de integração usam o mesmo papel, ou o servidor indicado em `ACCOUNTINGAI_TEST_PG_CONNECTION`. Para outra ligação, guarde-a apenas no secret store local:
 
 ```powershell
 dotnet user-secrets set "ConnectionStrings:Accounting" "<connection-string-local>" --project .\src\AccountingAI.Api\AccountingAI.Api.csproj

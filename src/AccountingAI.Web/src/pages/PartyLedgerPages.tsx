@@ -42,7 +42,7 @@ export function PartyBalancesByPartyPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Saldos de terceiros</h1><p>O saldo de cada cliente e fornecedor, a partir das linhas de lançamento que o indicam.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Contact /></span><h2>Requer ligação ao SQL Server</h2><p>Os saldos por terceiro são calculados na base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Contact /></span><h2>Requer ligação à base de dados</h2><p>Os saldos por terceiro são calculados na base de dados da empresa.</p></section>
     </div>
   }
 
@@ -54,7 +54,7 @@ export function PartyBalancesByPartyPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Saldos de terceiros</h1><p>O saldo de cada cliente e fornecedor, somando as linhas de lançamento que o indicam — independentemente da conta. As linhas sem terceiro não entram; o saldo por subconta continua em <Link to="/contas-correntes">Contas correntes</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Saldos de terceiros</h1><p>O saldo de cada cliente e fornecedor, somando as linhas de lançamento que o indicam — independentemente da conta. As linhas sem terceiro não entram; o saldo por subconta continua em <Link to="/contas-correntes">Contas correntes</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 
@@ -108,7 +108,7 @@ export function PartyStatementPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Terceiros</p><h1>Extrato de terceiro</h1></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Contact /></span><h2>Requer ligação ao SQL Server</h2><p>O extrato é lido da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Contact /></span><h2>Requer ligação à base de dados</h2><p>O extrato é lido da base de dados da empresa.</p></section>
     </div>
   }
 
@@ -122,7 +122,7 @@ export function PartyStatementPage() {
 
   return <div className="page-stack">
     <Link className="back-link" to="/saldos-terceiros"><ArrowLeft size={16} /> Saldos de terceiros</Link>
-    <header className="page-heading detail-heading"><div><p className="eyebrow">Extrato de terceiro</p><h1>{statement?.name ?? 'Terceiro'}</h1>{statement && <p>{partyNumber(statement.countryCode, statement.taxRegistrationNumber)}</p>}</div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading detail-heading"><div><p className="eyebrow">Extrato de terceiro</p><h1>{statement?.name ?? 'Terceiro'}</h1>{statement && <p>{partyNumber(statement.countryCode, statement.taxRegistrationNumber)}</p>}</div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

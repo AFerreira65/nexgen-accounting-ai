@@ -11,7 +11,7 @@ public sealed class DataDictionaryTests
     private static DataDictionaryService Service()
     {
         var options = new DbContextOptionsBuilder<AccountingDbContext>()
-            .UseSqlServer("Server=(localdb)\\unused;Database=unused;Trusted_Connection=True")
+            .UseNpgsql("Host=unused;Database=unused")
             .Options;
         return new DataDictionaryService(new AccountingDbContext(options));
     }

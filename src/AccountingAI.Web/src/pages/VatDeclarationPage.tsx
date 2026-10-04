@@ -46,7 +46,7 @@ export function VatDeclarationPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Declaração periódica de IVA</h1><p>O quadro 06 preenchido a partir da contabilidade, com conferência por conta.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Receipt /></span><h2>Requer ligação ao SQL Server</h2><p>A declaração é preparada a partir dos lançamentos da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Receipt /></span><h2>Requer ligação à base de dados</h2><p>A declaração é preparada a partir dos lançamentos da empresa.</p></section>
     </div>
   }
 
@@ -72,7 +72,7 @@ export function VatDeclarationPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Declaração periódica de IVA</h1><p>O quadro 06 preenchido a partir da contabilidade: cada linha vale pelo seu código de IVA ou pela classificação da conta. Abra um campo para ver as contas que o formam.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Declaração periódica de IVA</h1><p>O quadro 06 preenchido a partir da contabilidade: cada linha vale pelo seu código de IVA ou pela classificação da conta. Abra um campo para ver as contas que o formam.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

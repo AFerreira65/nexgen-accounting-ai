@@ -29,7 +29,7 @@ public sealed class CompanyAiSettings
     /// <summary>Se a síntese mensal é gerada automaticamente (F2-05E).</summary>
     public bool AutoMonthly { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static CompanyAiSettings Create(Guid companyId)
     {

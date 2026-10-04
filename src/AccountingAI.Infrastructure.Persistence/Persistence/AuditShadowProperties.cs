@@ -58,7 +58,7 @@ internal static class AuditShadowProperties
             // coluna-sombra, com o mesmo default das existentes.
             if (builder.Metadata.FindProperty("CreatedAtUtc") is null)
             {
-                builder.Property<DateTimeOffset>("CreatedAtUtc").HasDefaultValueSql("SYSUTCDATETIME()");
+                builder.Property<DateTimeOffset>("CreatedAtUtc").HasDefaultValueSql("now()");
             }
 
             builder.Property<Guid?>("CreatedBy");

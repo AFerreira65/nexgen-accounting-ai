@@ -58,7 +58,7 @@ public sealed class Party
 
     public bool IsActive { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static Party Create(Guid companyId, string? countryCode, string taxRegistrationNumber, string name)
     {

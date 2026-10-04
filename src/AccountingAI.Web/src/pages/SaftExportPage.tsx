@@ -55,7 +55,7 @@ export function SaftExportPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Dados</p><h1>Exportar SAF-T</h1><p>O ficheiro SAF-T (PT) de contabilidade de um exercício.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><FileDown /></span><h2>Requer ligação ao SQL Server</h2><p>O ficheiro é gerado a partir da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><FileDown /></span><h2>Requer ligação à base de dados</h2><p>O ficheiro é gerado a partir da base de dados da empresa.</p></section>
     </div>
   }
 
@@ -64,7 +64,7 @@ export function SaftExportPage() {
   const canExport = report !== null && report.fiscalYear === year && blocking.length === 0
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Dados</p><h1>Exportar SAF-T</h1><p>Gera o ficheiro SAF-T (PT) de contabilidade de um exercício, na versão 1.04_01: plano de contas com saldos e taxonomias, terceiros e movimentos por diário.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Dados</p><h1>Exportar SAF-T</h1><p>Gera o ficheiro SAF-T (PT) de contabilidade de um exercício, na versão 1.04_01: plano de contas com saldos e taxonomias, terceiros e movimentos por diário.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     <p className="mr-hint"><Info size={13} /> A aplicação confere a estrutura do ficheiro, mas não substitui o validador oficial: valide-o no Portal das Finanças antes de o entregar a quem quer que seja.</p>
 

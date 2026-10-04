@@ -48,7 +48,7 @@ export function BudgetPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Gestão</p><h1>Orçamento</h1><p>O previsto por conta de gastos e de rendimentos, comparado com o realizado.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Target /></span><h2>Requer ligação ao SQL Server</h2><p>O orçamento é guardado por empresa e por exercício.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Target /></span><h2>Requer ligação à base de dados</h2><p>O orçamento é guardado por empresa e por exercício.</p></section>
     </div>
   }
 
@@ -123,7 +123,7 @@ export function BudgetPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Gestão</p><h1>Orçamento</h1><p>O valor anual previsto por conta de gastos ou de rendimentos — uma conta ou o grupo que a agrega, e opcionalmente um <Link to="/centros-custo">centro de custo</Link> — repartido por doze meses iguais ou indicado mês a mês, e comparado com o realizado.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Gestão</p><h1>Orçamento</h1><p>O valor anual previsto por conta de gastos ou de rendimentos — uma conta ou o grupo que a agrega, e opcionalmente um <Link to="/centros-custo">centro de custo</Link> — repartido por doze meses iguais ou indicado mês a mês, e comparado com o realizado.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
 

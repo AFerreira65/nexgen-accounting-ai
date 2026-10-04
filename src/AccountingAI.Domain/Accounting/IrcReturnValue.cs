@@ -36,7 +36,7 @@ public sealed class IrcReturnValue
 
     public string? Note { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static IrcReturnValue Create(Guid companyId, int year, string field, decimal amount, string? note)
     {

@@ -78,7 +78,7 @@ public sealed class DataDictionaryService(AccountingDbContext context)
         context.Model.GetEntityTypes().Where(entityType => entityType.GetTableName() is not null);
 
     private static (string Schema, string Table) NameOf(IEntityType entityType) =>
-        (entityType.GetSchema() ?? "dbo", entityType.GetTableName()!);
+        (entityType.GetSchema() ?? "public", entityType.GetTableName()!);
 
     private static string ReferenceOf(IEntityType principal)
     {

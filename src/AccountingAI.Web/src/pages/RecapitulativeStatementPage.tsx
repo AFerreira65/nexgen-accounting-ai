@@ -40,7 +40,7 @@ export function RecapitulativeStatementPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Declaração recapitulativa</h1><p>As transmissões intracomunitárias de bens e as prestações de serviços a outros Estados-Membros, por adquirente.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><ArrowLeftRight /></span><h2>Requer ligação ao SQL Server</h2><p>A declaração é preparada a partir dos lançamentos e dos terceiros da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><ArrowLeftRight /></span><h2>Requer ligação à base de dados</h2><p>A declaração é preparada a partir dos lançamentos e dos terceiros da empresa.</p></section>
     </div>
   }
 
@@ -57,7 +57,7 @@ export function RecapitulativeStatementPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Declaração recapitulativa</h1><p>Os quadros 04 e 05: as operações com natureza de IVA intracomunitária, agregadas por adquirente e tipo, com o valor arredondado ao euro.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Declaração recapitulativa</h1><p>Os quadros 04 e 05: as operações com natureza de IVA intracomunitária, agregadas por adquirente e tipo, com o valor arredondado ao euro.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

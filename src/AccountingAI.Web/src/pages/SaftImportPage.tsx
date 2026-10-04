@@ -76,7 +76,7 @@ function CompanyProposal({ inspection, onCreated }: { inspection: SaftInspection
       <label><span>Norma contabilística</span><select value={accountingStandard} onChange={(event) => setAccountingStandard(event.target.value)}>{Object.entries(ACCOUNTING_STANDARD_NAMES).map(([value, name]) => <option key={value} value={value}>{name}</option>)}</select></label>
       <label><span>Moeda base</span><input value={baseCurrency} onChange={(event) => setBaseCurrency(event.target.value)} maxLength={3} /></label>
       <footer className="settings-actions">
-        {source !== 'database' && <span className="save-status">A criação requer ligação ao SQL Server.</span>}
+        {source !== 'database' && <span className="save-status">A criação requer ligação à base de dados.</span>}
         {status === 'error' && <span className="save-status error">{error}</span>}
         <button className="button button-primary" type="submit" disabled={source !== 'database' || status === 'creating'}>{status === 'creating' ? 'A criar…' : 'Criar empresa e provisionar cadastros'}</button>
       </footer>
@@ -437,7 +437,7 @@ export function SaftImportPage() {
   return <div className="page-stack">
     <header className="page-heading">
       <div><p className="eyebrow">Importação contabilística</p><h1>Importar SAF-T</h1><p>Leitura do cabeçalho, correspondência da empresa pelo NIF, criação e provisionamento quando não existe, e pré-visualização e importação do plano de contas e dos movimentos do ficheiro.</p></div>
-      <span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Ligado ao SQL Server' : 'Modo de demonstração'}</span>
+      <span className={`connection-badge ${source === 'database' ? 'database' : 'demonstration'}`}><Database size={15} />{source === 'database' ? 'Ligado à base de dados' : 'Modo de demonstração'}</span>
     </header>
 
     <section className="panel">

@@ -122,7 +122,7 @@ export function MonthlyEvolutionPage() {
   return <div className="page-stack">
     <header className="page-heading"><div><p className="eyebrow">Gestão</p><h1>Evolução mensal</h1><p>Rendimentos, gastos e resultado mês a mês, com o exercício anterior ao lado, e os saldos de tesouraria, clientes e fornecedores no fim de cada mês.</p></div>
       {onDatabase
-        ? <span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span>
+        ? <span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span>
         : <span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração — dados de exemplo</span>}
     </header>
 

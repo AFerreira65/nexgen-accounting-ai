@@ -61,7 +61,7 @@ export function Modelo22Page() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Modelo 22</h1><p>Do resultado líquido ao imposto a pagar: quadros 07, 09 e 10 da declaração de rendimentos de IRC.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Calculator /></span><h2>Requer ligação ao SQL Server</h2><p>O apuramento parte do resultado líquido da contabilidade da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Calculator /></span><h2>Requer ligação à base de dados</h2><p>O apuramento parte do resultado líquido da contabilidade da empresa.</p></section>
     </div>
   }
 
@@ -105,7 +105,7 @@ export function Modelo22Page() {
   </tr>
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Modelo 22</h1><p>Do resultado líquido ao imposto a pagar: quadros 07, 09 e 10. O resultado líquido vem da contabilidade; os acréscimos, as deduções e os pagamentos são indicados aqui e ficam guardados por exercício.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Modelo 22</h1><p>Do resultado líquido ao imposto a pagar: quadros 07, 09 e 10. O resultado líquido vem da contabilidade; os acréscimos, as deduções e os pagamentos são indicados aqui e ficam guardados por exercício.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
 

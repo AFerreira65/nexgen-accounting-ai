@@ -98,12 +98,12 @@ export function CrossCheckPage() {
   if (source !== 'database') {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Conferência</p><h1>Cruzamento</h1><p>Compras do e-Fatura face à contabilidade, e as vendas lançadas por mês.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><ArrowLeftRight /></span><h2>Requer ligação ao SQL Server</h2><p>O cruzamento lê as faturas do e-Fatura e os lançamentos da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><ArrowLeftRight /></span><h2>Requer ligação à base de dados</h2><p>O cruzamento lê as faturas do e-Fatura e os lançamentos da base de dados da empresa.</p></section>
     </div>
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Conferência</p><h1>Cruzamento</h1><p>As compras conhecidas pelo e-Fatura face aos lançamentos da contabilidade, e as vendas lançadas por mês. É um apoio de conferência — não altera lançamentos.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Conferência</p><h1>Cruzamento</h1><p>As compras conhecidas pelo e-Fatura face aos lançamentos da contabilidade, e as vendas lançadas por mês. É um apoio de conferência — não altera lançamentos.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     <section className="panel">
       <div className="panel-heading"><div><h2>Período</h2><p>Um conjunto de meses do exercício.</p></div>{report && <button className="button button-secondary" type="button" onClick={exportCsv}><Download size={15} /> Exportar CSV</button>}</div>

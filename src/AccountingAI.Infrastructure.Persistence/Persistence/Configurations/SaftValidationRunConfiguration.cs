@@ -13,7 +13,7 @@ internal sealed class SaftValidationRunConfiguration : IEntityTypeConfiguration<
         builder.Property(item => item.FileName).HasMaxLength(260).IsRequired();
         builder.Property(item => item.AuditFileVersion).HasMaxLength(16);
         builder.Property(item => item.IssuesJson).IsRequired();
-        builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
+        builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("now()");
         builder.HasIndex(item => new { item.CompanyId, item.CreatedAtUtc });
     }
 }

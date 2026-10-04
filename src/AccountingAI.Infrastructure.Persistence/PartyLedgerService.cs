@@ -83,6 +83,7 @@ public sealed class PartyLedgerService(AccountingDbContext context)
         }
 
         var term = search?.Trim();
+        var pattern = string.IsNullOrEmpty(term) ? null : TextSearch.ContainsPattern(term);
         var query =
             from total in partyLines
                 .GroupBy(line => line.PartyId)
@@ -93,7 +94,7 @@ public sealed class PartyLedgerService(AccountingDbContext context)
                     Credit = lines.Sum(line => line.Credit),
                 })
             join party in context.Parties.AsNoTracking() on total.PartyId equals party.Id
-            where string.IsNullOrEmpty(term) || party.Name.Contains(term!) || party.TaxRegistrationNumber.Contains(term!)
+            where pattern == null || EF.Functions.ILike(party.Name, pattern) || EF.Functions.ILike(party.TaxRegistrationNumber, pattern)
             select new { party.Id, party.CountryCode, party.TaxRegistrationNumber, party.Name, total.Debit, total.Credit };
 
         var count = await query.CountAsync(cancellationToken).ConfigureAwait(false);

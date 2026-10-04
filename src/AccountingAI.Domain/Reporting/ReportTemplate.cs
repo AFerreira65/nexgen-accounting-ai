@@ -47,7 +47,7 @@ public sealed class ReportTemplate
 
     public ReportOrientation Orientation { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static ReportTemplate Create(Guid companyId, string reportKey)
     {

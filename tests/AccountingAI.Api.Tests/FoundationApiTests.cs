@@ -48,11 +48,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task WorkContextSettingsRejectAnUnknownTextSize()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -80,11 +75,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task AccountingTestDataIsReadFromTheSelectedCompanyOnly()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -203,11 +193,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task MovementsCanBeRequestedAsAServerSidePage()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -267,11 +252,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task JournalMovementCountsAreScopedToTheCompany()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -298,11 +278,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task ASingleMovementCanBeReadByReference()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -327,11 +302,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task MovementsSummaryAggregatesTheWorkQueueWithoutTheFullList()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -364,11 +334,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task TaxonomyReviewIsScopedToTheActiveCompanyAndClassifiesAccounts()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -406,11 +371,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task TrialBalanceAndAccountLedgerAreScopedAndExcludeVoided()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -537,11 +497,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task MovementPostingRejectsUnbalancedAndUnknownReferences()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -603,11 +558,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task OrganizationAdminRejectsInvalidCompanyAndUserChanges()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -685,11 +635,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task JournalAndDocumentTypeMaintenanceRejectsInvalidChanges()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -736,11 +681,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task SaftHeaderInspectionMatchesAnExistingCompanyByTaxNumber()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -786,11 +726,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task SaftSchemaValidationEndpointReportsConformance()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -828,11 +763,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task SaftValidationEndpointRunsTheAnalyticalRules()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -857,11 +787,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task EFaturaPurchasesCanBePreviewedAndListed()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -908,11 +833,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task SaftValidationHistoryIsScopedToTheCompany()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -938,11 +858,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task CrossCheckReportIsScopedToTheCompanyAndNeedsAClosedPeriod()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -977,11 +892,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task SaftCompanyCreationRejectsDuplicatesAndUnknownUsers()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1020,11 +930,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task ReportTemplateReturnsADefaultAndAcceptsAnUpdate()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1067,11 +972,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task AnalysisRunReturnsGroupedRowsAndTotals()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1116,11 +1016,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task AnalysisCatalogAndListAreAvailable()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1153,11 +1048,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task ManagementReportCatalogAndDossierAreAvailable()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1200,11 +1090,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task ManagementReportSettingsGuardGenerationAndHistoryIsReadable()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1280,11 +1165,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task AtCertificateStatusIsReportedWithoutSecrets()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1316,11 +1196,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task VatReturnIsComputedForTheClosedPeriod()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1372,11 +1247,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task VatClassificationListsRelevantAccounts()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1409,11 +1279,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task PartiesListIsPagedAndValidatesInput()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1449,11 +1314,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task Modelo22IsComputedFromTheLedger()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1507,11 +1367,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task FixedAssetsAreListedAndScheduled()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1538,11 +1393,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task VatDeclarationFillsTheOfficialFields()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1583,11 +1433,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task FinancialStatementsAreBuiltFromTheTaxonomies()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1659,11 +1504,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task SaftExportReportsAndRefusesAnInvalidCompany()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1692,11 +1532,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task CostCentersListReportAndValidateInput()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1727,11 +1562,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task FiscalTablesReturnTheYearWithItsSources()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1753,11 +1583,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task PartyLedgerReturnsBalancesAndRejectsUnknownParties()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1787,11 +1612,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task EntryTemplatesListAndValidateInput()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1828,11 +1648,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task VatCodesListAndValidateInput()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1870,11 +1685,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task MovementWithUnknownPartyIsRejectedBeforeWriting()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1909,11 +1719,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task PartiesImportPreviewsAnalyseWithoutWriting()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1956,11 +1761,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task VatSummaryReturnsRowsGroupedByNatureRateAndRegion()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -1994,11 +1794,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task IrcEstimateComputesFromNetIncomePlusAdjustments()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -2039,11 +1834,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task IrcEstimateSavedAndHistoryAreExposedReadOnly()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -2083,11 +1873,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task DataDictionaryListsTablesAndDetailsColumns()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -2121,11 +1906,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task RecordInfoReportsAuditStampsAndGuardsTheTable()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -2168,11 +1948,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task SaftSalesInvoicesSummaryReadsTheFaturacaoBlock()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -2224,11 +1999,6 @@ public sealed class FoundationApiTests
     [TestMethod]
     public async Task SaftAccountsPreviewClassifiesTheFileAccountsAgainstTheCompanyChart()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new FoundationApiFactory(
             applyMigrations: true,
             seedDemoData: true,
@@ -2384,8 +2154,7 @@ public sealed class FoundationApiTests
                 {
                     settings["ConnectionStrings:Accounting"] =
                         connectionString ??
-                        "Server=(localdb)\\MSSQLLocalDB;Database=AccountingAI_ApiTests;" +
-                        "Integrated Security=true;TrustServerCertificate=true";
+                        "Host=localhost;Port=5432;Database=accounting_test;Username=accounting;Password=accounting";
                 }
 
                 configuration.AddInMemoryCollection(settings);

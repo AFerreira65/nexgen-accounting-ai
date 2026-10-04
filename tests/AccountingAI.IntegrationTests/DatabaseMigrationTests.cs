@@ -5,40 +5,22 @@ using AccountingAI.Domain.Organizations;
 using AccountingAI.Domain.Saft;
 using AccountingAI.Infrastructure.Persistence;
 using AccountingAI.Infrastructure.Persistence.Persistence;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace AccountingAI.IntegrationTests;
 
 [TestClass]
-public sealed class SqlServerMigrationTests
+public sealed class DatabaseMigrationTests
 {
     [TestMethod]
-    public async Task MigrationsAndAccountingSeedCanBeAppliedTwiceToSqlServer()
+    public async Task MigrationsAndAccountingSeedCanBeAppliedTwiceToPostgreSql()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
-        var databaseName = $"AccountingAI_Foundation_{Guid.NewGuid():N}";
-        var configuredServer = Environment.GetEnvironmentVariable("ACCOUNTINGAI_TEST_SQL_CONNECTION");
-        var connectionBuilder = string.IsNullOrWhiteSpace(configuredServer)
-            ? new SqlConnectionStringBuilder
-            {
-                DataSource = "(localdb)\\MSSQLLocalDB",
-                IntegratedSecurity = true,
-                TrustServerCertificate = true,
-                MultipleActiveResultSets = true
-            }
-            : new SqlConnectionStringBuilder(configuredServer);
-        connectionBuilder.InitialCatalog = databaseName;
-        var connectionString = connectionBuilder.ConnectionString;
+        var connectionString = TestDatabase.ConnectionString("Foundation");
 
         var options = new DbContextOptionsBuilder<AccountingDbContext>()
-            .UseSqlServer(connectionString, sqlOptions =>
-                sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "infrastructure"))
+            .UseNpgsql(connectionString, TestDatabase.Configure)
             .Options;
 
         await using var context = new AccountingDbContext(options);
@@ -52,123 +34,9 @@ public sealed class SqlServerMigrationTests
                 .GetAppliedMigrationsAsync()
                 .ConfigureAwait(false);
 
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "202608290001_Foundation");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "202608290002_LocalOrganization");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "202608300001_MultiCompanyUserSettings");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260830115718_AccountingLedgerTestData");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260830122003_AccountingStandardsAndProvisioning");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260830182151_AccountingTaxonomies");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260830234235_JournalEntryDocumentType");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260831215048_DocumentNumberSeries");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260903124046_DocumentNumberSeriesWidth");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260903131441_CompanyPostingLockDate");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260903134406_JournalEntryNotes");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260903151623_UserCompanySettingsTextSize");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260903154133_ShortAccountCodesAreIntegration");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260903161831_AssociateDemoUserWithMemberlessCompanies");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260904102947_JournalEntrySource");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260908092224_SaftValidationRun");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260908120313_EFaturaPurchase");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260908145523_AuditColumns");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260908154347_SavedAnalysis");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260908161754_ReportTemplate");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260909180838_ManagementReports");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260909185631_VatReturnFiling");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260910200132_CompanyAtCredentials");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260910202125_AccountVatClassification");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260911151602_IrcEstimateFiling");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260911180622_AtSettingsPerCompany");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20260917171335_UserAccountPasswordHash");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261003144942_Parties");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261003174527_JournalEntryLineParty");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261003175412_JournalEntryDocumentDate");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261003180058_VatCodes");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261003180432_JournalEntryLineVatCode");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261003183508_EntryTemplates");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261003202303_CostCenters");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261003205709_CompanyAndPartyAddress");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261004070149_FixedAssets");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261004073829_IrcReturnValues");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261004080629_FiscalDossierItems");
-            CollectionAssert.Contains(
-                appliedMigrations.ToArray(),
-                "20261004084055_BudgetLines");
+            CollectionAssert.AreEqual(
+                new[] { "20261004195730_PostgreSqlBaseline" },
+                appliedMigrations.ToArray());
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");
@@ -249,14 +117,12 @@ public sealed class SqlServerMigrationTests
             context.ChangeTracker.Clear();
 
             var services = new ServiceCollection()
-                .AddDbContext<AccountingDbContext>(builder => builder.UseSqlServer(
+                .AddDbContext<AccountingDbContext>(builder => builder.UseNpgsql(
                     connectionString,
-                    sqlOptions =>
+                    npgsqlOptions =>
                     {
-                        sqlOptions.MigrationsHistoryTable(
-                            "__EFMigrationsHistory",
-                            "infrastructure");
-                        sqlOptions.EnableRetryOnFailure();
+                        TestDatabase.Configure(npgsqlOptions);
+                        npgsqlOptions.EnableRetryOnFailure();
                     }))
                 .AddScoped<CompanyAccountingProvisioner>()
                 .AddScoped<AccountingMasterDataService>()
@@ -1435,12 +1301,12 @@ public sealed class SqlServerMigrationTests
             await context.Database.OpenConnectionAsync().ConfigureAwait(false);
             await using var command = context.Database.GetDbConnection().CreateCommand();
             command.CommandText =
-                "SELECT COUNT(*) FROM sys.tables t " +
-                "INNER JOIN sys.schemas s ON s.schema_id = t.schema_id " +
-                "WHERE (s.name = 'infrastructure' AND t.name = 'FoundationState') " +
-                "OR (s.name = 'organization' AND t.name IN ('AccountingFirms', 'Companies')) " +
-                "OR (s.name = 'identity' AND t.name IN ('UserAccounts', 'CompanyUsers', 'UserCompanySettings')) " +
-                "OR (s.name = 'accounting' AND t.name IN ('Accounts', 'Journals', 'AccountingDocumentTypes', 'JournalEntries', 'JournalEntryLines'));";
+                "SELECT COUNT(*) FROM information_schema.tables t " +
+                "WHERE t.table_type = 'BASE TABLE' AND (" +
+                "(t.table_schema = 'infrastructure' AND t.table_name = 'FoundationState') " +
+                "OR (t.table_schema = 'organization' AND t.table_name IN ('AccountingFirms', 'Companies')) " +
+                "OR (t.table_schema = 'identity' AND t.table_name IN ('UserAccounts', 'CompanyUsers', 'UserCompanySettings')) " +
+                "OR (t.table_schema = 'accounting' AND t.table_name IN ('Accounts', 'Journals', 'AccountingDocumentTypes', 'JournalEntries', 'JournalEntryLines')));";
 
             var tableCount = Convert.ToInt32(
                 await command.ExecuteScalarAsync().ConfigureAwait(false),
@@ -1448,26 +1314,18 @@ public sealed class SqlServerMigrationTests
 
             Assert.AreEqual(11, tableCount);
         }
-        catch (SqlException exception) when (IsLocalDbUnavailable(exception))
-        {
-            Assert.Inconclusive($"SQL Server LocalDB is unavailable: {exception.Message}");
-        }
         finally
         {
             try
             {
                 await context.Database.CloseConnectionAsync().ConfigureAwait(false);
-                await context.Database.EnsureDeletedAsync().ConfigureAwait(false);
+                await TestDatabase.DropAsync(context).ConfigureAwait(false);
             }
-            catch (SqlException exception) when (IsLocalDbUnavailable(exception))
+            catch (NpgsqlException)
             {
             }
         }
     }
-
-    private static bool IsLocalDbUnavailable(SqlException exception) =>
-        exception.Message.Contains("Local Database Runtime", StringComparison.OrdinalIgnoreCase) ||
-        exception.Message.Contains("automatic instance", StringComparison.OrdinalIgnoreCase);
 
     private sealed class FixedAccountsReader(IReadOnlyList<SaftAccount> accounts) : ISaftAccountsReader
     {

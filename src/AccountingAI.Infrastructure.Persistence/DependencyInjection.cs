@@ -8,7 +8,7 @@ namespace AccountingAI.Infrastructure.Persistence;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddAccountingSqlServer(
+    public static IServiceCollection AddAccountingPersistence(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -28,18 +28,17 @@ public static class DependencyInjection
         services.AddDbContext<AccountingDbContext>((serviceProvider, options) =>
             options
                 .AddInterceptors(serviceProvider.GetRequiredService<AuditStampingInterceptor>())
-                .UseSqlServer(
+                .UseNpgsql(
                 connectionString,
-                sqlOptions =>
+                npgsqlOptions =>
                 {
-                    sqlOptions.EnableRetryOnFailure();
-                    sqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "infrastructure");
-                    // O valor por omissão do SqlClient (30s) chega para uma empresa normal, mas
-                    // uma leitura ampla (ex.: lista de movimentos) numa empresa com um histórico
-                    // muito grande — importado de um SAF-T com anos de linhas por liquidar, por
-                    // exemplo — pode ainda não ter as páginas em cache na primeira consulta a
-                    // seguir à importação, e ultrapassar 30s só por causa disso.
-                    sqlOptions.CommandTimeout(120);
+                    npgsqlOptions.EnableRetryOnFailure();
+                    npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "infrastructure");
+                    // O valor por omissão (30s) chega para uma empresa normal, mas uma leitura
+                    // ampla (ex.: lista de movimentos) numa empresa com um histórico muito grande
+                    // — importado de um SAF-T com anos de linhas por liquidar, por exemplo — pode
+                    // ultrapassar 30s na primeira consulta a seguir à importação.
+                    npgsqlOptions.CommandTimeout(120);
                 }));
 
         services.AddScoped<CompanyAccountingProvisioner>();
@@ -99,7 +98,7 @@ public static class DependencyInjection
         services
             .AddHealthChecks()
             .AddDbContextCheck<AccountingDbContext>(
-                name: "sql-server",
+                name: "database",
                 tags: ["ready"]);
 
         return services;

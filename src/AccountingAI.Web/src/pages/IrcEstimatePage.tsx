@@ -131,12 +131,12 @@ export function IrcEstimatePage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Contabilidade</p><h1>Estimativa de IRC</h1><p>A estimativa do IRC de um período a partir do resultado contabilístico.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Calculator /></span><h2>Requer ligação ao SQL Server</h2><p>A estimativa de IRC lê o resultado do período da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Calculator /></span><h2>Requer ligação à base de dados</h2><p>A estimativa de IRC lê o resultado do período da base de dados da empresa.</p></section>
     </div>
   }
 
   return <div className="page-stack report-page">
-    <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Estimativa de IRC</h1><p>Resultado líquido do período (classes 6/7) mais as correções fiscais que introduzir, vezes a taxa que indicar. É uma conta rápida: o apuramento pelos campos da declaração, com a taxa das PME, as derramas, os prejuízos e as tributações autónomas, está no <Link to="/modelo-22">Modelo 22</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Estimativa de IRC</h1><p>Resultado líquido do período (classes 6/7) mais as correções fiscais que introduzir, vezes a taxa que indicar. É uma conta rápida: o apuramento pelos campos da declaração, com a taxa das PME, as derramas, os prejuízos e as tributações autónomas, está no <Link to="/modelo-22">Modelo 22</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
     <ReportChrome reportKey="estimativa-irc" title="Estimativa de IRC" from={fromDate} to={toDate} />
 
     <div className="filterbar no-print">

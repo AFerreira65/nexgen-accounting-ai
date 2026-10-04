@@ -169,12 +169,12 @@ export function AnalysesPage() {
   }
 
   return <div className="page-stack analyses">
-    <header className="page-heading no-print"><div><p className="eyebrow">Mapas</p><h1>Análises</h1><p>Componha um mapa sobre os movimentos: colunas, filtros, agrupamentos e totais. Semelhante às Análises Avançadas do PHC.</p></div><span className={`connection-badge ${onDatabase ? 'database' : 'demonstration'}`}><Database size={15} /> {onDatabase ? 'Ligado ao SQL Server' : 'Modo de demonstração'}</span></header>
+    <header className="page-heading no-print"><div><p className="eyebrow">Mapas</p><h1>Análises</h1><p>Componha um mapa sobre os movimentos: colunas, filtros, agrupamentos e totais. Semelhante às Análises Avançadas do PHC.</p></div><span className={`connection-badge ${onDatabase ? 'database' : 'demonstration'}`}><Database size={15} /> {onDatabase ? 'Ligado à base de dados' : 'Modo de demonstração'}</span></header>
 
     <div className="analyses-layout no-print">
       <section className="panel">
         <div className="panel-heading"><div><h2>Guardadas</h2></div><button className="button button-secondary" type="button" onClick={newAnalysis}><Plus size={14} /> Nova</button></div>
-        {!onDatabase && <p className="save-status"><CircleAlert size={15} /> Guardar análises requer ligação ao SQL Server; pode compô-las e corrê-las à mesma.</p>}
+        {!onDatabase && <p className="save-status"><CircleAlert size={15} /> Guardar análises requer ligação à base de dados; pode compô-las e corrê-las à mesma.</p>}
         {saved.length === 0 ? <p className="empty-state">Sem análises guardadas.</p> : <ul className="analyses-saved">
           {saved.map((analysis) => <li key={analysis.id} className={analysis.id === loadedId ? 'active' : undefined}>
             <button type="button" onClick={() => loadSaved(analysis)}><strong>{analysis.name}</strong>{analysis.description ? <small>{analysis.description}</small> : null}</button>

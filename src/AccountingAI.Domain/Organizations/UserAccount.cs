@@ -48,7 +48,7 @@ public sealed class UserAccount
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public ICollection<CompanyUser> CompanyMemberships { get; } = [];
 

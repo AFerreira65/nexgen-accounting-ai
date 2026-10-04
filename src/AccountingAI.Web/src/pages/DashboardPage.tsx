@@ -143,7 +143,7 @@ export function DashboardPage() {
       </div>
 
       <section className="metric-grid" aria-label="Indicadores do período">
-        <article className="metric-card"><span className="metric-icon teal"><Scale /></span><div><small>Movimentos</small><strong>{activeCount}</strong><span>{accountingSource === 'database' ? 'Lidos do SQL Server' : 'Fallback visual local'}</span></div></article>
+        <article className="metric-card"><span className="metric-icon teal"><Scale /></span><div><small>Movimentos</small><strong>{activeCount}</strong><span>{accountingSource === 'database' ? 'Lidos da base de dados' : 'Fallback visual local'}</span></div></article>
         <article className="metric-card"><span className={`metric-icon ${netResult >= 0 ? 'blue' : 'rose'}`}><TrendingUp /></span><div><small>Resultado</small><strong>{euro.format(netResult)}</strong><span>{asOf ?? (netResult >= 0 ? 'Lucro acumulado' : 'Prejuízo acumulado')}</span></div></article>
         <article className="metric-card"><span className="metric-icon blue"><Wallet /></span><div><small>Total do ativo</small><strong>{euro.format(totalAssets)}</strong><span>{asOf ?? 'Classes 1, 3, 4 e 2 devedora'}</span></div></article>
         <article className="metric-card"><span className="metric-icon amber"><Clock3 /></span><div><small>Por conferir</small><strong>{pendingCount}</strong><span>Movimentos pendentes de conferência</span></div></article>

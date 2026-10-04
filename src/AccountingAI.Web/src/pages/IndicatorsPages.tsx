@@ -38,7 +38,7 @@ export function OperatingMapPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Gestão</p><h1>Mapa de exploração</h1><p>A demonstração de resultados por naturezas, mês a mês.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><TrendingUp /></span><h2>Requer ligação ao SQL Server</h2><p>O mapa de exploração é calculado na base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><TrendingUp /></span><h2>Requer ligação à base de dados</h2><p>O mapa de exploração é calculado na base de dados da empresa.</p></section>
     </div>
   }
 
@@ -59,7 +59,7 @@ export function OperatingMapPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Gestão</p><h1>Mapa de exploração</h1><p>A demonstração de resultados por naturezas, mês a mês, sem o apuramento. Rendimentos positivos, gastos negativos.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Gestão</p><h1>Mapa de exploração</h1><p>A demonstração de resultados por naturezas, mês a mês, sem o apuramento. Rendimentos positivos, gastos negativos.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 
@@ -159,7 +159,7 @@ export function RatiosPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Gestão</p><h1>Rácios</h1><p>Liquidez, estrutura financeira, rendibilidade e prazos médios.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Percent /></span><h2>Requer ligação ao SQL Server</h2><p>Os rácios são calculados sobre as demonstrações financeiras da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Percent /></span><h2>Requer ligação à base de dados</h2><p>Os rácios são calculados sobre as demonstrações financeiras da empresa.</p></section>
     </div>
   }
 
@@ -170,7 +170,7 @@ export function RatiosPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Gestão</p><h1>Rácios</h1><p>Calculados sobre o balanço à data final e a demonstração de resultados do período, com o período homólogo ao lado. Cada rácio mostra a fórmula usada.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Gestão</p><h1>Rácios</h1><p>Calculados sobre o balanço à data final e a demonstração de resultados do período, com o período homólogo ao lado. Cada rácio mostra a fórmula usada.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

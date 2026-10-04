@@ -396,7 +396,7 @@ public sealed class JournalPostingService(AccountingDbContext context)
     /// </summary>
     private async Task<string> NextReferenceAsync(Guid companyId, string prefix, int year, CancellationToken cancellationToken)
     {
-        await SqlServerApplicationLock.AcquireAsync(
+        await DatabaseApplicationLock.AcquireAsync(
             context,
             $"AccountingAI:NumberSeries:{companyId:N}:{prefix}:{year}",
             cancellationToken).ConfigureAwait(false);

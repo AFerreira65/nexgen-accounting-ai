@@ -70,7 +70,7 @@ public sealed class DocumentNumberSeries
     /// <summary>Largura de preenchimento do número na referência (`{SERIE}-{ANO}-{N}`).</summary>
     public int Width { get; private set; } = DefaultWidth;
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     /// <summary>Formata a referência de um número desta série e exercício.</summary>
     public string Format(int number) => $"{Series}-{Year}-{number.ToString(System.Globalization.CultureInfo.InvariantCulture).PadLeft(Width, '0')}";

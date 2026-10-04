@@ -27,7 +27,7 @@ export function SettingsPage() {
     <div className="page-stack">
       <header className="page-heading">
         <div><p className="eyebrow">Empresa e utilizador</p><h1>Preferências de trabalho</h1><p>Configuração exclusiva de {activeCompany.legalName} para o utilizador atual.</p></div>
-        <span className={`connection-badge ${source}`}><Database size={15} />{source === 'database' ? 'Ligado ao SQL Server' : 'Modo de demonstração'}</span>
+        <span className={`connection-badge ${source}`}><Database size={15} />{source === 'database' ? 'Ligado à base de dados' : 'Modo de demonstração'}</span>
       </header>
 
       <form className="settings-layout" onSubmit={submit}>

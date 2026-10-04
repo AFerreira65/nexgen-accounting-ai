@@ -37,7 +37,7 @@ public sealed class SavedAnalysis
     /// <summary>A <c>AnalysisDefinition</c> serializada em JSON.</summary>
     public string DefinitionJson { get; private set; } = "{}";
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static SavedAnalysis Create(Guid companyId, string name, string? description, string definitionJson)
     {

@@ -47,7 +47,7 @@ public sealed class UserCompanySettings
 
     public DateTimeOffset UpdatedAtUtc { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public CompanyUser CompanyUser { get; private set; } = null!;
 

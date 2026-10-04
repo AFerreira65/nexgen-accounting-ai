@@ -66,7 +66,7 @@ public sealed class ManagementReport
 
     public int OutputTokens { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static ManagementReport Create(
         Guid companyId,

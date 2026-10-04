@@ -136,7 +136,7 @@ export function YearOpeningPage() {
     </div>
 
     {message && <div className={`series-message ${status === 'error' ? 'error' : 'success'}`}>{message}</div>}
-    {source !== 'database' && <div className="series-message">Pré-visualização de demonstração. O registo da abertura requer ligação ao SQL Server.</div>}
+    {source !== 'database' && <div className="series-message">Pré-visualização de demonstração. O registo da abertura requer ligação à base de dados.</div>}
 
     <section className="panel">
       <div className="panel-heading"><div><h2>Lançamento de abertura</h2><p>Uma linha por conta de balanço com saldo, e o resultado do exercício anterior em 56.</p></div></div>

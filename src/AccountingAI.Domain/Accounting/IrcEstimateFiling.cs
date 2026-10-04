@@ -42,7 +42,7 @@ public sealed class IrcEstimateFiling
     /// <summary>O <c>IrcEstimate</c> calculado ao guardar, serializado em JSON.</summary>
     public string SnapshotJson { get; private set; } = "{}";
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static IrcEstimateFiling Create(
         Guid companyId, DateOnly periodFrom, DateOnly periodTo,

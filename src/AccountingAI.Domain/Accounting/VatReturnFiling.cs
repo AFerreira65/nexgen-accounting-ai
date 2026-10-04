@@ -38,7 +38,7 @@ public sealed class VatReturnFiling
     /// <summary>O <c>VatReturn</c> calculado ao guardar, serializado em JSON.</summary>
     public string SnapshotJson { get; private set; } = "{}";
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static VatReturnFiling Create(
         Guid companyId, DateOnly periodFrom, DateOnly periodTo, decimal priorPeriodCredit, string snapshotJson)

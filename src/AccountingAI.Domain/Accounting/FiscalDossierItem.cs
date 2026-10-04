@@ -47,7 +47,7 @@ public sealed class FiscalDossierItem
 
     public string? Note { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static FiscalDossierItem Create(Guid companyId, int year, int element, FiscalDossierStatus status, string? note)
     {

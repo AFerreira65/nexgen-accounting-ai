@@ -73,12 +73,12 @@ export function CostCentersPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Centros de custo</h1><p>A dimensão analítica que se indica na linha do lançamento.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><FolderTree /></span><h2>Requer ligação ao SQL Server</h2><p>Os centros de custo são lidos da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><FolderTree /></span><h2>Requer ligação à base de dados</h2><p>Os centros de custo são lidos da base de dados da empresa.</p></section>
     </div>
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Centros de custo</h1><p>Atividades, obras ou departamentos a que se atribuem gastos e rendimentos na linha do lançamento, sem desdobrar o plano de contas. O resultado por centro está no <Link to="/mapa-analitico">Mapa analítico</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Centros de custo</h1><p>Atividades, obras ou departamentos a que se atribuem gastos e rendimentos na linha do lançamento, sem desdobrar o plano de contas. O resultado por centro está no <Link to="/mapa-analitico">Mapa analítico</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 
@@ -130,7 +130,7 @@ export function AnalyticReportPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Mapa analítico</h1><p>Gastos, rendimentos e resultado por centro de custo.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><FolderTree /></span><h2>Requer ligação ao SQL Server</h2><p>O mapa analítico é calculado na base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><FolderTree /></span><h2>Requer ligação à base de dados</h2><p>O mapa analítico é calculado na base de dados da empresa.</p></section>
     </div>
   }
 
@@ -151,7 +151,7 @@ export function AnalyticReportPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Mapa analítico</h1><p>Os gastos (classe 6) e os rendimentos (classe 7) do período por centro de custo. As linhas sem centro aparecem no fim, para o total bater com a demonstração de resultados.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Mapa analítico</h1><p>Os gastos (classe 6) e os rendimentos (classe 7) do período por centro de custo. As linhas sem centro aparecem no fim, para o total bater com a demonstração de resultados.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

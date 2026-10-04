@@ -14,7 +14,7 @@ internal sealed class BudgetLineConfiguration : IEntityTypeConfiguration<BudgetL
         builder.Property(item => item.AccountCode).HasMaxLength(BudgetLine.AccountCodeMaxLength).IsRequired();
         builder.Property(item => item.Amount).HasPrecision(18, 2);
         builder.Property(item => item.RowVersion).IsRowVersion();
-        builder.HasIndex(item => new { item.CompanyId, item.Year, item.AccountCode, item.CostCenterId, item.Month }).IsUnique().HasFilter(null);
+        builder.HasIndex(item => new { item.CompanyId, item.Year, item.AccountCode, item.CostCenterId, item.Month }).IsUnique().AreNullsDistinct(false);
         builder.HasOne<Company>()
             .WithMany()
             .HasForeignKey(item => item.CompanyId)

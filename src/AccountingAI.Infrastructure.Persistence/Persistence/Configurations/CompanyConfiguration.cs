@@ -16,7 +16,7 @@ internal sealed class CompanyConfiguration : IEntityTypeConfiguration<Company>
         builder.Property(item => item.AccountingStandard).HasConversion<int>();
         builder.Property(item => item.AccountingSetupVersion).HasMaxLength(64);
         builder.Property(item => item.BaseCurrency).HasMaxLength(3).IsFixedLength().IsRequired();
-        builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
+        builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("now()");
         builder.Property(item => item.AddressDetail).HasMaxLength(210);
         builder.Property(item => item.City).HasMaxLength(50);
         builder.Property(item => item.PostalCode).HasMaxLength(20);

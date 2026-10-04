@@ -14,7 +14,7 @@ internal sealed class UserAccountConfiguration : IEntityTypeConfiguration<UserAc
         builder.Property(item => item.Email).HasMaxLength(254).IsRequired();
         builder.Property(item => item.NormalizedEmail).HasMaxLength(254).IsRequired();
         builder.Property(item => item.PasswordHash).HasMaxLength(500);
-        builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
+        builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("now()");
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.HasIndex(item => item.NormalizedEmail).IsUnique();
     }

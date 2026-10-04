@@ -88,7 +88,7 @@ public sealed class JournalEntry
 
     public decimal TotalAmount { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public AccountingJournal Journal { get; private set; } = null!;
 

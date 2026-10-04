@@ -3,7 +3,6 @@ using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Infrastructure.Persistence;
 using AccountingAI.Infrastructure.Persistence.Persistence;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingAI.IntegrationTests;
@@ -14,27 +13,10 @@ public sealed class AnalysisRunnerTests
     [TestMethod]
     public async Task RunsFiltersGroupsAndTotalsForTheMovementsSource()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
-        var databaseName = $"AccountingAI_Runner_{Guid.NewGuid():N}";
-        var configured = Environment.GetEnvironmentVariable("ACCOUNTINGAI_TEST_SQL_CONNECTION");
-        var builder = string.IsNullOrWhiteSpace(configured)
-            ? new SqlConnectionStringBuilder
-            {
-                DataSource = "(localdb)\\MSSQLLocalDB",
-                IntegratedSecurity = true,
-                TrustServerCertificate = true,
-                MultipleActiveResultSets = true,
-            }
-            : new SqlConnectionStringBuilder(configured);
-        builder.InitialCatalog = databaseName;
-        var connectionString = builder.ConnectionString;
+        var connectionString = TestDatabase.ConnectionString("Runner");
 
         var options = new DbContextOptionsBuilder<AccountingDbContext>()
-            .UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory", "infrastructure"))
+            .UseNpgsql(connectionString, TestDatabase.Configure)
             .Options;
 
         await using var context = new AccountingDbContext(options);
@@ -137,7 +119,7 @@ public sealed class AnalysisRunnerTests
         }
         finally
         {
-            await context.Database.EnsureDeletedAsync().ConfigureAwait(false);
+            await TestDatabase.DropAsync(context).ConfigureAwait(false);
         }
     }
 

@@ -14,7 +14,7 @@ namespace AccountingAI.Api.Tests;
 
 /// <summary>
 /// Exercita o fluxo real de sessão (login por cookie, <c>/auth/me</c>,
-/// logout) numa base LocalDB descartável — ao contrário de
+/// logout) numa base PostgreSQL descartável — ao contrário de
 /// <see cref="FoundationApiTests"/>, esta fábrica NÃO substitui a
 /// autenticação por um esquema de teste, porque é precisamente isso que se
 /// quer testar aqui (ver ADR-0011).
@@ -25,11 +25,6 @@ public sealed class AuthApiTests
     [TestMethod]
     public async Task MeIsUnauthorizedWithoutASession()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new AuthApiFactory();
         using var client = factory.CreateClient();
 
@@ -41,11 +36,6 @@ public sealed class AuthApiTests
     [TestMethod]
     public async Task LoginWithAWrongPasswordIsRejectedAndDoesNotAuthenticate()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new AuthApiFactory();
         var userId = await factory.SeedUserAsync("carla@test.invalid", "Carla Autenticação", "S3nha-Forte!").ConfigureAwait(false);
         using var client = factory.CreateClient();
@@ -64,11 +54,6 @@ public sealed class AuthApiTests
     [TestMethod]
     public async Task LoginThenMeThenLogoutRoundTripsAndRouteUserIdIsEnforced()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
         await using var factory = new AuthApiFactory();
         var userId = await factory.SeedUserAsync("duarte@test.invalid", "Duarte Autenticação", "S3nha-Forte!").ConfigureAwait(false);
         using var client = factory.CreateClient();
@@ -106,8 +91,7 @@ public sealed class AuthApiTests
     private sealed class AuthApiFactory : WebApplicationFactory<Program>
     {
         private readonly string _connectionString =
-            "Server=(localdb)\\MSSQLLocalDB;Database=AccountingAI_AuthApiTests_" + Guid.NewGuid().ToString("N") + ";" +
-            "Integrated Security=true;TrustServerCertificate=true";
+            "Host=localhost;Port=5432;Username=accounting;Password=accounting;Database=acc_authapi_" + Guid.NewGuid().ToString("N");
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {

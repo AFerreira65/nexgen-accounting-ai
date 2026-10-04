@@ -54,7 +54,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
 
 builder.Services.AddProblemDetails();
-builder.Services.AddAccountingSqlServer(builder.Configuration);
+builder.Services.AddAccountingPersistence(builder.Configuration);
 builder.Services.AddSaftFileReading();
 builder.Services.AddAccountingAi(builder.Configuration);
 builder.Services.AddAccountingAt(builder.Configuration);
@@ -505,12 +505,12 @@ if (applicationEndpointsAvailable)
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim();
+            var pattern = TextSearch.ContainsPattern(search.Trim());
             query = query.Where(item =>
-                item.Reference.Contains(term) ||
-                item.DocumentReference.Contains(term) ||
-                item.Description.Contains(term) ||
-                (item.Notes != null && item.Notes.Contains(term)));
+                EF.Functions.ILike(item.Reference, pattern) ||
+                EF.Functions.ILike(item.DocumentReference, pattern) ||
+                EF.Functions.ILike(item.Description, pattern) ||
+                (item.Notes != null && EF.Functions.ILike(item.Notes, pattern)));
         }
 
         var ordered = query
@@ -518,8 +518,8 @@ if (applicationEndpointsAvailable)
             .ThenByDescending(item => item.Reference);
 
         // Sem `page` a resposta continua a ser o array completo, para o contexto
-        // de trabalho e os relatórios que ainda leem tudo. Com `page`, o SQL
-        // Server pagina — nas empresas grandes (SAF-T) não se transferem 20 MB.
+        // de trabalho e os relatórios que ainda leem tudo. Com `page`, a base de
+        // dados pagina — nas empresas grandes (SAF-T) não se transferem 20 MB.
         if (page is null)
         {
             var allEntities = await ordered

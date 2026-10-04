@@ -548,7 +548,7 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: '7211' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '6221' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '81' })).toBeInTheDocument()
-    expect(screen.getByText(/requer ligação ao SQL Server/i)).toBeInTheDocument()
+    expect(screen.getByText(/requer ligação à base de dados/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Registar apuramento/ })).toBeDisabled()
     expect(screen.queryByRole('button', { name: /Reabrir exercício/ })).not.toBeInTheDocument()
   })
@@ -560,7 +560,7 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Abertura do exercício' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '1211' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '56' })).toBeInTheDocument()
-    expect(screen.getByText(/requer ligação ao SQL Server/i)).toBeInTheDocument()
+    expect(screen.getByText(/requer ligação à base de dados/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Registar abertura/ })).toBeDisabled()
     expect(screen.queryByRole('button', { name: /Reabrir exercício/ })).not.toBeInTheDocument()
   })
@@ -691,7 +691,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Compras e-Fatura' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the cross-check screen (requires the database)', () => {
@@ -699,7 +699,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Cruzamento' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the data dictionary screen', () => {
@@ -721,7 +721,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Relatórios de gestão', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the VAT settlement screen (requires the database)', () => {
@@ -729,7 +729,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Apuramento de IVA', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the AT communication screen (requires the database)', () => {
@@ -737,7 +737,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Comunicação com a AT', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the VAT classification screen (requires the database)', () => {
@@ -745,7 +745,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Configuração de IVA', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the SAF-T export screen (requires the database)', () => {
@@ -753,7 +753,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Exportar SAF-T', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the financial statements screen (requires the database)', () => {
@@ -761,7 +761,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Demonstrações financeiras', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the monthly evolution charts with sample data in demonstration mode', () => {
@@ -780,13 +780,13 @@ describe('App', () => {
     window.history.pushState({}, '', '/mapa-exploracao')
     const { unmount } = render(<App />)
     expect(screen.getByRole('heading', { name: 'Mapa de exploração', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
     unmount()
 
     window.history.pushState({}, '', '/racios')
     render(<App />)
     expect(screen.getByRole('heading', { name: 'Rácios', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the VAT declaration screen (requires the database)', () => {
@@ -794,7 +794,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Declaração periódica de IVA', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the recapitulative statement screen (requires the database)', () => {
@@ -802,14 +802,14 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Declaração recapitulativa', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the fixed assets screens (require the database)', () => {
     window.history.pushState({}, '', '/ativos-fixos')
     const { unmount } = render(<App />)
     expect(screen.getByRole('heading', { name: 'Ativos fixos', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
     unmount()
 
     window.history.pushState({}, '', '/mapa-depreciacoes')
@@ -822,7 +822,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Modelo 22', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the IES screen (requires the database)', () => {
@@ -830,7 +830,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'IES — Anexo A', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the withholdings screen (requires the database)', () => {
@@ -838,7 +838,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Retenções na fonte', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the fiscal dossier screen (requires the database)', () => {
@@ -846,7 +846,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Dossier fiscal', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the aging screen (requires the database)', () => {
@@ -854,7 +854,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Idade de saldos', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the budget screen (requires the database)', () => {
@@ -862,14 +862,14 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Orçamento', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)
     expect(screen.getByRole('heading', { name: 'Centros de custo', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
     unmount()
 
     window.history.pushState({}, '', '/mapa-analitico')
@@ -882,7 +882,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Tabelas fiscais', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the party balances screen (requires the database)', () => {
@@ -890,7 +890,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Saldos de terceiros', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the entry templates screen (requires the database)', () => {
@@ -898,7 +898,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Lançamentos-tipo', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the VAT codes screen (requires the database)', () => {
@@ -906,7 +906,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Códigos de IVA', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the parties screen (requires the database)', () => {
@@ -914,7 +914,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Terceiros', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('groups the side menu and collapses it to an icon rail', () => {
@@ -937,7 +937,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Estimativa de IRC', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('offers an Opções menu on every screen with the two actions', () => {
@@ -974,7 +974,7 @@ describe('App', () => {
 
     expect(await screen.findByRole('heading', { name: 'Propor a criação da empresa' })).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Designação' })).toHaveValue('Nova Empresa do Ficheiro, Lda.')
-    expect(screen.getByText(/A criação requer ligação ao SQL Server/i)).toBeInTheDocument()
+    expect(screen.getByText(/A criação requer ligação à base de dados/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Criar empresa e provisionar cadastros/i })).toBeDisabled()
   })
 

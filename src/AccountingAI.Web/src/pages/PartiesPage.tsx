@@ -234,12 +234,12 @@ export function PartiesPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Terceiros</h1><p>Clientes e fornecedores da empresa, identificados pelo número de contribuinte.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Contact /></span><h2>Requer ligação ao SQL Server</h2><p>Os terceiros são lidos da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Contact /></span><h2>Requer ligação à base de dados</h2><p>Os terceiros são lidos da base de dados da empresa.</p></section>
     </div>
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Terceiros</h1><p>Clientes e fornecedores da empresa, identificados pelo país e pelo número de contribuinte, com a subconta 21/22 a que estão ligados.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Terceiros</h1><p>Clientes e fornecedores da empresa, identificados pelo país e pelo número de contribuinte, com a subconta 21/22 a que estão ligados.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

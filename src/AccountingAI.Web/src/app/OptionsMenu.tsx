@@ -79,7 +79,7 @@ export function OptionsMenu() {
         role="menuitem"
         aria-expanded={aboutOpen}
         disabled={!canAbout}
-        title={canAbout ? undefined : (source === 'database' ? 'Abra um registo (movimento, conta, diário) para ver quem o criou e alterou.' : 'Requer ligação ao SQL Server.')}
+        title={canAbout ? undefined : (source === 'database' ? 'Abra um registo (movimento, conta, diário) para ver quem o criou e alterou.' : 'Requer ligação à base de dados.')}
         onClick={toggleAbout}
       >
         <Info size={15} /> Sobre o Registo

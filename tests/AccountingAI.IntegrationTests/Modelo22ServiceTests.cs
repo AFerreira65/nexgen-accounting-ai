@@ -2,7 +2,6 @@ using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Infrastructure.Persistence;
 using AccountingAI.Infrastructure.Persistence.Persistence;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingAI.IntegrationTests;
@@ -32,26 +31,10 @@ public sealed class Modelo22ServiceTests
     [TestMethod]
     public async Task ComputesTaxableProfitTaxableIncomeAndTax()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
-        var databaseName = $"AccountingAI_Modelo22_{Guid.NewGuid():N}";
-        var configured = Environment.GetEnvironmentVariable("ACCOUNTINGAI_TEST_SQL_CONNECTION");
-        var builder = string.IsNullOrWhiteSpace(configured)
-            ? new SqlConnectionStringBuilder
-            {
-                DataSource = "(localdb)\\MSSQLLocalDB",
-                IntegratedSecurity = true,
-                TrustServerCertificate = true,
-                MultipleActiveResultSets = true,
-            }
-            : new SqlConnectionStringBuilder(configured);
-        builder.InitialCatalog = databaseName;
+        var connectionString = TestDatabase.ConnectionString("Modelo22");
 
         var options = new DbContextOptionsBuilder<AccountingDbContext>()
-            .UseSqlServer(builder.ConnectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory", "infrastructure"))
+            .UseNpgsql(connectionString, TestDatabase.Configure)
             .Options;
 
         await using var context = new AccountingDbContext(options);
@@ -219,7 +202,7 @@ public sealed class Modelo22ServiceTests
         }
         finally
         {
-            await context.Database.EnsureDeletedAsync().ConfigureAwait(false);
+            await TestDatabase.DropAsync(context).ConfigureAwait(false);
         }
     }
 }

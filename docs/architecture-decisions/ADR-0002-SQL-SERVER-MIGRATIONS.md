@@ -1,6 +1,6 @@
 # ADR-0002 — SQL Server e migrações versionadas
 
-- Estado: aceite para a F1-01
+- Estado: substituído pelo [ADR-0013](ADR-0013-POSTGRESQL.md) (PostgreSQL) em 2026-10-04
 - Data: 2026-08-29
 
 ## Contexto

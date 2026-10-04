@@ -138,7 +138,7 @@ export function YearEndClosingPage() {
     </div>
 
     {message && <div className={`series-message ${status === 'error' ? 'error' : 'success'}`}>{message}</div>}
-    {source !== 'database' && <div className="series-message">Pré-visualização de demonstração. O registo do apuramento requer ligação ao SQL Server.</div>}
+    {source !== 'database' && <div className="series-message">Pré-visualização de demonstração. O registo do apuramento requer ligação à base de dados.</div>}
 
     <section className="panel">
       <div className="panel-heading"><div><h2>Lançamento de apuramento</h2><p>Uma linha por conta de resultado, mais a contrapartida em 81.</p></div></div>

@@ -71,9 +71,14 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
+    /// <summary>Collation ICU sem distinção de maiúsculas (equivalente ao CI_AS do SQL Server).</summary>
+    public const string CaseInsensitiveCollation = "case_insensitive";
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
+
+        modelBuilder.HasCollation(CaseInsensitiveCollation, locale: "und-u-ks-level2", provider: "icu", deterministic: false);
 
         modelBuilder.ApplyConfiguration(new AccountingFirmConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyConfiguration());
@@ -113,7 +118,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
             entity.ToTable("FoundationState", "infrastructure");
             entity.HasKey(item => item.Id);
             entity.Property(item => item.SchemaVersion).HasMaxLength(32).IsRequired();
-            entity.Property(item => item.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
+            entity.Property(item => item.CreatedAtUtc).HasDefaultValueSql("now()");
         });
     }
 }

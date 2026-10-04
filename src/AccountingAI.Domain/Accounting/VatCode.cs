@@ -43,7 +43,7 @@ public sealed class VatCode
 
     public bool IsActive { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static VatCode Create(
         Guid companyId, string code, string name, VatRate rate, decimal percentage, VatOperationNature nature, VatRegion region)

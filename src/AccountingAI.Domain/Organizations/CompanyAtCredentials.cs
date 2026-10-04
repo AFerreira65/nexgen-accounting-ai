@@ -44,7 +44,7 @@ public sealed class CompanyAtCredentials
     /// <summary>O ambiente da AT (testes/produção) em que as chamadas desta empresa devem correr.</summary>
     public AtEnvironment Environment { get; private set; } = AtEnvironment.Testes;
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public static CompanyAtCredentials Create(
         Guid companyId, string subUser, string encryptedPassword,

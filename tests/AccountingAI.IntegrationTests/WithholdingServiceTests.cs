@@ -2,7 +2,6 @@ using AccountingAI.Domain.Accounting;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Infrastructure.Persistence;
 using AccountingAI.Infrastructure.Persistence.Persistence;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingAI.IntegrationTests;
@@ -13,26 +12,10 @@ public sealed class WithholdingServiceTests
     [TestMethod]
     public async Task ReportsWithholdingsByAccountMonthAndBeneficiary()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
-        var databaseName = $"AccountingAI_Withholding_{Guid.NewGuid():N}";
-        var configured = Environment.GetEnvironmentVariable("ACCOUNTINGAI_TEST_SQL_CONNECTION");
-        var builder = string.IsNullOrWhiteSpace(configured)
-            ? new SqlConnectionStringBuilder
-            {
-                DataSource = "(localdb)\\MSSQLLocalDB",
-                IntegratedSecurity = true,
-                TrustServerCertificate = true,
-                MultipleActiveResultSets = true,
-            }
-            : new SqlConnectionStringBuilder(configured);
-        builder.InitialCatalog = databaseName;
+        var connectionString = TestDatabase.ConnectionString("Withholding");
 
         var options = new DbContextOptionsBuilder<AccountingDbContext>()
-            .UseSqlServer(builder.ConnectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory", "infrastructure"))
+            .UseNpgsql(connectionString, TestDatabase.Configure)
             .Options;
 
         await using var context = new AccountingDbContext(options);
@@ -138,7 +121,7 @@ public sealed class WithholdingServiceTests
         }
         finally
         {
-            await context.Database.EnsureDeletedAsync().ConfigureAwait(false);
+            await TestDatabase.DropAsync(context).ConfigureAwait(false);
         }
     }
 }

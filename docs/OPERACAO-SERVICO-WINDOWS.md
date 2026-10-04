@@ -48,8 +48,9 @@ de correr isto, ou substitua `$PWD` pelo caminho completo.)
 funciona aqui.** Duas coisas na aplicação estão ligadas à sua conta pessoal
 do Windows:
 
-- a ligação ao SQL Server usa autenticação integrada
-  (`Integrated Security=true`) — só a sua conta tem sessão criada na base;
+- a password do papel `accounting` do PostgreSQL não está em
+  `appsettings.Production.json`: defina a ligação completa na variável de
+  ambiente `ConnectionStrings__Accounting` (ou `PGPASSWORD`) da conta do serviço;
 - a senha do certificado da AT, se a vier a configurar, cifra-se com a Data
   Protection do ASP.NET Core, cujo chaveiro fica em
   `%LOCALAPPDATA%\AccountingAI\dp-keys` — um caminho por conta. Correr como

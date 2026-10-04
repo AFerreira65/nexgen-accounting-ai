@@ -82,12 +82,12 @@ export function EFaturaPurchasesPage() {
   if (source !== 'database') {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Importação contabilística</p><h1>Compras e-Fatura</h1><p>Importação e consulta das faturas de compra conhecidas pelo Portal e-Fatura.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Receipt /></span><h2>Requer ligação ao SQL Server</h2><p>As compras do e-Fatura são lidas e guardadas na base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Receipt /></span><h2>Requer ligação à base de dados</h2><p>As compras do e-Fatura são lidas e guardadas na base de dados da empresa.</p></section>
     </div>
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Importação contabilística</p><h1>Compras e-Fatura</h1><p>Importe um ou mais CSV obtidos no Portal e-Fatura (adquirente). Reimportar o mesmo ficheiro não duplica.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Importação contabilística</p><h1>Compras e-Fatura</h1><p>Importe um ou mais CSV obtidos no Portal e-Fatura (adquirente). Reimportar o mesmo ficheiro não duplica.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     <section className="panel">
       <div className="panel-heading"><div><h2>Importar CSV</h2><p>Cada ficheiro é pré-visualizado antes de gravar. Lotes de 300 registos são assinalados.</p></div></div>

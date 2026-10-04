@@ -136,7 +136,7 @@ export function DocumentNumberSeriesPage() {
       setRows((current) => current.map((item) => item.series === row.series ? updated : item))
       setEditing(null)
       setStatus('saved')
-      setMessage(source === 'database' ? `Série ${row.series} atualizada no SQL Server.` : `Série ${row.series} ajustada apenas nesta demonstração.`)
+      setMessage(source === 'database' ? `Série ${row.series} atualizada na base de dados.` : `Série ${row.series} ajustada apenas nesta demonstração.`)
     } catch (error) {
       setStatus('error')
       setMessage(error instanceof Error ? error.message : 'Não foi possível atualizar a série.')
@@ -146,7 +146,7 @@ export function DocumentNumberSeriesPage() {
   return <div className="page-stack">
     <header className="page-heading">
       <div><p className="eyebrow">Numeração contabilística</p><h1>Séries documentais</h1><p>Consulte o último número emitido e avance com segurança o próximo número de cada série.</p></div>
-      <span className={`connection-badge ${source}`}><Database size={15} />{source === 'database' ? 'Contadores no SQL Server' : 'Modo de demonstração'}</span>
+      <span className={`connection-badge ${source}`}><Database size={15} />{source === 'database' ? 'Contadores na base de dados' : 'Modo de demonstração'}</span>
     </header>
 
     <section className="metric-grid series-metrics">

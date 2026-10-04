@@ -105,12 +105,12 @@ export function VatCodesPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Códigos de IVA</h1><p>Taxa, percentagem, natureza e região num código para indicar na linha do lançamento.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Percent /></span><h2>Requer ligação ao SQL Server</h2><p>Os códigos de IVA são lidos da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Percent /></span><h2>Requer ligação à base de dados</h2><p>Os códigos de IVA são lidos da base de dados da empresa.</p></section>
     </div>
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Códigos de IVA</h1><p>Cada código junta a taxa, a percentagem, a natureza da operação e a região. Indica-se na linha do lançamento e é o que permite desagregar o IVA por documento.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Códigos de IVA</h1><p>Cada código junta a taxa, a percentagem, a natureza da operação e a região. Indica-se na linha do lançamento e é o que permite desagregar o IVA por documento.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
     {status && !error && <p className="save-status success">{status}</p>}

@@ -37,6 +37,19 @@ jobs:
           cache: npm
           cache-dependency-path: src/AccountingAI.Web/package-lock.json
 
+      # A imagem windows-2025 traz o PostgreSQL instalado mas com o serviço parado
+      # (superutilizador postgres/root). Os testes de integração criam bases descartáveis
+      # com o papel accounting criado pelo script de preparação local.
+      - name: Start PostgreSQL
+        shell: pwsh
+        run: |
+          $service = Get-Service -Name 'postgresql*' | Select-Object -First 1
+          Set-Service -Name $service.Name -StartupType Manual
+          Start-Service -Name $service.Name
+          $env:PGPASSWORD = 'root'
+          & "$env:PGBIN\psql.exe" -U postgres -h localhost -v ON_ERROR_STOP=1 -f scripts/postgres/local-setup.sql
+          if ($LASTEXITCODE -ne 0) { throw 'A preparação do PostgreSQL falhou.' }
+
       - name: Restore .NET
         shell: pwsh
         run: dotnet restore '.\Accounting AI.slnx'

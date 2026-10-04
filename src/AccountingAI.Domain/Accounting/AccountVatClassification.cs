@@ -35,7 +35,7 @@ public sealed class AccountVatClassification
 
     public VatRegion Region { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     /// <summary>`true` quando não há nada classificado (a linha pode ser apagada).</summary>
     public bool IsEmpty => Rate == VatRate.Nenhuma && Nature == VatOperationNature.Nenhuma;

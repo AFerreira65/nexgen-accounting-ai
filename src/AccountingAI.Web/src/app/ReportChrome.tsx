@@ -86,7 +86,7 @@ export function ReportChrome({ reportKey, title, from, to }: {
         <button className="button button-secondary" type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)}><Settings2 size={15} /> Configurar impressão</button>
       </div>
       {open && <div className="report-chrome-panel">
-        {!onDatabase && <p className="save-status"><CircleAlert size={15} /> Guardar o modelo requer ligação ao SQL Server.</p>}
+        {!onDatabase && <p className="save-status"><CircleAlert size={15} /> Guardar o modelo requer ligação à base de dados.</p>}
         <label className="field-block" style={{ margin: 0 }}><span>Linhas de cabeçalho <small>(uma por linha, até 6)</small></span>
           <textarea rows={3} value={draft.headerLines} onChange={(event) => setDraft((current) => ({ ...current, headerLines: event.target.value }))} placeholder="Ex.: Documento de trabalho" />
         </label>

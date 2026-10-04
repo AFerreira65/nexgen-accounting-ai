@@ -148,12 +148,12 @@ export function VatSettlementPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Contabilidade</p><h1>Apuramento de IVA</h1><p>O apuramento periódico de IVA a partir das contas 24.3.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Receipt /></span><h2>Requer ligação ao SQL Server</h2><p>O apuramento de IVA lê os movimentos das contas 24.3 da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Receipt /></span><h2>Requer ligação à base de dados</h2><p>O apuramento de IVA lê os movimentos das contas 24.3 da base de dados da empresa.</p></section>
     </div>
   }
 
   return <div className="page-stack report-page">
-    <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Apuramento de IVA</h1><p>O movimento das contas 24.3 no período, com a aritmética do fecho de IVA: liquidado, dedutível, regularizações, excesso reportado e a posição final. É o apuramento contabilístico — não substitui a declaração periódica da AT.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Apuramento de IVA</h1><p>O movimento das contas 24.3 no período, com a aritmética do fecho de IVA: liquidado, dedutível, regularizações, excesso reportado e a posição final. É o apuramento contabilístico — não substitui a declaração periódica da AT.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
     <ReportChrome reportKey="apuramento-iva" title="Apuramento de IVA" from={fromDate} to={toDate} />
 
     <div className="filterbar no-print">

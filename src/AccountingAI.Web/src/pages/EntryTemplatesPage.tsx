@@ -140,12 +140,12 @@ export function EntryTemplatesPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Lançamentos-tipo</h1><p>Modelos de lançamentos repetitivos que calculam o IVA a partir da base.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><LayoutTemplate /></span><h2>Requer ligação ao SQL Server</h2><p>Os lançamentos-tipo são lidos da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><LayoutTemplate /></span><h2>Requer ligação à base de dados</h2><p>Os lançamentos-tipo são lidos da base de dados da empresa.</p></section>
     </div>
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Lançamentos-tipo</h1><p>Modelos de lançamentos repetitivos — uma compra, uma venda. No editor de lançamentos escolhe-se o modelo, indica-se o valor e as linhas ficam preenchidas com o IVA calculado.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Lançamentos-tipo</h1><p>Modelos de lançamentos repetitivos — uma compra, uma venda. No editor de lançamentos escolhe-se o modelo, indica-se o valor e as linhas ficam preenchidas com o IVA calculado.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

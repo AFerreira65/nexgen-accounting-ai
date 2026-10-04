@@ -10,7 +10,9 @@ internal sealed class SavedAnalysisConfiguration : IEntityTypeConfiguration<Save
     {
         builder.ToTable("SavedAnalysis", "reporting");
         builder.HasKey(item => item.Id);
-        builder.Property(item => item.Name).HasMaxLength(SavedAnalysis.NameMaxLength).IsRequired();
+        // O nome é único por empresa sem distinguir maiúsculas («Vendas» = «vendas»).
+        builder.Property(item => item.Name).HasMaxLength(SavedAnalysis.NameMaxLength).IsRequired()
+            .UseCollation(AccountingDbContext.CaseInsensitiveCollation);
         builder.Property(item => item.Description).HasMaxLength(SavedAnalysis.DescriptionMaxLength);
         builder.Property(item => item.DefinitionJson).IsRequired();
         builder.Property(item => item.RowVersion).IsRowVersion();

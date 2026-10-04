@@ -66,7 +66,7 @@ export function OrganizationPage() {
   return <div className="page-stack">
     <header className="page-heading">
       <div><p className="eyebrow">Cadastro organizacional</p><h1>Empresas e utilizadores</h1><p>Gabinetes, empresas e associações de utilizadores. A criação de empresa provisiona o plano standard da norma.</p></div>
-      <span className={`connection-badge ${database ? 'database' : 'demonstration'}`}><Database size={15} />{database ? 'Ligado ao SQL Server' : 'Modo de demonstração'}</span>
+      <span className={`connection-badge ${database ? 'database' : 'demonstration'}`}><Database size={15} />{database ? 'Ligado à base de dados' : 'Modo de demonstração'}</span>
     </header>
 
     {!database && <p className="save-status">A gestão do cadastro organizacional requer a ligação à API local.</p>}

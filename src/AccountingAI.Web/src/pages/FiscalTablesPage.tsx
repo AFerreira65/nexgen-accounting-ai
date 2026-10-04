@@ -37,12 +37,12 @@ export function FiscalTablesPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Tabelas fiscais</h1><p>As taxas que mudam de ano para ano, com a fonte de cada uma.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><BookText /></span><h2>Requer ligação ao SQL Server</h2><p>As tabelas fiscais são servidas pela API.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><BookText /></span><h2>Requer ligação à base de dados</h2><p>As tabelas fiscais são servidas pela API.</p></section>
     </div>
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Tabelas fiscais</h1><p>As taxas que mudam de ano para ano e que a aplicação propõe — na estimativa de IRC e nos códigos de IVA por omissão. Cada grupo indica a fonte e se foi lido no texto oficial.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Tabelas fiscais</h1><p>As taxas que mudam de ano para ano e que a aplicação propõe — na estimativa de IRC e nos códigos de IVA por omissão. Cada grupo indica a fonte e se foi lido no texto oficial.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     <div className="filterbar">
       <label className="inline-check">Ano <input type="number" aria-label="Ano" min="2000" max="2100" value={year} onChange={(event) => setYear(Number(event.target.value) || year)} /></label>

@@ -63,7 +63,7 @@ public sealed class LedgerAccount
 
     public bool IsActive { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public ICollection<JournalEntryLine> EntryLines { get; } = [];
 

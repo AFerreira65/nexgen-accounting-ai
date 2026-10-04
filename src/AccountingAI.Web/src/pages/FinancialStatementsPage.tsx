@@ -116,7 +116,7 @@ export function FinancialStatementsPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Demonstrações financeiras</h1><p>Balanço, demonstração de resultados, fluxos de caixa e alterações no capital próprio nos modelos do SNC.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Landmark /></span><h2>Requer ligação ao SQL Server</h2><p>As demonstrações são montadas a partir das taxonomias das contas na base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Landmark /></span><h2>Requer ligação à base de dados</h2><p>As demonstrações são montadas a partir das taxonomias das contas na base de dados da empresa.</p></section>
     </div>
   }
 
@@ -133,7 +133,7 @@ export function FinancialStatementsPage() {
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Demonstrações financeiras</h1><p>As demonstrações nos modelos do SNC. No balanço e na demonstração de resultados cada conta entra na rubrica que a tabela da AT atribui à sua taxonomia; os fluxos de caixa e as alterações no capital próprio são classificados pelas contas de contrapartida.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Demonstrações financeiras</h1><p>As demonstrações nos modelos do SNC. No balanço e na demonstração de resultados cada conta entra na rubrica que a tabela da AT atribui à sua taxonomia; os fluxos de caixa e as alterações no capital próprio são classificados pelas contas de contrapartida.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

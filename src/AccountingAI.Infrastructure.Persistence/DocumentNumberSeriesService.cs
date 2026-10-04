@@ -145,7 +145,7 @@ public sealed class DocumentNumberSeriesService(AccountingDbContext context)
         await strategy.ExecuteAsync(async () =>
         {
             await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            await SqlServerApplicationLock.AcquireAsync(
+            await DatabaseApplicationLock.AcquireAsync(
                 context,
                 $"AccountingAI:NumberSeries:{companyId:N}:{normalizedSeries}:{year}",
                 cancellationToken).ConfigureAwait(false);

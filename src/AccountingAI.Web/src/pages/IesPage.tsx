@@ -37,7 +37,7 @@ export function IesPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>IES — Anexo A</h1><p>A demonstração dos resultados e o balanço pelos campos do Anexo A da Informação Empresarial Simplificada.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><FileText /></span><h2>Requer ligação ao SQL Server</h2><p>O anexo é preenchido a partir das demonstrações financeiras da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><FileText /></span><h2>Requer ligação à base de dados</h2><p>O anexo é preenchido a partir das demonstrações financeiras da empresa.</p></section>
     </div>
   }
 
@@ -49,7 +49,7 @@ export function IesPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>IES — Anexo A</h1><p>Os quadros 03 e 04 do Anexo A, preenchidos com as rubricas das <Link to="/demonstracoes">demonstrações financeiras</Link>: cada rubrica vai para o campo do impresso com a mesma designação.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>IES — Anexo A</h1><p>Os quadros 03 e 04 do Anexo A, preenchidos com as rubricas das <Link to="/demonstracoes">demonstrações financeiras</Link>: cada rubrica vai para o campo do impresso com a mesma designação.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

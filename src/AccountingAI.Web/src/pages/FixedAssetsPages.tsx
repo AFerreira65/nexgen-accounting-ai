@@ -111,12 +111,12 @@ export function FixedAssetsPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Ativos fixos</h1><p>O cadastro dos ativos fixos tangíveis e intangíveis e os dados da sua depreciação.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Factory /></span><h2>Requer ligação ao SQL Server</h2><p>Os ativos fixos são lidos da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Factory /></span><h2>Requer ligação à base de dados</h2><p>Os ativos fixos são lidos da base de dados da empresa.</p></section>
     </div>
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Ativos fixos</h1><p>O cadastro dos ativos fixos tangíveis e intangíveis. As depreciações de cada exercício estão no <Link to="/mapa-depreciacoes">mapa de depreciações</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Cadastros contabilísticos</p><h1>Ativos fixos</h1><p>O cadastro dos ativos fixos tangíveis e intangíveis. As depreciações de cada exercício estão no <Link to="/mapa-depreciacoes">mapa de depreciações</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 
@@ -176,7 +176,7 @@ export function DepreciationSchedulePage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Mapa de depreciações</h1><p>As depreciações de cada ativo num exercício, por quotas constantes.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Factory /></span><h2>Requer ligação ao SQL Server</h2><p>O mapa é calculado a partir do cadastro de ativos fixos da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Factory /></span><h2>Requer ligação à base de dados</h2><p>O mapa é calculado a partir do cadastro de ativos fixos da empresa.</p></section>
     </div>
   }
 
@@ -204,7 +204,7 @@ export function DepreciationSchedulePage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Mapa de depreciações</h1><p>As depreciações de cada ativo do <Link to="/ativos-fixos">cadastro</Link> no exercício, por quotas constantes. O mapa é um cálculo; o lançamento só é gerado quando o pedir, e fica por conferir.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Mapa de depreciações</h1><p>As depreciações de cada ativo do <Link to="/ativos-fixos">cadastro</Link> no exercício, por quotas constantes. O mapa é um cálculo; o lançamento só é gerado quando o pedir, e fica por conferir.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

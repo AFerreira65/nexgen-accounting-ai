@@ -42,7 +42,7 @@ export function PartyAgingPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Idade de saldos</h1><p>O que está por receber de clientes e por pagar a fornecedores, pela antiguidade dos documentos.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Hourglass /></span><h2>Requer ligação ao SQL Server</h2><p>A idade dos saldos é calculada sobre os lançamentos com terceiro da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Hourglass /></span><h2>Requer ligação à base de dados</h2><p>A idade dos saldos é calculada sobre os lançamentos com terceiro da empresa.</p></section>
     </div>
   }
 
@@ -58,7 +58,7 @@ export function PartyAgingPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Idade de saldos</h1><p>O saldo em aberto de cada terceiro a uma data, repartido pela antiguidade dos documentos. Os pagamentos abatem aos documentos mais antigos.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Idade de saldos</h1><p>O saldo em aberto de cada terceiro a uma data, repartido pela antiguidade dos documentos. Os pagamentos abatem aos documentos mais antigos.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 

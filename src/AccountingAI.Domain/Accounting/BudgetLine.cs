@@ -39,7 +39,7 @@ public sealed class BudgetLine
 
     public decimal Amount { get; private set; }
 
-    public byte[] RowVersion { get; private set; } = [];
+    public uint RowVersion { get; private set; }
 
     public CostCenter? CostCenter { get; private set; }
 

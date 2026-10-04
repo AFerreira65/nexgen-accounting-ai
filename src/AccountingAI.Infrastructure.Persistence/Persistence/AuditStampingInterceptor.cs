@@ -34,7 +34,10 @@ public sealed class AuditStampingInterceptor(ICurrentUserAccessor currentUser) :
             return;
         }
 
-        var now = DateTimeOffset.UtcNow;
+        // O PostgreSQL guarda timestamptz ao microssegundo; truncar aqui mantém o valor em
+        // memória igual ao que fica gravado (o .NET tem resolução de 100 ns).
+        var utcNow = DateTimeOffset.UtcNow;
+        var now = utcNow.AddTicks(-(utcNow.Ticks % (TimeSpan.TicksPerMillisecond / 1000)));
         var userId = currentUser.UserId;
 
         foreach (var entry in context.ChangeTracker.Entries())

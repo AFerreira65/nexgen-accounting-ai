@@ -45,7 +45,7 @@ export function FiscalDossierPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Dossier fiscal</h1><p>O índice do processo de documentação fiscal de cada exercício, com o estado de cada elemento.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><FolderCheck /></span><h2>Requer ligação ao SQL Server</h2><p>O dossier é acompanhado por empresa e por exercício.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><FolderCheck /></span><h2>Requer ligação à base de dados</h2><p>O dossier é acompanhado por empresa e por exercício.</p></section>
     </div>
   }
 
@@ -64,7 +64,7 @@ export function FiscalDossierPage() {
   const elements = dossier?.elements ?? []
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Dossier fiscal</h1><p>Os doze elementos do processo de documentação fiscal (artigo 130.º do CIRC): o que a contabilidade do exercício mostra sobre cada um, onde a aplicação ajuda, e o estado que lhe der.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Dossier fiscal</h1><p>Os doze elementos do processo de documentação fiscal (artigo 130.º do CIRC): o que a contabilidade do exercício mostra sobre cada um, onde a aplicação ajuda, e o estado que lhe der.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
 

@@ -72,12 +72,12 @@ export function VatClassificationPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Contabilidade</p><h1>Configuração de IVA</h1><p>A taxa, a natureza e a região de cada conta de IVA e de base.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><Percent /></span><h2>Requer ligação ao SQL Server</h2><p>A classificação de IVA lê o plano de contas da base de dados da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><Percent /></span><h2>Requer ligação à base de dados</h2><p>A classificação de IVA lê o plano de contas da base de dados da empresa.</p></section>
     </div>
   }
 
   return <div className="page-stack">
-    <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Configuração de IVA</h1><p>A taxa, a natureza da operação e a região de cada conta de movimento das classes 6 e 7 e das contas 24.3. Serve a desagregação do IVA por taxa/natureza para a declaração periódica.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Configuração de IVA</h1><p>A taxa, a natureza da operação e a região de cada conta de movimento das classes 6 e 7 e das contas 24.3. Serve a desagregação do IVA por taxa/natureza para a declaração periódica.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
     {status && !error && <p className="save-status success">{status}</p>}

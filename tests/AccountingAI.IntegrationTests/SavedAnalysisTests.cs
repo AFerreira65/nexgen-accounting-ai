@@ -3,7 +3,6 @@ using AccountingAI.Application.Reporting;
 using AccountingAI.Domain.Organizations;
 using AccountingAI.Infrastructure.Persistence;
 using AccountingAI.Infrastructure.Persistence.Persistence;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingAI.IntegrationTests;
@@ -14,29 +13,12 @@ public sealed class SavedAnalysisTests
     [TestMethod]
     public async Task SavesValidatesAndAuditsAnalyses()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            Assert.Inconclusive("SQL Server validation is available only on Windows.");
-        }
-
-        var databaseName = $"AccountingAI_Analysis_{Guid.NewGuid():N}";
-        var configuredServer = Environment.GetEnvironmentVariable("ACCOUNTINGAI_TEST_SQL_CONNECTION");
-        var connectionBuilder = string.IsNullOrWhiteSpace(configuredServer)
-            ? new SqlConnectionStringBuilder
-            {
-                DataSource = "(localdb)\\MSSQLLocalDB",
-                IntegratedSecurity = true,
-                TrustServerCertificate = true,
-                MultipleActiveResultSets = true,
-            }
-            : new SqlConnectionStringBuilder(configuredServer);
-        connectionBuilder.InitialCatalog = databaseName;
-        var connectionString = connectionBuilder.ConnectionString;
+        var connectionString = TestDatabase.ConnectionString("Analysis");
 
         var currentUser = new CurrentUserAccessor { UserId = Guid.NewGuid() };
         var options = new DbContextOptionsBuilder<AccountingDbContext>()
             .AddInterceptors(new AuditStampingInterceptor(currentUser))
-            .UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory", "infrastructure"))
+            .UseNpgsql(connectionString, TestDatabase.Configure)
             .Options;
 
         await using var context = new AccountingDbContext(options);
@@ -113,7 +95,7 @@ public sealed class SavedAnalysisTests
         }
         finally
         {
-            await context.Database.EnsureDeletedAsync().ConfigureAwait(false);
+            await TestDatabase.DropAsync(context).ConfigureAwait(false);
         }
     }
 }

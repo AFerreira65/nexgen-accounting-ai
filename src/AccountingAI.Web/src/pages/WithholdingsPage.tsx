@@ -33,7 +33,7 @@ export function WithholdingsPage() {
   if (!onDatabase) {
     return <div className="page-stack">
       <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Retenções na fonte</h1><p>O retido e o entregue ao Estado, por conta, por mês e por beneficiário.</p></div><span className="connection-badge demonstration"><Database size={15} /> Modo de demonstração</span></header>
-      <section className="panel empty-state"><span className="empty-icon"><HandCoins /></span><h2>Requer ligação ao SQL Server</h2><p>As retenções são lidas das contas 242 da empresa.</p></section>
+      <section className="panel empty-state"><span className="empty-icon"><HandCoins /></span><h2>Requer ligação à base de dados</h2><p>As retenções são lidas das contas 242 da empresa.</p></section>
     </div>
   }
 
@@ -51,7 +51,7 @@ export function WithholdingsPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Retenções na fonte</h1><p>O movimento das contas 242 no exercício: o retido (créditos), o entregue ao Estado (débitos) e o que falta entregar, por conta, por mês e por beneficiário.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Retenções na fonte</h1><p>O movimento das contas 242 no exercício: o retido (créditos), o entregue ao Estado (débitos) e o que falta entregar, por conta, por mês e por beneficiário.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 
