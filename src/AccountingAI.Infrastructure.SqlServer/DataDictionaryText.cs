@@ -41,6 +41,7 @@ internal static class DataDictionaryText
         ["IrcEstimateFiling"] = "Estimativa de IRC guardada por uma empresa (período, taxa e correções fiscais indicadas, fotografia do cálculo).",
         ["CostCenters"] = "Centros de custo da empresa: a dimensão analítica indicada na linha do lançamento.",
         ["FixedAssets"] = "Ativos fixos da empresa, com os dados para calcular as depreciações por quotas constantes.",
+        ["FiscalDossierItems"] = "O estado que o utilizador deu a cada elemento do dossier fiscal de um exercício.",
         ["IrcReturnValues"] = "Valores indicados pelo utilizador para o Modelo 22 de cada exercício: acréscimos, deduções e parâmetros do cálculo.",
         ["EntryTemplates"] = "Lançamentos-tipo da empresa: diário, tipo de documento e linhas de um lançamento repetitivo.",
         ["EntryTemplateLines"] = "Linhas de um lançamento-tipo: base, IVA ou contrapartida, com a conta, o lado e o código de IVA.",
@@ -217,6 +218,10 @@ internal static class DataDictionaryText
         ["VatCodes.IsActive"] = "Se o código está ativo.",
 
         ["JournalEntries.DocumentDate"] = "A data do documento de origem, quando indicada; pode diferir da data do lançamento.",
+        ["FiscalDossierItems.Year"] = "O exercício do dossier fiscal.",
+        ["FiscalDossierItems.Element"] = "O número do elemento na lista da Portaria n.º 92-A/2011.",
+        ["FiscalDossierItems.Status"] = "O estado do elemento: por preparar, pronto ou não aplicável.",
+        ["FiscalDossierItems.Note"] = "Uma nota sobre o elemento, por exemplo onde está arquivado.",
         ["IrcReturnValues.Year"] = "O exercício a que o valor respeita.",
         ["IrcReturnValues.Field"] = "O número do campo do Modelo 22 ou o nome do parâmetro (por exemplo a taxa da derrama municipal).",
         ["IrcReturnValues.Amount"] = "O valor indicado.",

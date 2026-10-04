@@ -163,6 +163,9 @@ public sealed class SqlServerMigrationTests
             CollectionAssert.Contains(
                 appliedMigrations.ToArray(),
                 "20261004073829_IrcReturnValues");
+            CollectionAssert.Contains(
+                appliedMigrations.ToArray(),
+                "20261004080629_FiscalDossierItems");
 
             var firmId = Guid.NewGuid();
             var firm = new AccountingFirm(firmId, "Gabinete de Teste", "gabinete-teste");

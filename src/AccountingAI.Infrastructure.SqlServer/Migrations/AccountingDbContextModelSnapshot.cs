@@ -394,6 +394,56 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.ToTable("EntryTemplateLines", "accounting");
                 });
 
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.FiscalDossierItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Element")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "Year", "Element")
+                        .IsUnique();
+
+                    b.ToTable("FiscalDossierItems", "accounting");
+                });
+
             modelBuilder.Entity("AccountingAI.Domain.Accounting.FixedAsset", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1800,6 +1850,15 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .WithMany()
                         .HasForeignKey("VatCodeId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.FiscalDossierItem", b =>
+                {
+                    b.HasOne("AccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("AccountingAI.Domain.Accounting.FixedAsset", b =>

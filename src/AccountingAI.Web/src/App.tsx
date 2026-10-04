@@ -40,6 +40,7 @@ import { PartyBalancesByPartyPage, PartyStatementPage } from './pages/PartyLedge
 import { VatCodesPage } from './pages/VatCodesPage'
 import { FiscalTablesPage } from './pages/FiscalTablesPage'
 import { FinancialStatementsPage } from './pages/FinancialStatementsPage'
+import { FiscalDossierPage } from './pages/FiscalDossierPage'
 import { DepreciationSchedulePage, FixedAssetsPage } from './pages/FixedAssetsPages'
 import { SaftExportPage } from './pages/SaftExportPage'
 import { AnalyticReportPage, CostCentersPage } from './pages/AnalyticPages'
@@ -95,6 +96,7 @@ export function App() {
             <Route path="/modelo-22" element={<Modelo22Page />} />
             <Route path="/ies" element={<IesPage />} />
             <Route path="/retencoes" element={<WithholdingsPage />} />
+            <Route path="/dossier-fiscal" element={<FiscalDossierPage />} />
             <Route path="/config-iva" element={<VatClassificationPage />} />
             <Route path="/codigos-iva" element={<VatCodesPage />} />
             <Route path="/tabelas-fiscais" element={<FiscalTablesPage />} />

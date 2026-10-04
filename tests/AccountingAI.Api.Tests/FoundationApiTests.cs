@@ -1470,6 +1470,9 @@ public sealed class FoundationApiTests
         using var withholdings = await client.GetAsync($"{basePath}/withholdings?year=2026").ConfigureAwait(false);
         var withholdingsPayload = await withholdings.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badWithholdings = await client.GetAsync($"{basePath}/withholdings?year=12").ConfigureAwait(false);
+        using var dossier = await client.GetAsync($"{basePath}/fiscal-dossier?year=2026").ConfigureAwait(false);
+        var dossierPayload = await dossier.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badDossier = await client.GetAsync($"{basePath}/fiscal-dossier?year=12").ConfigureAwait(false);
         using var catalog = await client.GetAsync($"{basePath}/modelo-22/fields").ConfigureAwait(false);
         var catalogPayload = await catalog.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badYear = await client.GetAsync($"{basePath}/modelo-22?year=12").ConfigureAwait(false);
@@ -1488,6 +1491,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, withholdings.StatusCode);
         StringAssert.Contains(withholdingsPayload, "\"totalWithheld\":");
         Assert.AreEqual(HttpStatusCode.BadRequest, badWithholdings.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, dossier.StatusCode);
+        StringAssert.Contains(dossierPayload, "\"number\":12");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badDossier.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badYear.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
     }

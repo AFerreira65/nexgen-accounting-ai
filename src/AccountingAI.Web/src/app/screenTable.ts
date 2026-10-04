@@ -22,6 +22,7 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/modelo-22': { schema: 'accounting', name: 'IrcReturnValues' },
   '/ies': { schema: 'accounting', name: 'JournalEntryLines' },
   '/retencoes': { schema: 'accounting', name: 'JournalEntryLines' },
+  '/dossier-fiscal': { schema: 'accounting', name: 'FiscalDossierItems' },
   '/codigos-iva': { schema: 'accounting', name: 'VatCodes' },
   '/config-iva': { schema: 'accounting', name: 'AccountVatClassification' },
   '/estimativa-irc': { schema: 'accounting', name: 'JournalEntryLines' },

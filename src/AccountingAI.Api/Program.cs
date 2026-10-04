@@ -2095,6 +2095,40 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Dossier fiscal: o índice dos elementos da portaria, com o estado de cada um por exercício.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fiscal-dossier", async (
+        Guid userId, Guid companyId, int year, FiscalDossierService dossier, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        var result = await dossier.BuildAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        return result is null ? Results.NotFound() : Results.Ok(result);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fiscal-dossier/{element:int}", async (
+        Guid userId, Guid companyId, int element, int year, FiscalDossierItemRequest request, FiscalDossierService dossier, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        try
+        {
+            var result = await dossier
+                .SetAsync(userId, companyId, year, element, request?.Status ?? string.Empty, request?.Note, cancellationToken)
+                .ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["dossier"] = [exception.Message] });
+        }
+    });
+
     // Retenções na fonte: o movimento das contas 242 por conta, mês e beneficiário.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/withholdings", async (
         Guid userId, Guid companyId, int year, WithholdingService withholdings, CancellationToken cancellationToken) =>
@@ -4049,6 +4083,8 @@ public sealed record EntryTemplateRequest(
 public sealed record ApplyEntryTemplateRequest(decimal Amount, bool AmountIncludesVat = false);
 
 public sealed record CostCenterRequest(string? Code, string? Name, bool IsActive = true);
+
+public sealed record FiscalDossierItemRequest(string? Status, string? Note);
 
 public sealed record VatCodeRequest(
     string? Code,

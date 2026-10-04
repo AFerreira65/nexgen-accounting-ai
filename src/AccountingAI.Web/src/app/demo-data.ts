@@ -710,6 +710,13 @@ export type RecapitulativeStatement = {
   source: string
   disclaimer: string
 }
+export type FiscalDossier = {
+  year: number
+  elements: { number: number; title: string; support: string; link: string | null; linkLabel: string | null; evidence: string | null; status: string; note: string | null }[]
+  pending: number
+  source: string
+  disclaimer: string
+}
 export type WithholdingReport = {
   year: number
   accounts: { accountCode: string; accountName: string; opening: number; withheld: number; delivered: number; balance: number }[]
