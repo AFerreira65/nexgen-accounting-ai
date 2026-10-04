@@ -6,10 +6,11 @@ import { euro, type Modelo22Field, type Modelo22Return } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 
-const sections = ['Quadro 07', 'Quadro 09', 'Quadro 10'] as const
+const sections = ['Quadro 07', 'Quadro 09', 'Tributações autónomas', 'Quadro 10'] as const
 const sectionTitles: Record<string, string> = {
   'Quadro 07': 'Quadro 07 — Apuramento do lucro tributável',
   'Quadro 09': 'Quadro 09 — Apuramento da matéria coletável (regime geral)',
+  'Tributações autónomas': 'Tributações autónomas — encargos por tipo',
   'Quadro 10': 'Quadro 10 — Cálculo do imposto',
 }
 const parse = (value: string) => Number(value.replace(/\s/g, '').replace(',', '.'))
@@ -132,7 +133,7 @@ export function Modelo22Page() {
       </section>}
 
       {sections.map((section) => <section key={section} className="panel">
-        <div className="panel-heading"><div><h2>{sectionTitles[section]}</h2>{section === 'Quadro 07' && <p>Só aparecem os campos com valor. Para preencher outro, escolha-o na lista ou mostre todos. Os valores são os que guardou; as somas atualizam ao guardar.</p>}</div></div>
+        <div className="panel-heading"><div><h2>{sectionTitles[section]}</h2>{section === 'Tributações autónomas' && <p>Indique os encargos do exercício sujeitos a tributação autónoma; o total calculado passa a ser o campo 365. Sem encargos indicados, o campo 365 fica como o preencher.</p>}{section === 'Quadro 07' && <p>Só aparecem os campos com valor. Para preencher outro, escolha-o na lista ou mostre todos. Os valores são os que guardou; as somas atualizam ao guardar.</p>}</div></div>
         {section === 'Quadro 07' && <div className="filterbar">
           <label className="inline-check">Adicionar campo <select aria-label="Adicionar campo do quadro 07" value="" onChange={(event) => { const code = event.target.value; if (code) setAdded((current) => new Set(current).add(code)) }}>
             <option value="">— escolher —</option>

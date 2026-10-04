@@ -1,4 +1,4 @@
-import { Calculator, Database, Download, Info, Plus, Save, Trash2 } from 'lucide-react'
+﻿import { Calculator, Database, Download, Info, Plus, Save, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
@@ -136,7 +136,7 @@ export function IrcEstimatePage() {
   }
 
   return <div className="page-stack report-page">
-    <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Estimativa de IRC</h1><p>Resultado líquido do período (classes 6/7) mais as correções fiscais que introduzir, vezes a taxa que indicar. Não é o Modelo 22 nem substitui o cálculo oficial — introduza as correções e confirme a taxa aplicável.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading detail-heading"><div><p className="eyebrow">Contabilidade</p><h1>Estimativa de IRC</h1><p>Resultado líquido do período (classes 6/7) mais as correções fiscais que introduzir, vezes a taxa que indicar. É uma conta rápida: o apuramento pelos campos da declaração, com a taxa das PME, as derramas, os prejuízos e as tributações autónomas, está no <Link to="/modelo-22">Modelo 22</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
     <ReportChrome reportKey="estimativa-irc" title="Estimativa de IRC" from={fromDate} to={toDate} />
 
     <div className="filterbar no-print">

@@ -94,9 +94,59 @@ os pagamentos por conta.
   encargo (quadro 13) é um incremento próprio.
 - Não gera o ficheiro da declaração nem a entrega (Bloco C).
 
+### F3-10B — Tributações autónomas e prejuízos reportáveis (feito)
+
+**Tributações autónomas.** Uma secção nova entre o quadro 09 e o quadro 10:
+o utilizador indica os encargos do exercício por tipo (despesas não
+documentadas, viaturas por escalão, despesas de representação, ajudas de
+custo…) e a aplicação aplica as taxas do exercício, do artigo 88.º do CIRC
+tal como estão nas tabelas fiscais ([F3-04](F3-04-FISCAL-TABLES.md)).
+
+- Havendo encargos indicados, o **campo 365 passa a ser o total calculado**;
+  um valor que lá estivesse indicado é ignorado, com aviso. Sem encargos, o
+  campo 365 continua a ser indicado à mão.
+- Com **prejuízo fiscal**, as taxas são agravadas em dez pontos percentuais
+  (art.º 88.º, n.º 14), com um aviso para confirmar se alguma exceção se
+  aplica.
+- As tabelas só têm tributações autónomas a partir de 2025; antes disso a
+  secção não aparece.
+- Os encargos são indicados, não lidos das contas: o plano de contas não
+  distingue, por exemplo, o escalão de cada viatura.
+
+**Prejuízos fiscais reportáveis.**
+
+| Linha do quadro 09 | Regra |
+|---|---|
+| Prejuízos reportáveis no início do exercício | O transportado dos exercícios anteriores: para cada um, o saldo inicial + o prejuízo do campo 777 − o deduzido no campo 309. Recua até dez exercícios, a partir do primeiro com lançamentos ou valores guardados. |
+| Saldo inicial indicado (`prejuizos-iniciais`) | Substitui o transportado — para quem traz prejuízos de antes de usar a aplicação. |
+| Limite da dedução | 65 % do lucro tributável — CIRC, art.º 52.º, n.º 2, na redação da Lei n.º 24-D/2022 (texto do Portal das Finanças, consultado em 2026-10-04); aplicado a partir de 2023. |
+| Campo 309 | Continua a ser indicado; a aplicação **sugere** o menor entre o saldo e o limite, e avisa se o indicado exceder um ou outro. |
+| Prejuízos a reportar | Saldo inicial + prejuízo do exercício − campo 309. |
+
+**Estimativa de IRC.** O ecrã da estimativa mantém-se como conta rápida e
+passa a remeter para o Modelo 22, que é onde estão a taxa das PME, as
+derramas, os prejuízos e as tributações autónomas — fecha o que o F3-04B
+previa.
+
+**Validação efetuada**
+
+- `AccountingAI.IntegrationTests` (`Modelo22ServiceTests`): um prejuízo de
+  2025 transportado para 2026 e sugerido para o campo 309; dedução dentro e
+  acima do saldo; saldo inicial indicado e aviso do limite de 65 %; encargos
+  de tributação autónoma às taxas de 2026, a substituir o campo 365; taxas
+  agravadas com prejuízo fiscal; chave de encargo desconhecida recusada.
+- A suite completa: 250 testes .NET, 98 de interface.
+
+**Pressupostos a confirmar com um contabilista**
+
+- Os prejuízos anteriores a 2023 tinham prazo de reporte e um regime
+  transitório; a aplicação trata todos os prejuízos transportados como
+  reportáveis sem prazo.
+- O agravamento das tributações autónomas tem exceções (por exemplo no início
+  de atividade) que a aplicação não conhece.
+- As reduções transitórias de taxas das tributações autónomas não estão nas
+  tabelas.
+
 ### A seguir
 
-- **F3-10B** — tributações autónomas (quadro 13) a partir das contas e das
-  taxas do exercício; prejuízos fiscais reportáveis por exercício; ligação da
-  estimativa de IRC a este apuramento (fecha o F3-04B).
 - **F3-10C** — ficheiro e entrega pelo webservice da AT (Bloco C).

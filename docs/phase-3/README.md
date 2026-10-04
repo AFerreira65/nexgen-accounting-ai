@@ -25,7 +25,7 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | B | **F3-08** | Declaração periódica de IVA | **Em curso** — [`F3-08`](F3-08-VAT-DECLARATION.md); F3-08A (quadro 06 pelo modelo oficial em vigor, com conferência por conta) feito; faltam o lançamento de apuramento, os anexos e o XML (sem XML-Schema oficial encontrado); modelo novo para períodos a partir de 1 de julho de 2027 |
 | B | **F3-09** | Declaração recapitulativa de IVA | **Concluído (sem entrega)** — [`F3-09`](F3-09-RECAPITULATIVE-STATEMENT.md); F3-09A (naturezas intracomunitárias, quadros 04 e 05, campo 7 da declaração periódica) feito; a entrega pelo webservice fica para o Bloco C |
 | B | **F3-12** | Ativos fixos e depreciações | **Em curso** — [`F3-12`](F3-12-FIXED-ASSETS.md); F3-12A (cadastro e mapa de depreciações por quotas constantes, com conferência contra a contabilidade) e F3-12B (lançamento das depreciações do exercício, por conferir) feitos; faltam a alienação e o mapa fiscal |
-| B | **F3-10** | Modelo 22 (IRC) | **Em curso** — [`F3-10`](F3-10-MODELO-22.md); F3-10A (quadros 07, 09 e 10 pelo impresso oficial, com os valores guardados por exercício) feito; faltam as tributações autónomas (quadro 13), os prejuízos reportáveis, os anexos e a entrega |
+| B | **F3-10** | Modelo 22 (IRC) | **Em curso** — [`F3-10`](F3-10-MODELO-22.md); F3-10A (quadros 07, 09 e 10 pelo impresso oficial, com os valores guardados por exercício) e F3-10B (tributações autónomas por tipo de encargo e prejuízos fiscais reportáveis com o limite de 65 %) feitos; faltam os anexos e a entrega |
 | B | F3-11, F3-13, F3-14 | Saídas sem a AT: IES, retenções, dossier fiscal | Por especificar |
 | C | F3-15 … F3-17 | Comunicação com a AT | Depende da adesão — [`../ADESAO-AT.md`](../ADESAO-AT.md) |
 | D | F3-18 … F3-21 | Automação do lançamento | Por especificar |
@@ -34,7 +34,7 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | E | F3-24 … F3-26 | Gestão: orçamento, assistente com IA, relatório para o empresário | Por especificar |
 | F | F3-27 … F3-28 | Gabinete: calendário de obrigações e painel | Por especificar |
 
-O **Bloco A está fechado** (2026-10-03), salvo o F3-04B, que segue com o Modelo 22. A ordem acordada: Bloco A primeiro; depois F3-06 e F3-07, com os gráficos
+O **Bloco A está fechado** (2026-10-03); o F3-04B ficou resolvido no Modelo 22 (F3-10B). A ordem acordada: Bloco A primeiro; depois F3-06 e F3-07, com os gráficos
 (F3-22/23) em paralelo; a seguir o resto do Bloco B; o Bloco C assim que houver
 certificado de testes.
 

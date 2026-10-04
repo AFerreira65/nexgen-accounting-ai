@@ -166,6 +166,54 @@ public sealed class Modelo22ServiceTests
             await Assert.ThrowsExactlyAsync<ArgumentException>(
                 () => service.SaveAsync(userId, companyId, 2026, [new("724", 1m), new("724", 2m)], CancellationToken.None)).ConfigureAwait(false);
 
+            // Prejuízos reportáveis: um prejuízo de 40 000 em 2025 transporta-se para 2026 e é sugerido para o campo 309.
+            await service.SaveAsync(userId, companyId, 2025, [new("774", 40000m)], CancellationToken.None).ConfigureAwait(false);
+            var carried = await service.SaveAsync(userId, companyId, 2026, [new("724", 10000m)], CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual(40000m, Value(carried!, "prejuizos-disponiveis"));
+            Assert.AreEqual(104000m, Value(carried!, "309-limite"), "65 % do lucro tributável de 160 000.");
+            Assert.AreEqual(40000m, carried!.Fields.Single(field => field.Code == "309").Suggested);
+            Assert.AreEqual(40000m, Value(carried, "prejuizos-a-reportar"), "Nada deduzido: continuam por reportar.");
+
+            var deducted = await service.SaveAsync(userId, companyId, 2026, [new("724", 10000m), new("309", 40000m)], CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual(120000m, Value(deducted!, "311"));
+            Assert.AreEqual(0m, Value(deducted!, "prejuizos-a-reportar"));
+            Assert.IsFalse(deducted!.Warnings.Any(warning => warning.Contains("campo 309", StringComparison.Ordinal)));
+
+            var tooMuch = await service.SaveAsync(userId, companyId, 2026, [new("724", 10000m), new("309", 50000m)], CancellationToken.None).ConfigureAwait(false);
+            Assert.IsTrue(tooMuch!.Warnings.Any(warning => warning.Contains("excede os prejuízos fiscais reportáveis", StringComparison.Ordinal)));
+
+            // Um saldo inicial indicado substitui o transportado; acima de 65 % do lucro tributável há aviso.
+            var overLimit = await service.SaveAsync(userId, companyId, 2026,
+                [new("724", 10000m), new(Modelo22Service.OpeningLossesField, 200000m), new("309", 150000m)], CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual(200000m, Value(overLimit!, "prejuizos-disponiveis"));
+            Assert.IsTrue(overLimit!.Warnings.Any(warning => warning.Contains("art.º 52.º, n.º 2", StringComparison.Ordinal)));
+            Assert.AreEqual(50000m, Value(overLimit, "prejuizos-a-reportar"));
+
+            // Tributações autónomas: os encargos por tipo, às taxas de 2026, passam a ser o campo 365.
+            var autonomous = await service.SaveAsync(userId, companyId, 2026,
+            [
+                new("724", 10000m), new("365", 99m),
+                new(Modelo22Service.AutonomousPrefix + "despesas-representacao", 1000m),
+                new(Modelo22Service.AutonomousPrefix + "viaturas-ate-37500", 5000m),
+            ], CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual(500m, Value(autonomous!, "365"), "1 000 × 10 % + 5 000 × 8 %.");
+            Assert.IsTrue(autonomous!.Fields.Single(field => field.Code == "365").Computed);
+            Assert.IsTrue(autonomous.Warnings.Any(warning => warning.Contains("é ignorado", StringComparison.Ordinal)));
+            Assert.AreEqual(Value(autonomous, "361") + 500m, Value(autonomous, "367"));
+
+            // Com prejuízo fiscal, as taxas são agravadas em dez pontos percentuais.
+            var aggravated = await service.SaveAsync(userId, companyId, 2026,
+            [
+                new("774", 180000m),
+                new(Modelo22Service.AutonomousPrefix + "despesas-representacao", 1000m),
+                new(Modelo22Service.AutonomousPrefix + "viaturas-ate-37500", 5000m),
+            ], CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual(1100m, Value(aggravated!, "365"), "1 000 × 20 % + 5 000 × 18 %.");
+            Assert.AreEqual(1100m, Value(aggravated!, "367"), "Mesmo com prejuízo, as tributações autónomas pagam-se.");
+            Assert.IsTrue(aggravated!.Warnings.Any(warning => warning.Contains("art.º 88.º, n.º 14", StringComparison.Ordinal)));
+            await Assert.ThrowsExactlyAsync<ArgumentException>(
+                () => service.SaveAsync(userId, companyId, 2026, [new("ta-nao-existe", 1m)], CancellationToken.None)).ConfigureAwait(false);
+
             Assert.IsNull(await service.BuildAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
             Assert.IsNull(await service.SaveAsync(Guid.NewGuid(), companyId, 2026, [], CancellationToken.None).ConfigureAwait(false));
         }

@@ -77,7 +77,8 @@ se foi lido no texto oficial ou se vem de fonte secundária.
   2026 a 2028) antes de qualquer uso que não seja estimativa.
 - Quando sair a Lei do Orçamento para 2027, rever o catálogo inteiro.
 
-### F3-04B — Estimativa de IRC com a taxa das PME e a derrama (a seguir)
+### F3-04B — Estimativa de IRC com a taxa das PME e a derrama (resolvido no F3-10)
 
-A estimativa passa a aplicar as duas parcelas de uma PME e a derrama estadual,
-em vez de uma só taxa. Liga-se ao Modelo 22 (F3-10).
+As duas parcelas de uma PME e a derrama estadual passaram a ser aplicadas no
+Modelo 22 ([F3-10](F3-10-MODELO-22.md)); a estimativa de IRC mantém-se como
+conta rápida e remete para lá.

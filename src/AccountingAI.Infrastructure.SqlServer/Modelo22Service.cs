@@ -44,12 +44,34 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
 
     public const string MunicipalSurtaxRateField = "derrama-municipal-taxa";
 
+    /// <summary>O saldo de prejuízos fiscais reportáveis no início do exercício, quando o utilizador o indica em vez de o deixar transportar.</summary>
+    public const string OpeningLossesField = "prejuizos-iniciais";
+
+    /// <summary>O prefixo dos encargos sujeitos a tributação autónoma: <c>ta-</c> seguido da chave da tabela fiscal.</summary>
+    public const string AutonomousPrefix = "ta-";
+
+    /// <summary>
+    /// A parte do lucro tributável que os prejuízos deduzidos não podem exceder
+    /// em cada período: CIRC, artigo 52.º, n.º 2, na redação da Lei n.º
+    /// 24-D/2022, de 30 de dezembro (texto do Portal das Finanças, consultado
+    /// em 2026-10-04) — períodos com início em ou após 1 de janeiro de 2023.
+    /// </summary>
+    public const decimal LossDeductionLimit = 0.65m;
+
+    private const int LossDeductionLimitFirstYear = 2023;
+
+    // Até quantos exercícios se recua para transportar os prejuízos, quando o saldo inicial não é indicado.
+    private const int LossCarryYears = 10;
+
+    private const string SurchargeKey = "agravamento-prejuizo-fiscal";
+
     public const string Disclaimer =
         "Mapa de trabalho, não validado pela AT. Cobre o regime geral de um sujeito passivo residente: sem regimes de redução de taxa, " +
         "sem as taxas das Regiões Autónomas (campos 350 e 370), sem imposto a outras taxas (campo 349), sem grupos de sociedades e sem os anexos. " +
-        "Os limites legais (dedução de prejuízos, benefícios, derrama municipal) não são verificados.";
+        "Dos limites legais só verifica o da dedução de prejuízos (65 % do lucro tributável); os prejuízos anteriores a 2023, que tinham prazo de reporte, " +
+        "e os limites dos benefícios e da derrama municipal não são verificados.";
 
-    private const string Q07 = "Quadro 07", Q09 = "Quadro 09", Q10 = "Quadro 10";
+    private const string Q07 = "Quadro 07", Q09 = "Quadro 09", Q10 = "Quadro 10", QTA = "Tributações autónomas";
 
     // Os campos dos quadros 09 e 10 que o utilizador indica, com a designação do impresso.
     private static readonly (string Code, string Section, string Label)[] UserFields =
@@ -83,6 +105,36 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
 
     /// <returns><c>null</c> sem acesso à empresa.</returns>
     public async Task<Modelo22Return?> BuildAsync(Guid userId, Guid companyId, int year, CancellationToken cancellationToken = default)
+    {
+        // Os prejuízos reportáveis vêm dos exercícios anteriores: apura-se cada um, do mais antigo para o mais recente.
+        var firstEntry = await context.JournalEntries
+            .AsNoTracking()
+            .Where(entry => entry.CompanyId == companyId && entry.Status != JournalEntryStatus.Voided)
+            .MinAsync(entry => (DateOnly?)entry.EntryDate, cancellationToken)
+            .ConfigureAwait(false);
+        var firstSaved = await context.IrcReturnValues
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId)
+            .MinAsync(item => (int?)item.Year, cancellationToken)
+            .ConfigureAwait(false);
+        var first = Math.Max(year - LossCarryYears, Math.Min(firstEntry?.Year ?? year, firstSaved ?? year));
+        var carried = 0m;
+        for (var previous = first; previous < year; previous++)
+        {
+            var computed = await ComputeAsync(userId, companyId, previous, carried, cancellationToken).ConfigureAwait(false);
+            if (computed is null)
+            {
+                return null;
+            }
+
+            carried = computed.Value.ClosingLosses;
+        }
+
+        return (await ComputeAsync(userId, companyId, year, carried, cancellationToken).ConfigureAwait(false))?.Return;
+    }
+
+    private async Task<(Modelo22Return Return, decimal ClosingLosses)?> ComputeAsync(
+        Guid userId, Guid companyId, int year, decimal carriedLosses, CancellationToken cancellationToken)
     {
         var income = await statements
             .IncomeStatementAsync(userId, companyId, new DateOnly(year, 1, 1), new DateOnly(year, 12, 31), cancellationToken)
@@ -143,7 +195,32 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
 
         Computed("301", Q09, "Prejuízo fiscal (transporte do quadro 07)", loss);
         Computed("302", Q09, "Lucro tributável (transporte do quadro 07)", profit);
-        UserField("309");
+
+        // Prejuízos reportáveis: o saldo indicado para o exercício ou, sem ele, o transportado dos anteriores.
+        fields.Add(new Modelo22Field(
+            OpeningLossesField, Q09, "Prejuízos fiscais reportáveis no início do exercício — indicar só para substituir o valor transportado",
+            Saved(OpeningLossesField), false, saved.GetValueOrDefault(OpeningLossesField).Note));
+        var openingLosses = Computed(
+            "prejuizos-disponiveis", Q09, "Prejuízos fiscais reportáveis no início do exercício",
+            saved.ContainsKey(OpeningLossesField) ? Saved(OpeningLossesField) : carriedLosses);
+        decimal? lossLimit = year >= LossDeductionLimitFirstYear
+            ? Computed("309-limite", Q09, $"Limite da dedução de prejuízos ({LossDeductionLimit:P0} do lucro tributável, art.º 52.º, n.º 2)",
+                decimal.Round(profit * LossDeductionLimit, 2, MidpointRounding.AwayFromZero))
+            : null;
+        var deductible = Math.Min(openingLosses, lossLimit ?? profit);
+        fields.Add(new Modelo22Field(
+            "309", Q09, "Prejuízos fiscais deduzidos", Saved("309"), false, saved.GetValueOrDefault("309").Note,
+            deductible > 0m && Saved("309") == 0m ? deductible : null, "prejuízos reportáveis, até ao limite"));
+        if (Saved("309") > openingLosses)
+        {
+            warnings.Add($"O campo 309 ({Saved("309"):N2}) excede os prejuízos fiscais reportáveis no início do exercício ({openingLosses:N2}).");
+        }
+
+        if (lossLimit is { } limit && Saved("309") > limit)
+        {
+            warnings.Add($"O campo 309 ({Saved("309"):N2}) excede {LossDeductionLimit:P0} do lucro tributável ({limit:N2}), o máximo dedutível em cada período (CIRC, art.º 52.º, n.º 2).");
+        }
+
         UserField("310");
         var deductions = Saved("309") + Saved("310");
         if (deductions > profit)
@@ -152,6 +229,9 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
         }
 
         var taxable = Computed("311", Q09, "Matéria coletável (302 − 309 − 310)", Math.Max(0m, profit - deductions));
+        var closingLosses = Computed(
+            "prejuizos-a-reportar", Q09, "Prejuízos fiscais a reportar para os exercícios seguintes",
+            Math.Max(0m, openingLosses + loss - Saved("309")));
 
         // Quadro 10 — cálculo do imposto, com as taxas do exercício.
         var sme = Saved(SmeField) != 0m;
@@ -175,6 +255,39 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
 
             Computed("347-A", Q10, $"Imposto à taxa do art.º 87.º, n.º 2 — PME, primeiros {table.Irc.SmeThreshold:N0} € de matéria coletável × {table.Irc.SmeRate:P0}", field347A);
             Computed("347-B", Q10, $"Imposto à taxa normal (art.º 87.º, n.º 1) × {table.Irc.GeneralRate:P0}", field347B);
+        }
+
+        // Tributações autónomas: os encargos indicados por tipo, às taxas do exercício.
+        var autonomous = Saved("365");
+        var autonomousComputed = false;
+        if (table is { AutonomousTaxation.Count: > 0 })
+        {
+            var surcharge = loss > 0m ? table.AutonomousTaxation.FirstOrDefault(item => item.Key == SurchargeKey)?.Rate ?? 0m : 0m;
+            var sum = 0m;
+            foreach (var item in table.AutonomousTaxation.Where(item => item.Key != SurchargeKey))
+            {
+                var code = AutonomousPrefix + item.Key;
+                fields.Add(new Modelo22Field(
+                    code, QTA, $"{item.Description} — encargos sujeitos, a {item.Rate + surcharge:P1}", Saved(code), false, saved.GetValueOrDefault(code).Note));
+                sum += decimal.Round(Saved(code) * (item.Rate + surcharge), 2, MidpointRounding.AwayFromZero);
+                autonomousComputed |= Saved(code) != 0m;
+            }
+
+            Computed("ta-total", QTA, "Tributações autónomas (transporta para o campo 365 quando há encargos indicados)", sum);
+            if (autonomousComputed)
+            {
+                if (Saved("365") != 0m)
+                {
+                    warnings.Add("Há encargos indicados nas tributações autónomas: o campo 365 passa a ser o total calculado e o valor que tinha sido indicado é ignorado.");
+                }
+
+                if (surcharge > 0m)
+                {
+                    warnings.Add($"Com prejuízo fiscal, as taxas de tributação autónoma foram agravadas em {surcharge * 100m:0} pontos percentuais (art.º 88.º, n.º 14); confirme se alguma exceção se aplica.");
+                }
+
+                autonomous = sum;
+            }
         }
 
         var field351 = Computed("351", Q10, "Coleta (347-A + 347-B + 349 + 350 + 370)", field347A + field347B);
@@ -206,12 +319,20 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
         var municipal = Computed(
             "364", Q10, $"Derrama municipal ({municipalRate:0.####} % do lucro tributável)",
             decimal.Round(profit * municipalRate / 100m, 2, MidpointRounding.AwayFromZero));
-        foreach (var code in new[] { "379", "365", "366", "369" })
+        UserField("379");
+        if (autonomousComputed)
         {
-            UserField(code);
+            Computed("365", Q10, "Tributações autónomas", autonomous);
+        }
+        else
+        {
+            UserField("365");
         }
 
-        var total = balance + Saved("363") + Saved("372") + municipal - Saved("379") + Saved("365") + Saved("366") + Saved("369");
+        UserField("366");
+        UserField("369");
+
+        var total = balance + Saved("363") + Saved("372") + municipal - Saved("379") + autonomous + Saved("366") + Saved("369");
         Computed("367", Q10, "Total a pagar [361 ou (−362) + 363 + 372 + 364 − 379 + 365 + 366 + 369] > 0", Math.Max(0m, total));
         Computed("368", Q10, "Total a recuperar [(−362) + 363 + 372 + 364 − 379 + 365 + 366 + 369] < 0", Math.Max(0m, -total));
 
@@ -230,7 +351,7 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
             warnings.Add("A taxa da derrama municipal está a zero: confirme a taxa do município (ofício-circulado anual da AT) e o Anexo A, se houver mais de um município.");
         }
 
-        return new Modelo22Return(year, sme, municipalRate, fields, warnings, Source, Disclaimer);
+        return (new Modelo22Return(year, sme, municipalRate, fields, warnings, Source, Disclaimer), closingLosses);
     }
 
     /// <summary>
@@ -257,6 +378,10 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
             .Concat(UserFields.Select(field => field.Code))
             .Append(SmeField)
             .Append(MunicipalSurtaxRateField)
+            .Append(OpeningLossesField)
+            .Concat((FiscalTableCatalog.For(year)?.AutonomousTaxation ?? [])
+                .Where(item => item.Key != SurchargeKey)
+                .Select(item => AutonomousPrefix + item.Key))
             .ToHashSet(StringComparer.Ordinal);
         var incoming = new Dictionary<string, Modelo22Input>(StringComparer.Ordinal);
         foreach (var value in values)
