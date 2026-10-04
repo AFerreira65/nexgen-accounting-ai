@@ -321,6 +321,20 @@ html[data-theme='dark'] .warning-list { color: #f0c987; }
 .amount-input { width: 130px; text-align: right; }
 .ratio-formula { color: #738289; font-size: 11px; }
 html[data-theme='dark'] .ratio-formula { color: #9fb3ba; }
+.bar-list { display: grid; gap: 9px; margin: 0; padding: 6px 22px 20px; list-style: none; }
+.bar-list li { display: grid; grid-template-columns: minmax(120px, 38%) minmax(60px, 1fr) auto; align-items: center; gap: 12px; font-size: 12px; }
+.bar-list-label { overflow: hidden; color: #2b3d45; text-overflow: ellipsis; white-space: nowrap; }
+.bar-list-track { height: 10px; overflow: hidden; border-radius: 6px; background: #eef3f4; }
+.bar-list-fill { display: block; height: 100%; min-width: 2px; border-radius: 6px; background: var(--tone); }
+.bar-list-value { color: #14262e; font-weight: 700; white-space: nowrap; }
+.bar-list-value small { margin-left: 6px; color: #738289; font-weight: 600; }
+.bar-list.tone-primary { --tone: #0b9286; }
+.bar-list.tone-danger { --tone: #d9647a; }
+.bar-list.tone-accent { --tone: #2f6fd0; }
+.bar-list.tone-warning { --tone: #d08a1c; }
+.bar-list.tone-muted { --tone: #8a9aa1; }
+html[data-theme='dark'] .bar-list-label, html[data-theme='dark'] .bar-list-value { color: #e3eff0; }
+html[data-theme='dark'] .bar-list-track { background: #24393f; }
 .chart-grid-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .chart-panel .panel-heading { padding-bottom: 4px; }
 .chart { margin: 0; padding: 4px 14px 14px; }

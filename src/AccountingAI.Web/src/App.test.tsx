@@ -772,6 +772,8 @@ describe('App', () => {
     expect(screen.getByText(/dados de exemplo/i)).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /Rendimentos, gastos e resultado por mês/ })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /Saldo de caixa e bancos/ })).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: /Gastos por natureza/ })).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: /Maiores clientes/ })).toBeInTheDocument()
   })
 
   it('shows the operating map and ratios screens (require the database)', () => {

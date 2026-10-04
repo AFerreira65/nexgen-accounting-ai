@@ -51,7 +51,44 @@ os mapas e os relatórios de gestão eram só tabelas e texto.
 - O saldo de clientes e de fornecedores é o líquido das contas — um
   adiantamento abate ao saldo, ao contrário do balanço.
 
+### F3-22B — Gráficos de estrutura e gráfico na visão geral (feito)
+
+- **`BarList`** (`app/charts.tsx`) — lista de barras horizontais para
+  comparar parcelas com nomes compridos (rubricas, terceiros), com o valor e
+  o peso de cada uma.
+- **`FinancialStatementsService.StructureAsync`** — a estrutura de um
+  exercício, só de leitura:
+
+| Estrutura | Regra |
+|---|---|
+| Gastos por natureza | As rubricas da demonstração de resultados com valor negativo, do maior para o menor, com o peso no total. |
+| Rendimentos por natureza | As rubricas com valor positivo. |
+| Maiores clientes | Os dez terceiros com mais débitos nas contas 21 no exercício (faturação lançada, **com IVA**), sem a abertura. |
+| Maiores fornecedores | Os dez com mais créditos nas contas 22 (compras lançadas, com IVA). |
+
+- **API:** `GET .../management/structure?year=`.
+- **PWA:** o ecrã «Evolução mensal» ganha quatro painéis de estrutura (em
+  modo de demonstração, com dados de exemplo); a **«Visão geral»** passa a
+  mostrar o gráfico de rendimentos, gastos e resultado do exercício, com
+  ligação à evolução mensal — só com a base ligada e só se houver movimentos.
+
+**Validação efetuada**
+
+- `AccountingAI.IntegrationTests`: a estrutura dos gastos e dos rendimentos
+  (ordem, valores e pesos) no cenário das demonstrações.
+- `AccountingAI.Api.Tests`: o endpoint.
+- `AccountingAI.Web`: `tsc`, `eslint`, 102 testes (as listas de barras em
+  modo de demonstração), `vite build`; os painéis foram vistos no navegador
+  com os dados de exemplo.
+- A suite completa: 254 testes .NET.
+
+**Por verificar**
+
+- Tudo com uma **empresa real**, incluindo o gráfico da visão geral, que não
+  existe em modo de demonstração.
+- Os maiores clientes e fornecedores só veem lançamentos com terceiro; uma
+  nota de crédito não abate à faturação do cliente.
+
 ### A seguir
 
-- **F3-22B** — gráficos na visão geral e nos relatórios de gestão; gráficos de
-  estrutura (gastos por natureza, maiores clientes e fornecedores).
+- **F3-22C** — gráficos nos relatórios de gestão gerados com IA (F2-05).

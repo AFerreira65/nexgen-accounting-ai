@@ -11,6 +11,26 @@ export type ChartSeries = {
   dashed?: boolean
 }
 
+/**
+ * Lista de barras horizontais: para comparar parcelas com nomes compridos
+ * (rubricas, terceiros), que não cabem no eixo de um gráfico de colunas.
+ */
+export function BarList({ title, items, format, tone = 'primary' }: {
+  title: string
+  items: { label: string; amount: number; share: number }[]
+  format: (value: number) => string
+  tone?: ChartTone
+}) {
+  const max = Math.max(1, ...items.map((item) => item.amount))
+  return <ul className={`bar-list tone-${tone}`} aria-label={title}>
+    {items.map((item) => <li key={item.label}>
+      <span className="bar-list-label" title={item.label}>{item.label}</span>
+      <span className="bar-list-track"><span className="bar-list-fill" style={{ width: `${(item.amount / max) * 100}%` }} /></span>
+      <span className="bar-list-value">{format(item.amount)} <small>{item.share.toLocaleString('pt-PT', { maximumFractionDigits: 1 })} %</small></span>
+    </li>)}
+  </ul>
+}
+
 const compact = new Intl.NumberFormat('pt-PT', { notation: 'compact', maximumFractionDigits: 1 })
 
 /** Passo «redondo» (1, 2 ou 5 × 10ⁿ) para cerca de cinco divisões do eixo. */

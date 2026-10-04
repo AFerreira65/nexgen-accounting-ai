@@ -1,7 +1,8 @@
 import { AlertTriangle, ArrowRight, Clock3, Database, HandCoins, Landmark, Receipt, Scale, TrendingUp, Users, Wallet } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { euro, formatMovementDate, type Movement } from '../app/demo-data'
+import { Chart } from '../app/charts'
+import { euro, formatMovementDate, type MonthlyEvolution, type Movement } from '../app/demo-data'
 import { PeriodShortcuts } from '../app/periods'
 import { useMovementsSummary, useWorkContext } from '../app/WorkContext'
 
@@ -11,6 +12,8 @@ type Balance = { accountCode: string; balance: number }
 // movimentos aqui — é só um resumo; a lista completa e paginada fica em
 // Movimentos.
 const RECENT_MOVEMENTS = 8
+
+const dashboardMonths = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
 // A data de referência dos indicadores fica guardada por empresa no
 // navegador, para não voltar ao presente a cada visita ao painel.
@@ -39,7 +42,7 @@ function balancesFromMovements(movements: ReturnType<typeof useWorkContext>['mov
 }
 
 export function DashboardPage() {
-  const { accountingSource, activeCompany, movements, source, user } = useWorkContext()
+  const { accountingSource, activeCompany, monthlyEvolution, movements, source, user } = useWorkContext()
   const onDatabase = accountingSource === 'database'
   // Contagens e movimentos por conferir vêm do resumo agregado; a lista
   // recente, numa empresa ligada à BD, de um pedido só da primeira página.
@@ -57,6 +60,18 @@ export function DashboardPage() {
       else window.localStorage.removeItem(`${REFERENCE_DATE_KEY}${activeCompany.companyId}`)
     } catch { /* storage é opcional */ }
   }
+
+  // A evolução do exercício, para o gráfico do painel; se falhar, o painel fica sem ele.
+  const chartYear = activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()
+  const [evolution, setEvolution] = useState<MonthlyEvolution | null>(null)
+  useEffect(() => {
+    if (!onDatabase) { setEvolution(null); return }
+    const controller = new AbortController()
+    void monthlyEvolution(activeCompany.companyId, chartYear)
+      .then((value) => { if (!controller.signal.aborted) setEvolution(value) })
+      .catch(() => { if (!controller.signal.aborted) setEvolution(null) })
+    return () => controller.abort()
+  }, [monthlyEvolution, onDatabase, activeCompany.companyId, chartYear])
 
   const [recent, setRecent] = useState<Movement[] | null>(null)
   useEffect(() => {
@@ -140,6 +155,15 @@ export function DashboardPage() {
         <Link className="metric-card" to="/contas-correntes"><span className="metric-icon amber"><HandCoins /></span><div><small>Saldo de fornecedores</small><strong>{euro.format(payables)}</strong><span>{asOf ?? 'Classe 22 · a pagar'}</span></div></Link>
         <Link className="metric-card" to="/iva"><span className="metric-icon navy"><Receipt /></span><div><small>Posição de IVA</small><strong>{euro.format(vatPosition)}</strong><span>{asOf ?? (vatPosition > 0 ? 'A entregar ao Estado' : vatPosition < 0 ? 'A recuperar ou a reportar' : 'Nulo')}</span></div></Link>
       </section>
+
+      {evolution && evolution.lastMonth > 0 && <section className="panel chart-panel">
+        <div className="panel-heading"><div><h2>Evolução de {chartYear}</h2><p>Rendimentos, gastos e resultado por mês, sem o apuramento.</p></div><Link className="text-link" to="/evolucao">Ver a evolução mensal <ArrowRight size={15} /></Link></div>
+        <Chart title={`Rendimentos, gastos e resultado por mês em ${chartYear}`} labels={dashboardMonths} format={euro.format} height={220} series={[
+          { name: 'Rendimentos', kind: 'bar', tone: 'primary', values: evolution.months.map((month) => (month.month <= evolution.lastMonth ? month.income : null)) },
+          { name: 'Gastos', kind: 'bar', tone: 'danger', values: evolution.months.map((month) => (month.month <= evolution.lastMonth ? month.expenses : null)) },
+          { name: 'Resultado', kind: 'line', tone: 'accent', values: evolution.months.map((month) => (month.month <= evolution.lastMonth ? month.result : null)) },
+        ]} />
+      </section>}
 
       <div className="dashboard-grid">
         <section className="panel">

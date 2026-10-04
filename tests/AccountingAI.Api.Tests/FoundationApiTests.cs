@@ -1610,6 +1610,8 @@ public sealed class FoundationApiTests
         using var evolution = await client.GetAsync($"{basePath}/management/monthly-evolution?year=2026").ConfigureAwait(false);
         var evolutionPayload = await evolution.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badYear = await client.GetAsync($"{basePath}/management/monthly-evolution?year=12").ConfigureAwait(false);
+        using var structure = await client.GetAsync($"{basePath}/management/structure?year=2026").ConfigureAwait(false);
+        var structurePayload = await structure.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var map = await client.GetAsync($"{basePath}/management/operating-map?year=2026").ConfigureAwait(false);
         var mapPayload = await map.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var ratios = await client.GetAsync($"{basePath}/management/ratios?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
@@ -1634,6 +1636,8 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, evolution.StatusCode);
         StringAssert.Contains(evolutionPayload, "\"month\":12");
         Assert.AreEqual(HttpStatusCode.BadRequest, badYear.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, structure.StatusCode);
+        StringAssert.Contains(structurePayload, "\"topCustomers\":");
         Assert.AreEqual(HttpStatusCode.OK, map.StatusCode);
         StringAssert.Contains(mapPayload, "\"label\":\"Resultado líquido do período\"");
         Assert.AreEqual(HttpStatusCode.OK, ratios.StatusCode);

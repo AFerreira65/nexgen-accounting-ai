@@ -236,6 +236,19 @@ public sealed class CashFlowAndEquityStatementsTests
             Assert.IsNull(await service.RatiosAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
             Assert.IsNull(await service.OperatingMapAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
 
+            // Estrutura do exercício: os gastos por natureza, do maior para o menor, com o peso de cada um.
+            var structure = await service.StructureAsync(userId, companyId, 2026, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsNotNull(structure);
+            CollectionAssert.AreEqual(
+                new[] { "Fornecimentos e serviços externos", "Juros e gastos similares suportados" },
+                structure!.Expenses.Select(item => item.Label).ToArray());
+            Assert.AreEqual(200m, structure.Expenses[0].Amount);
+            Assert.AreEqual(95.2m, structure.Expenses[0].Share);
+            Assert.AreEqual("Vendas e serviços prestados", structure.Income.Single().Label);
+            Assert.AreEqual(100m, structure.Income.Single().Share);
+            Assert.AreEqual(0, structure.TopCustomers.Count, "Neste cenário não há lançamentos com terceiro.");
+            Assert.IsNull(await service.StructureAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
+
             // IES, Anexo A: as rubricas nos campos do impresso, com os gastos positivos.
             var annex = await new IesAnnexAService(context, service).BuildAsync(userId, companyId, 2026, CancellationToken.None).ConfigureAwait(false);
             Assert.IsNotNull(annex);

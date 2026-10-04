@@ -775,6 +775,8 @@ export type OperatingMap = {
 }
 export type FinancialRatio = { group: string; label: string; value: number | null; comparative: number | null; unit: 'x' | '%' | 'dias' | '€'; formula: string }
 export type FinancialRatios = { from: string; to: string; model: string; days: number; ratios: FinancialRatio[]; balanceDifference: number; excludedAccounts: number }
+export type StructureItem = { label: string; amount: number; share: number }
+export type ExerciseStructure = { year: number; expenses: StructureItem[]; income: StructureItem[]; topCustomers: StructureItem[]; topSuppliers: StructureItem[] }
 export type MonthlyEvolution = {
   year: number
   lastMonth: number

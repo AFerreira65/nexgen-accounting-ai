@@ -1,8 +1,8 @@
 import { Database, Download } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Chart } from '../app/charts'
+import { BarList, Chart } from '../app/charts'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
-import { euro, type MonthlyEvolution } from '../app/demo-data'
+import { euro, type ExerciseStructure, type MonthlyEvolution } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -37,6 +37,21 @@ function demoEvolution(year: number): MonthlyEvolution {
   }
 }
 
+/** Estrutura de exemplo para o modo de demonstração. */
+function demoStructure(year: number): ExerciseStructure {
+  const shares = (items: [string, number][]) => {
+    const total = items.reduce((value, [, amount]) => value + amount, 0)
+    return items.map(([label, amount]) => ({ label, amount, share: Math.round((amount / total) * 1000) / 10 }))
+  }
+  return {
+    year,
+    expenses: shares([['Fornecimentos e serviços externos', 71200], ['Gastos com o pessoal', 58400], ['Custo das mercadorias vendidas e das matérias consumidas', 26900], ['Gastos / reversões de depreciação e de amortização', 9100], ['Outros gastos', 3800]]),
+    income: shares([['Vendas e serviços prestados', 182300], ['Outros rendimentos', 7900]]),
+    topCustomers: shares([['Cliente Alfa, Lda.', 61200], ['Beta Indústria, S.A.', 44800], ['Gama Serviços', 31500], ['Delta & Filhos', 18700]]),
+    topSuppliers: shares([['Fornecedor Norte, Lda.', 38900], ['Energia do Sul, S.A.', 17400], ['Papelaria Central', 6200]]),
+  }
+}
+
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0)
 
 /** A variação face ao período homólogo, ou vazio quando não há base de comparação. */
@@ -47,12 +62,13 @@ function change(current: number, previous: number) {
 }
 
 export function MonthlyEvolutionPage() {
-  const { activeCompany, source, monthlyEvolution } = useWorkContext()
+  const { activeCompany, source, monthlyEvolution, exerciseStructure } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const defaultYear = activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()
   const [year, setYear] = useState(defaultYear)
   const [loaded, setLoaded] = useState<MonthlyEvolution | null>(null)
+  const [loadedStructure, setLoadedStructure] = useState<ExerciseStructure | null>(null)
   const [error, setError] = useState('')
   usePublishRecord(undefined, undefined)
 
@@ -68,6 +84,16 @@ export function MonthlyEvolutionPage() {
     return () => controller.abort()
   }, [monthlyEvolution, companyId, onDatabase, year])
 
+  useEffect(() => {
+    if (!onDatabase) { setLoadedStructure(null); return }
+    const controller = new AbortController()
+    void exerciseStructure(companyId, year)
+      .then((value) => { if (!controller.signal.aborted) setLoadedStructure(value) })
+      .catch(() => { if (!controller.signal.aborted) setLoadedStructure(null) })
+    return () => controller.abort()
+  }, [exerciseStructure, companyId, onDatabase, year])
+
+  const structure = onDatabase ? loadedStructure : demoStructure(year)
   const evolution = onDatabase ? loaded : demoEvolution(year)
   const months = evolution?.months ?? []
   const last = evolution?.lastMonth ?? 0
@@ -150,6 +176,25 @@ export function MonthlyEvolutionPage() {
           ]} />
         </section>
       </div>
+
+      {structure && <div className="chart-grid-layout">
+        <section className="panel chart-panel">
+          <div className="panel-heading"><div><h2>Gastos por natureza</h2><p>As rubricas da demonstração de resultados de {year}, com o peso de cada uma.</p></div></div>
+          {structure.expenses.length > 0 ? <BarList title={`Gastos por natureza em ${year}`} items={structure.expenses} format={euro.format} tone="danger" /> : <p className="empty-state">Sem gastos no exercício.</p>}
+        </section>
+        <section className="panel chart-panel">
+          <div className="panel-heading"><div><h2>Rendimentos por natureza</h2><p>De onde vêm os rendimentos de {year}.</p></div></div>
+          {structure.income.length > 0 ? <BarList title={`Rendimentos por natureza em ${year}`} items={structure.income} format={euro.format} /> : <p className="empty-state">Sem rendimentos no exercício.</p>}
+        </section>
+        <section className="panel chart-panel">
+          <div className="panel-heading"><div><h2>Maiores clientes</h2><p>Faturação lançada nas contas 21 (com IVA), pelos lançamentos com terceiro.</p></div></div>
+          {structure.topCustomers.length > 0 ? <BarList title={`Maiores clientes em ${year}`} items={structure.topCustomers} format={euro.format} tone="accent" /> : <p className="empty-state">Sem lançamentos de clientes com terceiro indicado.</p>}
+        </section>
+        <section className="panel chart-panel">
+          <div className="panel-heading"><div><h2>Maiores fornecedores</h2><p>Compras lançadas nas contas 22 (com IVA), pelos lançamentos com terceiro.</p></div></div>
+          {structure.topSuppliers.length > 0 ? <BarList title={`Maiores fornecedores em ${year}`} items={structure.topSuppliers} format={euro.format} tone="warning" /> : <p className="empty-state">Sem lançamentos de fornecedores com terceiro indicado.</p>}
+        </section>
+      </div>}
 
       <section className="panel">
         <div className="panel-heading"><div><h2>Valores</h2><p>Os números por trás dos gráficos.</p></div></div>

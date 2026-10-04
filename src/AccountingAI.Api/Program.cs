@@ -2392,6 +2392,19 @@ if (applicationEndpointsAvailable)
         return evolution is null ? Results.NotFound() : Results.Ok(evolution);
     });
 
+    // Estrutura do exercício: gastos e rendimentos por natureza, maiores clientes e fornecedores.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/structure", async (
+        Guid userId, Guid companyId, int year, FinancialStatementsService statements, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        var structure = await statements.StructureAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        return structure is null ? Results.NotFound() : Results.Ok(structure);
+    });
+
     // Mapa de exploração mensal e rácios, sobre as rubricas das demonstrações financeiras.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/operating-map", async (
         Guid userId, Guid companyId, int year, FinancialStatementsService statements, CancellationToken cancellationToken) =>
