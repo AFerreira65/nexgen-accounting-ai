@@ -75,9 +75,44 @@ fiscal.
   datas e o valor originais: as acumuladas no início resultam do cálculo, não
   do que foi efetivamente lançado.
 
+### F3-12B — Lançamento das depreciações do exercício (feito)
+
+- **`FixedAssetService.PostDepreciationAsync`** — gera um lançamento a 31 de
+  dezembro com o gasto a débito e as depreciações acumuladas a crédito,
+  **somados por conta**, no diário indicado. Fica **por conferir**: é o
+  contabilista que o confirma nos movimentos.
+- **Recusas**, para não lançar o que não deve:
+
+| Situação | Mensagem |
+|---|---|
+| O exercício já foi lançado por aqui | Reconhece-se pela referência de documento «Depreciações AAAA» num lançamento não anulado; para gerar de novo, anula-se esse. |
+| Sem depreciações no exercício | Nada a lançar. |
+| Um ativo sem a conta do gasto ou a das acumuladas | Lista os códigos em falta. |
+| Já há gastos de depreciação nas contas 64 | Só avança com confirmação explícita (`allowExisting`), para não duplicar o que veio de um SAF-T ou foi lançado à mão. |
+| Período fechado, diário inexistente ou inativo | As regras gerais dos lançamentos. |
+
+- **API:** `POST .../fixed-assets/schedule/post?year=&journal=&allowExisting=`.
+- **PWA:** no «Mapa de depreciações», o painel «Lançar as depreciações» pede
+  o diário; quando já há gastos lançados, o botão diz quanto e pede a
+  confirmação.
+
+**Validação efetuada**
+
+- `AccountingAI.IntegrationTests` (`FixedAssetServiceTests`): recusa com
+  gastos já lançados sem confirmação e com um ativo sem contas; lançamento
+  com as duas depreciações somadas por conta, por conferir; segunda tentativa
+  recusada com a referência do primeiro; o mapa passa a ver o gasto lançado.
+- A suite completa: 247 testes .NET, 97 de interface.
+- **Por verificar em direto:** o painel de lançamento, com a base real — é
+  uma operação de escrita, pelo que não tem teste de API (os testes de API
+  correm contra a base real e são só de leitura).
+
+**Limitações**
+
+- Um lançamento por exercício, a 31 de dezembro; não há depreciações mensais.
+- Não lança só a diferença: ou o exercício inteiro, ou nada.
+
 ### A seguir
 
-- **F3-12B** — gerar o lançamento das depreciações do exercício (ou do mês) a
-  partir do mapa, pelas contas de cada ativo.
 - **F3-12C** — alienação e abate com a mais ou menos-valia; mapa fiscal
   (modelo 32) e tabelas do Decreto Regulamentar n.º 25/2009.

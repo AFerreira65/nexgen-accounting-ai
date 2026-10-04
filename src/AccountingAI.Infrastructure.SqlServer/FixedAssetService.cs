@@ -46,7 +46,8 @@ public sealed record DepreciationScheduleRow(
     decimal Depreciation,
     decimal AccumulatedAtEnd,
     decimal NetValue,
-    string? ExpenseAccountCode);
+    string? ExpenseAccountCode,
+    string? AccumulatedAccountCode = null);
 
 /// <param name="LedgerDepreciation">Os gastos de depreciação lançados no exercício (contas 64, sem o apuramento).</param>
 /// <param name="Difference">Calculado menos lançado: zero quando a contabilidade tem as depreciações do mapa.</param>
@@ -64,10 +65,14 @@ public sealed record DepreciationSchedule(
 /// Mantém o cadastro de ativos fixos (<see cref="FixedAsset"/>) e calcula o
 /// mapa de depreciações de um exercício, por quotas constantes. O mapa é um
 /// cálculo — não lança nada — e compara o total com os gastos de depreciação
-/// que estão na contabilidade.
+/// que estão na contabilidade. O lançamento das depreciações é um passo à
+/// parte, pedido pelo utilizador, e fica por conferir.
 /// </summary>
-public sealed class FixedAssetService(AccountingDbContext context)
+public sealed class FixedAssetService(AccountingDbContext context, JournalPostingService posting)
 {
+    /// <summary>A referência de documento do lançamento gerado: é por ela que se sabe que o exercício já foi lançado.</summary>
+    public static string DepreciationDocumentReference(int year) => $"Depreciações {year}";
+
     /// <returns><c>null</c> sem acesso à empresa.</returns>
     public async Task<IReadOnlyList<FixedAssetRow>?> ListAsync(
         Guid userId, Guid companyId, bool includeInactive, CancellationToken cancellationToken = default)
@@ -149,6 +154,7 @@ public sealed class FixedAssetService(AccountingDbContext context)
         var assets = await context.FixedAssets
             .AsNoTracking()
             .Include(item => item.ExpenseAccount)
+            .Include(item => item.AccumulatedAccount)
             .Where(item => item.CompanyId == companyId && item.IsActive && item.StartOfUseDate.Year <= year)
             .OrderBy(item => item.Code)
             .ToListAsync(cancellationToken)
@@ -163,7 +169,7 @@ public sealed class FixedAssetService(AccountingDbContext context)
                 var atEnd = asset.AccumulatedAtEndOf(year);
                 return new DepreciationScheduleRow(
                     asset.Code, asset.Description, asset.StartOfUseDate, asset.DisposalDate, asset.AcquisitionValue, asset.AnnualRate,
-                    atStart, atEnd - atStart, atEnd, asset.AcquisitionValue - atEnd, asset.ExpenseAccount?.Code);
+                    atStart, atEnd - atStart, atEnd, asset.AcquisitionValue - atEnd, asset.ExpenseAccount?.Code, asset.AccumulatedAccount?.Code);
             })
             .ToList();
 
@@ -185,6 +191,73 @@ public sealed class FixedAssetService(AccountingDbContext context)
         return new DepreciationSchedule(
             year, rows, rows.Sum(row => row.AcquisitionValue), total, rows.Sum(row => row.AccumulatedAtEnd), rows.Sum(row => row.NetValue),
             ledger, total - ledger);
+    }
+
+    /// <summary>
+    /// Gera o lançamento das depreciações do exercício, a 31 de dezembro: o
+    /// gasto a débito e as depreciações acumuladas a crédito, somados por
+    /// conta. Fica por conferir. Recusa se o exercício já foi lançado por
+    /// aqui, se algum ativo não tem as duas contas, ou — sem
+    /// <paramref name="allowExisting"/> — se já há gastos de depreciação na
+    /// contabilidade (para não duplicar o que veio de outro lado).
+    /// </summary>
+    /// <returns><c>null</c> sem acesso à empresa.</returns>
+    public async Task<PostedMovement?> PostDepreciationAsync(
+        Guid userId, Guid companyId, int year, string journalCode, bool allowExisting, CancellationToken cancellationToken = default)
+    {
+        var schedule = await ScheduleAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        if (schedule is null)
+        {
+            return null;
+        }
+
+        var documentReference = DepreciationDocumentReference(year);
+        var existing = await context.JournalEntries
+            .AsNoTracking()
+            .Where(entry => entry.CompanyId == companyId &&
+                entry.Status != JournalEntryStatus.Voided &&
+                entry.DocumentReference == documentReference)
+            .Select(entry => entry.Reference)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (existing is not null)
+        {
+            throw new InvalidOperationException($"As depreciações de {year} já foram lançadas ({existing}). Anule esse lançamento para as gerar de novo.");
+        }
+
+        var rows = schedule.Rows.Where(row => row.Depreciation > 0m).ToList();
+        if (rows.Count == 0)
+        {
+            throw new InvalidOperationException($"Não há depreciações a lançar em {year}.");
+        }
+
+        var incomplete = rows.Where(row => row.ExpenseAccountCode is null || row.AccumulatedAccountCode is null).Select(row => row.Code).ToList();
+        if (incomplete.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Falta a conta do gasto ou a das depreciações acumuladas em: {string.Join(", ", incomplete)}. Complete o cadastro antes de lançar.");
+        }
+
+        if (schedule.LedgerDepreciation != 0m && !allowExisting)
+        {
+            throw new InvalidOperationException(
+                $"Já há {schedule.LedgerDepreciation:N2} de gastos de depreciação lançados em {year} (contas 64). Confirme que não vai duplicar antes de gerar o lançamento.");
+        }
+
+        var description = $"Depreciações do exercício de {year}";
+        var lines = rows
+            .GroupBy(row => row.ExpenseAccountCode!, StringComparer.Ordinal)
+            .OrderBy(group => group.Key, StringComparer.Ordinal)
+            .Select(group => new JournalEntryLineInput(group.Key, description, group.Sum(row => row.Depreciation), 0m))
+            .Concat(rows
+                .GroupBy(row => row.AccumulatedAccountCode!, StringComparer.Ordinal)
+                .OrderBy(group => group.Key, StringComparer.Ordinal)
+                .Select(group => new JournalEntryLineInput(group.Key, description, 0m, group.Sum(row => row.Depreciation))))
+            .ToList();
+
+        return await posting
+            .PostAsync(companyId, journalCode, new DateOnly(year, 12, 31), documentReference, description, reviewed: false, lines, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private async Task<(string? Asset, string? Accumulated, string? Expense)> ApplyAsync(

@@ -147,16 +147,21 @@ export function FixedAssetsPage() {
 }
 
 export function DepreciationSchedulePage() {
-  const { activeCompany, source, depreciationSchedule } = useWorkContext()
+  const { activeCompany, source, depreciationSchedule, postDepreciation } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const defaultYear = activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()
   const [year, setYear] = useState(defaultYear)
   const [schedule, setSchedule] = useState<DepreciationSchedule | null>(null)
   const [error, setError] = useState('')
+  const [journal, setJournal] = useState('')
+  const [posting, setPosting] = useState(false)
+  const [posted, setPosted] = useState('')
+  const [reload, setReload] = useState(0)
   usePublishRecord(undefined, undefined)
 
   useEffect(() => { setYear(defaultYear) }, [defaultYear, companyId])
+  useEffect(() => { setPosted('') }, [year, companyId])
 
   useEffect(() => {
     if (!onDatabase) { setSchedule(null); return }
@@ -166,7 +171,7 @@ export function DepreciationSchedulePage() {
       .then((value) => { if (!controller.signal.aborted) setSchedule(value) })
       .catch((problem: unknown) => { if (!controller.signal.aborted) setError(problem instanceof Error ? problem.message : 'Não foi possível calcular o mapa de depreciações.') })
     return () => controller.abort()
-  }, [depreciationSchedule, companyId, onDatabase, year])
+  }, [depreciationSchedule, companyId, onDatabase, year, reload])
 
   if (!onDatabase) {
     return <div className="page-stack">
@@ -176,6 +181,20 @@ export function DepreciationSchedulePage() {
   }
 
   const rows = schedule?.rows ?? []
+  async function post(allowExisting: boolean) {
+    setPosting(true)
+    setError('')
+    setPosted('')
+    try {
+      const movement = await postDepreciation(companyId, { year, journal: journal.trim(), allowExisting })
+      setPosted(movement.reference)
+      setReload((value) => value + 1)
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Não foi possível gerar o lançamento.')
+    } finally {
+      setPosting(false)
+    }
+  }
   const exportCsv = () => downloadCsv(
     csvFilename(`mapa-depreciacoes-${year}`, activeCompany.legalName),
     toCsv([
@@ -185,7 +204,7 @@ export function DepreciationSchedulePage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Mapa de depreciações</h1><p>As depreciações de cada ativo do <Link to="/ativos-fixos">cadastro</Link> no exercício, por quotas constantes. É um cálculo: não lança nada na contabilidade.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Mapa de depreciações</h1><p>As depreciações de cada ativo do <Link to="/ativos-fixos">cadastro</Link> no exercício, por quotas constantes. O mapa é um cálculo; o lançamento só é gerado quando o pedir, e fica por conferir.</p></div><span className="connection-badge database"><Database size={15} /> Ligado ao SQL Server</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 
@@ -235,6 +254,17 @@ export function DepreciationSchedulePage() {
         </table></div>
         {rows.length === 0 && <p className="empty-state">Sem ativos em funcionamento em {year}. Registe-os no <Link to="/ativos-fixos">cadastro de ativos fixos</Link>.</p>}
       </section>
+
+      {rows.length > 0 && <section className="panel settings-panel">
+        <div className="panel-heading"><div><h2>Lançar as depreciações de {year}</h2><p>Um lançamento a 31 de dezembro, com o gasto a débito e as depreciações acumuladas a crédito, somados por conta. Fica por conferir nos movimentos.</p></div></div>
+        <div className="filterbar">
+          <label className="inline-check">Diário <input value={journal} onChange={(event) => setJournal(event.target.value.toUpperCase())} placeholder="código do diário" aria-label="Diário" /></label>
+          {schedule.ledgerDepreciation === 0
+            ? <button className="button button-primary" type="button" disabled={posting || journal.trim() === ''} onClick={() => void post(false)}>{posting ? 'A lançar…' : 'Gerar lançamento'}</button>
+            : <button className="button button-secondary" type="button" disabled={posting || journal.trim() === ''} onClick={() => void post(true)}>{posting ? 'A lançar…' : `Gerar mesmo com ${euro.format(schedule.ledgerDepreciation)} já lançados`}</button>}
+          {posted && <span className="save-status success"><CircleCheck size={15} /> Lançamento {posted} criado, por conferir.</span>}
+        </div>
+      </section>}
 
       <p className="statement-note">Quotas constantes sobre o valor de aquisição menos o valor residual. Sem duodécimos, o ano de entrada em funcionamento leva a quota anual inteira e o da alienação nenhuma; com duodécimos contam os meses desde o de entrada em funcionamento e até ao anterior ao da alienação. Não é o mapa fiscal modelo 32: não separa as depreciações não aceites fiscalmente.</p>
     </>}

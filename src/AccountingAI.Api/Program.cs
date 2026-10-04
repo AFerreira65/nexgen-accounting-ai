@@ -2115,6 +2115,27 @@ if (applicationEndpointsAvailable)
         return schedule is null ? Results.NotFound() : Results.Ok(schedule);
     });
 
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/schedule/post", async (
+        Guid userId, Guid companyId, int year, string? journal, bool? allowExisting, FixedAssetService assets, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        try
+        {
+            var posted = await assets
+                .PostDepreciationAsync(userId, companyId, year, journal ?? string.Empty, allowExisting ?? false, cancellationToken)
+                .ConfigureAwait(false);
+            return posted is null ? Results.NotFound() : Results.Ok(ToMovementResponse(posted));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or TimeoutException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["depreciacoes"] = [exception.Message] });
+        }
+    });
+
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets", async (
         Guid userId, Guid companyId, FixedAssetInput request, FixedAssetService assets, CancellationToken cancellationToken) =>
     {

@@ -127,6 +127,7 @@ type WorkContextValue = WorkContextData & {
   fixedAssets: (companyId: string, includeInactive: boolean) => Promise<FixedAssetRow[]>
   saveFixedAsset: (companyId: string, input: FixedAssetRow, isNew: boolean) => Promise<FixedAssetRow>
   depreciationSchedule: (companyId: string, year: number) => Promise<DepreciationSchedule>
+  postDepreciation: (companyId: string, params: { year: number; journal: string; allowExisting: boolean }) => Promise<{ reference: string }>
   atCredentials: (companyId: string) => Promise<AtCredentials>
   vatClassification: (companyId: string) => Promise<VatClassificationRow[]>
   setVatClassification: (companyId: string, accountCode: string, input: { rate: string; nature: string; region: string }) => Promise<void>
@@ -908,6 +909,12 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as FixedAssetRow
+    },
+    postDepreciation: async (companyId, { year, journal, allowExisting }) => {
+      const params = new URLSearchParams({ year: String(year), journal, allowExisting: String(allowExisting) })
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/fixed-assets/schedule/post?${params}`, { method: 'POST' })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as { reference: string }
     },
     depreciationSchedule: async (companyId, year) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/fixed-assets/schedule?year=${year}`)

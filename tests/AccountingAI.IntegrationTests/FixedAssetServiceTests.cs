@@ -71,7 +71,7 @@ public sealed class FixedAssetServiceTests
             await context.SaveChangesAsync().ConfigureAwait(false);
             context.ChangeTracker.Clear();
 
-            var service = new FixedAssetService(context);
+            var service = new FixedAssetService(context, new JournalPostingService(context));
             FixedAssetInput Input(string code, decimal value, decimal rate, DateOnly start, bool byMonths = false, DateOnly? disposal = null, bool active = true) => new(
                 code, $"Ativo {code}", start, start, value, 0m, rate, byMonths, "433", "4383", "6423", disposal, active);
 
@@ -110,6 +110,36 @@ public sealed class FixedAssetServiceTests
             Assert.AreEqual(3200m, schedule.TotalAcquisitionValue);
             Assert.AreEqual(200m, schedule.LedgerDepreciation);
             Assert.AreEqual(350m, schedule.Difference, "Faltam lançar 350 de depreciações.");
+
+            // Lançar: recusa enquanto houver gastos já lançados sem confirmação, ou um ativo sem contas.
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+                () => service.PostDepreciationAsync(userId, companyId, 2026, "GERAL", allowExisting: false, CancellationToken.None)).ConfigureAwait(false);
+            await service.CreateAsync(
+                userId, companyId,
+                Input("SEM-CONTAS", 100m, 10m, new DateOnly(2026, 1, 1)) with { ExpenseAccountCode = null, AccumulatedAccountCode = null },
+                CancellationToken.None).ConfigureAwait(false);
+            var missing = await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+                () => service.PostDepreciationAsync(userId, companyId, 2026, "GERAL", allowExisting: true, CancellationToken.None)).ConfigureAwait(false);
+            StringAssert.Contains(missing.Message, "SEM-CONTAS");
+            await service.UpdateAsync(
+                userId, companyId, "SEM-CONTAS", Input("SEM-CONTAS", 100m, 10m, new DateOnly(2026, 1, 1), active: false), CancellationToken.None).ConfigureAwait(false);
+
+            var posted = await service.PostDepreciationAsync(userId, companyId, 2026, "GERAL", allowExisting: true, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsNotNull(posted);
+            Assert.AreEqual(new DateOnly(2026, 12, 31), posted!.EntryDate);
+            Assert.AreEqual("Depreciações 2026", posted.DocumentReference);
+            Assert.AreEqual("Por conferir", posted.Status);
+            Assert.AreEqual(2, posted.Lines.Count, "As duas depreciações somam-se por conta.");
+            Assert.AreEqual(550m, posted.Lines.Single(line => line.AccountCode == "6423").Debit);
+            Assert.AreEqual(550m, posted.Lines.Single(line => line.AccountCode == "4383").Credit);
+            // Não se lança duas vezes o mesmo exercício.
+            var twice = await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+                () => service.PostDepreciationAsync(userId, companyId, 2026, "GERAL", allowExisting: true, CancellationToken.None)).ConfigureAwait(false);
+            StringAssert.Contains(twice.Message, posted.Reference);
+            Assert.AreEqual(750m, (await service.ScheduleAsync(userId, companyId, 2026, CancellationToken.None).ConfigureAwait(false))!.LedgerDepreciation);
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+                () => service.PostDepreciationAsync(userId, companyId, 2019, "GERAL", allowExisting: true, CancellationToken.None)).ConfigureAwait(false);
+            Assert.IsNull(await service.PostDepreciationAsync(Guid.NewGuid(), companyId, 2026, "GERAL", true, CancellationToken.None).ConfigureAwait(false));
 
             // Alterar: a alienação em 2026 tira a quota desse ano (sem duodécimos).
             var updated = await service
