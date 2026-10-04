@@ -376,23 +376,30 @@ public sealed partial class FinancialStatementsService(AccountingDbContext conte
                 continue;
             }
 
-            if (entry.Class is not ("GR" or "RG"))
+            if (IncomeLineLabel(account.TaxonomyReference, account.TaxonomyCode, model) is { } line)
             {
-                // Resultado líquido (818) e dividendos antecipados (89) são do balanço.
-                continue;
+                lines[line] = lines.GetValueOrDefault(line) + amount;
             }
-
-            var line = entry.DebitLine ?? entry.CreditLine;
-            if (line is null || line == "Resultado antes de impostos")
-            {
-                // O resultado antes de impostos (811) é um subtotal calculado, não uma rubrica.
-                continue;
-            }
-
-            lines[line] = lines.GetValueOrDefault(line) + amount;
         }
 
         return lines;
+    }
+
+    /// <summary>A rubrica da demonstração de resultados de uma taxonomia; <c>null</c> quando não é de gastos nem de rendimentos.</summary>
+    private static string? IncomeLineLabel(string? taxonomyReference, int? taxonomyCode, string model)
+    {
+        var entry = taxonomyCode is { } code && taxonomyReference is { } reference
+            ? StatementLineCatalog.Find(reference, code, model)
+            : null;
+        if (entry is null || entry.Class is not ("GR" or "RG"))
+        {
+            // Resultado líquido (818) e dividendos antecipados (89) são do balanço.
+            return null;
+        }
+
+        // O resultado antes de impostos (811) é um subtotal calculado, não uma rubrica.
+        var line = entry.DebitLine ?? entry.CreditLine;
+        return line == "Resultado antes de impostos" ? null : line;
     }
 
     private async Task<IReadOnlyList<AccountBalance>> BalancesAsync(

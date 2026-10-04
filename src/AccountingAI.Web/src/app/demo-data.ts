@@ -770,8 +770,10 @@ export type OperatingMap = {
   year: number
   lastMonth: number
   model: string
-  rows: { label: string; months: number[]; total: number; isTotal: boolean }[]
+  rows: { label: string; months: number[]; total: number; isTotal: boolean; budget: number[] | null }[]
   excluded: StatementExcludedAccount[]
+  hasBudget: boolean
+  unassignedBudget: { accountCode: string; costCenterCode: string | null; amount: number; reason: string }[]
 }
 export type FinancialRatio = { group: string; label: string; value: number | null; comparative: number | null; unit: 'x' | '%' | 'dias' | '€'; formula: string }
 export type FinancialRatios = { from: string; to: string; model: string; days: number; ratios: FinancialRatio[]; balanceDifference: number; excludedAccounts: number }

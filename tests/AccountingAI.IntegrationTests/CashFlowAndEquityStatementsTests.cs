@@ -213,6 +213,29 @@ public sealed class CashFlowAndEquityStatementsTests
             Assert.AreEqual(-100m, mapResult.Months[3]);
             Assert.AreEqual(-110m, mapResult.Total);
             Assert.AreEqual(0, map.Excluded.Count);
+            Assert.IsFalse(map.HasBudget);
+            Assert.IsNull(mapResult.Budget);
+
+            // Com orçamento: cada linha vai para a rubrica das suas contas; a que abrange mais de uma fica de fora.
+            for (var month = 1; month <= 12; month++)
+            {
+                context.Add(BudgetLine.Create(companyId, 2026, month, "7211", null, 50m));
+                context.Add(BudgetLine.Create(companyId, 2026, month, "6221", null, month == 4 ? 150m : 0m));
+                context.Add(BudgetLine.Create(companyId, 2026, month, "6", null, 1m));
+            }
+
+            await context.SaveChangesAsync().ConfigureAwait(false);
+            context.ChangeTracker.Clear();
+            var budgeted = await service.OperatingMapAsync(userId, companyId, 2026, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsTrue(budgeted!.HasBudget);
+            OperatingMapRow BudgetedRow(string label) => budgeted.Rows.Single(row => row.Label == label);
+            Assert.AreEqual(50m, BudgetedRow("Vendas e serviços prestados").Budget![0]);
+            Assert.AreEqual(-150m, BudgetedRow("Fornecimentos e serviços externos").Budget![3], "Os gastos orçamentados são negativos, como os realizados.");
+            Assert.AreEqual(0m, BudgetedRow("Juros e gastos similares suportados").Budget!.Sum());
+            Assert.AreEqual(600m - 150m, BudgetedRow("Resultado líquido do período").Budget!.Sum());
+            Assert.AreEqual(-100m, BudgetedRow("Resultado líquido do período").Budget![3]);
+            var outside = budgeted.UnassignedBudget.Single();
+            Assert.AreEqual(("6", 12m), (outside.AccountCode, outside.Amount));
 
             // Rácios sobre o balanço e a demonstração de resultados, com o período homólogo.
             var ratios = await service.RatiosAsync(userId, companyId, from, to, CancellationToken.None).ConfigureAwait(false);

@@ -3,11 +3,19 @@ using Microsoft.EntityFrameworkCore;
 namespace AccountingAI.Infrastructure.SqlServer;
 
 /// <summary>Uma rubrica do mapa de exploração: um valor por mês e o total do exercício.</summary>
-public sealed record OperatingMapRow(string Label, IReadOnlyList<decimal> Months, decimal Total, bool IsTotal = false);
+/// <param name="Budget">O orçamentado por mês, com o sinal da rubrica (gastos negativos); <c>null</c> quando o exercício não tem orçamento.</param>
+public sealed record OperatingMapRow(
+    string Label, IReadOnlyList<decimal> Months, decimal Total, bool IsTotal = false, IReadOnlyList<decimal>? Budget = null);
+
+/// <summary>Uma linha do orçamento que o mapa de exploração não consegue pôr numa rubrica.</summary>
+public sealed record OperatingMapUnassignedBudget(string AccountCode, string? CostCenterCode, decimal Amount, string Reason);
 
 /// <param name="LastMonth">O último mês com movimentos (0 se não houver).</param>
+/// <param name="HasBudget">Se o exercício tem orçamento: as rubricas trazem então o orçamentado por mês.</param>
+/// <param name="UnassignedBudget">As linhas do orçamento que ficaram fora das rubricas.</param>
 public sealed record OperatingMap(
-    int Year, int LastMonth, string Model, IReadOnlyList<OperatingMapRow> Rows, IReadOnlyList<StatementExcludedAccount> Excluded);
+    int Year, int LastMonth, string Model, IReadOnlyList<OperatingMapRow> Rows, IReadOnlyList<StatementExcludedAccount> Excluded,
+    bool HasBudget, IReadOnlyList<OperatingMapUnassignedBudget> UnassignedBudget);
 
 /// <summary>Um rácio: o valor do período e o do período homólogo; <c>null</c> quando o denominador é zero.</summary>
 /// <param name="Unit"><c>x</c> (quociente), <c>%</c>, <c>dias</c> ou <c>€</c>.</param>
@@ -60,8 +68,55 @@ public sealed partial class FinancialStatementsService
                 excluded))
             .ToList();
 
+        // O orçamento do exercício, posto na rubrica das contas que cada linha abrange. Como no relatório
+        // do orçamento, uma linha por centro de custo é um detalhe quando a conta também tem orçamento geral.
+        var budgetLines = await context.BudgetLines
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId && item.Year == year)
+            .Select(item => new { item.AccountCode, item.CostCenterId, CostCenterCode = item.CostCenter!.Code, item.Month, item.Amount })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var hasBudget = budgetLines.Count > 0;
+        var general = budgetLines.Where(item => item.CostCenterId is null).Select(item => item.AccountCode).Distinct().ToList();
+        var budget = new Dictionary<string, decimal[]>(StringComparer.Ordinal);
+        var unassigned = new List<OperatingMapUnassignedBudget>();
+        foreach (var group in budgetLines
+            .Where(item => item.CostCenterId is null ||
+                !general.Any(code => item.AccountCode.StartsWith(code, StringComparison.Ordinal) || code.StartsWith(item.AccountCode, StringComparison.Ordinal)))
+            .GroupBy(item => (item.AccountCode, item.CostCenterCode))
+            .OrderBy(group => group.Key.AccountCode, StringComparer.Ordinal)
+            .ThenBy(group => group.Key.CostCenterCode, StringComparer.Ordinal))
+        {
+            var code = group.Key.AccountCode;
+            var labels = accounts.Values
+                .Where(account => account.Code.StartsWith(code, StringComparison.Ordinal))
+                .Select(account => IncomeLineLabel(account.TaxonomyReference, account.TaxonomyCode, model))
+                .Where(label => label is not null)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+            if (labels.Count != 1)
+            {
+                unassigned.Add(new(code, group.Key.CostCenterCode, group.Sum(item => item.Amount), labels.Count == 0
+                    ? "Nenhuma conta com taxonomia de gastos ou rendimentos"
+                    : "As contas abrangidas pertencem a mais de uma rubrica"));
+                continue;
+            }
+
+            if (!budget.TryGetValue(labels[0]!, out var values))
+            {
+                budget[labels[0]!] = values = new decimal[12];
+            }
+
+            foreach (var item in group)
+            {
+                // Rendimentos positivos, gastos negativos, como o realizado.
+                values[item.Month - 1] += code[0] == '7' ? item.Amount : -item.Amount;
+            }
+        }
+
         var rows = new List<OperatingMapRow>();
         var running = new decimal[12];
+        var runningBudget = new decimal[12];
         var used = new HashSet<string>(StringComparer.Ordinal);
 
         void Add(IEnumerable<string> labels)
@@ -74,24 +129,27 @@ public sealed partial class FinancialStatementsService
                 }
 
                 var values = months.Select(month => month.GetValueOrDefault(label)).ToList();
-                if (values.All(value => value == 0m))
+                var budgeted = budget.GetValueOrDefault(label);
+                if (values.All(value => value == 0m) && budgeted is null)
                 {
                     continue;
                 }
 
-                rows.Add(new OperatingMapRow(label, values, values.Sum()));
+                rows.Add(new OperatingMapRow(label, values, values.Sum(), Budget: hasBudget ? budgeted ?? new decimal[12] : null));
                 for (var index = 0; index < 12; index++)
                 {
                     running[index] += values[index];
+                    runningBudget[index] += budgeted?[index] ?? 0m;
                 }
             }
         }
 
-        void Total(string label) => rows.Add(new OperatingMapRow(label, running.ToArray(), running.Sum(), IsTotal: true));
+        void Total(string label) => rows.Add(new OperatingMapRow(
+            label, running.ToArray(), running.Sum(), IsTotal: true, Budget: hasBudget ? runningBudget.ToArray() : null));
 
         var known = IncomeBeforeDepreciation.Concat(IncomeBeforeOperating).Concat(IncomeBeforeTax).Append(TaxLine).ToHashSet(StringComparer.Ordinal);
         Add(IncomeBeforeDepreciation);
-        Add(months.SelectMany(month => month.Keys).Where(label => !known.Contains(label)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal));
+        Add(months.SelectMany(month => month.Keys).Concat(budget.Keys).Where(label => !known.Contains(label)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal));
         Total("Resultado antes de depreciações, gastos de financiamento e impostos");
         Add(IncomeBeforeOperating);
         Total("Resultado operacional (antes de gastos de financiamento e impostos)");
@@ -109,7 +167,9 @@ public sealed partial class FinancialStatementsService
                 .GroupBy(item => (item.AccountCode, item.AccountName, item.Reason))
                 .Select(group => new StatementExcludedAccount(group.Key.AccountCode, group.Key.AccountName, group.Sum(item => item.Balance), group.Key.Reason))
                 .OrderBy(item => item.AccountCode, StringComparer.Ordinal)
-                .ToList());
+                .ToList(),
+            hasBudget,
+            unassigned);
     }
 
     /// <summary>

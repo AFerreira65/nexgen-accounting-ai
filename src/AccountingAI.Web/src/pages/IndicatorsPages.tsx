@@ -48,9 +48,14 @@ export function OperatingMapPage() {
   const row = (label: string) => rows.find((item) => item.label === label)
   const ebitda = row('Resultado antes de depreciações, gastos de financiamento e impostos')
   const net = row('Resultado líquido do período')
+  const hasBudget = map?.hasBudget ?? false
+  // O orçamentado de janeiro até ao último mês com movimentos, para comparar com o total realizado.
+  const budgetToDate = (item: OperatingMap['rows'][number]) => (item.budget ?? []).slice(0, last).reduce((sum, value) => sum + value, 0)
   const exportCsv = () => downloadCsv(
     csvFilename(`mapa-exploracao-${year}`, activeCompany.legalName),
-    toCsv([['Rubrica', ...monthLabels, 'Total'], ...rows.map((item) => [item.label, ...item.months, item.total])]),
+    toCsv(hasBudget
+      ? [['Rubrica', 'Valores', ...monthLabels, 'Total'], ...rows.flatMap((item) => [[item.label, 'Realizado', ...item.months, item.total], [item.label, 'Orçamento', ...(item.budget ?? []), (item.budget ?? []).reduce((sum, value) => sum + value, 0)]])]
+      : [['Rubrica', ...monthLabels, 'Total'], ...rows.map((item) => [item.label, ...item.months, item.total])]),
   )
 
   return <div className="page-stack">
@@ -72,19 +77,39 @@ export function OperatingMapPage() {
         <Chart title={`Resultado antes de depreciações e resultado líquido por mês em ${year}`} labels={shown} format={euro.format} series={[
           { name: 'Antes de depreciações, financiamento e impostos', kind: 'bar', tone: 'primary', values: ebitda.months.slice(0, shown.length) },
           { name: 'Resultado líquido', kind: 'line', tone: 'accent', values: net.months.slice(0, shown.length) },
+          ...(net.budget ? [{ name: 'Resultado orçamentado', kind: 'line' as const, tone: 'muted' as const, dashed: true, values: net.budget.slice(0, shown.length) }] : []),
         ]} />
       </section>}
 
       <section className="panel">
         <div className="table-wrap"><table>
-          <thead><tr><th>Rubricas</th>{shown.map((label) => <th key={label} className="numeric">{label}</th>)}<th className="numeric">Total</th></tr></thead>
+          <thead><tr><th>Rubricas</th>{shown.map((label) => <th key={label} className="numeric">{label}</th>)}<th className="numeric">Total</th>{hasBudget && <><th className="numeric">Orçamento até {shown[shown.length - 1]}</th><th className="numeric">Desvio</th></>}</tr></thead>
           <tbody>{rows.map((item) => <tr key={item.label} className={item.isTotal ? 'subtotal-row' : undefined}>
             <td>{item.label}</td>
             {shown.map((label, index) => <td key={label} className="numeric">{item.months[index] === 0 ? '—' : plain.format(item.months[index])}</td>)}
             <td className="numeric strong">{plain.format(item.total)}</td>
+            {hasBudget && <>
+              <td className="numeric">{plain.format(budgetToDate(item))}</td>
+              <td className="numeric"><span className={`badge ${item.total === budgetToDate(item) ? 'neutral' : item.total > budgetToDate(item) ? 'success' : 'warning'}`}>{plain.format(item.total - budgetToDate(item))}</span></td>
+            </>}
           </tr>)}</tbody>
         </table></div>
       </section>
+
+      {hasBudget && <p className="statement-note">O <Link to="/orcamento">orçamento</Link> entra na rubrica das contas que cada linha abrange, com o sinal do mapa (gastos negativos). O desvio é o realizado menos o orçamentado até {shown[shown.length - 1]}: a verde quando ajuda o resultado, a laranja quando o prejudica. Os subtotais orçamentados só somam as rubricas que têm orçamento.</p>}
+
+      {map.unassignedBudget.length > 0 && <section className="panel">
+        <div className="panel-heading"><div><h2>Orçamento fora do mapa</h2><p>Linhas do orçamento que não cabem numa só rubrica. Orçamente por grupos mais finos (por exemplo 62 em vez de 6) para entrarem no mapa.</p></div></div>
+        <div className="table-wrap"><table>
+          <thead><tr><th>Conta</th><th>Centro de custo</th><th>Motivo</th><th className="numeric">Orçamento anual</th></tr></thead>
+          <tbody>{map.unassignedBudget.map((line) => <tr key={`${line.accountCode}-${line.costCenterCode ?? ''}`}>
+            <td>{line.accountCode}</td>
+            <td>{line.costCenterCode ?? '—'}</td>
+            <td>{line.reason}</td>
+            <td className="numeric">{euro.format(line.amount)}</td>
+          </tr>)}</tbody>
+        </table></div>
+      </section>}
 
       {map.excluded.length > 0 && <section className="panel">
         <div className="panel-heading"><div><h2>Contas fora do mapa</h2><p>Contas de gastos ou rendimentos com movimento que não cabem em nenhuma rubrica. Corrija a taxonomia no plano de contas.</p></div></div>

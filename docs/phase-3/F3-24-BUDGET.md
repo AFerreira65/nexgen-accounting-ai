@@ -101,6 +101,43 @@ Sem migração: a tabela já guardava um valor por mês.
 - A cópia do orçamento não confere se as contas e os centros de custo de
   origem ainda existem.
 
-### A seguir
+### F3-24C — O orçamento no mapa de exploração (feito)
 
-- **F3-24C** — o orçamento no mapa de exploração.
+O [mapa de exploração](F3-23-RATIOS-OPERATING-MAP.md) organiza-se por
+rubricas da demonstração de resultados; o orçamento, por contas. A ligação:
+
+| Parte | Regra |
+|---|---|
+| Rubrica de uma linha | A das contas do plano que o código da linha abrange, pela taxonomia. Se todas caem na mesma rubrica, o orçamento vai para ela. |
+| Fora do mapa | Uma linha cujas contas pertencem a **mais de uma rubrica** (por exemplo a classe `6` inteira), ou sem nenhuma conta com taxonomia de gastos ou rendimentos, não é repartida: aparece numa lista à parte, com o motivo. |
+| Sinal | O do mapa: rendimentos positivos, gastos negativos. |
+| Centro de custo | Como no relatório do orçamento: a linha de um centro só conta quando a conta não tem orçamento geral. |
+| Subtotais | Somam o orçamento das rubricas acima; só valem como resultado orçamentado se o orçamento cobrir todas as rubricas. |
+| Rubrica só com orçamento | Aparece no mapa mesmo sem realizado. |
+
+- **`FinancialStatementsService.OperatingMapAsync`**: cada rubrica traz
+  `Budget` (doze meses, ou `null` sem orçamento no exercício); o mapa traz
+  `HasBudget` e `UnassignedBudget`.
+- **PWA:** no «Mapa de exploração», com orçamento no exercício, a tabela
+  ganha as colunas **«Orçamento até»** o último mês com movimentos e
+  **«Desvio»** (verde quando ajuda o resultado), o gráfico ganha a linha do
+  resultado orçamentado, o CSV leva o realizado e o orçamento por mês, e a
+  lista «Orçamento fora do mapa» mostra o que não coube.
+
+**Validação efetuada**
+
+- `CashFlowAndEquityStatementsTests`: sem orçamento o mapa não muda; com
+  orçamento, o valor por rubrica e por mês, o sinal dos gastos, o resultado
+  orçamentado e a linha da classe 6 fora do mapa.
+- `AccountingAI.Web`: `tsc`, `eslint`, 103 testes, `vite build`.
+- A suite completa: 256 testes .NET.
+
+**Por verificar**
+
+- O ecrã com a base real: não foi visto no navegador.
+
+**Limitações**
+
+- O orçamento até ao mês compara-se com o realizado até ao último mês com
+  movimentos — não há escolha de mês no mapa.
+- Uma linha de orçamento que abranja várias rubricas não é repartida.
