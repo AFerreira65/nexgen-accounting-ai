@@ -120,6 +120,7 @@ public sealed class VatSummaryService(AccountingDbContext context)
                 item.line.JournalEntry.EntryDate <= to &&
                 item.classification == null &&
                 item.line.VatCodeId == null &&
+                !item.line.JournalEntry.Lines.Any(other => other.Account.Code.StartsWith("2435")) &&
                 item.line.Account.IsActive && item.line.Account.AllowsPosting &&
                 (item.line.Account.Code.StartsWith("6") || item.line.Account.Code.StartsWith("7") ||
                  item.line.Account.Code.StartsWith("2432") || item.line.Account.Code.StartsWith("2433") || item.line.Account.Code.StartsWith("2434")))
@@ -168,6 +169,7 @@ public sealed class VatSummaryService(AccountingDbContext context)
             .Where(item => item.line.CompanyId == companyId &&
                 item.classification.CompanyId == companyId &&
                 item.line.VatCodeId == null &&
+                !item.line.JournalEntry.Lines.Any(other => other.Account.Code.StartsWith("2435")) &&
                 item.line.JournalEntry.Status != JournalEntryStatus.Voided &&
                 item.line.JournalEntry.EntryDate >= from &&
                 item.line.JournalEntry.EntryDate <= to)
@@ -201,6 +203,7 @@ public sealed class VatSummaryService(AccountingDbContext context)
             .AsNoTracking()
             .Where(line => line.CompanyId == companyId &&
                 line.VatCodeId != null &&
+                !line.JournalEntry.Lines.Any(other => other.Account.Code.StartsWith("2435")) &&
                 line.JournalEntry.Status != JournalEntryStatus.Voided &&
                 line.JournalEntry.EntryDate >= from &&
                 line.JournalEntry.EntryDate <= to)

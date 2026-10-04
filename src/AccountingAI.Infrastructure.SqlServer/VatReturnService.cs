@@ -17,6 +17,7 @@ public sealed class VatReturnService(AccountingDbContext context) : IVatReturnSe
     private const string InputPrefix = "2432";
     private const string RegularisationPrefix = "2434";
     private const string CarryForwardPrefix = "2437";
+    private const string SettlementPrefix = "2435";
 
     public async Task<VatReturn?> BuildAsync(
         Guid userId,
@@ -45,7 +46,9 @@ public sealed class VatReturnService(AccountingDbContext context) : IVatReturnSe
                 line.JournalEntry.Status != JournalEntryStatus.Voided &&
                 line.JournalEntry.EntryDate >= from &&
                 line.JournalEntry.EntryDate <= to &&
-                line.Account.Code.StartsWith(VatPrefix))
+                line.Account.Code.StartsWith(VatPrefix) &&
+                // O lançamento de apuramento (o que movimenta a conta 2435) salda as contas: não é IVA do período.
+                !line.JournalEntry.Lines.Any(other => other.Account.Code.StartsWith(SettlementPrefix)))
             .GroupBy(line => new { line.Account.Code, line.Account.Name })
             .Select(group => new
             {

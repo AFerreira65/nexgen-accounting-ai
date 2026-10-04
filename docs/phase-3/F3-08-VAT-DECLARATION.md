@@ -90,11 +90,61 @@ campos do modelo oficial, as somas de controlo e a conferência campo a campo.
 - Na autoliquidação, a base da compra entra nos campos 1, 5 e 3 pelo valor a
   débito da linha com o código de IVA.
 
+### F3-08B — Lançamento de apuramento do IVA (feito)
+
+- **`VatSettlementEntryService`** — propõe e gera o lançamento que fecha o IVA
+  de um período:
+
+| Passo | Lançamento |
+|---|---|
+| Saldar o período | Cada conta 2432 (dedutível), 2433 (liquidado) e 2434 (regularizações) é lançada ao contrário do seu saldo no período, por contrapartida da conta de apuramento (2435). |
+| Crédito anterior | O saldo devedor da conta 2437 antes do período é creditado e entra a débito na 2435. |
+| Resultado | Saldo credor da 2435 → IVA a pagar (2436); saldo devedor → IVA a recuperar (2437). A 2435 fica saldada. |
+
+- Data do **fim do período**, no diário indicado, **por conferir**. As três
+  contas (apuramento, a pagar, a recuperar) propõem-se pelos códigos do SNC e
+  podem ser trocadas pelas subcontas da empresa.
+- Trabalha sobre o que **ainda está por saldar** no período: se o apuramento
+  já está na contabilidade (por exemplo, importado de um SAF-T), não propõe
+  nada.
+- **Recusas:** período já apurado por aqui (reconhece-se pela referência de
+  documento «Apuramento IVA AAAA período»); datas que não formam um mês nem
+  um trimestre; sem IVA por apurar; conta em falta ou que não é de movimento.
+- **Mudança no apuramento e no resumo de IVA (Fase 2):** os lançamentos que
+  movimentam a conta **2435** deixam de contar em `VatReturnService` e em
+  `VatSummaryService`. Sem isto, um período depois de apurado apareceria com o
+  liquidado e o dedutível a zero — tanto com o lançamento gerado aqui como
+  com os apuramentos que venham de um SAF-T importado.
+- **API:** `GET .../vat-settlement-entry?from=&to=&settlement=&payable=&recoverable=`
+  (a proposta) e `POST` com `journal=` (o lançamento).
+- **PWA:** no ecrã «Declaração de IVA», o painel «Lançamento de apuramento do
+  IVA» mostra a proposta linha a linha, deixa trocar as contas e pede o
+  diário.
+
+**Validação efetuada**
+
+- `AccountingAI.IntegrationTests`: `VatSettlementEntryServiceTests` — três
+  trimestres seguidos: IVA a pagar; IVA a recuperar; crédito anterior a
+  entrar no apuramento seguinte; conta de apuramento saldada; segunda
+  tentativa recusada; o apuramento contabilístico e a declaração continuam a
+  mostrar os valores do período depois do lançamento; sem movimento e conta
+  em falta. Os testes do apuramento e do resumo de IVA da Fase 2 continuam a
+  passar.
+- `AccountingAI.Api.Tests`: a proposta (só leitura).
+- A suite completa: 253 testes .NET, 101 de interface.
+- **Por verificar em direto:** o painel, com a base real — é uma operação de
+  escrita.
+
+**Pressupostos a confirmar com um contabilista**
+
+- O apuramento num só lançamento, com a conta 2435 a débito e a crédito pelos
+  totais, em vez de um lançamento por conta.
+- Reconhecer um lançamento de apuramento por movimentar a conta 2435 (e não
+  por um tipo de documento).
+- O reembolso pedido (2438) não é tratado: todo o crédito fica na 2437.
+
 ### A seguir
 
-- **F3-08B** — lançamento de apuramento do IVA (transferência das contas
-  2432, 2433 e 2434 para a 2435 e daí para a 2436 ou 2437) e ligação ao
-  apuramento guardado.
 - **F3-08C** — ficheiro XML da declaração para carregar no Portal das
   Finanças. **Bloqueado**: não encontrei o XML-Schema oficial publicado
   (a página «Suporte informático — formato de ficheiros» devolve erro); sem

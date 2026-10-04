@@ -1552,6 +1552,9 @@ public sealed class FoundationApiTests
         using var recapitulative = await client.GetAsync($"{basePath}/recapitulative-statement?from=2026-01-01&to=2026-03-31").ConfigureAwait(false);
         var recapitulativePayload = await recapitulative.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badRecapitulative = await client.GetAsync($"{basePath}/recapitulative-statement?from=2026-01-01").ConfigureAwait(false);
+        using var settlementEntry = await client.GetAsync($"{basePath}/vat-settlement-entry?from=2026-01-01&to=2026-03-31").ConfigureAwait(false);
+        var settlementEntryPayload = await settlementEntry.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badSettlementEntry = await client.GetAsync($"{basePath}/vat-settlement-entry?from=2026-03-31&to=2026-01-01").ConfigureAwait(false);
         using var unauthorized = await client
             .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/vat-declaration?from=2026-01-01&to=2026-03-31")
             .ConfigureAwait(false);
@@ -1565,6 +1568,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, recapitulative.StatusCode);
         StringAssert.Contains(recapitulativePayload, "\"field19\":");
         Assert.AreEqual(HttpStatusCode.BadRequest, badRecapitulative.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, settlementEntry.StatusCode);
+        StringAssert.Contains(settlementEntryPayload, "\"period\":\"03T\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badSettlementEntry.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
     }
 

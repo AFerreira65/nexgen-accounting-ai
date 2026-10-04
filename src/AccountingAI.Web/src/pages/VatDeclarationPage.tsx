@@ -6,6 +6,7 @@ import { euro, type VatDeclaration, type VatFormField } from '../app/demo-data'
 import { monthRange, periodReference, quarterRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
+import { VatSettlementEntryPanel } from './VatSettlementEntryPanel'
 
 const shortDate = (value: string) => value.split('-').reverse().join('/')
 const seatLabels: Record<string, string> = { Continente: 'Continente', Acores: 'Açores', Madeira: 'Madeira' }
@@ -126,6 +127,8 @@ export function VatDeclarationPage() {
           })}</tbody>
         </table></div>
       </section>
+
+      <VatSettlementEntryPanel companyId={companyId} from={range.from} to={range.to} />
 
       <p className="statement-note">{declaration.disclaimer}</p>
       <p className="statement-note">Fonte dos campos: {declaration.source}</p>

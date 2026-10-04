@@ -1754,6 +1754,48 @@ if (applicationEndpointsAvailable)
         return statement is null ? Results.NotFound() : Results.Ok(statement);
     });
 
+    // Lançamento de apuramento do IVA de um período: primeiro a proposta, depois o lançamento.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-settlement-entry", async (
+        Guid userId, Guid companyId, string? from, string? to, string? settlement, string? payable, string? recoverable,
+        VatSettlementEntryService entries, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) ||
+            !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) ||
+            end < start)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = ["Indique um período válido (aaaa-mm-dd)."] });
+        }
+
+        var preview = await entries
+            .PreviewAsync(userId, companyId, start, end, VatSettlementAccountsOf(settlement, payable, recoverable), cancellationToken)
+            .ConfigureAwait(false);
+        return preview is null ? Results.NotFound() : Results.Ok(preview);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-settlement-entry", async (
+        Guid userId, Guid companyId, string? from, string? to, string? settlement, string? payable, string? recoverable, string? journal,
+        VatSettlementEntryService entries, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) ||
+            !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) ||
+            end < start)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = ["Indique um período válido (aaaa-mm-dd)."] });
+        }
+
+        try
+        {
+            var posted = await entries
+                .PostAsync(userId, companyId, start, end, VatSettlementAccountsOf(settlement, payable, recoverable), journal ?? string.Empty, cancellationToken)
+                .ConfigureAwait(false);
+            return posted is null ? Results.NotFound() : Results.Ok(ToMovementResponse(posted));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or TimeoutException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["apuramentoIva"] = [exception.Message] });
+        }
+    });
+
     // O quadro 06 da declaração periódica de IVA, preenchido a partir da contabilidade.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-declaration", async (
         Guid userId, Guid companyId, string? from, string? to, decimal? priorCredit,
@@ -3770,6 +3812,16 @@ public partial class Program
             line.CostCenter
         })
     };
+
+    /// <summary>As contas do apuramento do IVA: as indicadas ou, em branco, as do SNC (2435, 2436 e 2437).</summary>
+    private static VatSettlementAccounts VatSettlementAccountsOf(string? settlement, string? payable, string? recoverable)
+    {
+        var defaults = new VatSettlementAccounts();
+        return new VatSettlementAccounts(
+            string.IsNullOrWhiteSpace(settlement) ? defaults.Settlement : settlement.Trim(),
+            string.IsNullOrWhiteSpace(payable) ? defaults.Payable : payable.Trim(),
+            string.IsNullOrWhiteSpace(recoverable) ? defaults.Recoverable : recoverable.Trim());
+    }
 
     private static bool TryParseReportDateRange(
         string? from,
