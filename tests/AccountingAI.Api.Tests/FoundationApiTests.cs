@@ -1473,6 +1473,9 @@ public sealed class FoundationApiTests
         using var dossier = await client.GetAsync($"{basePath}/fiscal-dossier?year=2026").ConfigureAwait(false);
         var dossierPayload = await dossier.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badDossier = await client.GetAsync($"{basePath}/fiscal-dossier?year=12").ConfigureAwait(false);
+        using var aging = await client.GetAsync($"{basePath}/parties/aging?date=2026-12-31&kind=fornecedores").ConfigureAwait(false);
+        var agingPayload = await aging.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badAging = await client.GetAsync($"{basePath}/parties/aging?date=2026-12-31&kind=outros").ConfigureAwait(false);
         using var catalog = await client.GetAsync($"{basePath}/modelo-22/fields").ConfigureAwait(false);
         var catalogPayload = await catalog.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badYear = await client.GetAsync($"{basePath}/modelo-22?year=12").ConfigureAwait(false);
@@ -1494,6 +1497,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, dossier.StatusCode);
         StringAssert.Contains(dossierPayload, "\"number\":12");
         Assert.AreEqual(HttpStatusCode.BadRequest, badDossier.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, aging.StatusCode);
+        StringAssert.Contains(agingPayload, "\"kind\":\"fornecedores\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badAging.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badYear.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
     }

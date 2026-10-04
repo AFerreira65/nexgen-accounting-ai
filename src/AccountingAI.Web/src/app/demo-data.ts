@@ -710,6 +710,16 @@ export type RecapitulativeStatement = {
   source: string
   disclaimer: string
 }
+export type PartyAging = {
+  date: string
+  kind: string
+  bucketLabels: string[]
+  rows: { partyId: string; countryCode: string; taxRegistrationNumber: string; name: string; open: number; buckets: number[]; advance: number; oldestDate: string | null }[]
+  totalOpen: number
+  totalBuckets: number[]
+  totalAdvance: number
+  disclaimer: string
+}
 export type FiscalDossier = {
   year: number
   elements: { number: number; title: string; support: string; link: string | null; linkLabel: string | null; evidence: string | null; status: string; note: string | null }[]

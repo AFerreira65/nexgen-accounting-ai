@@ -27,6 +27,7 @@ import { ManagementReportsPage } from './pages/ManagementReportsPage'
 import { OperatingMapPage, RatiosPage } from './pages/IndicatorsPages'
 import { IesPage } from './pages/IesPage'
 import { Modelo22Page } from './pages/Modelo22Page'
+import { PartyAgingPage } from './pages/PartyAgingPage'
 import { MonthlyEvolutionPage } from './pages/MonthlyEvolutionPage'
 import { RecapitulativeStatementPage } from './pages/RecapitulativeStatementPage'
 import { VatDeclarationPage } from './pages/VatDeclarationPage'
@@ -64,6 +65,7 @@ export function App() {
             <Route path="/terceiros" element={<PartiesPage />} />
             <Route path="/terceiros/:partyId" element={<PartyStatementPage />} />
             <Route path="/saldos-terceiros" element={<PartyBalancesByPartyPage />} />
+            <Route path="/idade-saldos" element={<PartyAgingPage />} />
             <Route path="/lancamentos-tipo" element={<EntryTemplatesPage />} />
             <Route path="/centros-custo" element={<CostCentersPage />} />
             <Route path="/ativos-fixos" element={<FixedAssetsPage />} />

@@ -75,7 +75,39 @@ homólogo:
 - A rendibilidade do capital próprio usa o capital próprio final, que já
   inclui o resultado do período.
 
-### A seguir
+### F3-23B — Idade de saldos de clientes e fornecedores (feito)
 
-- **F3-23B** — idade de saldos de clientes e fornecedores (antiguidade por
-  intervalos), que precisa de casar faturas com pagamentos.
+- **`PartyAgingService`** — só lê; exclui os anulados. Para clientes (contas
+  21) ou fornecedores (contas 22), a uma data:
+
+| Parte | Regra |
+|---|---|
+| Linhas | As das contas 21 ou 22 **com terceiro**, até à data. |
+| Documentos e pagamentos | Para um cliente os documentos são os débitos e os pagamentos os créditos; para um fornecedor, ao contrário. |
+| Antiguidade | A aplicação não casa cada pagamento com a sua fatura: os pagamentos de um terceiro **abatem aos documentos mais antigos**, e o que sobra em aberto é repartido pela idade. |
+| Idade | Da data do documento — ou do lançamento, se o documento não a tem — até à data pedida. Não há datas de vencimento. |
+| Intervalos | Até 30, 31 a 60, 61 a 90, 91 a 180 e mais de 180 dias. |
+| Saldo ao contrário | O que o cliente adiantou (ou o que se adiantou ao fornecedor) fica numa coluna própria, sem abater ao que está em aberto de outros terceiros. |
+
+- **API:** `GET .../parties/aging?date=&kind=clientes|fornecedores`.
+- **PWA:** ecrã **«Idade de saldos»** (`/idade-saldos`, grupo «Mapas») —
+  clientes ou fornecedores, a data, o gráfico por antiguidade, a tabela por
+  terceiro (com ligação ao extrato), totais, CSV e impressão.
+
+**Validação efetuada**
+
+- `AccountingAI.IntegrationTests`: `PartyAgingServiceTests` — pagamento
+  parcial a abater às faturas mais antigas, adiantamento sem fatura, data do
+  documento diferente da do lançamento, documento posterior à data pedida.
+- `AccountingAI.Api.Tests`: o endpoint e a recusa de um tipo desconhecido.
+- A suite completa: 254 testes .NET, 102 de interface.
+
+**Por verificar e pressupostos**
+
+- Com uma **empresa real**: os lançamentos importados só entram se tiverem
+  terceiro (F3-01D); os saldos de abertura por conta, sem terceiro, ficam de
+  fora, pelo que o total pode não coincidir com o saldo das contas 21 e 22.
+- Uma nota de crédito conta como pagamento (abate aos documentos mais
+  antigos), não ao documento a que respeita.
+- Sem prazos de pagamento por terceiro, «em atraso» não se distingue de «em
+  aberto».

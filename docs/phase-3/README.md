@@ -32,7 +32,7 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | C | F3-15 … F3-17 | Comunicação com a AT | Depende da adesão — [`../ADESAO-AT.md`](../ADESAO-AT.md) |
 | D | F3-18 … F3-21 | Automação do lançamento | Por especificar |
 | E | **F3-22** | Gráficos | **Em curso** — [`F3-22`](F3-22-CHARTS.md); F3-22A (componente de gráficos e ecrã «Evolução mensal») feito; faltam os gráficos na visão geral e nos relatórios |
-| E | **F3-23** | Mapa de exploração e rácios | **Em curso** — [`F3-23`](F3-23-RATIOS-OPERATING-MAP.md); F3-23A (mapa de exploração mensal e rácios com fórmula e período homólogo) feito; falta a idade de saldos |
+| E | **F3-23** | Mapa de exploração e rácios | **Concluído** — [`F3-23`](F3-23-RATIOS-OPERATING-MAP.md); F3-23A (mapa de exploração mensal e rácios com fórmula e período homólogo) e F3-23B (idade de saldos de clientes e fornecedores) feitos |
 | E | F3-24 … F3-26 | Gestão: orçamento, assistente com IA, relatório para o empresário | Por especificar |
 | F | F3-27 … F3-28 | Gabinete: calendário de obrigações e painel | Por especificar |
 

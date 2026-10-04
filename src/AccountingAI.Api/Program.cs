@@ -1950,6 +1950,28 @@ if (applicationEndpointsAvailable)
         return result is null ? Results.NotFound() : Results.Ok(result);
     });
 
+    // Idade dos saldos de clientes ou de fornecedores a uma data.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/parties/aging", async (
+        Guid userId, Guid companyId, string? date, string? kind, PartyAgingService aging, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(date, "yyyy-MM-dd", out var at))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["date"] = ["Indique a data (aaaa-mm-dd)."] });
+        }
+
+        try
+        {
+            var result = await aging
+                .BuildAsync(userId, companyId, at, string.IsNullOrWhiteSpace(kind) ? PartyAgingService.Customers : kind, cancellationToken)
+                .ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["kind"] = [exception.Message] });
+        }
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/parties/balances", async (
         Guid userId, Guid companyId, string? to, string? search, int? page, int? pageSize,
         PartyLedgerService ledger, CancellationToken cancellationToken) =>

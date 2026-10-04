@@ -847,6 +847,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
   })
 
+  it('shows the aging screen (requires the database)', () => {
+    window.history.pushState({}, '', '/idade-saldos')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Idade de saldos', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)
