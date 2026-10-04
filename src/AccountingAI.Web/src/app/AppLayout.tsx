@@ -13,6 +13,7 @@ import {
   ClipboardCheck,
   DoorOpen,
   ChartLine,
+  Factory,
   FileDown,
   FileText,
   FileUp,
@@ -61,6 +62,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/contas-correntes', label: 'Contas correntes', icon: Users },
     { to: '/saldos-terceiros', label: 'Saldos de terceiros', icon: Contact },
     { to: '/mapa-analitico', label: 'Mapa analítico', icon: FolderTree },
+    { to: '/mapa-depreciacoes', label: 'Mapa de depreciações', icon: Factory },
   ] },
   { label: 'Fiscal', links: [
     { to: '/iva', label: 'Resumo de IVA', icon: Receipt },
@@ -91,6 +93,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/documentos', label: 'Documentos', icon: FileText },
     { to: '/lancamentos-tipo', label: 'Lançamentos-tipo', icon: LayoutTemplate },
     { to: '/centros-custo', label: 'Centros de custo', icon: FolderTree },
+    { to: '/ativos-fixos', label: 'Ativos fixos', icon: Factory },
     { to: '/series', label: 'Séries', icon: ListOrdered },
     { to: '/taxonomias', label: 'Taxonomias', icon: Tags },
   ] },

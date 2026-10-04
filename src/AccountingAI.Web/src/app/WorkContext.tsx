@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type BalanceSheetStatement, type RecapitulativeStatement, type VatDeclaration, type OperatingMap, type FinancialRatios, type MonthlyEvolution, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type AppliedTemplate, type SaftExportReport, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type BalanceSheetStatement, type FixedAssetRow, type DepreciationSchedule, type RecapitulativeStatement, type VatDeclaration, type OperatingMap, type FinancialRatios, type MonthlyEvolution, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type AppliedTemplate, type SaftExportReport, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -124,6 +124,9 @@ type WorkContextValue = WorkContextData & {
   costCenters: (companyId: string, includeInactive: boolean) => Promise<CostCenterRow[]>
   saveCostCenter: (companyId: string, input: CostCenterRow, isNew: boolean) => Promise<CostCenterRow>
   analyticReport: (companyId: string, params: { from: string; to: string }) => Promise<AnalyticReport>
+  fixedAssets: (companyId: string, includeInactive: boolean) => Promise<FixedAssetRow[]>
+  saveFixedAsset: (companyId: string, input: FixedAssetRow, isNew: boolean) => Promise<FixedAssetRow>
+  depreciationSchedule: (companyId: string, year: number) => Promise<DepreciationSchedule>
   atCredentials: (companyId: string) => Promise<AtCredentials>
   vatClassification: (companyId: string) => Promise<VatClassificationRow[]>
   setVatClassification: (companyId: string, accountCode: string, input: { rate: string; nature: string; region: string }) => Promise<void>
@@ -890,6 +893,26 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as CostCenterRow
+    },
+    fixedAssets: async (companyId, includeInactive) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/fixed-assets?includeInactive=${includeInactive}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as FixedAssetRow[]
+    },
+    saveFixedAsset: async (companyId, input, isNew) => {
+      const base = `/api/v1/development/users/${data.user.id}/companies/${companyId}/fixed-assets`
+      const response = await fetch(isNew ? base : `${base}/${encodeURIComponent(input.code)}`, {
+        method: isNew ? 'POST' : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as FixedAssetRow
+    },
+    depreciationSchedule: async (companyId, year) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/fixed-assets/schedule?year=${year}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as DepreciationSchedule
     },
     analyticReport: async (companyId, { from, to }) => {
       const params = new URLSearchParams()

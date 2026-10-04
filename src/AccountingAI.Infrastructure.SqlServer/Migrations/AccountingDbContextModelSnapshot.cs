@@ -394,6 +394,97 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.ToTable("EntryTemplateLines", "accounting");
                 });
 
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.FixedAsset", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AccumulatedAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("AcquisitionDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("AcquisitionValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("AnnualRate")
+                        .HasPrecision(7, 4)
+                        .HasColumnType("decimal(7,4)");
+
+                    b.Property<Guid?>("AssetAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("ByMonths")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateOnly?>("DisposalDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid?>("ExpenseAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("ResidualValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateOnly>("StartOfUseDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccumulatedAccountId");
+
+                    b.HasIndex("AssetAccountId");
+
+                    b.HasIndex("ExpenseAccountId");
+
+                    b.HasIndex("CompanyId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("FixedAssets", "accounting");
+                });
+
             modelBuilder.Entity("AccountingAI.Domain.Accounting.IrcEstimateFiling", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1656,6 +1747,36 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                         .WithMany()
                         .HasForeignKey("VatCodeId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.FixedAsset", b =>
+                {
+                    b.HasOne("AccountingAI.Domain.Accounting.LedgerAccount", "AccumulatedAccount")
+                        .WithMany()
+                        .HasForeignKey("AccumulatedAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("AccountingAI.Domain.Accounting.LedgerAccount", "AssetAccount")
+                        .WithMany()
+                        .HasForeignKey("AssetAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("AccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AccountingAI.Domain.Accounting.LedgerAccount", "ExpenseAccount")
+                        .WithMany()
+                        .HasForeignKey("ExpenseAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AccumulatedAccount");
+
+                    b.Navigation("AssetAccount");
+
+                    b.Navigation("ExpenseAccount");
                 });
 
             modelBuilder.Entity("AccountingAI.Domain.Accounting.JournalEntry", b =>

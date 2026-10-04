@@ -1447,6 +1447,37 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task FixedAssetsAreListedAndScheduled()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var list = await client.GetAsync($"{basePath}/fixed-assets?includeInactive=true").ConfigureAwait(false);
+        using var schedule = await client.GetAsync($"{basePath}/fixed-assets/schedule?year=2026").ConfigureAwait(false);
+        var payload = await schedule.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badYear = await client.GetAsync($"{basePath}/fixed-assets/schedule?year=12").ConfigureAwait(false);
+        using var unauthorized = await client
+            .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/fixed-assets")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, list.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, schedule.StatusCode);
+        StringAssert.Contains(payload, "\"ledgerDepreciation\":");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badYear.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task VatDeclarationFillsTheOfficialFields()
     {
         if (!OperatingSystem.IsWindows())

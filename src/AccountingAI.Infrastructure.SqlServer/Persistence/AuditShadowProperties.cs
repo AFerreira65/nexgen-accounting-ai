@@ -41,6 +41,7 @@ internal static class AuditShadowProperties
         typeof(VatCode),
         typeof(EntryTemplate),
         typeof(CostCenter),
+        typeof(FixedAsset),
     ];
 
     public static void Apply(ModelBuilder modelBuilder)

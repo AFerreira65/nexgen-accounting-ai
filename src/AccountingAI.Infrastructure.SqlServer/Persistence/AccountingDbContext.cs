@@ -61,6 +61,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<CostCenter> CostCenters => Set<CostCenter>();
 
+    public DbSet<FixedAsset> FixedAssets => Set<FixedAsset>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -93,6 +95,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new EntryTemplateConfiguration());
         modelBuilder.ApplyConfiguration(new EntryTemplateLineConfiguration());
         modelBuilder.ApplyConfiguration(new CostCenterConfiguration());
+        modelBuilder.ApplyConfiguration(new FixedAssetConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

@@ -27,6 +27,8 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/abertura': { schema: 'accounting', name: 'JournalEntries' },
   '/contas': { schema: 'accounting', name: 'Accounts' },
   '/centros-custo': { schema: 'accounting', name: 'CostCenters' },
+  '/ativos-fixos': { schema: 'accounting', name: 'FixedAssets' },
+  '/mapa-depreciacoes': { schema: 'accounting', name: 'FixedAssets' },
   '/mapa-analitico': { schema: 'accounting', name: 'JournalEntryLines' },
   '/demonstracoes': { schema: 'accounting', name: 'JournalEntryLines' },
   '/evolucao': { schema: 'accounting', name: 'JournalEntryLines' },

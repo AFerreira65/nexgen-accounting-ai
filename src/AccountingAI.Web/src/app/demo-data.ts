@@ -657,6 +657,32 @@ export type SaftExportReport = {
 
 export type CostCenterRow = { code: string; name: string; isActive: boolean }
 
+export type FixedAssetRow = {
+  code: string
+  description: string
+  acquisitionDate: string
+  startOfUseDate: string
+  acquisitionValue: number
+  residualValue: number
+  annualRate: number
+  byMonths: boolean
+  assetAccountCode: string | null
+  accumulatedAccountCode: string | null
+  expenseAccountCode: string | null
+  disposalDate: string | null
+  isActive: boolean
+}
+export type DepreciationSchedule = {
+  year: number
+  rows: { code: string; description: string; startOfUseDate: string; disposalDate: string | null; acquisitionValue: number; annualRate: number; accumulatedAtStart: number; depreciation: number; accumulatedAtEnd: number; netValue: number; expenseAccountCode: string | null }[]
+  totalAcquisitionValue: number
+  totalDepreciation: number
+  totalAccumulatedAtEnd: number
+  totalNetValue: number
+  ledgerDepreciation: number
+  difference: number
+}
+
 export type StatementLine = { section: string; label: string; amount: number; comparative: number; isTotal: boolean }
 export type StatementExcludedAccount = { accountCode: string; accountName: string; balance: number; reason: string }
 export type BalanceSheetStatement = {

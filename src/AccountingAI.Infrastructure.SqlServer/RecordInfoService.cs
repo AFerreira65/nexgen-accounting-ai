@@ -52,6 +52,8 @@ public sealed class RecordInfoService(AccountingDbContext context)
                 (c, company, id, ct) => ById(id, key => Audited(c.Parties.Where(x => x.CompanyId == company && x.Id == key), ct))),
             ["centros-custo"] = (new("accounting", "CostCenters", true),
                 (c, company, id, ct) => Audited(c.CostCenters.Where(x => x.CompanyId == company && x.Code == Code(id)), ct)),
+            ["ativos-fixos"] = (new("accounting", "FixedAssets", true),
+                (c, company, id, ct) => Audited(c.FixedAssets.Where(x => x.CompanyId == company && x.Code == Code(id)), ct)),
             ["lancamentos-tipo"] = (new("accounting", "EntryTemplates", true),
                 (c, company, id, ct) => Audited(c.EntryTemplates.Where(x => x.CompanyId == company && x.Code == Code(id)), ct)),
             ["codigos-iva"] = (new("accounting", "VatCodes", true),

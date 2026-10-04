@@ -2095,6 +2095,54 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Ativos fixos: cadastro e mapa de depreciações de um exercício.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets", async (
+        Guid userId, Guid companyId, bool? includeInactive, FixedAssetService assets, CancellationToken cancellationToken) =>
+    {
+        var list = await assets.ListAsync(userId, companyId, includeInactive ?? false, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/schedule", async (
+        Guid userId, Guid companyId, int year, FixedAssetService assets, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        var schedule = await assets.ScheduleAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        return schedule is null ? Results.NotFound() : Results.Ok(schedule);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets", async (
+        Guid userId, Guid companyId, FixedAssetInput request, FixedAssetService assets, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var created = await assets.CreateAsync(userId, companyId, request, cancellationToken).ConfigureAwait(false);
+            return created is null ? Results.NotFound() : Results.Ok(created);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["ativo"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/{code}", async (
+        Guid userId, Guid companyId, string code, FixedAssetInput request, FixedAssetService assets, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var updated = await assets.UpdateAsync(userId, companyId, code, request, cancellationToken).ConfigureAwait(false);
+            return updated is null ? Results.NotFound() : Results.Ok(updated);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["ativo"] = [exception.Message] });
+        }
+    });
+
     // Demonstrações financeiras nos modelos do SNC, montadas pelas taxonomias das contas.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/statements/balance-sheet", async (
         Guid userId, Guid companyId, string? date, FinancialStatementsService statements, CancellationToken cancellationToken) =>

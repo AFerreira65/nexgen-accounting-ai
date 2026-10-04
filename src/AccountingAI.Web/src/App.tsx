@@ -37,6 +37,7 @@ import { PartyBalancesByPartyPage, PartyStatementPage } from './pages/PartyLedge
 import { VatCodesPage } from './pages/VatCodesPage'
 import { FiscalTablesPage } from './pages/FiscalTablesPage'
 import { FinancialStatementsPage } from './pages/FinancialStatementsPage'
+import { DepreciationSchedulePage, FixedAssetsPage } from './pages/FixedAssetsPages'
 import { SaftExportPage } from './pages/SaftExportPage'
 import { AnalyticReportPage, CostCentersPage } from './pages/AnalyticPages'
 import { EntryTemplatesPage } from './pages/EntryTemplatesPage'
@@ -61,6 +62,8 @@ export function App() {
             <Route path="/saldos-terceiros" element={<PartyBalancesByPartyPage />} />
             <Route path="/lancamentos-tipo" element={<EntryTemplatesPage />} />
             <Route path="/centros-custo" element={<CostCentersPage />} />
+            <Route path="/ativos-fixos" element={<FixedAssetsPage />} />
+            <Route path="/mapa-depreciacoes" element={<DepreciationSchedulePage />} />
             <Route path="/mapa-analitico" element={<AnalyticReportPage />} />
             <Route path="/diarios" element={<JournalsPage />} />
             <Route path="/documentos" element={<DocumentTypesPage />} />
