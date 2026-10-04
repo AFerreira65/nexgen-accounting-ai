@@ -1471,6 +1471,13 @@ public sealed class FoundationApiTests
         using var badRuleBody = new StringContent("{\"entryTemplateCode\":\"NAO-HA\"}", System.Text.Encoding.UTF8, "application/json");
         using var badRule = await client.PutAsync($"{basePath}/supplier-entry-rules/500584095", badRuleBody).ConfigureAwait(false);
         using var missingRule = await client.DeleteAsync($"{basePath}/supplier-entry-rules/500584095").ConfigureAwait(false);
+        using var sales = await client.GetAsync($"{basePath}/sales-suggested-entries?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
+        var salesPayload = await sales.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var salesRules = await client.GetAsync($"{basePath}/sales-entry-rules").ConfigureAwait(false);
+        using var badSalesRuleBody = new StringContent("{\"entryTemplateCode\":\"NAO-HA\"}", System.Text.Encoding.UTF8, "application/json");
+        using var badSalesRule = await client.PutAsync($"{basePath}/sales-entry-rules/23", badSalesRuleBody).ConfigureAwait(false);
+        using var notSaftBody = new StringContent("isto não é XML", System.Text.Encoding.UTF8, "application/xml");
+        using var notSaft = await client.PostAsync($"{basePath}/sales-documents/import?dryRun=true", notSaftBody).ConfigureAwait(false);
         using var map = await client.GetAsync($"{basePath}/management/operating-map?year=2026").ConfigureAwait(false);
         var mapPayload = await map.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var ratios = await client.GetAsync($"{basePath}/management/ratios?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
@@ -1510,6 +1517,11 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, rules.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badRule.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, missingRule.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, sales.StatusCode);
+        StringAssert.Contains(salesPayload, "\"percentagesWithoutRule\":");
+        Assert.AreEqual(HttpStatusCode.OK, salesRules.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, badSalesRule.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, notSaft.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, map.StatusCode);
         StringAssert.Contains(mapPayload, "\"label\":\"Resultado líquido do período\"");
         Assert.AreEqual(HttpStatusCode.OK, ratios.StatusCode);

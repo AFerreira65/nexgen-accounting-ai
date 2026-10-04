@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddSingleton<ISaftAccountingWriter, SaftAccountingWriter>();
         services.AddSingleton<ISaftEntriesReader, SaftEntriesReader>();
         services.AddSingleton<ISaftSalesInvoicesReader, SaftSalesInvoicesReader>();
+        services.AddSingleton<ISaftSalesDocumentsReader, SaftSalesDocumentsReader>();
         services.AddSingleton<ISaftSchemaValidator, SaftSchemaValidator>();
         services.AddSingleton<ISaftValidationModelReader, SaftValidationModelReader>();
         services.AddSingleton<IEFaturaCsvReader, EFaturaCsvReader>();

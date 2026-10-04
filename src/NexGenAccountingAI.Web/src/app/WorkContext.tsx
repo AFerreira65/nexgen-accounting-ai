@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type BalanceSheetStatement, type BudgetReport, type SuggestedEntriesReport, type SuggestedEntryOutcome, type SupplierEntryRuleRow, type ExerciseStructure, type PartyAging, type VatSettlementEntryPreview, type FiscalDossier, type WithholdingReport, type IesAnnexA, type Modelo22Return, type FixedAssetRow, type DepreciationSchedule, type RecapitulativeStatement, type VatDeclaration, type OperatingMap, type FinancialRatios, type MonthlyEvolution, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type AppliedTemplate, type SaftExportReport, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type BalanceSheetStatement, type BudgetReport, type SuggestedEntriesReport, type SalesDocumentsImportResult, type SalesSuggestedEntriesReport, type SalesEntryRuleRow, type SuggestedEntryOutcome, type SupplierEntryRuleRow, type ExerciseStructure, type PartyAging, type VatSettlementEntryPreview, type FiscalDossier, type WithholdingReport, type IesAnnexA, type Modelo22Return, type FixedAssetRow, type DepreciationSchedule, type RecapitulativeStatement, type VatDeclaration, type OperatingMap, type FinancialRatios, type MonthlyEvolution, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type AppliedTemplate, type SaftExportReport, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -134,6 +134,12 @@ type WorkContextValue = WorkContextData & {
   supplierEntryRules: (companyId: string) => Promise<SupplierEntryRuleRow[]>
   saveSupplierEntryRule: (companyId: string, supplierTaxId: string, input: { entryTemplateCode: string; description: string | null; isActive: boolean }) => Promise<SupplierEntryRuleRow>
   deleteSupplierEntryRule: (companyId: string, supplierTaxId: string) => Promise<void>
+  importSalesDocuments: (companyId: string, file: File, dryRun: boolean) => Promise<SalesDocumentsImportResult>
+  salesSuggestedEntries: (companyId: string, range: { from: string; to: string }) => Promise<SalesSuggestedEntriesReport>
+  finalizeSalesSuggestedEntries: (companyId: string, documentIds: string[]) => Promise<SuggestedEntryOutcome[]>
+  salesEntryRules: (companyId: string) => Promise<SalesEntryRuleRow[]>
+  saveSalesEntryRule: (companyId: string, percentage: number, input: { entryTemplateCode: string; isActive: boolean }) => Promise<SalesEntryRuleRow>
+  deleteSalesEntryRule: (companyId: string, percentage: number) => Promise<void>
   operatingMap: (companyId: string, year: number) => Promise<OperatingMap>
   financialRatios: (companyId: string, params: { from: string; to: string }) => Promise<FinancialRatios>
   cashFlowStatement: (companyId: string, params: { from: string; to: string }) => Promise<CashFlowStatement>
@@ -1085,6 +1091,49 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
     },
     deleteSupplierEntryRule: async (companyId, supplierTaxId) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/supplier-entry-rules/${encodeURIComponent(supplierTaxId)}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error(await problemMessage(response))
+    },
+    importSalesDocuments: async (companyId, file, dryRun) => {
+      const params = new URLSearchParams({ fileName: file.name })
+      if (dryRun) params.set('dryRun', 'true')
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/sales-documents/import?${params}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/xml' },
+        body: file,
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SalesDocumentsImportResult
+    },
+    salesSuggestedEntries: async (companyId, range) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/sales-suggested-entries?from=${range.from}&to=${range.to}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SalesSuggestedEntriesReport
+    },
+    finalizeSalesSuggestedEntries: async (companyId, documentIds) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/sales-suggested-entries/finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentIds }),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SuggestedEntryOutcome[]
+    },
+    salesEntryRules: async (companyId) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/sales-entry-rules`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SalesEntryRuleRow[]
+    },
+    saveSalesEntryRule: async (companyId, percentage, input) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/sales-entry-rules/${percentage}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as SalesEntryRuleRow
+    },
+    deleteSalesEntryRule: async (companyId, percentage) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/sales-entry-rules/${percentage}`, { method: 'DELETE' })
       if (!response.ok) throw new Error(await problemMessage(response))
     },
     exerciseStructure: async (companyId, year) => {

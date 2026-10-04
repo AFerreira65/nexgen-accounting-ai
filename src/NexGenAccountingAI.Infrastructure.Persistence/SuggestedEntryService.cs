@@ -68,7 +68,7 @@ public sealed record SuggestedEntriesReport(
 }
 
 /// <summary>O resultado de finalizar uma sugestão: a referência do lançamento criado, ou o erro.</summary>
-public sealed record SuggestedEntryOutcome(Guid PurchaseId, string? Reference, string? Error);
+public sealed record SuggestedEntryOutcome(Guid DocumentId, string? Reference, string? Error);
 
 /// <summary>
 /// Lançamentos sugeridos a partir das compras do e-Fatura (F3-18A). Cada fatura

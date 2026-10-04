@@ -35,7 +35,7 @@ public sealed class DatabaseMigrationTests
                 .ConfigureAwait(false);
 
             CollectionAssert.AreEqual(
-                new[] { "20261004195730_PostgreSqlBaseline", "20261004221135_SupplierEntryRules" },
+                new[] { "20261004195730_PostgreSqlBaseline", "20261004221135_SupplierEntryRules", "20261004222709_SalesDocuments" },
                 appliedMigrations.ToArray());
 
             var firmId = Guid.NewGuid();

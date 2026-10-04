@@ -2534,6 +2534,102 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Lançamentos sugeridos das vendas (F3-18B): documentos de um SAF-T de faturação, com regra por taxa de IVA.
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/sales-documents/import", async (
+        Guid userId,
+        Guid companyId,
+        HttpRequest request,
+        SalesSuggestedEntryService sales,
+        CancellationToken cancellationToken,
+        bool? dryRun,
+        string? fileName) =>
+    {
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = null;
+        }
+
+        try
+        {
+            var result = await sales
+                .ImportAsync(userId, companyId, request.Body,
+                    string.IsNullOrWhiteSpace(fileName) ? "(sem nome)" : fileName,
+                    dryRun ?? false, cancellationToken)
+                .ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }
+        catch (Exception exception) when (exception is SaftFileFormatException or ArgumentException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["saft"] = [exception.Message] });
+        }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/sales-suggested-entries", async (
+        Guid userId, Guid companyId, DateOnly from, DateOnly to, SalesSuggestedEntryService sales, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var report = await sales.ListAsync(userId, companyId, from, to, cancellationToken).ConfigureAwait(false);
+            return report is null ? Results.NotFound() : Results.Ok(report);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/sales-suggested-entries/finalize", async (
+        Guid userId, Guid companyId, FinalizeSalesSuggestedEntriesRequest request, SalesSuggestedEntryService sales, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var outcomes = await sales.FinalizeAsync(userId, companyId, request?.DocumentIds ?? [], cancellationToken).ConfigureAwait(false);
+            return outcomes is null ? Results.NotFound() : Results.Ok(outcomes);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["sugestoes"] = [exception.Message] });
+        }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/sales-entry-rules", async (
+        Guid userId, Guid companyId, SalesSuggestedEntryService sales, CancellationToken cancellationToken) =>
+    {
+        var rules = await sales.ListRulesAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return rules is null ? Results.NotFound() : Results.Ok(rules);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/sales-entry-rules/{percentage:decimal}", async (
+        Guid userId, Guid companyId, decimal percentage, SalesEntryRuleRequest request, SalesSuggestedEntryService sales, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var rule = await sales
+                .SaveRuleAsync(userId, companyId, percentage, request?.EntryTemplateCode ?? string.Empty, request?.IsActive ?? true, cancellationToken)
+                .ConfigureAwait(false);
+            return rule is null ? Results.NotFound() : Results.Ok(rule);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["regra"] = [exception.Message] });
+        }
+    });
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/sales-entry-rules/{percentage:decimal}", async (
+        Guid userId, Guid companyId, decimal percentage, SalesSuggestedEntryService sales, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var deleted = await sales.DeleteRuleAsync(userId, companyId, percentage, cancellationToken).ConfigureAwait(false);
+            return deleted is true ? Results.NoContent() : Results.NotFound();
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["regra"] = [exception.Message] });
+        }
+    });
+
     // Estrutura do exercício: gastos e rendimentos por natureza, maiores clientes e fornecedores.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/structure", async (
         Guid userId, Guid companyId, int year, FinancialStatementsService statements, CancellationToken cancellationToken) =>
@@ -4322,6 +4418,10 @@ public sealed record BudgetCopyRequest(string? Source, int SourceYear, decimal? 
 public sealed record FinalizeSuggestedEntriesRequest(IReadOnlyList<Guid>? PurchaseIds);
 
 public sealed record SupplierEntryRuleRequest(string? EntryTemplateCode, string? Description, bool IsActive = true);
+
+public sealed record FinalizeSalesSuggestedEntriesRequest(IReadOnlyList<Guid>? DocumentIds);
+
+public sealed record SalesEntryRuleRequest(string? EntryTemplateCode, bool IsActive = true);
 
 public sealed record VatCodeRequest(
     string? Code,

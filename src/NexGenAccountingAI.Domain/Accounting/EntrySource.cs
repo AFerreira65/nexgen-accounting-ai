@@ -17,4 +17,7 @@ public enum EntrySource
 
     /// <summary>Gerado a partir de uma fatura de compra do e-Fatura (lançamento sugerido).</summary>
     EFatura = 4,
+
+    /// <summary>Gerado a partir de um documento de venda de um SAF-T de faturação (lançamento sugerido).</summary>
+    SaftBilling = 5,
 }

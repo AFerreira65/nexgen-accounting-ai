@@ -1004,6 +1004,55 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("Parties", "accounting");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.SalesEntryRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EntryTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<decimal>("TaxPercentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntryTemplateId");
+
+                    b.HasIndex("CompanyId", "TaxPercentage")
+                        .IsUnique();
+
+                    b.ToTable("SalesEntryRules", "accounting");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.SupplierEntryRule", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1172,6 +1221,88 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("VatReturnFiling", "accounting");
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Billing.SalesDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Atcud")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("CustomerCountry")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CustomerTaxId")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("GrossTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("ImportBatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("InvoiceDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("InvoiceNo")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("InvoiceType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("IsVoided")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("JournalEntryReference")
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)");
+
+                    b.Property<decimal>("NetTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("SourceFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<decimal>("TaxPayable")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "InvoiceDate");
+
+                    b.HasIndex("CompanyId", "InvoiceNo")
+                        .IsUnique();
+
+                    b.ToTable("SalesDocuments", "accounting");
                 });
 
             modelBuilder.Entity("NexGenAccountingAI.Domain.Efatura.EFaturaPurchase", b =>
@@ -2125,6 +2256,23 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.SalesEntryRule", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NexGenAccountingAI.Domain.Accounting.EntryTemplate", "EntryTemplate")
+                        .WithMany()
+                        .HasForeignKey("EntryTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("EntryTemplate");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.SupplierEntryRule", b =>
                 {
                     b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
@@ -2149,6 +2297,45 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Billing.SalesDocument", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsMany("NexGenAccountingAI.Domain.Billing.SalesDocumentTax", "Taxes", b1 =>
+                        {
+                            b1.Property<Guid>("SalesDocumentId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<decimal>("Percentage")
+                                .HasPrecision(5, 2);
+
+                            b1.Property<decimal>("TaxAmount")
+                                .HasPrecision(18, 2);
+
+                            b1.Property<decimal>("TaxBase")
+                                .HasPrecision(18, 2);
+
+                            b1.HasKey("SalesDocumentId", "__synthesizedOrdinal");
+
+                            b1.ToTable("SalesDocuments", "accounting");
+
+                            b1
+                                .ToJson("Taxes")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SalesDocumentId");
+                        });
+
+                    b.Navigation("Taxes");
                 });
 
             modelBuilder.Entity("NexGenAccountingAI.Domain.Organizations.Company", b =>

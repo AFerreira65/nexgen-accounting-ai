@@ -23,7 +23,7 @@ export type Movement = {
   description: string
   notes?: string | null
   status: 'Conferido' | 'Por conferir' | 'Anulado'
-  source?: 'Manual' | 'SaftImport' | 'Opening' | 'Closing' | 'EFatura'
+  source?: 'Manual' | 'SaftImport' | 'Opening' | 'Closing' | 'EFatura' | 'SaftBilling'
   amount: number
   lines: MovementLine[]
 }
@@ -812,7 +812,30 @@ export type SuggestedEntry = {
   ready: boolean
 }
 export type SuggestedEntriesReport = { from: string; to: string; purchaseCount: number; bookedCount: number; cancelledCount: number; readyCount: number; withoutRuleCount: number; items: SuggestedEntry[] }
-export type SuggestedEntryOutcome = { purchaseId: string; reference: string | null; error: string | null }
+export type SuggestedEntryOutcome = { documentId: string; reference: string | null; error: string | null }
+export type SalesDocumentsImportResult = { batchId: string | null; read: number; imported: number; alreadyExisted: number; voided: number; from: string | null; to: string | null; warnings: string[] }
+export type SalesSuggestedEntry = {
+  documentId: string
+  invoiceNo: string
+  invoiceType: string
+  invoiceDate: string
+  customerTaxId: string
+  customerName: string
+  isCreditNote: boolean
+  netTotal: number
+  taxPayable: number
+  grossTotal: number
+  percentages: number[]
+  journalCode: string | null
+  documentTypeCode: string | null
+  description: string
+  lines: SuggestedEntryLine[]
+  problem: string | null
+  warning: string | null
+  ready: boolean
+}
+export type SalesSuggestedEntriesReport = { from: string; to: string; documentCount: number; bookedCount: number; voidedCount: number; readyCount: number; percentagesWithoutRule: number[]; items: SalesSuggestedEntry[] }
+export type SalesEntryRuleRow = { taxPercentage: number; entryTemplateCode: string; entryTemplateName: string; isActive: boolean }
 export type SupplierEntryRuleRow = { supplierTaxId: string; supplierName: string | null; entryTemplateCode: string; entryTemplateName: string; description: string | null; isActive: boolean }
 export type StructureItem = { label: string; amount: number; share: number }
 export type ExerciseStructure = { year: number; expenses: StructureItem[]; income: StructureItem[]; topCustomers: StructureItem[]; topSuppliers: StructureItem[] }

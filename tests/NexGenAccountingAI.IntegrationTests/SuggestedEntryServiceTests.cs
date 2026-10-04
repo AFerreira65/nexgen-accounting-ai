@@ -127,13 +127,13 @@ public sealed class SuggestedEntryServiceTests
             // Finalizar cria os lançamentos por conferir, com origem e-Fatura, e liga-os às faturas.
             var outcomes = await service.FinalizeAsync(userId, companyId, [invoice.Id, creditNote.Id, noRule.Id, alreadyBooked.Id], CancellationToken.None).ConfigureAwait(false);
             Assert.IsNotNull(outcomes);
-            Assert.IsNotNull(outcomes!.Single(item => item.PurchaseId == invoice.Id).Reference);
-            Assert.IsNotNull(outcomes.Single(item => item.PurchaseId == creditNote.Id).Reference);
-            Assert.AreEqual("O fornecedor não tem regra de lançamento.", outcomes.Single(item => item.PurchaseId == noRule.Id).Error);
-            Assert.AreEqual("A fatura já tem lançamento ou está anulada.", outcomes.Single(item => item.PurchaseId == alreadyBooked.Id).Error);
+            Assert.IsNotNull(outcomes!.Single(item => item.DocumentId == invoice.Id).Reference);
+            Assert.IsNotNull(outcomes.Single(item => item.DocumentId == creditNote.Id).Reference);
+            Assert.AreEqual("O fornecedor não tem regra de lançamento.", outcomes.Single(item => item.DocumentId == noRule.Id).Error);
+            Assert.AreEqual("A fatura já tem lançamento ou está anulada.", outcomes.Single(item => item.DocumentId == alreadyBooked.Id).Error);
             context.ChangeTracker.Clear();
 
-            var reference = outcomes.Single(item => item.PurchaseId == invoice.Id).Reference!;
+            var reference = outcomes.Single(item => item.DocumentId == invoice.Id).Reference!;
             var posted = await context.JournalEntries.AsNoTracking().Include(entry => entry.Lines)
                 .SingleAsync(entry => entry.CompanyId == companyId && entry.Reference == reference).ConfigureAwait(false);
             Assert.AreEqual(EntrySource.EFatura, posted.Source);

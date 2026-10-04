@@ -78,6 +78,7 @@ public static class DependencyInjection
         services.AddScoped<PartyAgingService>();
         services.AddScoped<BudgetService>();
         services.AddScoped<SuggestedEntryService>();
+        services.AddScoped<SalesSuggestedEntryService>();
         services.AddScoped<FiscalDossierService>();
         services.AddScoped<PartyImportService>();
         services.AddScoped<PartyLedgerService>();

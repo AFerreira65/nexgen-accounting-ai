@@ -80,10 +80,75 @@ a fatura.
 - **Não visto com a base real:** a base de trabalho só abre com a sessão do
   utilizador.
 
+### F3-18B — Lançamentos sugeridos a partir das vendas do SAF-T de faturação (feito)
+
+- **`SaftSalesDocumentsReader`** (`Infrastructure.Files`): lê, documento a
+  documento e em streaming, o bloco `SalesInvoices`.
+  - Cada documento traz o cliente, resolvido pelos `Customer` dos
+    `MasterFiles`, e a base e o imposto **por taxa de IVA**.
+  - A base de cada taxa é a soma das linhas (`CreditAmount` menos
+  `DebitAmount`).
+  - O imposto calcula-se pela percentagem. O acerto ao cêntimo até ao
+    `NetTotal` e ao `TaxPayable` do documento fica na taxa com mais base.
+  - Num SAF-T real com 1190 documentos, a soma das partes bateu com os
+    totais de todos eles.
+- **`Domain/Billing/SalesDocument`**: o documento importado. A repartição por
+  taxa fica numa coluna `jsonb`.
+- **`Domain/Accounting/SalesEntryRule`**: a regra de vendas por percentagem
+  de IVA, que liga uma taxa a um lançamento-tipo.
+- **Migração aditiva** `20261004222709_SalesDocuments`: duas tabelas novas.
+- **`EntrySource.SaftBilling`**: a origem «Sugerido do SAF-T de faturação».
+- **`SalesSuggestedEntryService`** aplica estas regras:
+
+| Parte | Regra |
+|---|---|
+| Importar | Idempotente pelo número do documento. Recusa um ficheiro cujo NIF não seja o da empresa ativa. Tem pré-visualização (`dryRun`). |
+| Documentos por lançar | Os do período não anulados e sem um lançamento ligado por anular nem um lançamento de vendas (linhas em 71, 72 ou 2433) com o mesmo número de documento, ±31 dias. O critério é o do cruzamento. |
+| Valores | Para cada taxa do documento, aplica-se o lançamento-tipo da regra dessa taxa à base e ao IVA dessa parte (`ComputeForDocument`). As linhas com a mesma conta, o mesmo código de IVA e o mesmo papel juntam-se, e o cliente fica numa só linha. Um documento com uma taxa sem regra não é sugerido. |
+| Nota de crédito | O tipo `NC` inverte os lados. |
+| Cliente | Se o cliente tiver ficha de terceiro ativa (país e NIF), vai na linha do cliente, com a conta própria quando a ficha a tiver. O consumidor final (NIF 999999990) fica na conta do lançamento-tipo, sem terceiro. |
+| Finalizar | Igual às compras: lançamento por conferir, ligado ao documento, com erro por documento. |
+
+- **API:**
+  - `POST .../sales-documents/import?dryRun=&fileName=`, com o XML no corpo;
+  - `GET .../sales-suggested-entries?from=&to=`;
+  - `POST .../sales-suggested-entries/finalize` (`{ documentIds }`);
+  - `GET .../sales-entry-rules`, `PUT` e `DELETE .../sales-entry-rules/{percentagem}`.
+- **PWA:** o ecrã «Lançamentos sugeridos» tem agora dois separadores,
+  «Compras (e-Fatura)» e «Vendas (SAF-T de faturação)», com o período
+  partilhado. O separador das vendas tem:
+  - a importação do ficheiro, com pré-visualização;
+  - as regras por taxa, com as taxas ainda sem regra;
+  - os documentos por lançar e o botão «Finalizar».
+
+  O resultado de finalizar indica `documentId` nos dois separadores.
+- **Limitação:** as vendas lançadas por resumo mensal não se encontram pelo
+  número do documento. Nesse caso, os documentos aparecem por lançar e não
+  devem ser finalizados; o ecrã avisa.
+
+**Validação efetuada**
+
+- `NexGenAccountingAI.Infrastructure.Files.Tests` (`SaftSalesDocumentsReaderTests`):
+  - duas taxas no mesmo documento, com o acerto ao cêntimo;
+  - nota de crédito com valores positivos;
+  - consumidor final e documento anulado;
+  - ficheiro sem vendas e XML ilegível.
+- `NexGenAccountingAI.IntegrationTests` (`SalesSuggestedEntryServiceTests`, em
+  PostgreSQL, com um leitor falso):
+  - **Importar:** pré-visualização sem escrita, reimportação sem duplicar e
+    ficheiro de outra empresa recusado.
+  - **Lista:** documento já lançado à mão fora da lista; taxa sem regra.
+  - **Sugestão:** documento a duas taxas com cinco linhas, cliente na conta
+    própria e com terceiro; nota de crédito de consumidor final sem
+    terceiro.
+  - **Finalizar:** lançamento por conferir com a origem certa; o documento
+    sai das sugestões.
+  - **Regras e acesso:** regras, lançamento-tipo inexistente e sem acesso.
+- `NexGenAccountingAI.Api.Tests`: lista, regras, regra com lançamento-tipo
+  inexistente e corpo que não é XML.
+
 ### Por fazer
 
-- **F3-18B**: as vendas a partir do SAF-T de faturação. O leitor atual só
-  soma totais, por isso é preciso ler documento a documento, com o cliente.
 - **F3-18C**: o mapa de documentos em falta, ou seja, os lançamentos de
   compra sem fatura no e-Fatura (o inverso desta lista), com o seguimento de
   cada um.
