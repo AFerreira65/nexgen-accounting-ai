@@ -1464,6 +1464,9 @@ public sealed class FoundationApiTests
 
         using var result = await client.GetAsync($"{basePath}/modelo-22?year=2026").ConfigureAwait(false);
         var payload = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var ies = await client.GetAsync($"{basePath}/ies/annex-a?year=2026").ConfigureAwait(false);
+        var iesPayload = await ies.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badIes = await client.GetAsync($"{basePath}/ies/annex-a?year=12").ConfigureAwait(false);
         using var catalog = await client.GetAsync($"{basePath}/modelo-22/fields").ConfigureAwait(false);
         var catalogPayload = await catalog.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badYear = await client.GetAsync($"{basePath}/modelo-22?year=12").ConfigureAwait(false);
@@ -1476,6 +1479,9 @@ public sealed class FoundationApiTests
         StringAssert.Contains(payload, "\"code\":\"367\"");
         Assert.AreEqual(HttpStatusCode.OK, catalog.StatusCode);
         StringAssert.Contains(catalogPayload, "\"number\":724");
+        Assert.AreEqual(HttpStatusCode.OK, ies.StatusCode);
+        StringAssert.Contains(iesPayload, "\"code\":\"A00158\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badIes.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badYear.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
     }

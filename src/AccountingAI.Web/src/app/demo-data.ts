@@ -710,6 +710,7 @@ export type RecapitulativeStatement = {
   source: string
   disclaimer: string
 }
+export type IesAnnexA = { year: number; norm: string; fields: { code: string; quadro: string; section: string; label: string; amount: number; computed: boolean }[]; warnings: string[]; source: string; disclaimer: string }
 export type Modelo22Field = { code: string; section: string; label: string; amount: number; computed: boolean; note: string | null; suggested: number | null; suggestionSource: string | null }
 export type Modelo22Return = { year: number; smallOrMediumEnterprise: boolean; municipalSurtaxRate: number; fields: Modelo22Field[]; warnings: string[]; source: string; disclaimer: string }
 export type VatFormField = { number: number; label: string; column: 'base' | 'sujeito-passivo' | 'estado' | 'apuramento'; amount: number; computed: boolean; supported: boolean; sources: { accountCode: string; accountName: string; amount: number }[] }

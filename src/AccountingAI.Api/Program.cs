@@ -2095,6 +2095,19 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // IES: os quadros 03 e 04 do Anexo A, a partir das demonstrações financeiras.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/ies/annex-a", async (
+        Guid userId, Guid companyId, int year, IesAnnexAService ies, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        var annex = await ies.BuildAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        return annex is null ? Results.NotFound() : Results.Ok(annex);
+    });
+
     // Modelo 22: apuramento do lucro tributável, da matéria coletável e do imposto de um exercício.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/modelo-22/fields", () =>
         Results.Ok(new { source = Modelo22Service.Source, fields = Modelo22Service.Quadro07Fields }));

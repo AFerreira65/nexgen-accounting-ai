@@ -236,6 +236,33 @@ public sealed class CashFlowAndEquityStatementsTests
             Assert.IsNull(await service.RatiosAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
             Assert.IsNull(await service.OperatingMapAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
 
+            // IES, Anexo A: as rubricas nos campos do impresso, com os gastos positivos.
+            var annex = await new IesAnnexAService(context, service).BuildAsync(userId, companyId, 2026, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsNotNull(annex);
+            Assert.AreEqual("S", annex!.Norm);
+            decimal Ies(string code) => annex.Fields.Single(field => field.Code == code).Amount;
+            Assert.AreEqual(100m, Ies("A00001"));
+            Assert.AreEqual(200m, Ies("A00007"), "Os fornecimentos e serviços externos vão positivos: o impresso subtrai-os.");
+            Assert.AreEqual(10m, Ies("A00023"));
+            Assert.AreEqual(-100m, Ies("A00018"));
+            Assert.AreEqual(-110m, Ies("A00024"));
+            Assert.AreEqual(-110m, Ies("A00026"));
+            Assert.AreEqual(300m, Ies("A00101"));
+            Assert.AreEqual(115m, Ies("A00116"));
+            Assert.AreEqual(1405m, Ies("A00124"));
+            Assert.AreEqual(1820m, Ies("A00126"));
+            Assert.AreEqual(1400m, Ies("A00127"));
+            Assert.AreEqual(1430m, Ies("A00136"));
+            Assert.AreEqual(-110m, Ies("A00137"));
+            Assert.AreEqual(1320m, Ies("A00139"));
+            Assert.AreEqual(500m, Ies("A00141"));
+            Assert.AreEqual(500m, Ies("A00157"));
+            Assert.AreEqual(1820m, Ies("A00158"));
+            Assert.IsTrue(annex.Fields.Single(field => field.Code == "A00158").Computed);
+            Assert.IsFalse(annex.Fields.Any(field => field.Code == "A00006"), "Os campos sem valor não aparecem.");
+            Assert.AreEqual(0, annex.Warnings.Count, string.Join(" | ", annex.Warnings));
+            Assert.IsNull(await new IesAnnexAService(context, service).BuildAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
+
             Assert.IsNull(await service.CashFlowsAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
             Assert.IsNull(await service.EquityChangesAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
         }

@@ -20,6 +20,7 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/declaracao-iva': { schema: 'accounting', name: 'JournalEntryLines' },
   '/declaracao-recapitulativa': { schema: 'accounting', name: 'JournalEntryLines' },
   '/modelo-22': { schema: 'accounting', name: 'IrcReturnValues' },
+  '/ies': { schema: 'accounting', name: 'JournalEntryLines' },
   '/codigos-iva': { schema: 'accounting', name: 'VatCodes' },
   '/config-iva': { schema: 'accounting', name: 'AccountVatClassification' },
   '/estimativa-irc': { schema: 'accounting', name: 'JournalEntryLines' },
