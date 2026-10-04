@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $webRoot = Join-Path $projectRoot 'src\NexGenAccountingAI.Web'
 $apiProject = Join-Path $projectRoot 'src\NexGenAccountingAI.Api\NexGenAccountingAI.Api.csproj'
-$webUrl = 'http://127.0.0.1:5173/'
+$webUrl = 'http://127.0.0.1:5273/'
 $apiHealthUrl = 'http://127.0.0.1:5080/health/live'
 
 function Test-LocalUrl {

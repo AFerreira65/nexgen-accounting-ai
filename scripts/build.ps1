@@ -40,7 +40,7 @@ Push-Location $webProject
 try {
     $webServerIsRunning = $false
     try {
-        $webResponse = Invoke-WebRequest -Uri 'http://127.0.0.1:5173/' -UseBasicParsing -TimeoutSec 2
+        $webResponse = Invoke-WebRequest -Uri 'http://127.0.0.1:5273/' -UseBasicParsing -TimeoutSec 2
         $webServerIsRunning = $webResponse.StatusCode -eq 200
     }
     catch {

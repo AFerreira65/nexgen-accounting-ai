@@ -55,7 +55,7 @@ Execute `Abrir NexGen Accounting AI.cmd` na pasta principal, ou:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
 ```
 
-A aplicação abre em `http://127.0.0.1:5173/`. O ficheiro `src/NexGenAccountingAI.Web/index.html` não deve ser usado como aplicação através de `file://`; se for aberto diretamente, apresenta agora a instrução correta em vez de uma página branca.
+A aplicação abre em `http://127.0.0.1:5273/`. O ficheiro `src/NexGenAccountingAI.Web/index.html` não deve ser usado como aplicação através de `file://`; se for aberto diretamente, apresenta agora a instrução correta em vez de uma página branca.
 
 ### PostgreSQL local
 

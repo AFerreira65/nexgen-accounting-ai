@@ -27,7 +27,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
 
 Endereços:
 
-- aplicação: `http://127.0.0.1:5173/`;
+- aplicação: `http://127.0.0.1:5273/`;
 - API: `http://127.0.0.1:5080`;
 - saúde: `http://127.0.0.1:5080/health/ready`.
 

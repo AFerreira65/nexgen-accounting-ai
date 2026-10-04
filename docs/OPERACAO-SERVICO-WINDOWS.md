@@ -101,4 +101,4 @@ Continua a ser só por linha de comandos — nunca por um formulário público:
 
 Nada disto obriga a usar o serviço sempre — `dotnet run` continua a
 funcionar em `http://localhost:5080` como antes, com a Vite em
-`http://localhost:5173`. As duas formas usam a mesma base de dados.
+`http://localhost:5273`. As duas formas usam a mesma base de dados.

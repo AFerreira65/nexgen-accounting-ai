@@ -62,7 +62,7 @@ describe('App', () => {
   it('explains how to start the application when index.html is opened as a file', () => {
     expect(indexHtml).toContain("window.location.protocol === 'file:'")
     expect(indexHtml).toContain('A aplicação precisa do servidor local')
-    expect(indexHtml).toContain('http://127.0.0.1:5173/')
+    expect(indexHtml).toContain('http://127.0.0.1:5273/')
   })
 
   it('switches company and opens its scoped settings', () => {
