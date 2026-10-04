@@ -815,6 +815,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Mapa de depreciações', level: 1 })).toBeInTheDocument()
   })
 
+  it('shows the Modelo 22 screen (requires the database)', () => {
+    window.history.pushState({}, '', '/modelo-22')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Modelo 22', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação ao SQL Server/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)

@@ -63,6 +63,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<FixedAsset> FixedAssets => Set<FixedAsset>();
 
+    public DbSet<IrcReturnValue> IrcReturnValues => Set<IrcReturnValue>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -96,6 +98,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new EntryTemplateLineConfiguration());
         modelBuilder.ApplyConfiguration(new CostCenterConfiguration());
         modelBuilder.ApplyConfiguration(new FixedAssetConfiguration());
+        modelBuilder.ApplyConfiguration(new IrcReturnValueConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

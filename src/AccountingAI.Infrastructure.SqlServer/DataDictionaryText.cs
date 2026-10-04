@@ -41,6 +41,7 @@ internal static class DataDictionaryText
         ["IrcEstimateFiling"] = "Estimativa de IRC guardada por uma empresa (período, taxa e correções fiscais indicadas, fotografia do cálculo).",
         ["CostCenters"] = "Centros de custo da empresa: a dimensão analítica indicada na linha do lançamento.",
         ["FixedAssets"] = "Ativos fixos da empresa, com os dados para calcular as depreciações por quotas constantes.",
+        ["IrcReturnValues"] = "Valores indicados pelo utilizador para o Modelo 22 de cada exercício: acréscimos, deduções e parâmetros do cálculo.",
         ["EntryTemplates"] = "Lançamentos-tipo da empresa: diário, tipo de documento e linhas de um lançamento repetitivo.",
         ["EntryTemplateLines"] = "Linhas de um lançamento-tipo: base, IVA ou contrapartida, com a conta, o lado e o código de IVA.",
         ["VatCodes"] = "Códigos de IVA da empresa: taxa, percentagem, natureza da operação e região, para indicar na linha do lançamento.",
@@ -216,6 +217,10 @@ internal static class DataDictionaryText
         ["VatCodes.IsActive"] = "Se o código está ativo.",
 
         ["JournalEntries.DocumentDate"] = "A data do documento de origem, quando indicada; pode diferir da data do lançamento.",
+        ["IrcReturnValues.Year"] = "O exercício a que o valor respeita.",
+        ["IrcReturnValues.Field"] = "O número do campo do Modelo 22 ou o nome do parâmetro (por exemplo a taxa da derrama municipal).",
+        ["IrcReturnValues.Amount"] = "O valor indicado.",
+        ["IrcReturnValues.Note"] = "Uma nota de trabalho sobre o valor.",
         ["FixedAssets.Code"] = "O código do ativo; único por empresa.",
         ["FixedAssets.Description"] = "A descrição do ativo.",
         ["FixedAssets.AcquisitionDate"] = "A data de aquisição.",

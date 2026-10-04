@@ -42,6 +42,7 @@ internal static class AuditShadowProperties
         typeof(EntryTemplate),
         typeof(CostCenter),
         typeof(FixedAsset),
+        typeof(IrcReturnValue),
     ];
 
     public static void Apply(ModelBuilder modelBuilder)

@@ -540,6 +540,59 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.ToTable("IrcEstimateFiling", "accounting");
                 });
 
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.IrcReturnValue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Field")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "Year", "Field")
+                        .IsUnique();
+
+                    b.ToTable("IrcReturnValues", "accounting");
+                });
+
             modelBuilder.Entity("AccountingAI.Domain.Accounting.JournalEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1777,6 +1830,15 @@ namespace AccountingAI.Infrastructure.SqlServer.Migrations
                     b.Navigation("AssetAccount");
 
                     b.Navigation("ExpenseAccount");
+                });
+
+            modelBuilder.Entity("AccountingAI.Domain.Accounting.IrcReturnValue", b =>
+                {
+                    b.HasOne("AccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("AccountingAI.Domain.Accounting.JournalEntry", b =>

@@ -2095,6 +2095,41 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Modelo 22: apuramento do lucro tributável, da matéria coletável e do imposto de um exercício.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/modelo-22/fields", () =>
+        Results.Ok(new { source = Modelo22Service.Source, fields = Modelo22Service.Quadro07Fields }));
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/modelo-22", async (
+        Guid userId, Guid companyId, int year, Modelo22Service modelo22, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        var result = await modelo22.BuildAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        return result is null ? Results.NotFound() : Results.Ok(result);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/modelo-22", async (
+        Guid userId, Guid companyId, int year, Modelo22Input[] values, Modelo22Service modelo22, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        try
+        {
+            var result = await modelo22.SaveAsync(userId, companyId, year, values ?? [], cancellationToken).ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["modelo22"] = [exception.Message] });
+        }
+    });
+
     // Ativos fixos: cadastro e mapa de depreciações de um exercício.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets", async (
         Guid userId, Guid companyId, bool? includeInactive, FixedAssetService assets, CancellationToken cancellationToken) =>

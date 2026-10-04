@@ -1,0 +1,605 @@
+{
+ "source": "Autoridade Tributária e Aduaneira — declaração de rendimentos Modelo 22 (impresso em vigor a partir de janeiro de 2026) e Manual de Preenchimento do Quadro 07 (versão 2025, abril de 2026), consultados em 2026-10-04.",
+ "fields": [
+  {
+   "number": 702,
+   "side": "acrescer",
+   "label": "Variações patrimoniais positivas não refletidas no resultado líquido do período (art.º 21.º) e quota-parte do subsídio respeitante a ativos não correntes, não depreciáveis/não amortizáveis [art.º 22.º n.º 1, al. b) a al. d)]",
+   "group": "variacoes"
+  },
+  {
+   "number": 703,
+   "side": "acrescer",
+   "label": "Variações patrimoniais positivas (regimes transitórios previstos no art.º 5.º, n.ºs 1, 5 e 6 do DL 159/2009, de 13/7 e no artigo 4.º da Lei n.º 82-A/2023, de 29 de dezembro)",
+   "group": "variacoes"
+  },
+  {
+   "number": 704,
+   "side": "deduzir",
+   "label": "Variações patrimoniais negativas não refletidas no resultado líquido do período (art.º 24.º)",
+   "group": "variacoes"
+  },
+  {
+   "number": 705,
+   "side": "deduzir",
+   "label": "Variações patrimoniais negativas (regimes transitórios previstos no art.º 5.º, n.ºs 1, 5 e 6 do DL 159/2009, de 13/7 e no artigo 4.º da Lei n.º 82-A/2023, de 29 de dezembro)",
+   "group": "variacoes"
+  },
+  {
+   "number": 706,
+   "side": "acrescer",
+   "label": "Alteração do regime fiscal dos contratos de construção (correções positivas)",
+   "group": "variacoes"
+  },
+  {
+   "number": 707,
+   "side": "deduzir",
+   "label": "Alteração do regime fiscal dos contratos de construção (correções negativas)",
+   "group": "variacoes"
+  },
+  {
+   "number": 805,
+   "side": "acrescer",
+   "label": "Variações positivas na mensuração de passivos de contratos de seguros e as decorrentes da aplicação do justo valor aos ativos afetos a esses passivos, que sejam refletidas em capitais próprios (art.º 50.º, n.º 1 e n.º 4)",
+   "group": "variacoes"
+  },
+  {
+   "number": 806,
+   "side": "deduzir",
+   "label": "Variações negativas na mensuração de passivos de contratos de seguros e as decorrentes da aplicação do justo valor aos ativos afetos a esses passivos, que sejam refletidas em capitais próprios (art.º 50.º, n.º 1 e n.º 4)",
+   "group": "variacoes"
+  },
+  {
+   "number": 709,
+   "side": "acrescer",
+   "label": "Matéria coletável / lucro tributável imputado por sociedades transparentes, ACE ou AEIE (art.º 6.º)",
+   "group": "acrescer"
+  },
+  {
+   "number": 710,
+   "side": "acrescer",
+   "label": "Correções relativas a períodos de tributação anteriores (art.º 18.º, n.º 2)",
+   "group": "acrescer"
+  },
+  {
+   "number": 711,
+   "side": "acrescer",
+   "label": "Vendas e prestações de serviços com pagamento diferido: diferença entre a quantia nominal da contraprestação e o justo valor (art.º 18.º, n.º 5)",
+   "group": "acrescer"
+  },
+  {
+   "number": 712,
+   "side": "acrescer",
+   "label": "Anulação dos efeitos do método da equivalência patrimonial e do método de consolidação proporcional no caso de empreendimentos conjuntos que sejam sujeitos passivos de IRC (art.º 18.º, n.º 8)",
+   "group": "acrescer"
+  },
+  {
+   "number": 713,
+   "side": "acrescer",
+   "label": "Ajustamentos não dedutíveis decorrentes da aplicação do justo valor (art.º 18.º, n.º 9)",
+   "group": "acrescer"
+  },
+  {
+   "number": 714,
+   "side": "acrescer",
+   "label": "Pagamentos com base em ações (art.º 18.º, n.º 11)",
+   "group": "acrescer"
+  },
+  {
+   "number": 715,
+   "side": "acrescer",
+   "label": "Gastos de benefícios de cessação de emprego, benefícios de reforma e outros benefícios pós emprego ou a longo prazo dos empregados (art.º 18.º, n.º 12)",
+   "group": "acrescer"
+  },
+  {
+   "number": 716,
+   "side": "acrescer",
+   "label": "Despesas não documentadas [art.º 23.º-A, n.º 1, al. b)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 717,
+   "side": "acrescer",
+   "label": "Gastos suportados com a transmissão onerosa de partes de capital (ex-art.º 23.º, n.ºs 3, 4 e 1.ª parte do n.º 5)",
+   "group": "acrescer"
+  },
+  {
+   "number": 718,
+   "side": "acrescer",
+   "label": "Perdas por imparidade em inventários para além dos limites legais (art.º 28.º) e em créditos não fiscalmente dedutíveis ou para além dos limites legais (art.ºs 28.º-A a 28.º-C)",
+   "group": "acrescer"
+  },
+  {
+   "number": 719,
+   "side": "acrescer",
+   "label": "Perdas por imparidade de ativos não correntes (art.º 31.º-B) e depreciações e amortizações (art.º 34.º, n.º 1), não aceites como gastos",
+   "group": "acrescer"
+  },
+  {
+   "number": 720,
+   "side": "acrescer",
+   "label": "40% do aumento das depreciações dos ativos fixos tangíveis em resultado de reavaliação fiscal (art.º 15.º, n.º 2 do DR 25/2009, de 14/9)",
+   "group": "acrescer"
+  },
+  {
+   "number": 721,
+   "side": "acrescer",
+   "label": "Provisões não dedutíveis ou para além dos limites legais (art.ºs 19.º, n.º 4 e 39.º) e perdas por imparidade fiscalmente não dedutíveis de ativos financeiros",
+   "group": "acrescer"
+  },
+  {
+   "number": 722,
+   "side": "acrescer",
+   "label": "Créditos incobráveis não aceites como gastos (art.º 41.º)",
+   "group": "acrescer"
+  },
+  {
+   "number": 723,
+   "side": "acrescer",
+   "label": "Realizações de utilidade social não dedutíveis (art.º 43.º)",
+   "group": "acrescer"
+  },
+  {
+   "number": 724,
+   "side": "acrescer",
+   "label": "IRC, incluindo as tributações autónomas, e outros impostos que direta ou indiretamente incidam sobre os lucros [art.º 23.º-A, n.º 1, al. a)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 725,
+   "side": "acrescer",
+   "label": "Impostos diferidos [art.º 23.º-A, n.º 1, al. a)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 726,
+   "side": "acrescer",
+   "label": "Encargos evidenciados em documentos emitidos por sujeitos passivos com NIF inexistente ou inválido ou por sujeitos passivos cessados oficiosamente [art.º 23.º-A, n.º 1, al. c)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 727,
+   "side": "acrescer",
+   "label": "Impostos, taxas e outros tributos que incidam sobre terceiros que o sujeito passivo não esteja legalmente obrigado a suportar [art.º 23.º-A, n.º 1, al. f)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 728,
+   "side": "acrescer",
+   "label": "Multas, coimas e demais encargos, incluindo juros compensatórios e moratórios, pela prática de infrações [art.º 23.º-A, n.º 1, al. e)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 729,
+   "side": "acrescer",
+   "label": "Indemnizações por eventos seguráveis [art.º 23.º-A, n.º 1, al. g)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 730,
+   "side": "acrescer",
+   "label": "Ajudas de custo e encargos com compensação pela deslocação em viatura própria do trabalhador [art.º 23.º-A, n.º 1, al. h)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 731,
+   "side": "acrescer",
+   "label": "Encargos não devidamente documentados [art.º 23.º-A, n.º 1, al. c)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 732,
+   "side": "acrescer",
+   "label": "Encargos com o aluguer de viaturas sem condutor [art.º 23.º-A, n.º 1, al. i)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 733,
+   "side": "acrescer",
+   "label": "Encargos com combustíveis [art.º 23.º-A, n.º 1, al. j)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 734,
+   "side": "acrescer",
+   "label": "Juros e outras formas de remuneração de suprimentos e empréstimos feitos pelos sócios à sociedade [art.º 23.º-A, n.º 1, al. m)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 735,
+   "side": "acrescer",
+   "label": "Gastos não dedutíveis relativos à participação nos lucros por membros dos órgãos sociais [art.º 23.º-A, n.º 1, al. o)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 736,
+   "side": "acrescer",
+   "label": "Menos-valias contabilísticas",
+   "group": "acrescer"
+  },
+  {
+   "number": 737,
+   "side": "acrescer",
+   "label": "50% de outras perdas relativas a partes de capital ou outras componentes de capital próprio (ex-art.º 45.º, n.º 3, parte final)",
+   "group": "acrescer"
+  },
+  {
+   "number": 738,
+   "side": "acrescer",
+   "label": "Mais-valia fiscal resultante de mudanças no modelo de valorização [art.º 46.º, n.º 5, al. b)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 739,
+   "side": "acrescer",
+   "label": "Diferença positiva entre as mais-valias e as menos-valias fiscais sem intenção de reinvestimento (art.º 46.º)",
+   "group": "acrescer"
+  },
+  {
+   "number": 740,
+   "side": "acrescer",
+   "label": "50% da diferença positiva entre as mais-valias e as menos-valias fiscais com intenção expressa de reinvestimento (art.º 48.º, n.º 1)",
+   "group": "acrescer"
+  },
+  {
+   "number": 741,
+   "side": "acrescer",
+   "label": "Acréscimos por não reinvestimento ou pela não manutenção dos ativos na titularidade do adquirente (art.º 48.º, n.º 6)",
+   "group": "acrescer"
+  },
+  {
+   "number": 742,
+   "side": "acrescer",
+   "label": "Mais-valias fiscais - regime transitório [art.º 7, n.º 7, al. b) da Lei n.º 30-G/2000, de 29/12 e art.º 32.º, n.º 8 da Lei n.º 109-B/2001, de 27/12]",
+   "group": "acrescer"
+  },
+  {
+   "number": 743,
+   "side": "acrescer",
+   "label": "Correções relativas a instrumentos financeiros derivados (art.º 49.º)",
+   "group": "acrescer"
+  },
+  {
+   "number": 744,
+   "side": "acrescer",
+   "label": "Correções relativas a preços de transferência (art.º 63.º, n.º 8)",
+   "group": "acrescer"
+  },
+  {
+   "number": 745,
+   "side": "acrescer",
+   "label": "Diferença positiva entre o valor patrimonial tributário definitivo do imóvel e o valor constante do contrato [art.º 64.º, n.º 3 al. a)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 746,
+   "side": "acrescer",
+   "label": "Importâncias pagas ou devidas a entidades não residentes sujeitas a um regime fiscal privilegiado [art.º 23.º-A, n.º 1, al. r) e n.º 7]",
+   "group": "acrescer"
+  },
+  {
+   "number": 747,
+   "side": "acrescer",
+   "label": "Imputação de rendimentos de entidades não residentes sujeitas a um regime fiscal privilegiado (art.º 66.º)",
+   "group": "acrescer"
+  },
+  {
+   "number": 748,
+   "side": "acrescer",
+   "label": "Limitação à dedutibilidade de gastos de financiamento líquidos (art.º 67.º)",
+   "group": "acrescer"
+  },
+  {
+   "number": 749,
+   "side": "acrescer",
+   "label": "Correções nos casos de crédito de imposto por dupla tributação jurídica internacional (art.º 68.º, n.º 1)",
+   "group": "acrescer"
+  },
+  {
+   "number": 750,
+   "side": "acrescer",
+   "label": "Correções resultantes da opção pelo regime especial aplicável às fusões, cisões, entradas de ativos e permutas de partes sociais (art.ºs 74.º, 76.º e 77.º)",
+   "group": "acrescer"
+  },
+  {
+   "number": 751,
+   "side": "acrescer",
+   "label": "Donativos não previstos ou além dos limites legais (art.os 62.º, 62.º-A e 62.º-B do EBF)",
+   "group": "acrescer"
+  },
+  {
+   "number": 752,
+   "side": "acrescer",
+   "label": "Outros acréscimos",
+   "group": "acrescer"
+  },
+  {
+   "number": 779,
+   "side": "acrescer",
+   "label": "Encargos financeiros não dedutíveis (ex-art.º 32.º, n.º 2 do EBF)",
+   "group": "acrescer"
+  },
+  {
+   "number": 780,
+   "side": "acrescer",
+   "label": "Contribuição sobre o setor bancário [art.º 23.º-A, n.º 1, al. p)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 782,
+   "side": "acrescer",
+   "label": "Gastos referentes a inventários e a fornecimentos e serviços externos com pagamento diferido: gastos de juros (art.º 18.º, n.º 5)",
+   "group": "acrescer"
+  },
+  {
+   "number": 783,
+   "side": "acrescer",
+   "label": "Despesas ilícitas [art.º 23.º-A, n.º 1, al. d)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 784,
+   "side": "acrescer",
+   "label": "Encargos relativos a barcos de recreio e aeronaves de passageiros [art.º 23.º-A, n.º 1, al. k)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 785,
+   "side": "acrescer",
+   "label": "Contribuição extraordinária sobre o setor energético [art.º 23.º-A, n.º 1, al. q)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 786,
+   "side": "acrescer",
+   "label": "Outras perdas relativas a instrumentos de capital próprio e gastos suportados com a transmissão onerosa de instrumentos de capital próprio de entidades não residentes sujeitas a um regime fiscal privilegiado (art.º 23.º-A, n.ºs 2 e 3)",
+   "group": "acrescer"
+  },
+  {
+   "number": 787,
+   "side": "acrescer",
+   "label": "Prejuízos de estabelecimentos estáveis situados fora do território português (art.º 54.º-A)",
+   "group": "acrescer"
+  },
+  {
+   "number": 788,
+   "side": "acrescer",
+   "label": "Correções nos casos de crédito de imposto por dupla tributação económica internacional (art.º 68.º, n.º 3)",
+   "group": "acrescer"
+  },
+  {
+   "number": 789,
+   "side": "acrescer",
+   "label": "Transferência de residência, afetação de elementos patrimoniais a estabelecimento estável situado fora do território português, cessação da atividade ou transferência de elementos patrimoniais de estabelecimento estável situado em território português: saldo positivo referente aos elementos patrimoniais transferidos para outro Estado membro da UE ou do EEE ou afetos a estabelecimento estável aí situado (art.ºs 83.º, 84.º e 54.º-A, n.º 11)",
+   "group": "acrescer"
+  },
+  {
+   "number": 790,
+   "side": "acrescer",
+   "label": "Transferência de residência, afetação de elementos patrimoniais a estabelecimento estável situado fora do território português, cessação da atividade ou transferência de elementos patrimoniais de estabelecimento estável situado em território português: saldo positivo referente aos elementos patrimoniais transferidos para países fora da UE ou do EEE ou afetos a estabelecimento estável aí situado (art.ºs 83.º, 84.º e 54.º-A, n.º 11)",
+   "group": "acrescer"
+  },
+  {
+   "number": 797,
+   "side": "acrescer",
+   "label": "Adicional ao Imposto Municipal sobre imóveis (art.º 135.º-J do Código do IMI)",
+   "group": "acrescer"
+  },
+  {
+   "number": 799,
+   "side": "acrescer",
+   "label": "Gastos e perdas relativos às atividades de transporte marítimo às quais é aplicável o regime especial de determinação da matéria coletável (art.º 6.º do Anexo ao Decreto-Lei n.º 92/2018, de 13 de novembro)",
+   "group": "acrescer"
+  },
+  {
+   "number": 802,
+   "side": "acrescer",
+   "label": "Contribuição extraordinária sobre a indústria farmacêutica [art.º 23.º-A, n.º 1, al. s)]",
+   "group": "acrescer"
+  },
+  {
+   "number": 803,
+   "side": "acrescer",
+   "label": "Assimetrias híbridas e assimetrias de residência fiscal (art.ºs 68.º-B, n.º 1 e 68.º-D, n.º1)",
+   "group": "acrescer"
+  },
+  {
+   "number": 804,
+   "side": "acrescer",
+   "group": "acrescer",
+   "label": "Contribuições de solidariedade temporária sobre os setores da energia e da distribuição alimentar (art.º 16.º da Lei n.º 24-B/2022, de 30 de dezembro)"
+  },
+  {
+   "number": 754,
+   "side": "deduzir",
+   "label": "Despesas ou encargos de projeção económica plurianual contabilizados como gasto na vigência do POC e ainda não aceites fiscalmente [art.º 22.º al. f) do DR 25/2009, de 14/9]",
+   "group": "deduzir"
+  },
+  {
+   "number": 755,
+   "side": "deduzir",
+   "label": "Prejuízo fiscal imputado por ACE ou AEIE (art.º 6.º)",
+   "group": "deduzir"
+  },
+  {
+   "number": 756,
+   "side": "deduzir",
+   "label": "Correções relativas a períodos de tributação anteriores (art.º 18.º, n.º 2)",
+   "group": "deduzir"
+  },
+  {
+   "number": 757,
+   "side": "deduzir",
+   "label": "Vendas e prestações de serviços com pagamento diferido: rédito de juros (art.º 18.º, n.º 5)",
+   "group": "deduzir"
+  },
+  {
+   "number": 758,
+   "side": "deduzir",
+   "label": "Anulação dos efeitos do método da equivalência patrimonial e do método de consolidação proporcional no caso de empreendimentos conjuntos que sejam sujeitos passivos de IRC (art.º 18.º, n.º 8)",
+   "group": "deduzir"
+  },
+  {
+   "number": 759,
+   "side": "deduzir",
+   "label": "Ajustamentos não tributáveis decorrentes da aplicação do justo valor (art.º 18.º, n.º 9)",
+   "group": "deduzir"
+  },
+  {
+   "number": 760,
+   "side": "deduzir",
+   "label": "Pagamentos com base em ações (art.º 18.º, n.º 11)",
+   "group": "deduzir"
+  },
+  {
+   "number": 761,
+   "side": "deduzir",
+   "label": "Pagamento ou colocação à disposição dos beneficiários de benefícios de cessação de emprego, benefícios de reforma e outros beneficios pós emprego ou a longo prazo dos empregados (art.º 18.º, n.º 12)",
+   "group": "deduzir"
+  },
+  {
+   "number": 762,
+   "side": "deduzir",
+   "label": "Reversão de perdas por imparidade tributadas (art.ºs 28.º, n.º 3 e 28.º-A, n.º 3)",
+   "group": "deduzir"
+  },
+  {
+   "number": 763,
+   "side": "deduzir",
+   "label": "Depreciações e amortizações tributadas em períodos de tributação anteriores (art.º 20.º do DR 25/2009, de 14/9)",
+   "group": "deduzir"
+  },
+  {
+   "number": 764,
+   "side": "deduzir",
+   "label": "Reversão de provisões tributadas (art.ºs 19.º, n.º 4 e 39.º, n.º 4)",
+   "group": "deduzir"
+  },
+  {
+   "number": 765,
+   "side": "deduzir",
+   "label": "Restituição de impostos não dedutíveis e excesso da estimativa para impostos",
+   "group": "deduzir"
+  },
+  {
+   "number": 766,
+   "side": "deduzir",
+   "label": "Impostos diferidos [art.º 23.º-A, n.º 1, al. a)]",
+   "group": "deduzir"
+  },
+  {
+   "number": 767,
+   "side": "deduzir",
+   "group": "deduzir",
+   "label": "Mais-valias contabilísticas"
+  },
+  {
+   "number": 768,
+   "side": "deduzir",
+   "label": "50% da menos-valia fiscal resultante de mudanças no modelo de valorização [art.º 46.º, n.º 5.º, al. b) e ex-art.º 45.º, n.º 3, parte final] e 50% da diferença negativa entre as mais e as menos-valias fiscais de partes de capital ou outras componentes do capital próprio (ex-art.º 45.º, n.º 3, 1.ª parte)",
+   "group": "deduzir"
+  },
+  {
+   "number": 769,
+   "side": "deduzir",
+   "label": "Diferença negativa entre as mais-valias e as menos-valias fiscais (art.º 46.º)",
+   "group": "deduzir"
+  },
+  {
+   "number": 770,
+   "side": "deduzir",
+   "label": "Correções relativas a instrumentos financeiros derivados (art.º 49.º)",
+   "group": "deduzir"
+  },
+  {
+   "number": 771,
+   "side": "deduzir",
+   "label": "Eliminação da dupla tributação económica de lucros e reservas distribuídos (art.ºs 51.º e 51.º-D)",
+   "group": "deduzir"
+  },
+  {
+   "number": 772,
+   "side": "deduzir",
+   "label": "Correção pelo adquirente do imóvel quando adota o valor patrimonial tributário definitivo para a determinação do resultado tributável na respetiva transmissão [art.º 64.º, n.º 3, al. b)]",
+   "group": "deduzir"
+  },
+  {
+   "number": 773,
+   "side": "deduzir",
+   "label": "Correções resultantes da opção pelo regime especial aplicável às fusões, cisões, entradas de ativos e permutas das partes sociais (art.ºs 74.º, 76.º e 77.º)",
+   "group": "deduzir"
+  },
+  {
+   "number": 774,
+   "side": "deduzir",
+   "label": "Benefícios fiscais",
+   "group": "deduzir"
+  },
+  {
+   "number": 775,
+   "side": "deduzir",
+   "label": "Outras deduções",
+   "group": "deduzir"
+  },
+  {
+   "number": 781,
+   "side": "deduzir",
+   "label": "Perdas por imparidade tributadas em períodos de tributação anteriores (art.ºs 28.º, 28.º-A, n.º 1 e 31.º-B, n.º 8)",
+   "group": "deduzir"
+  },
+  {
+   "number": 791,
+   "side": "deduzir",
+   "label": "Gastos referentes a inventários e a fornecimentos e serviços externos com pagamento diferido: diferença entre a quantia nominal da contraprestação e o justo valor (art.º 18.º, n.º 5)",
+   "group": "deduzir"
+  },
+  {
+   "number": 792,
+   "side": "deduzir",
+   "label": "Gasto fiscal relativo a ativos intangíveis, propriedades de investimento e ativos biológicos não consumíveis (art.º 45.º-A)",
+   "group": "deduzir"
+  },
+  {
+   "number": 793,
+   "side": "deduzir",
+   "label": "Dedução dos rendimentos de direitos de autor e de direitos de propriedade industrial com o limite do n.º 8 do artigo 50.º-A",
+   "group": "deduzir"
+  },
+  {
+   "number": 794,
+   "side": "deduzir",
+   "label": "Lucros de estabelecimentos estáveis situados fora do território português (art.º 54.º-A)",
+   "group": "deduzir"
+  },
+  {
+   "number": 795,
+   "side": "deduzir",
+   "label": "Reporte dos gastos de financiamento líquidos de períodos de tributação anteriores (art.º 67.º)",
+   "group": "deduzir"
+  },
+  {
+   "number": 796,
+   "side": "deduzir",
+   "label": "Transferência de residência, afetação de elementos patrimoniais a estabelecimento estável situado fora do território português, cessação da atividade ou transferência de elementos patrimoniais de estabelecimento estável situado em território português: saldo negativo referente aos elementos patrimoniais transferidos para fora do território português ou afetos a estabelecimento estável aí situado (art.ºs 83.º, 84.º e 54.º-A, n.º 11)",
+   "group": "deduzir"
+  },
+  {
+   "number": 798,
+   "side": "deduzir",
+   "label": "Perdas por imparidade em créditos e benefícios pós-emprego ou a longo prazo de empregados (art.º 4.º do anexo à Lei n.º 61/2014, de 26 de agosto)",
+   "group": "deduzir"
+  },
+  {
+   "number": 800,
+   "side": "deduzir",
+   "label": "Réditos e rendimentos relativos às atividades de transporte marítimo às quais é aplicável o regime especial de determinação da matéria coletável (art.º 6.º do Anexo ao Decreto-Lei n.º 92/2018, de 13 de novembro)",
+   "group": "deduzir"
+  },
+  {
+   "number": 801,
+   "side": "deduzir",
+   "label": "Aumento das depreciações ou amortizações resultantes das reavaliações efetuadas nos termos do Decreto-Lei n.º 66/2016, de 3 de novembro (art.º 8.º do Decreto-Lei)",
+   "group": "deduzir"
+  }
+ ]
+}

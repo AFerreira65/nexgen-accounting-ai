@@ -1447,6 +1447,40 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task Modelo22IsComputedFromTheLedger()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Inconclusive("SQL Server validation is available only on Windows.");
+        }
+
+        await using var factory = new FoundationApiFactory(
+            applyMigrations: true,
+            seedDemoData: true,
+            useConfiguredDatabase: true);
+        using var client = factory.CreateClient();
+
+        const string basePath = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        using var result = await client.GetAsync($"{basePath}/modelo-22?year=2026").ConfigureAwait(false);
+        var payload = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var catalog = await client.GetAsync($"{basePath}/modelo-22/fields").ConfigureAwait(false);
+        var catalogPayload = await catalog.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badYear = await client.GetAsync($"{basePath}/modelo-22?year=12").ConfigureAwait(false);
+        using var unauthorized = await client
+            .GetAsync("/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/99999999-9999-9999-9999-999999999999/modelo-22?year=2026")
+            .ConfigureAwait(false);
+
+        Assert.AreEqual(HttpStatusCode.OK, result.StatusCode);
+        StringAssert.Contains(payload, "\"code\":\"701\"");
+        StringAssert.Contains(payload, "\"code\":\"367\"");
+        Assert.AreEqual(HttpStatusCode.OK, catalog.StatusCode);
+        StringAssert.Contains(catalogPayload, "\"number\":724");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badYear.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
+    }
+
+    [TestMethod]
     public async Task FixedAssetsAreListedAndScheduled()
     {
         if (!OperatingSystem.IsWindows())

@@ -72,6 +72,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/config-iva', label: 'Configuração de IVA', icon: Percent },
     { to: '/codigos-iva', label: 'Códigos de IVA', icon: Percent },
     { to: '/estimativa-irc', label: 'Estimativa de IRC', icon: Calculator },
+    { to: '/modelo-22', label: 'Modelo 22', icon: Calculator },
     { to: '/tabelas-fiscais', label: 'Tabelas fiscais', icon: BookText },
     { to: '/comunicacao-at', label: 'Comunicação com a AT', icon: ShieldCheck },
   ] },
