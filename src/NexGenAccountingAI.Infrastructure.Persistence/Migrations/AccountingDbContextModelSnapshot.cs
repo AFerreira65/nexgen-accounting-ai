@@ -1223,6 +1223,56 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("VatReturnFiling", "accounting");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Banking.BankEntryRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EntryTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Pattern")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntryTemplateId");
+
+                    b.HasIndex("CompanyId", "Pattern")
+                        .IsUnique();
+
+                    b.ToTable("BankEntryRules", "accounting");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Banking.BankStatementImport", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2436,6 +2486,21 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
                         .WithMany()
                         .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Banking.BankEntryRule", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NexGenAccountingAI.Domain.Accounting.EntryTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("EntryTemplateId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

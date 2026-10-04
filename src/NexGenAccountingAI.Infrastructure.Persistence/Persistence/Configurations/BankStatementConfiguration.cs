@@ -60,3 +60,23 @@ internal sealed class BankStatementImportConfiguration : IEntityTypeConfiguratio
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+internal sealed class BankEntryRuleConfiguration : IEntityTypeConfiguration<BankEntryRule>
+{
+    public void Configure(EntityTypeBuilder<BankEntryRule> builder)
+    {
+        builder.ToTable("BankEntryRules", "accounting");
+        builder.HasKey(item => item.Id);
+        builder.Property(item => item.Pattern).HasMaxLength(BankEntryRule.PatternMaxLength).IsRequired();
+        builder.Property(item => item.RowVersion).IsRowVersion();
+        builder.HasIndex(item => new { item.CompanyId, item.Pattern }).IsUnique();
+        builder.HasOne<Company>()
+            .WithMany()
+            .HasForeignKey(item => item.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<EntryTemplate>()
+            .WithMany()
+            .HasForeignKey(item => item.EntryTemplateId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}

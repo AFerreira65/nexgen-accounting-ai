@@ -87,11 +87,57 @@ comparar.
 - **Não visto com extratos reais.** Os CSV variam de banco para banco; um
   formato que não seja reconhecido dá um erro claro.
 
+### F3-19B — Lançar a partir do extrato (feito)
+
+- **`Domain/Banking/BankEntryRule`**: a regra de lançamento a partir do
+  extrato.
+  - Junta um texto procurado no descritivo a um lançamento-tipo.
+  - O texto guarda-se normalizado: maiúsculas, sem acentos e com espaços
+    simples. Tem pelo menos 3 caracteres, e há uma regra por texto e por
+    empresa.
+  - A regra é auditável e está no dicionário de dados.
+  - Migração aditiva `20261004225329_BankEntryRules`.
+- **`EntrySource.BankStatement`**: a origem «Lançado do extrato bancário».
+- **`BankEntryService`**:
+  - **Escolha da regra:** um movimento **por conciliar** cujo descritivo
+    contém o texto de uma regra ativa recebe a proposta. Se várias regras
+    servirem, ganha a de texto mais comprido.
+  - **Valor:** o lançamento-tipo aplica-se ao valor do movimento. Com uma
+    linha de IVA, o valor é o total; com várias, a regra não serve.
+  - **Contrapartida e lados:** a contrapartida passa a ser **a conta do
+    extrato**. Se o lançamento-tipo estiver escrito para o sentido
+    contrário, os lados invertem-se: o estorno de uma comissão credita o
+    gasto.
+  - **Lançar:** cria o lançamento por conferir com a data do movimento, a
+    referência do banco (ou «Extrato \<data\>») e o descritivo nas
+    observações, e **concilia-o** logo com o movimento. Um movimento já
+    conciliado ou sem regra fica com o erro.
+- **API:**
+  - `GET` e `PUT .../bank-entry-rules` (`{ pattern, entryTemplateCode, isActive }`);
+  - `DELETE .../bank-entry-rules?pattern=`;
+  - `GET .../bank-statements/entry-suggestions?accountCode=&from=&to=`;
+  - `POST .../bank-statements/post` (`{ lineIds }`).
+- **PWA:** no ecrã «Bancos», o painel «Lançar a partir do extrato» tem:
+  - o formulário e a lista das regras;
+  - as propostas, com as linhas e as prontas já selecionadas;
+  - o botão «Lançar», com as ligações aos lançamentos criados.
+
+**Validação efetuada**
+
+- `NexGenAccountingAI.IntegrationTests` (`BankEntryServiceTests`, em
+  PostgreSQL):
+  - **Regras:** texto normalizado; texto curto e lançamento-tipo
+    inexistente recusados.
+  - **Propostas:** só para os movimentos com regra; contrapartida na conta
+    do extrato; estorno invertido; juros a crédito.
+  - **Lançar:** lançamento por conferir com a origem certa e conciliado; um
+    movimento sem regra e um já conciliado ficam com o erro.
+  - **Fecho:** apagar uma regra; sem acesso.
+- `NexGenAccountingAI.Api.Tests`: regras, texto curto e lançar sem
+  movimentos.
+
 ### Por fazer
 
-- **F3-19B**: lançar a partir do extrato, com regras por descritivo (por
-  exemplo, as comissões e o imposto do selo), criando o lançamento por
-  conferir já conciliado.
 - **F3-19C**: conciliar um movimento com vários lançamentos (um pagamento de
   várias faturas) e vários movimentos com um lançamento.
 - Open Banking (PSD2), mais tarde.

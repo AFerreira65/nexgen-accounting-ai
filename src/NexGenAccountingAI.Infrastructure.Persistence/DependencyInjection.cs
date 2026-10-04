@@ -80,6 +80,7 @@ public static class DependencyInjection
         services.AddScoped<SuggestedEntryService>();
         services.AddScoped<SalesSuggestedEntryService>();
         services.AddScoped<BankStatementService>();
+        services.AddScoped<BankEntryService>();
         services.AddScoped<FiscalDossierService>();
         services.AddScoped<PartyImportService>();
         services.AddScoped<PartyLedgerService>();

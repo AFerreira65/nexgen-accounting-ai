@@ -1481,6 +1481,11 @@ public sealed class FoundationApiTests
         using var notSaftBody = new StringContent("isto não é XML", System.Text.Encoding.UTF8, "application/xml");
         using var notSaft = await client.PostAsync($"{basePath}/sales-documents/import?dryRun=true", notSaftBody).ConfigureAwait(false);
         using var bankAccounts = await client.GetAsync($"{basePath}/bank-accounts").ConfigureAwait(false);
+        using var bankRules = await client.GetAsync($"{basePath}/bank-entry-rules").ConfigureAwait(false);
+        using var shortBankRuleBody = new StringContent("{\"pattern\":\"ab\",\"entryTemplateCode\":\"X\"}", System.Text.Encoding.UTF8, "application/json");
+        using var shortBankRule = await client.PutAsync($"{basePath}/bank-entry-rules", shortBankRuleBody).ConfigureAwait(false);
+        using var emptyBankPostBody = new StringContent("{\"lineIds\":[]}", System.Text.Encoding.UTF8, "application/json");
+        using var emptyBankPost = await client.PostAsync($"{basePath}/bank-statements/post", emptyBankPostBody).ConfigureAwait(false);
         using var notBankBody = new StringContent("a;b\n1;2\n", System.Text.Encoding.UTF8, "text/csv");
         using var notBank = await client.PostAsync($"{basePath}/bank-statements/import?accountCode=12&dryRun=true", notBankBody).ConfigureAwait(false);
         using var wrongBankAccount = await client.GetAsync($"{basePath}/bank-statements/lines?accountCode=2111&from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
@@ -1530,6 +1535,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.BadRequest, badSalesRule.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, notSaft.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, bankAccounts.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, bankRules.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, shortBankRule.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, emptyBankPost.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, notBank.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, wrongBankAccount.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, map.StatusCode);

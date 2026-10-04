@@ -20,4 +20,7 @@ public enum EntrySource
 
     /// <summary>Gerado a partir de um documento de venda de um SAF-T de faturação (lançamento sugerido).</summary>
     SaftBilling = 5,
+
+    /// <summary>Gerado a partir de um movimento do extrato bancário, por uma regra de lançamento.</summary>
+    BankStatement = 6,
 }

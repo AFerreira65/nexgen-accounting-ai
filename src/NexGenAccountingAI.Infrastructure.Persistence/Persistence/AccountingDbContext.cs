@@ -81,6 +81,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<BankStatementImport> BankStatementImports => Set<BankStatementImport>();
 
+    public DbSet<BankEntryRule> BankEntryRules => Set<BankEntryRule>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     /// <summary>Collation ICU sem distinção de maiúsculas (equivalente ao CI_AS do SQL Server).</summary>
@@ -127,6 +129,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new SalesDocumentConfiguration());
         modelBuilder.ApplyConfiguration(new BankStatementImportConfiguration());
         modelBuilder.ApplyConfiguration(new BankStatementLineConfiguration());
+        modelBuilder.ApplyConfiguration(new BankEntryRuleConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

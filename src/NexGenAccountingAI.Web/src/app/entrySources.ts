@@ -7,6 +7,7 @@ export const ENTRY_SOURCE_LABELS: Record<string, string> = {
   Closing: 'Apuramento',
   EFatura: 'Sugerido do e-Fatura',
   SaftBilling: 'Sugerido do SAF-T de faturação',
+  BankStatement: 'Lançado do extrato bancário',
 }
 
 export const ENTRY_SOURCES = Object.keys(ENTRY_SOURCE_LABELS)

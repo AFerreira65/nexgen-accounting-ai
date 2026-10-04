@@ -1,14 +1,15 @@
-import { Banknote, CircleAlert, CircleCheck, Database, Download, FileUp, Link2, Link2Off, Wand2 } from 'lucide-react'
+import { Banknote, CircleAlert, CircleCheck, Database, Download, FileUp, Link2, Link2Off, Trash2, Wand2, WandSparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
-import { euro, formatMovementDate, type BankAccountRow, type BankReconciliationReport, type BankStatementImportResult, type BankStatementLineRow } from '../app/demo-data'
+import { euro, formatMovementDate, type BankAccountRow, type BankEntryRuleRow, type BankEntrySuggestion, type BankReconciliationReport, type BankStatementImportResult, type BankStatementLineRow, type EntryTemplateRow, type SuggestedEntryOutcome } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
+import { SuggestionLines, SuggestionOutcomes } from './suggestionParts'
 
 export function BanksPage() {
-  const { activeCompany, source, bankAccounts, importBankStatement, bankStatementLines, autoReconcileBank, reconcileBankLine, unreconcileBankLine, bankReconciliation } = useWorkContext()
+  const { activeCompany, source, bankAccounts, importBankStatement, bankStatementLines, autoReconcileBank, reconcileBankLine, unreconcileBankLine, bankReconciliation, bankEntryRules, saveBankEntryRule, deleteBankEntryRule, bankEntrySuggestions, postBankLines, entryTemplates } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const fiscalYear = activeCompany.settings.defaultFiscalYear
@@ -20,6 +21,13 @@ export function BanksPage() {
   const [report, setReport] = useState<BankReconciliationReport | null>(null)
   const [pending, setPending] = useState<{ file: File; preview: BankStatementImportResult } | null>(null)
   const [choice, setChoice] = useState<Record<string, string>>({})
+  const [rules, setRules] = useState<BankEntryRuleRow[]>([])
+  const [templates, setTemplates] = useState<EntryTemplateRow[]>([])
+  const [suggestions, setSuggestions] = useState<BankEntrySuggestion[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [outcomes, setOutcomes] = useState<SuggestedEntryOutcome[]>([])
+  const [newPattern, setNewPattern] = useState('')
+  const [newTemplate, setNewTemplate] = useState('')
   const [notice, setNotice] = useState('')
   const [reload, setReload] = useState(0)
   const [busy, setBusy] = useState(false)
@@ -43,11 +51,25 @@ export function BanksPage() {
     if (!onDatabase || !accountCode || !fromDate || !toDate) { setLines([]); setReport(null); return }
     const controller = new AbortController()
     setError('')
-    void Promise.all([bankStatementLines(companyId, accountCode, { from: fromDate, to: toDate }), bankReconciliation(companyId, accountCode, toDate)])
-      .then(([rows, map]) => { if (!controller.signal.aborted) { setLines(rows); setReport(map) } })
+    void Promise.all([
+      bankStatementLines(companyId, accountCode, { from: fromDate, to: toDate }),
+      bankReconciliation(companyId, accountCode, toDate),
+      bankEntrySuggestions(companyId, accountCode, { from: fromDate, to: toDate }),
+      bankEntryRules(companyId),
+      entryTemplates(companyId, false),
+    ])
+      .then(([rows, map, proposals, ruleRows, templateRows]) => {
+        if (controller.signal.aborted) return
+        setLines(rows)
+        setReport(map)
+        setSuggestions(proposals)
+        setSelected(new Set(proposals.filter((item) => item.ready).map((item) => item.lineId)))
+        setRules(ruleRows)
+        setTemplates(templateRows)
+      })
       .catch((problem: unknown) => { if (!controller.signal.aborted) setError(problem instanceof Error ? problem.message : 'Não foi possível carregar o extrato.') })
     return () => controller.abort()
-  }, [accountCode, bankReconciliation, bankStatementLines, companyId, fromDate, onDatabase, reload, toDate])
+  }, [accountCode, bankEntryRules, bankEntrySuggestions, bankReconciliation, bankStatementLines, companyId, entryTemplates, fromDate, onDatabase, reload, toDate])
 
   if (!onDatabase) {
     return <div className="page-stack">
@@ -101,6 +123,30 @@ export function BanksPage() {
     await unreconcileBankLine(companyId, line.id)
     setReload((value) => value + 1)
   }, 'Não foi possível desfazer a conciliação.')
+
+  const postSelected = () => void run(async () => {
+    setOutcomes(await postBankLines(companyId, [...selected]))
+    setReload((value) => value + 1)
+  }, 'Não foi possível lançar os movimentos.')
+
+  const addRule = () => void run(async () => {
+    await saveBankEntryRule(companyId, { pattern: newPattern, entryTemplateCode: newTemplate, isActive: true })
+    setNewPattern('')
+    setNewTemplate('')
+    setReload((value) => value + 1)
+  }, 'Não foi possível guardar a regra.')
+
+  const removeRule = (pattern: string) => void run(async () => {
+    await deleteBankEntryRule(companyId, pattern)
+    setReload((value) => value + 1)
+  }, 'Não foi possível apagar a regra.')
+
+  const toggle = (lineId: string) => setSelected((current) => {
+    const next = new Set(current)
+    if (next.has(lineId)) next.delete(lineId)
+    else next.add(lineId)
+    return next
+  })
 
   const account = accounts?.find((row) => row.accountCode === accountCode)
   const candidates = (amount: number) => (report?.bookOnly ?? []).filter((entry) => entry.amount === amount)
@@ -173,6 +219,43 @@ export function BanksPage() {
               </span>}</td>
           </tr>)}</tbody>
         </table></div>}
+      </section>
+
+      <SuggestionOutcomes outcomes={outcomes} />
+
+      <section className="panel">
+        <div className="panel-heading"><div><h2>Lançar a partir do extrato</h2><p>Os movimentos por conciliar cujo descritivo contém o texto de uma regra são propostos com o lançamento-tipo dessa regra; a contrapartida passa a ser a conta do banco e, numa entrada, os lados invertem-se. Finalizar cria o lançamento por conferir, já conciliado com o movimento.</p></div></div>
+        <form className="filterbar" onSubmit={(event) => { event.preventDefault(); addRule() }}>
+          <label className="inline-check">Texto no descritivo <input aria-label="Texto no descritivo" value={newPattern} onChange={(event) => setNewPattern(event.target.value)} placeholder="ex.: COMISSAO" /></label>
+          <label className="inline-check">Lançamento-tipo <select aria-label="Lançamento-tipo da regra" value={newTemplate} onChange={(event) => setNewTemplate(event.target.value)}><option value="">Escolher…</option>{templates.map((template) => <option key={template.code} value={template.code}>{template.code} — {template.name}</option>)}</select></label>
+          <button className="button button-secondary" type="submit" disabled={busy || newPattern.trim().length < 3 || !newTemplate}>Guardar regra</button>
+        </form>
+        {templates.length === 0 && <p className="save-status"><CircleAlert size={15} /> Crie primeiro um lançamento-tipo em <Link to="/lancamentos-tipo">Lançamentos-tipo</Link> — por exemplo, «Comissão bancária»: 6878 a débito e a conta do banco na contrapartida.</p>}
+        {rules.length > 0 && <div className="table-wrap"><table>
+          <thead><tr><th>Texto</th><th>Lançamento-tipo</th><th /></tr></thead>
+          <tbody>{rules.map((rule) => <tr key={rule.pattern}>
+            <td>{rule.pattern}</td>
+            <td>{rule.entryTemplateCode} — {rule.entryTemplateName}{rule.isActive ? '' : ' (inativa)'}</td>
+            <td><button className="icon-button" type="button" aria-label={`Apagar a regra ${rule.pattern}`} disabled={busy} onClick={() => removeRule(rule.pattern)}><Trash2 size={16} /></button></td>
+          </tr>)}</tbody>
+        </table></div>}
+        {suggestions.length > 0 && <>
+          <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
+            <button className="button button-primary" type="button" disabled={busy || selected.size === 0} onClick={postSelected}><WandSparkles size={16} /> {busy ? 'A lançar…' : `Lançar ${selected.size} ${selected.size === 1 ? 'movimento' : 'movimentos'}`}</button>
+          </div>
+          <div className="table-wrap"><table>
+            <thead><tr><th><span className="sr-only">Selecionar</span></th><th>Data</th><th>Movimento</th><th className="numeric">Montante</th><th>Lançamento proposto</th></tr></thead>
+            <tbody>{suggestions.map((item) => <tr key={item.lineId}>
+              <td><input type="checkbox" aria-label={`Selecionar ${item.description}`} disabled={!item.ready} checked={selected.has(item.lineId)} onChange={() => toggle(item.lineId)} /></td>
+              <td>{formatMovementDate(item.bookingDate)}</td>
+              <td>{item.description}<small>regra {item.pattern}</small></td>
+              <td className={`numeric strong${item.amount < 0 ? ' negative' : ''}`}>{euro.format(item.amount)}</td>
+              <td>{item.ready
+                ? <><small>{item.entryTemplateCode} · {item.journalCode} · {item.entryDescription}</small><SuggestionLines lines={item.lines} /></>
+                : <span className="suggestion-problem">{item.problem}</span>}</td>
+            </tr>)}</tbody>
+          </table></div>
+        </>}
       </section>
 
       {report && report.bookOnly.length > 0 && <section className="panel">

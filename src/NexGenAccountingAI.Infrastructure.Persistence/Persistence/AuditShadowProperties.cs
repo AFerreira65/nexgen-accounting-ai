@@ -1,4 +1,5 @@
 using NexGenAccountingAI.Domain.Accounting;
+using NexGenAccountingAI.Domain.Banking;
 using NexGenAccountingAI.Domain.Organizations;
 using NexGenAccountingAI.Domain.Reporting;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +48,7 @@ internal static class AuditShadowProperties
         typeof(BudgetLine),
         typeof(SupplierEntryRule),
         typeof(SalesEntryRule),
+        typeof(BankEntryRule),
     ];
 
     public static void Apply(ModelBuilder modelBuilder)

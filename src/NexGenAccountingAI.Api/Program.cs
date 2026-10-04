@@ -2756,6 +2756,65 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Lançar a partir do extrato (F3-19B): regras por descritivo → lançamento-tipo.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-entry-rules", async (
+        Guid userId, Guid companyId, BankEntryService entries, CancellationToken cancellationToken) =>
+    {
+        var rules = await entries.ListRulesAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return rules is null ? Results.NotFound() : Results.Ok(rules);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-entry-rules", async (
+        Guid userId, Guid companyId, BankEntryRuleRequest request, BankEntryService entries, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var rule = await entries
+                .SaveRuleAsync(userId, companyId, request?.Pattern ?? string.Empty, request?.EntryTemplateCode ?? string.Empty, request?.IsActive ?? true, cancellationToken)
+                .ConfigureAwait(false);
+            return rule is null ? Results.NotFound() : Results.Ok(rule);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["regra"] = [exception.Message] });
+        }
+    });
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-entry-rules", async (
+        Guid userId, Guid companyId, string? pattern, BankEntryService entries, CancellationToken cancellationToken) =>
+    {
+        var deleted = await entries.DeleteRuleAsync(userId, companyId, pattern ?? string.Empty, cancellationToken).ConfigureAwait(false);
+        return deleted is true ? Results.NoContent() : Results.NotFound();
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-statements/entry-suggestions", async (
+        Guid userId, Guid companyId, string? accountCode, DateOnly from, DateOnly to, BankEntryService entries, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var suggestions = await entries.SuggestAsync(userId, companyId, accountCode ?? string.Empty, from, to, cancellationToken).ConfigureAwait(false);
+            return suggestions is null ? Results.NotFound() : Results.Ok(suggestions);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["extrato"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-statements/post", async (
+        Guid userId, Guid companyId, PostBankLinesRequest request, BankEntryService entries, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var outcomes = await entries.PostAsync(userId, companyId, request?.LineIds ?? [], cancellationToken).ConfigureAwait(false);
+            return outcomes is null ? Results.NotFound() : Results.Ok(outcomes);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["extrato"] = [exception.Message] });
+        }
+    });
+
     // Estrutura do exercício: gastos e rendimentos por natureza, maiores clientes e fornecedores.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/structure", async (
         Guid userId, Guid companyId, int year, FinancialStatementsService statements, CancellationToken cancellationToken) =>
@@ -4552,6 +4611,10 @@ public sealed record FinalizeSalesSuggestedEntriesRequest(IReadOnlyList<Guid>? D
 public sealed record SalesEntryRuleRequest(string? EntryTemplateCode, bool IsActive = true);
 
 public sealed record BankReconcileRequest(string? EntryReference);
+
+public sealed record BankEntryRuleRequest(string? Pattern, string? EntryTemplateCode, bool IsActive = true);
+
+public sealed record PostBankLinesRequest(IReadOnlyList<Guid>? LineIds);
 
 public sealed record VatCodeRequest(
     string? Code,

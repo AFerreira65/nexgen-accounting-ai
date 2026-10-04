@@ -23,7 +23,7 @@ export type Movement = {
   description: string
   notes?: string | null
   status: 'Conferido' | 'Por conferir' | 'Anulado'
-  source?: 'Manual' | 'SaftImport' | 'Opening' | 'Closing' | 'EFatura' | 'SaftBilling'
+  source?: 'Manual' | 'SaftImport' | 'Opening' | 'Closing' | 'EFatura' | 'SaftBilling' | 'BankStatement'
   amount: number
   lines: MovementLine[]
 }
@@ -856,6 +856,8 @@ export type BankReconciliationReport = {
   expectedStatementBalance: number
   difference: number | null
 }
+export type BankEntryRuleRow = { pattern: string; entryTemplateCode: string; entryTemplateName: string; isActive: boolean }
+export type BankEntrySuggestion = { lineId: string; bookingDate: string; description: string; amount: number; pattern: string; entryTemplateCode: string; journalCode: string | null; documentTypeCode: string | null; entryDescription: string; lines: SuggestedEntryLine[]; problem: string | null; ready: boolean }
 export type SupplierEntryRuleRow = { supplierTaxId: string; supplierName: string | null; entryTemplateCode: string; entryTemplateName: string; description: string | null; isActive: boolean }
 export type StructureItem = { label: string; amount: number; share: number }
 export type ExerciseStructure = { year: number; expenses: StructureItem[]; income: StructureItem[]; topCustomers: StructureItem[]; topSuppliers: StructureItem[] }
