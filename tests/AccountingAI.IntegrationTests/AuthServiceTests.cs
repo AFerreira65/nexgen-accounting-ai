@@ -1,6 +1,6 @@
 using AccountingAI.Domain.Organizations;
-using AccountingAI.Infrastructure.SqlServer;
-using AccountingAI.Infrastructure.SqlServer.Persistence;
+using AccountingAI.Infrastructure.Persistence;
+using AccountingAI.Infrastructure.Persistence.Persistence;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 

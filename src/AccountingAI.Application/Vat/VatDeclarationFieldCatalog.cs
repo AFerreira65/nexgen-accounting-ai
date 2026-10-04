@@ -4,7 +4,7 @@ namespace AccountingAI.Application.Vat;
 
 /// <summary>
 /// O campo numerado da declaração periódica de IVA em vigor que corresponde a uma
-/// linha do resumo (<see cref="VatSummary"/> em <c>Infrastructure.SqlServer</c>) —
+/// linha do resumo (<see cref="VatSummary"/> em <c>Infrastructure.Persistence</c>) —
 /// best-effort, nunca oficial. Ver <see cref="VatDeclarationFieldCatalog.Disclaimer"/>.
 /// </summary>
 /// <param name="Number">O número do campo.</param>

@@ -1,5 +1,5 @@
-using AccountingAI.Infrastructure.SqlServer;
-using AccountingAI.Infrastructure.SqlServer.Persistence;
+using AccountingAI.Infrastructure.Persistence;
+using AccountingAI.Infrastructure.Persistence.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AccountingAI.IntegrationTests;

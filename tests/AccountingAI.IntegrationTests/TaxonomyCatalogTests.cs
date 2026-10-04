@@ -1,4 +1,4 @@
-using AccountingAI.Infrastructure.SqlServer;
+using AccountingAI.Infrastructure.Persistence;
 
 namespace AccountingAI.IntegrationTests;
 

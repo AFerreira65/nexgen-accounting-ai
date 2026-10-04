@@ -14,7 +14,7 @@
     <ProjectReference Include="../AccountingAI.Infrastructure.Ai/AccountingAI.Infrastructure.Ai.csproj" />
     <ProjectReference Include="../AccountingAI.Infrastructure.At/AccountingAI.Infrastructure.At.csproj" />
     <ProjectReference Include="../AccountingAI.Infrastructure.Files/AccountingAI.Infrastructure.Files.csproj" />
-    <ProjectReference Include="../AccountingAI.Infrastructure.SqlServer/AccountingAI.Infrastructure.SqlServer.csproj" />
+    <ProjectReference Include="../AccountingAI.Infrastructure.Persistence/AccountingAI.Infrastructure.Persistence.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">

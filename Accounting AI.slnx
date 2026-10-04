@@ -6,7 +6,7 @@
   <Project Path="src/AccountingAI.Infrastructure.Ai/AccountingAI.Infrastructure.Ai.csproj" />
   <Project Path="src/AccountingAI.Infrastructure.At/AccountingAI.Infrastructure.At.csproj" />
   <Project Path="src/AccountingAI.Infrastructure.Files/AccountingAI.Infrastructure.Files.csproj" />
-  <Project Path="src/AccountingAI.Infrastructure.SqlServer/AccountingAI.Infrastructure.SqlServer.csproj" />
+  <Project Path="src/AccountingAI.Infrastructure.Persistence/AccountingAI.Infrastructure.Persistence.csproj" />
   <Project Path="src/AccountingAI.WinForms/AccountingAI.WinForms.csproj" />
   <Project Path="src/AccountingAI.Worker/AccountingAI.Worker.csproj" />
   <Project Path="tests/AccountingAI.Api.Tests/AccountingAI.Api.Tests.csproj" />
