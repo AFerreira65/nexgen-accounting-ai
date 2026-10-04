@@ -101,4 +101,49 @@ public sealed class EntryTemplateTests
             new EntryTemplateLine(EntryTemplateLineKind.Balance, EntryTemplateSide.Debit, account));
         Assert.ThrowsExactly<InvalidOperationException>(() => wrongSide.Compute(10m, false, Percentages));
     }
+
+    [TestMethod]
+    public void ADocumentKeepsItsOwnBaseAndVat()
+    {
+        // A fatura do e-Fatura traz 18,71 de IVA (arredondamento do fornecedor): fica assim.
+        var lines = Purchase().ComputeForDocument(81.30m, 18.71m, reverse: false, Percentages);
+
+        Assert.AreEqual(81.30m, lines[0].Debit);
+        Assert.AreEqual(18.71m, lines[1].Debit);
+        Assert.AreEqual(100.01m, lines[2].Credit);
+    }
+
+    [TestMethod]
+    public void ACreditNoteSwapsTheSides()
+    {
+        var lines = Purchase().ComputeForDocument(-10m, -2.30m, reverse: true, Percentages);
+
+        Assert.AreEqual(10m, lines[0].Credit);
+        Assert.AreEqual(2.30m, lines[1].Credit);
+        Assert.AreEqual(12.30m, lines[2].Debit);
+        Assert.AreEqual(0m, lines.Sum(line => line.Debit) - lines.Sum(line => line.Credit));
+    }
+
+    [TestMethod]
+    public void WithoutAVatLineTheVatIsACost()
+    {
+        var template = Template(
+            new EntryTemplateLine(EntryTemplateLineKind.Base, EntryTemplateSide.Debit, Guid.NewGuid()),
+            new EntryTemplateLine(EntryTemplateLineKind.Balance, EntryTemplateSide.Credit, Guid.NewGuid()));
+
+        var lines = template.ComputeForDocument(50m, 11.50m, reverse: false, Percentages);
+
+        Assert.AreEqual(2, lines.Count);
+        Assert.AreEqual(61.50m, lines[0].Debit);
+        Assert.AreEqual(61.50m, lines[1].Credit);
+    }
+
+    [TestMethod]
+    public void AnExemptDocumentOmitsTheZeroVatLine()
+    {
+        var lines = Purchase().ComputeForDocument(40m, 0m, reverse: false, Percentages);
+
+        Assert.AreEqual(2, lines.Count);
+        Assert.AreEqual(40m, lines[1].Credit);
+    }
 }

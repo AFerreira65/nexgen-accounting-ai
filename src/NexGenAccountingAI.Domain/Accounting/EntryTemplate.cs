@@ -214,6 +214,72 @@ public sealed class EntryTemplate
             .ToList();
     }
 
+    /// <summary>
+    /// Calcula as linhas para um documento que já traz a base e o imposto (uma
+    /// fatura do e-Fatura). Com uma linha de IVA, usa os valores do documento
+    /// tal como vêm; sem linhas de IVA, o imposto não é dedutível e soma-se à
+    /// base; com várias linhas de IVA, calcula-as pela base com
+    /// <see cref="Compute"/>. Com <paramref name="reverse"/> (uma nota de
+    /// crédito), troca o débito com o crédito em todas as linhas.
+    /// </summary>
+    public IReadOnlyList<EntryTemplateAmount> ComputeForDocument(
+        decimal taxBase, decimal taxAmount, bool reverse, IReadOnlyDictionary<Guid, decimal> percentages)
+    {
+        ArgumentNullException.ThrowIfNull(percentages);
+        taxBase = decimal.Round(Math.Abs(taxBase), 2, MidpointRounding.AwayFromZero);
+        taxAmount = decimal.Round(Math.Abs(taxAmount), 2, MidpointRounding.AwayFromZero);
+
+        var ordered = lines.OrderBy(line => line.Sequence).ToList();
+        var baseLine = ordered.Single(line => line.Kind == EntryTemplateLineKind.Base);
+        var balanceLine = ordered.Single(line => line.Kind == EntryTemplateLineKind.Balance);
+        var vatLines = ordered.Where(line => line.Kind == EntryTemplateLineKind.Vat).ToList();
+
+        IReadOnlyList<EntryTemplateAmount> amounts;
+        if (vatLines.Count > 1)
+        {
+            amounts = Compute(taxBase, amountIncludesVat: false, percentages);
+        }
+        else
+        {
+            var values = new Dictionary<EntryTemplateLine, decimal>();
+            if (vatLines.Count == 1)
+            {
+                values[baseLine] = taxBase;
+                values[vatLines[0]] = taxAmount;
+            }
+            else
+            {
+                values[baseLine] = taxBase + taxAmount;
+            }
+
+            if (values[baseLine] <= 0m)
+            {
+                throw new ArgumentException("O documento não tem valor.", nameof(taxBase));
+            }
+
+            var debit = values.Where(pair => pair.Key.Side == EntryTemplateSide.Debit).Sum(pair => pair.Value);
+            var credit = values.Where(pair => pair.Key.Side == EntryTemplateSide.Credit).Sum(pair => pair.Value);
+            var missing = balanceLine.Side == EntryTemplateSide.Debit ? credit - debit : debit - credit;
+            if (missing <= 0)
+            {
+                throw new InvalidOperationException(
+                    "A contrapartida está do lado errado: com estes valores o lançamento não equilibra.");
+            }
+
+            values[balanceLine] = missing;
+            amounts = ordered
+                .Where(line => values.TryGetValue(line, out var value) && value != 0)
+                .Select(line => line.Side == EntryTemplateSide.Debit
+                    ? new EntryTemplateAmount(line, values[line], 0m)
+                    : new EntryTemplateAmount(line, 0m, values[line]))
+                .ToList();
+        }
+
+        return reverse
+            ? amounts.Select(amount => new EntryTemplateAmount(amount.Line, amount.Credit, amount.Debit)).ToList()
+            : amounts;
+    }
+
     public static string NormalizeCode(string? code)
     {
         var normalized = (code ?? string.Empty).Trim().ToUpperInvariant();

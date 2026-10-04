@@ -67,46 +67,7 @@ public static class CrossCheckBuilder
             .ThenBy(entry => entry.Reference, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        var entryKeys = orderedEntries
-            .Select(entry => Normalize(entry.DocumentReference))
-            .ToArray();
-        var entryMatched = new bool[orderedEntries.Count];
-        var invoiceMatched = new bool[orderedInvoices.Count];
-        var matchedCount = 0;
-
-        for (var i = 0; i < orderedInvoices.Count; i++)
-        {
-            var invoiceKey = Normalize(orderedInvoices[i].InvoiceNo);
-            if (invoiceKey.Length < MinInvoiceKeyLength)
-            {
-                continue;
-            }
-
-            for (var j = 0; j < orderedEntries.Count; j++)
-            {
-                if (entryMatched[j] || entryKeys[j].Length < MinInvoiceKeyLength)
-                {
-                    continue;
-                }
-
-                if (!KeysMatch(invoiceKey, entryKeys[j]))
-                {
-                    continue;
-                }
-
-                var dayGap = Math.Abs(
-                    orderedEntries[j].EntryDate.DayNumber - orderedInvoices[i].InvoiceDate.DayNumber);
-                if (dayGap > DateToleranceDays)
-                {
-                    continue;
-                }
-
-                entryMatched[j] = true;
-                invoiceMatched[i] = true;
-                matchedCount++;
-                break;
-            }
-        }
+        var (invoiceMatched, entryMatched, matchedCount) = Match(orderedInvoices, orderedEntries);
 
         var unbooked = new List<CrossCheckUnbookedInvoice>();
         for (var i = 0; i < orderedInvoices.Count && unbooked.Count < MaxListed; i++)
@@ -225,6 +186,88 @@ public static class CrossCheckBuilder
                 decimal.Round(pair.Value.AccountingVat, 2),
                 pair.Value.AccountingEntryCount))
             .ToList();
+    }
+
+    /// <summary>
+    /// As faturas que já têm lançamento na contabilidade, pelo mesmo critério do
+    /// relatório: número de documento normalizado e tolerância de datas.
+    /// </summary>
+    public static IReadOnlySet<Guid> BookedInvoiceIds(
+        IReadOnlyList<CrossCheckInvoiceInput> invoices,
+        IReadOnlyList<CrossCheckPurchaseEntryInput> purchaseEntries)
+    {
+        ArgumentNullException.ThrowIfNull(invoices);
+        ArgumentNullException.ThrowIfNull(purchaseEntries);
+
+        var orderedInvoices = invoices
+            .OrderBy(invoice => invoice.InvoiceDate)
+            .ThenBy(invoice => invoice.InvoiceNo, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var orderedEntries = purchaseEntries
+            .OrderBy(entry => entry.EntryDate)
+            .ThenBy(entry => entry.Reference, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var (invoiceMatched, _, _) = Match(orderedInvoices, orderedEntries);
+
+        var booked = new HashSet<Guid>();
+        for (var i = 0; i < orderedInvoices.Count; i++)
+        {
+            if (invoiceMatched[i])
+            {
+                booked.Add(orderedInvoices[i].Id);
+            }
+        }
+
+        return booked;
+    }
+
+    /// <summary>Correspondência gulosa um-para-um, pela ordem de data das faturas e dos lançamentos.</summary>
+    private static (bool[] InvoiceMatched, bool[] EntryMatched, int MatchedCount) Match(
+        List<CrossCheckInvoiceInput> orderedInvoices,
+        List<CrossCheckPurchaseEntryInput> orderedEntries)
+    {
+        var entryKeys = orderedEntries
+            .Select(entry => Normalize(entry.DocumentReference))
+            .ToArray();
+        var entryMatched = new bool[orderedEntries.Count];
+        var invoiceMatched = new bool[orderedInvoices.Count];
+        var matchedCount = 0;
+
+        for (var i = 0; i < orderedInvoices.Count; i++)
+        {
+            var invoiceKey = Normalize(orderedInvoices[i].InvoiceNo);
+            if (invoiceKey.Length < MinInvoiceKeyLength)
+            {
+                continue;
+            }
+
+            for (var j = 0; j < orderedEntries.Count; j++)
+            {
+                if (entryMatched[j] || entryKeys[j].Length < MinInvoiceKeyLength)
+                {
+                    continue;
+                }
+
+                if (!KeysMatch(invoiceKey, entryKeys[j]))
+                {
+                    continue;
+                }
+
+                var dayGap = Math.Abs(
+                    orderedEntries[j].EntryDate.DayNumber - orderedInvoices[i].InvoiceDate.DayNumber);
+                if (dayGap > DateToleranceDays)
+                {
+                    continue;
+                }
+
+                entryMatched[j] = true;
+                invoiceMatched[i] = true;
+                matchedCount++;
+                break;
+            }
+        }
+
+        return (invoiceMatched, entryMatched, matchedCount);
     }
 
     /// <summary>Fica só com letras e dígitos, em maiúsculas — tolera espaços, barras, pontos e prefixos de série.</summary>

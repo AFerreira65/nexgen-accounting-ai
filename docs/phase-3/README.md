@@ -30,7 +30,8 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | B | **F3-13** | Retenções na fonte e declarações de terceiros | **Em curso** — [`F3-13`](F3-13-WITHHOLDINGS.md); F3-13A (mapa de retenções por conta, mês e beneficiário) feito; faltam o Modelo 10, o Modelo 30 e o Imposto do Selo |
 | B | **F3-14** | Dossier fiscal | **Em curso** — [`F3-14`](F3-14-FISCAL-DOSSIER.md); F3-14A (índice dos doze elementos da Portaria 92-A/2011, com indícios da contabilidade e estado por exercício) feito; faltam os mapas de modelo oficial (30, 31 e 32) |
 | C | F3-15 … F3-17 | Comunicação com a AT | Depende da adesão — [`../ADESAO-AT.md`](../ADESAO-AT.md) |
-| D | F3-18 … F3-21 | Automação do lançamento | Por especificar |
+| D | **F3-18** | Lançamentos sugeridos | **Em curso** — [`F3-18`](F3-18-SUGGESTED-ENTRIES.md); F3-18A (sugestões a partir das compras do e-Fatura, com regra por fornecedor e lançamento-tipo, finalizadas por conferir) feito; faltam as vendas do SAF-T de faturação e o mapa de documentos em falta |
+| D | F3-19 … F3-21 | Bancos, arquivo digital, classificação com IA | Por especificar |
 | E | **F3-22** | Gráficos | **Em curso** — [`F3-22`](F3-22-CHARTS.md); F3-22A (componente de gráficos e ecrã «Evolução mensal») e F3-22B (gráficos de estrutura e gráfico na visão geral) feitos; faltam os gráficos nos relatórios de gestão |
 | E | **F3-23** | Mapa de exploração e rácios | **Concluído** — [`F3-23`](F3-23-RATIOS-OPERATING-MAP.md); F3-23A (mapa de exploração mensal e rácios com fórmula e período homólogo) e F3-23B (idade de saldos de clientes e fornecedores) feitos |
 | E | **F3-24** | Orçamento | **Concluído** — [`F3-24`](F3-24-BUDGET.md); F3-24A (orçamento anual por conta e centro de custo, com desvios), F3-24B (valores por mês e cópia do orçamento ou do realizado de outro exercício) e F3-24C (o orçamento no mapa de exploração, por rubrica) feitos |

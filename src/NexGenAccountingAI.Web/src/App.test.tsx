@@ -865,6 +865,15 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
+  it('shows the suggested entries screen (requires the database)', () => {
+    window.history.pushState({}, '', '/lancamentos-sugeridos')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Lançamentos sugeridos', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Lançamentos sugeridos/ })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)

@@ -84,6 +84,40 @@ public sealed class EFaturaPurchase
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
+    public const int JournalEntryReferenceMaxLength = 48;
+
+    /// <summary>
+    /// A referência do lançamento criado a partir desta fatura (lançamento sugerido
+    /// finalizado), se houver. Guarda-se a referência e não o Id porque corrigir um
+    /// lançamento recria-o com a mesma referência.
+    /// </summary>
+    public string? JournalEntryReference { get; private set; }
+
+    /// <summary>
+    /// Uma nota de crédito do fornecedor: o tipo de documento é <c>NC</c> ou «Nota de
+    /// crédito», ou o total vem negativo. Critério da aplicação — o CSV do Portal
+    /// não tem um campo próprio.
+    /// </summary>
+    public bool IsCreditNote => IsCreditNoteType(InvoiceType) || GrossTotal < 0m;
+
+    /// <summary>Uma fatura anulada no Portal não se lança.</summary>
+    public bool IsCancelled =>
+        Status is not null && Status.Contains("anulad", StringComparison.OrdinalIgnoreCase);
+
+    public void LinkToEntry(string journalEntryReference)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(journalEntryReference);
+        JournalEntryReference = journalEntryReference.Trim();
+    }
+
+    public static bool IsCreditNoteType(string? invoiceType)
+    {
+        var type = (invoiceType ?? string.Empty).Trim();
+        return type.Equals("NC", StringComparison.OrdinalIgnoreCase) ||
+            type.StartsWith("NC ", StringComparison.OrdinalIgnoreCase) ||
+            type.StartsWith("Nota de cr", StringComparison.OrdinalIgnoreCase);
+    }
+
     public static string KeyOf(string supplierTaxId, string invoiceNo, DateOnly invoiceDate) =>
         string.Join('|',
             supplierTaxId.Trim().ToUpperInvariant(),

@@ -39,6 +39,7 @@ import {
   TrendingUp,
   Users,
   WalletCards,
+  WandSparkles,
   type LucideIcon,
 } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
@@ -56,6 +57,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/', label: 'Visão geral', icon: CircleGauge, end: true },
     { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
     { to: '/movimentos', label: 'Movimentos', icon: WalletCards },
+    { to: '/lancamentos-sugeridos', label: 'Lançamentos sugeridos', icon: WandSparkles },
   ] },
   { label: 'Mapas', links: [
     { to: '/livro-diario', label: 'Livro diário', icon: BookText },

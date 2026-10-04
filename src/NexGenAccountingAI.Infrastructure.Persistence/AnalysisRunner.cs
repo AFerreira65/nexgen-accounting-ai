@@ -193,6 +193,7 @@ public sealed class AnalysisRunner(AccountingDbContext context, AccountLedgerSer
         EntrySource.SaftImport => "SAF-T",
         EntrySource.Opening => "Abertura",
         EntrySource.Closing => "Apuramento",
+        EntrySource.EFatura => "e-Fatura",
         _ => "Manual",
     };
 

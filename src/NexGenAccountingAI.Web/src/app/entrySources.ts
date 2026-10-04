@@ -5,6 +5,7 @@ export const ENTRY_SOURCE_LABELS: Record<string, string> = {
   SaftImport: 'Importado do SAF-T',
   Opening: 'Abertura',
   Closing: 'Apuramento',
+  EFatura: 'Sugerido do e-Fatura',
 }
 
 export const ENTRY_SOURCES = Object.keys(ENTRY_SOURCE_LABELS)

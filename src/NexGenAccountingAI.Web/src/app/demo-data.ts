@@ -23,7 +23,7 @@ export type Movement = {
   description: string
   notes?: string | null
   status: 'Conferido' | 'Por conferir' | 'Anulado'
-  source?: 'Manual' | 'SaftImport' | 'Opening' | 'Closing'
+  source?: 'Manual' | 'SaftImport' | 'Opening' | 'Closing' | 'EFatura'
   amount: number
   lines: MovementLine[]
 }
@@ -790,6 +790,30 @@ export type BudgetReport = {
   unbudgetedIncome: number
   unbudgetedExpenses: number
 }
+export type SuggestedEntryLine = { accountCode: string; accountName: string; description: string; debit: number; credit: number; vatCode: string | null; partyTaxNumber: string | null }
+export type SuggestedEntry = {
+  purchaseId: string
+  supplierTaxId: string
+  supplierName: string
+  invoiceNo: string
+  invoiceDate: string
+  invoiceType: string
+  isCreditNote: boolean
+  taxBase: number
+  taxAmount: number
+  grossTotal: number
+  entryTemplateCode: string | null
+  journalCode: string | null
+  documentTypeCode: string | null
+  description: string
+  lines: SuggestedEntryLine[]
+  problem: string | null
+  warning: string | null
+  ready: boolean
+}
+export type SuggestedEntriesReport = { from: string; to: string; purchaseCount: number; bookedCount: number; cancelledCount: number; readyCount: number; withoutRuleCount: number; items: SuggestedEntry[] }
+export type SuggestedEntryOutcome = { purchaseId: string; reference: string | null; error: string | null }
+export type SupplierEntryRuleRow = { supplierTaxId: string; supplierName: string | null; entryTemplateCode: string; entryTemplateName: string; description: string | null; isActive: boolean }
 export type StructureItem = { label: string; amount: number; share: number }
 export type ExerciseStructure = { year: number; expenses: StructureItem[]; income: StructureItem[]; topCustomers: StructureItem[]; topSuppliers: StructureItem[] }
 export type MonthlyEvolution = {

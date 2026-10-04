@@ -14,4 +14,7 @@ public enum EntrySource
 
     /// <summary>Gerado pelo apuramento de resultados do exercício.</summary>
     Closing = 3,
+
+    /// <summary>Gerado a partir de uma fatura de compra do e-Fatura (lançamento sugerido).</summary>
+    EFatura = 4,
 }

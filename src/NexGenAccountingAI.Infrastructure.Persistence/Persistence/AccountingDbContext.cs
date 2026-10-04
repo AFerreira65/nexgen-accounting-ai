@@ -69,6 +69,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<BudgetLine> BudgetLines => Set<BudgetLine>();
 
+    public DbSet<SupplierEntryRule> SupplierEntryRules => Set<SupplierEntryRule>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     /// <summary>Collation ICU sem distinção de maiúsculas (equivalente ao CI_AS do SQL Server).</summary>
@@ -110,6 +112,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new IrcReturnValueConfiguration());
         modelBuilder.ApplyConfiguration(new FiscalDossierItemConfiguration());
         modelBuilder.ApplyConfiguration(new BudgetLineConfiguration());
+        modelBuilder.ApplyConfiguration(new SupplierEntryRuleConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

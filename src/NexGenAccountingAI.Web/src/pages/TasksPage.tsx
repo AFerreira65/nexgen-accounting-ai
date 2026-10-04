@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ArrowRight, CircleCheck, Clock3, Receipt, Tags, X } from 'lucide-react'
+import { ArrowLeftRight, ArrowRight, CircleCheck, Clock3, Receipt, Tags, WandSparkles, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate } from '../app/demo-data'
@@ -86,6 +86,11 @@ export function TasksPage() {
       <Link className="attention-item" to="/cruzamento">
         <span className="attention-icon amber"><ArrowLeftRight /></span>
         <span><strong>Rever o cruzamento de compras</strong><small>e-Fatura × contabilidade, por mês e por documento</small></span>
+        <ArrowRight size={16} />
+      </Link>
+      <Link className="attention-item" to="/lancamentos-sugeridos">
+        <span className="attention-icon amber"><WandSparkles /></span>
+        <span><strong>Lançar a partir das sugestões</strong><small>Cada fatura com a proposta da regra do fornecedor, para finalizar por conferir</small></span>
         <ArrowRight size={16} />
       </Link>
     </section>}

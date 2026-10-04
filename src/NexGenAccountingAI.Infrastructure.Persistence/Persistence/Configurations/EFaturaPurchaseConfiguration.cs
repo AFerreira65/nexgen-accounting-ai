@@ -22,6 +22,7 @@ internal sealed class EFaturaPurchaseConfiguration : IEntityTypeConfiguration<EF
         builder.Property(item => item.TaxBase).HasPrecision(18, 2);
         builder.Property(item => item.TaxAmount).HasPrecision(18, 2);
         builder.Property(item => item.GrossTotal).HasPrecision(18, 2);
+        builder.Property(item => item.JournalEntryReference).HasMaxLength(EFaturaPurchase.JournalEntryReferenceMaxLength);
         builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("now()");
         builder.HasIndex(item => new { item.CompanyId, item.DocumentKey }).IsUnique();
         builder.HasIndex(item => new { item.CompanyId, item.InvoiceDate });

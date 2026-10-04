@@ -2464,6 +2464,76 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Lançamentos sugeridos (F3-18A): as compras do e-Fatura sem lançamento, com a proposta da regra do fornecedor.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/suggested-entries", async (
+        Guid userId, Guid companyId, DateOnly from, DateOnly to, SuggestedEntryService suggestions, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var report = await suggestions.ListAsync(userId, companyId, from, to, cancellationToken).ConfigureAwait(false);
+            return report is null ? Results.NotFound() : Results.Ok(report);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/suggested-entries/finalize", async (
+        Guid userId, Guid companyId, FinalizeSuggestedEntriesRequest request, SuggestedEntryService suggestions, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var outcomes = await suggestions
+                .FinalizeAsync(userId, companyId, request?.PurchaseIds ?? [], cancellationToken)
+                .ConfigureAwait(false);
+            return outcomes is null ? Results.NotFound() : Results.Ok(outcomes);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["sugestoes"] = [exception.Message] });
+        }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/supplier-entry-rules", async (
+        Guid userId, Guid companyId, SuggestedEntryService suggestions, CancellationToken cancellationToken) =>
+    {
+        var rules = await suggestions.ListRulesAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return rules is null ? Results.NotFound() : Results.Ok(rules);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/supplier-entry-rules/{supplierTaxId}", async (
+        Guid userId, Guid companyId, string supplierTaxId, SupplierEntryRuleRequest request, SuggestedEntryService suggestions, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var rule = await suggestions
+                .SaveRuleAsync(userId, companyId, supplierTaxId,
+                    new SupplierEntryRuleInput(request?.EntryTemplateCode ?? string.Empty, request?.Description, request?.IsActive ?? true),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return rule is null ? Results.NotFound() : Results.Ok(rule);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["regra"] = [exception.Message] });
+        }
+    });
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/supplier-entry-rules/{supplierTaxId}", async (
+        Guid userId, Guid companyId, string supplierTaxId, SuggestedEntryService suggestions, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var deleted = await suggestions.DeleteRuleAsync(userId, companyId, supplierTaxId, cancellationToken).ConfigureAwait(false);
+            return deleted is true ? Results.NoContent() : Results.NotFound();
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["regra"] = [exception.Message] });
+        }
+    });
+
     // Estrutura do exercício: gastos e rendimentos por natureza, maiores clientes e fornecedores.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/structure", async (
         Guid userId, Guid companyId, int year, FinancialStatementsService statements, CancellationToken cancellationToken) =>
@@ -4248,6 +4318,10 @@ public sealed record FiscalDossierItemRequest(string? Status, string? Note);
 public sealed record BudgetLineRequest(string? AccountCode, string? CostCenterCode, decimal AnnualAmount, IReadOnlyList<decimal>? MonthlyAmounts = null);
 
 public sealed record BudgetCopyRequest(string? Source, int SourceYear, decimal? AdjustmentPercent);
+
+public sealed record FinalizeSuggestedEntriesRequest(IReadOnlyList<Guid>? PurchaseIds);
+
+public sealed record SupplierEntryRuleRequest(string? EntryTemplateCode, string? Description, bool IsActive = true);
 
 public sealed record VatCodeRequest(
     string? Code,

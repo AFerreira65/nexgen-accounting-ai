@@ -51,46 +51,8 @@ public sealed class CrossCheckService(AccountingDbContext context) : ICrossCheck
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        // Um lançamento é «de compra» quando tem pelo menos uma linha numa conta
-        // de gasto (classe 6) ou de IVA dedutível (2432*). Trazem-se as linhas
-        // para somar a base e o IVA em memória. A abertura e o apuramento
-        // contra-movimentam as classes 6 e 7 sem serem operações reais, por isso
-        // ficam de fora das três perspetivas.
-        var purchaseEntryRows = await context.JournalEntries
-            .AsNoTracking()
-            .Where(entry => entry.CompanyId == companyId &&
-                entry.Status != JournalEntryStatus.Voided &&
-                entry.Source != EntrySource.Opening &&
-                entry.Source != EntrySource.Closing &&
-                entry.EntryDate >= from &&
-                entry.EntryDate <= to &&
-                entry.Lines.Any(line =>
-                    line.Account.Code.StartsWith("6") || line.Account.Code.StartsWith("2432")))
-            .Select(entry => new
-            {
-                entry.Reference,
-                entry.EntryDate,
-                entry.DocumentReference,
-                entry.Description,
-                PurchaseBase = entry.Lines
-                    .Where(line => line.Account.Code.StartsWith("6"))
-                    .Sum(line => (decimal?)(line.Debit - line.Credit)) ?? 0m,
-                DeductibleVat = entry.Lines
-                    .Where(line => line.Account.Code.StartsWith("2432"))
-                    .Sum(line => (decimal?)(line.Debit - line.Credit)) ?? 0m
-            })
-            .ToListAsync(cancellationToken)
+        var purchaseEntries = await LoadPurchaseEntriesAsync(context, companyId, from, to, cancellationToken)
             .ConfigureAwait(false);
-
-        var purchaseEntries = purchaseEntryRows
-            .Select(row => new CrossCheckPurchaseEntryInput(
-                row.Reference,
-                row.EntryDate,
-                row.DocumentReference,
-                row.Description,
-                row.PurchaseBase,
-                row.DeductibleVat))
-            .ToList();
 
         var periodLines = context.JournalEntryLines
             .AsNoTracking()
@@ -134,5 +96,58 @@ public sealed class CrossCheckService(AccountingDbContext context) : ICrossCheck
 
         return CrossCheckBuilder.Build(
             from, to, invoices, purchaseEntries, salesMonths, periodDebit, periodCredit);
+    }
+
+    /// <summary>
+    /// Os lançamentos de compra do período (com a base e o IVA dedutível somados),
+    /// como entram no cruzamento.
+    /// </summary>
+    internal static async Task<List<CrossCheckPurchaseEntryInput>> LoadPurchaseEntriesAsync(
+        AccountingDbContext context,
+        Guid companyId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken)
+    {
+        // Um lançamento é «de compra» quando tem pelo menos uma linha numa conta
+        // de gasto (classe 6) ou de IVA dedutível (2432*). Trazem-se as linhas
+        // para somar a base e o IVA em memória. A abertura e o apuramento
+        // contra-movimentam as classes 6 e 7 sem serem operações reais, por isso
+        // ficam de fora das três perspetivas.
+        var purchaseEntryRows = await context.JournalEntries
+            .AsNoTracking()
+            .Where(entry => entry.CompanyId == companyId &&
+                entry.Status != JournalEntryStatus.Voided &&
+                entry.Source != EntrySource.Opening &&
+                entry.Source != EntrySource.Closing &&
+                entry.EntryDate >= from &&
+                entry.EntryDate <= to &&
+                entry.Lines.Any(line =>
+                    line.Account.Code.StartsWith("6") || line.Account.Code.StartsWith("2432")))
+            .Select(entry => new
+            {
+                entry.Reference,
+                entry.EntryDate,
+                entry.DocumentReference,
+                entry.Description,
+                PurchaseBase = entry.Lines
+                    .Where(line => line.Account.Code.StartsWith("6"))
+                    .Sum(line => (decimal?)(line.Debit - line.Credit)) ?? 0m,
+                DeductibleVat = entry.Lines
+                    .Where(line => line.Account.Code.StartsWith("2432"))
+                    .Sum(line => (decimal?)(line.Debit - line.Credit)) ?? 0m
+            })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return purchaseEntryRows
+            .Select(row => new CrossCheckPurchaseEntryInput(
+                row.Reference,
+                row.EntryDate,
+                row.DocumentReference,
+                row.Description,
+                row.PurchaseBase,
+                row.DeductibleVat))
+            .ToList();
     }
 }
