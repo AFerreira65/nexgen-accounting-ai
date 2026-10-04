@@ -30,6 +30,7 @@ import { Modelo22Page } from './pages/Modelo22Page'
 import { MonthlyEvolutionPage } from './pages/MonthlyEvolutionPage'
 import { RecapitulativeStatementPage } from './pages/RecapitulativeStatementPage'
 import { VatDeclarationPage } from './pages/VatDeclarationPage'
+import { WithholdingsPage } from './pages/WithholdingsPage'
 import { VatSettlementPage } from './pages/VatSettlementPage'
 import { AtCommunicationPage } from './pages/AtCommunicationPage'
 import { VatClassificationPage } from './pages/VatClassificationPage'
@@ -93,6 +94,7 @@ export function App() {
             <Route path="/declaracao-recapitulativa" element={<RecapitulativeStatementPage />} />
             <Route path="/modelo-22" element={<Modelo22Page />} />
             <Route path="/ies" element={<IesPage />} />
+            <Route path="/retencoes" element={<WithholdingsPage />} />
             <Route path="/config-iva" element={<VatClassificationPage />} />
             <Route path="/codigos-iva" element={<VatCodesPage />} />
             <Route path="/tabelas-fiscais" element={<FiscalTablesPage />} />

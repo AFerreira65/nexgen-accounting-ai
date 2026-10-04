@@ -27,7 +27,8 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | B | **F3-12** | Ativos fixos e depreciações | **Em curso** — [`F3-12`](F3-12-FIXED-ASSETS.md); F3-12A (cadastro e mapa de depreciações por quotas constantes, com conferência contra a contabilidade) e F3-12B (lançamento das depreciações do exercício, por conferir) feitos; faltam a alienação e o mapa fiscal |
 | B | **F3-10** | Modelo 22 (IRC) | **Em curso** — [`F3-10`](F3-10-MODELO-22.md); F3-10A (quadros 07, 09 e 10 pelo impresso oficial, com os valores guardados por exercício) e F3-10B (tributações autónomas por tipo de encargo e prejuízos fiscais reportáveis com o limite de 65 %) feitos; faltam os anexos e a entrega |
 | B | **F3-11** | IES | **Em curso** — [`F3-11`](F3-11-IES.md); F3-11A (Anexo A, quadros 03 e 04, pelos códigos do impresso oficial) feito; faltam o quadro 04-A, os fluxos de caixa, os quadros fiscais, os outros anexos e a entrega |
-| B | F3-13, F3-14 | Saídas sem a AT: retenções, dossier fiscal | Por especificar |
+| B | **F3-13** | Retenções na fonte e declarações de terceiros | **Em curso** — [`F3-13`](F3-13-WITHHOLDINGS.md); F3-13A (mapa de retenções por conta, mês e beneficiário) feito; faltam o Modelo 10, o Modelo 30 e o Imposto do Selo |
+| B | F3-14 | Dossier fiscal | Por especificar |
 | C | F3-15 … F3-17 | Comunicação com a AT | Depende da adesão — [`../ADESAO-AT.md`](../ADESAO-AT.md) |
 | D | F3-18 … F3-21 | Automação do lançamento | Por especificar |
 | E | **F3-22** | Gráficos | **Em curso** — [`F3-22`](F3-22-CHARTS.md); F3-22A (componente de gráficos e ecrã «Evolução mensal») feito; faltam os gráficos na visão geral e nos relatórios |

@@ -710,6 +710,17 @@ export type RecapitulativeStatement = {
   source: string
   disclaimer: string
 }
+export type WithholdingReport = {
+  year: number
+  accounts: { accountCode: string; accountName: string; opening: number; withheld: number; delivered: number; balance: number }[]
+  months: { month: number; accountCode: string; withheld: number; delivered: number }[]
+  beneficiaries: { countryCode: string; taxNumber: string; name: string; accountCode: string; withheld: number; incomeEstimate: number; entries: number }[]
+  totalWithheld: number
+  totalDelivered: number
+  totalBalance: number
+  withheldWithoutParty: number
+  disclaimer: string
+}
 export type IesAnnexA = { year: number; norm: string; fields: { code: string; quadro: string; section: string; label: string; amount: number; computed: boolean }[]; warnings: string[]; source: string; disclaimer: string }
 export type Modelo22Field = { code: string; section: string; label: string; amount: number; computed: boolean; note: string | null; suggested: number | null; suggestionSource: string | null }
 export type Modelo22Return = { year: number; smallOrMediumEnterprise: boolean; municipalSurtaxRate: number; fields: Modelo22Field[]; warnings: string[]; source: string; disclaimer: string }

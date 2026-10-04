@@ -1467,6 +1467,9 @@ public sealed class FoundationApiTests
         using var ies = await client.GetAsync($"{basePath}/ies/annex-a?year=2026").ConfigureAwait(false);
         var iesPayload = await ies.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badIes = await client.GetAsync($"{basePath}/ies/annex-a?year=12").ConfigureAwait(false);
+        using var withholdings = await client.GetAsync($"{basePath}/withholdings?year=2026").ConfigureAwait(false);
+        var withholdingsPayload = await withholdings.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badWithholdings = await client.GetAsync($"{basePath}/withholdings?year=12").ConfigureAwait(false);
         using var catalog = await client.GetAsync($"{basePath}/modelo-22/fields").ConfigureAwait(false);
         var catalogPayload = await catalog.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badYear = await client.GetAsync($"{basePath}/modelo-22?year=12").ConfigureAwait(false);
@@ -1482,6 +1485,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, ies.StatusCode);
         StringAssert.Contains(iesPayload, "\"code\":\"A00158\"");
         Assert.AreEqual(HttpStatusCode.BadRequest, badIes.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, withholdings.StatusCode);
+        StringAssert.Contains(withholdingsPayload, "\"totalWithheld\":");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badWithholdings.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badYear.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, unauthorized.StatusCode);
     }

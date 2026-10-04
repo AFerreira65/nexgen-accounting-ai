@@ -75,6 +75,7 @@ public static class DependencyInjection
         services.AddScoped<FinancialStatementsService>();
         services.AddScoped<Modelo22Service>();
         services.AddScoped<IesAnnexAService>();
+        services.AddScoped<WithholdingService>();
         services.AddScoped<PartyImportService>();
         services.AddScoped<PartyLedgerService>();
         services.AddScoped<VatSummaryService>();
