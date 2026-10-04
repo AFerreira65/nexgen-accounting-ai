@@ -23,7 +23,7 @@ de IVA» (sem filtro de datas) e abre-o.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e trinta e sete testes de interface (o teste da
+- `NexGenAccountingAI.Web`: lint, build e trinta e sete testes de interface (o teste da
   visão geral confirma o cartão «Posição de IVA» com 299,00 € «A entregar ao
   Estado» na empresa de demonstração);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem segredos;

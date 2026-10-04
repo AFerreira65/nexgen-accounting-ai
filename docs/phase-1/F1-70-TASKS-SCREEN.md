@@ -28,7 +28,7 @@ ativa aparecem com ligação direta; sem nenhum dos dois, mostra «Tudo em dia»
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e trinta e oito testes de interface (um novo:
+- `NexGenAccountingAI.Web`: lint, build e trinta e oito testes de interface (um novo:
   em «Tarefas», o movimento por conferir de demonstração e a secção de contas por
   classificar aparecem, com a ligação a Taxonomias);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem segredos;

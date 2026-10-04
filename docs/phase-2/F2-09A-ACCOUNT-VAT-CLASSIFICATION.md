@@ -38,16 +38,16 @@ classificação de IVA (taxa / natureza / região) por conta, por conta e em lot
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `AccountVatClassificationServiceTests` —
+- `NexGenAccountingAI.IntegrationTests`: `AccountVatClassificationServiceTests` —
   a lista traz só as contas 6/7/243 (não a 1201) e todas por classificar;
   classificar a 7111 fica `Classified` com a taxa/natureza; voltar a `Nenhuma`
   apaga a linha; o lote por `2433` atinge as duas contas `243`; conta
   desconhecida `false`, sem acesso `null`/`-1`. `SqlServerMigrationTests` inclui
   a migração nova.
-- `AccountingAI.Api.Tests`: `VatClassificationListsRelevantAccounts` — a lista
+- `NexGenAccountingAI.Api.Tests`: `VatClassificationListsRelevantAccounts` — a lista
   vem como `[` com `accountCode`/`rate`/`nature`; um enum inválido no `PUT` dá
   `400`; empresa sem acesso `404`.
-- `AccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
+- `NexGenAccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
   `eslint` e os oitenta e oito testes de interface verdes.
 - `dotnet build`/`dotnet test` na solução; `scripts/build.ps1 -SyntheticOnly` e
   `scripts/verify-security.ps1` sem ocorrências.

@@ -1,4 +1,4 @@
-# Análise de necessidades — Accounting AI face ao mercado e às obrigações fiscais
+# Análise de necessidades — NexGen Accounting AI face ao mercado e às obrigações fiscais
 
 Data: 2026-10-03. Base: código no ramo `f2-11a-login-authentication`, pesquisa
 web aos concorrentes e à documentação técnica da AT.
@@ -82,7 +82,7 @@ SNC.32, ARTSOFT, Sendys, Wintouch. Não encontrei referência atual a um produto
 
 ### 3.1 Requisito mínimo de mercado vs. projeto
 
-| # | Todos os concorrentes orientados a gabinetes têm | Accounting AI |
+| # | Todos os concorrentes orientados a gabinetes têm | NexGen Accounting AI |
 |---|---|---|
 | 1 | Multi-empresa, plano SNC pré-configurado, diários, lançamentos-tipo | Parcial — faltam lançamentos-tipo |
 | 2 | SAF-T de faturação e compras do e-Fatura como origem de lançamentos, com mapa de documentos em falta | Parcial — lê e cruza, não lança |

@@ -32,7 +32,7 @@ taxonomia, com «Sem taxonomia» no fim; a exportação CSV segue o mesmo agrupa
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build de produção e trinta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build de produção e trinta e três testes de interface
   (o teste do balancete passa também a ligar «Agrupar por taxonomia», confirmar o
   subtotal «Sem taxonomia» e a exclusão mútua com «Agrupar por classe»);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem segredos;

@@ -27,13 +27,13 @@ verdade, a omitir contas por classificar.
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `VatSummaryServiceTests` — a conta de gasto
+- `NexGenAccountingAI.IntegrationTests`: `VatSummaryServiceTests` — a conta de gasto
   não classificada com movimento no período (`6222`) aparece em `Unclassified`
   com os valores certos; a conta classificada e a sem movimento continuam de
   fora, tal como antes.
-- `AccountingAI.Api.Tests`: `VatSummaryReturnsRowsGroupedByNatureRateAndRegion`
+- `NexGenAccountingAI.Api.Tests`: `VatSummaryReturnsRowsGroupedByNatureRateAndRegion`
   passa a verificar também a chave `unclassified` na resposta.
-- `AccountingAI.Web`: `tsc`, `eslint` e os oitenta e dois testes de interface
+- `NexGenAccountingAI.Web`: `tsc`, `eslint` e os oitenta e dois testes de interface
   verdes.
 - `dotnet build`/`dotnet test` na solução (173 testes); `scripts/build.ps1
   -SyntheticOnly` e `scripts/verify-security.ps1` sem ocorrências.

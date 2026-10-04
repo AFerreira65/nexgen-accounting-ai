@@ -34,7 +34,7 @@ resultado refletirem só o que existia até essa data.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e trinta e oito testes de interface (o
+- `NexGenAccountingAI.Web`: lint, build e trinta e oito testes de interface (o
   teste do painel de trabalho passa também pelo filtro, confirmando que
   a posição de IVA muda ao recuar a data de referência antes de um dos
   dois lançamentos de IVA sintéticos, e volta ao valor original ao limpar

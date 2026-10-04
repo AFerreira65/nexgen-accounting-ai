@@ -26,7 +26,7 @@ Todas as normas recebem oito diários iniciais: operações diversas, compras, v
 
 São também criados onze tipos de documento, já associados ao diário sugerido: abertura, fatura e nota de crédito de fornecedor, fatura e nota de crédito a cliente, recebimento, pagamento, transferência, operação diversa, apuramento e encerramento.
 
-Estes códigos são convenções operacionais do Accounting AI, não uma lista imposta pelo SNC. Depois da cópia, cada empresa poderá desativar, renomear ou ampliar os seus registos quando a respetiva funcionalidade de manutenção for implementada.
+Estes códigos são convenções operacionais do NexGen Accounting AI, não uma lista imposta pelo SNC. Depois da cópia, cada empresa poderá desativar, renomear ou ampliar os seus registos quando a respetiva funcionalidade de manutenção for implementada.
 
 ## Regras de provisionamento
 

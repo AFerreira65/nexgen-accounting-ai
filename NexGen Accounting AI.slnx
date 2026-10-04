@@ -1,0 +1,19 @@
+<Solution>
+  <Project Path="src/NexGenAccountingAI.Api/NexGenAccountingAI.Api.csproj" />
+  <Project Path="src/NexGenAccountingAI.Application/NexGenAccountingAI.Application.csproj" />
+  <Project Path="src/NexGenAccountingAI.Core/NexGenAccountingAI.Core.csproj" />
+  <Project Path="src/NexGenAccountingAI.Domain/NexGenAccountingAI.Domain.csproj" />
+  <Project Path="src/NexGenAccountingAI.Infrastructure.Ai/NexGenAccountingAI.Infrastructure.Ai.csproj" />
+  <Project Path="src/NexGenAccountingAI.Infrastructure.At/NexGenAccountingAI.Infrastructure.At.csproj" />
+  <Project Path="src/NexGenAccountingAI.Infrastructure.Files/NexGenAccountingAI.Infrastructure.Files.csproj" />
+  <Project Path="src/NexGenAccountingAI.Infrastructure.Persistence/NexGenAccountingAI.Infrastructure.Persistence.csproj" />
+  <Project Path="src/NexGenAccountingAI.WinForms/NexGenAccountingAI.WinForms.csproj" />
+  <Project Path="src/NexGenAccountingAI.Worker/NexGenAccountingAI.Worker.csproj" />
+  <Project Path="tests/NexGenAccountingAI.Api.Tests/NexGenAccountingAI.Api.Tests.csproj" />
+  <Project Path="tests/NexGenAccountingAI.ArchitectureTests/NexGenAccountingAI.ArchitectureTests.csproj" />
+  <Project Path="tests/NexGenAccountingAI.Domain.Tests/NexGenAccountingAI.Domain.Tests.csproj" />
+  <Project Path="tests/NexGenAccountingAI.Infrastructure.Files.Tests/NexGenAccountingAI.Infrastructure.Files.Tests.csproj" />
+  <Project Path="tests/NexGenAccountingAI.IntegrationTests/NexGenAccountingAI.IntegrationTests.csproj" />
+  <Project Path="tests/NexGenAccountingAI.Smoke/NexGenAccountingAI.Smoke.csproj" />
+  <Project Path="tests/NexGenAccountingAI.WinForms.Smoke/NexGenAccountingAI.WinForms.Smoke.csproj" />
+</Solution>

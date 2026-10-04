@@ -42,12 +42,12 @@ cada campo se aplica.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests` (`CashFlowAndEquityStatementsTests`): os
+- `NexGenAccountingAI.IntegrationTests` (`CashFlowAndEquityStatementsTests`): os
   campos dos dois quadros para o cenário das demonstrações (gastos positivos,
   subtotais, somas, totais iguais, resultado igual nos dois quadros, sem
   avisos).
-- `AccountingAI.Api.Tests`: o endpoint e a recusa de um exercício inválido.
-- `AccountingAI.Web`: `tsc`, `eslint`, 99 testes, `vite build`.
+- `NexGenAccountingAI.Api.Tests`: o endpoint e a recusa de um exercício inválido.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 99 testes, `vite build`.
 - A suite completa: 250 testes .NET.
 
 **Por verificar**

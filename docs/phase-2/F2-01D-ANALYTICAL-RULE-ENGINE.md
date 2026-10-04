@@ -49,17 +49,17 @@ analíticas (com `ruleId`) além das do esquema.
 
 ## Validação efetuada
 
-- `AccountingAI.Infrastructure.Files.Tests`: quarenta e quatro testes (onze
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: quarenta e quatro testes (onze
   novos) — modelo limpo não levanta nada, e cada regra assinalada num caso
   de falha (NIF, base, período/exercício, contagem, totais, transação
   desequilibrada, conta por resolver agrupada, data fora do período, base
   sem diários, identificação do produtor);
-- `AccountingAI.Api.Tests`: dezanove testes (um novo — o `saft/validate`
+- `NexGenAccountingAI.Api.Tests`: dezanove testes (um novo — o `saft/validate`
   devolve `ruleId` de `NIF-CHECKDIGIT`, `BASIS-KNOWN` e
   `ACCOUNT-REF-RESOLVES` num ficheiro deficiente);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (106 testes
   .NET); testes de arquitetura verdes;
-- `AccountingAI.Web`: sessenta e três testes sem alteração;
+- `NexGenAccountingAI.Web`: sessenta e três testes sem alteração;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem
   segredos;
 - verificação com a API local contra ficheiros SAF-T reais: três ficheiros

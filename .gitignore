@@ -19,8 +19,8 @@ appsettings.local.json
 efatura.credentials.json
 # Build da PWA copiado para dentro da API para o serviço do Windows servir
 # (F2-11B) — gerado por scripts/publish-service.ps1, nunca versionado.
-src/AccountingAI.Api/wwwroot/*
-!src/AccountingAI.Api/wwwroot/.gitkeep
+src/NexGenAccountingAI.Api/wwwroot/*
+!src/NexGenAccountingAI.Api/wwwroot/.gitkeep
 
 # Dados e documentação locais que não devem ser publicados automaticamente.
 SAFTs Exemplo/

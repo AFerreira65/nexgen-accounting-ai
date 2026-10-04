@@ -36,7 +36,7 @@ de importação primeiro.
 
 - `dotnet build`/`dotnet test` na solução inteira sem avisos nem falhas
   (35 testes de domínio, incluindo os de `SetDefaultFiscalYear` de F1-76);
-- `AccountingAI.Web`: lint, build e quarenta e quatro testes de interface;
+- `NexGenAccountingAI.Web`: lint, build e quarenta e quatro testes de interface;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem
   segredos;
 - verificação contra a base `accountingAI`: criar uma empresa a partir de

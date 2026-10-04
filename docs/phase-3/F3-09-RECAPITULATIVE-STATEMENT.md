@@ -46,13 +46,13 @@ operações de tipo 4 vão ao campo 8 da declaração periódica, não ao 7.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `RecapitulativeStatementServiceTests` —
+- `NexGenAccountingAI.IntegrationTests`: `RecapitulativeStatementServiceTests` —
   agregação de duas vendas e uma nota de crédito ao mesmo adquirente, serviço
   a um cliente grego (`EL`), operação triangular, lançamento sem terceiro e
   adquirente de país terceiro; campos 10, 17, 18 e 19; e os campos 7 e 8 da
   declaração periódica para os mesmos dados.
-- `AccountingAI.Api.Tests`: o endpoint (só leitura).
-- `AccountingAI.Web`: `tsc`, `eslint`, 96 testes, `vite build`.
+- `NexGenAccountingAI.Api.Tests`: o endpoint (só leitura).
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 96 testes, `vite build`.
 - A suite completa: 240 testes .NET.
 
 **Por verificar**

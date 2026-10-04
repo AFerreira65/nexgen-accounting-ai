@@ -41,11 +41,11 @@ paginado; sem `page`, devolve o array como sempre.
 
 ## Validação efetuada
 
-- `AccountingAI.Api`: catorze testes (um novo — envelope paginado, trava
+- `NexGenAccountingAI.Api`: catorze testes (um novo — envelope paginado, trava
   da última página, `search` pela referência, 400 em data inválida, e o
   array completo intacto sem `page`);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
-- `AccountingAI.Web`: lint, build e setenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e três testes de interface
   (sem alteração — nenhum ecrã consome ainda o endpoint paginado);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem
   segredos;

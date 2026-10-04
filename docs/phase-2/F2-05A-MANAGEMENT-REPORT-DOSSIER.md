@@ -62,13 +62,13 @@ GET /api/v1/development/users/{userId}/companies/{companyId}/management-reports/
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `ManagementReportDataServiceTests` — empresa
+- `NexGenAccountingAI.IntegrationTests`: `ManagementReportDataServiceTests` — empresa
   construída com um exercício anterior (2025) e o corrente (2026): a variação
   homóloga vem preenchida (vendas +500), a margem líquida e o peso do pessoal
   batem com o cálculo à mão, o maior movimento (1500) vem primeiro e cita a
   conta 7111, o cruzamento corre (sem faturas do e-Fatura, débito = crédito), e
   sem acesso devolve `null`.
-- `AccountingAI.Api.Tests`: `ManagementReportCatalogAndDossierAreAvailable` — o
+- `NexGenAccountingAI.Api.Tests`: `ManagementReportCatalogAndDossierAreAvailable` — o
   catálogo traz `sintese-mensal` e as secções; o dossiê traz `companyName`,
   `incomeSummary`, `ratios` e `crossCheck`; sem datas `400`; empresa sem acesso
   `404`.
@@ -77,7 +77,7 @@ GET /api/v1/development/users/{userId}/companies/{companyId}/management-reports/
 
 ## Fora deste incremento
 
-- o narrador e o projeto `AccountingAI.Infrastructure.Ai` — F2-05B;
+- o narrador e o projeto `NexGenAccountingAI.Infrastructure.Ai` — F2-05B;
 - a persistência (`reporting.ManagementReport`), o interruptor
   (`reporting.CompanyAiSettings`) e os *endpoints* de geração — F2-05C;
 - o ecrã «Relatórios de gestão» na PWA — F2-05D.

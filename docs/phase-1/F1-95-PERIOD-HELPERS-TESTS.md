@@ -28,7 +28,7 @@ mantém-se em F1-71.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e sessenta testes de interface (dez
+- `NexGenAccountingAI.Web`: lint, build e sessenta testes de interface (dez
   novos, unitários, para as funções de período);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

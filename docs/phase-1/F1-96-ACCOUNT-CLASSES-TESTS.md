@@ -31,7 +31,7 @@ mantém-se em F1-71.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e setenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e três testes de interface
   (treze novos, unitários, para `accountClasses`);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

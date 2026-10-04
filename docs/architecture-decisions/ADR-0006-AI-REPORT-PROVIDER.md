@@ -40,10 +40,10 @@ coerência (um só fornecedor, um só SDK). O `model` fica **configurável**
 (`Ai:Model`, por omissão `claude-opus-5`); trocar de fornecedor no futuro é
 trocar a implementação de uma interface (abaixo), não reescrever o épico.
 
-### Isolamento do SDK — projeto `AccountingAI.Infrastructure.Ai`
+### Isolamento do SDK — projeto `NexGenAccountingAI.Infrastructure.Ai`
 
 A dependência do SDK vive **só** num projeto novo,
-`AccountingAI.Infrastructure.Ai`, à imagem do que `Infrastructure.Files` faz
+`NexGenAccountingAI.Infrastructure.Ai`, à imagem do que `Infrastructure.Files` faz
 com a leitura de ficheiros. O `Application` define a fronteira
 `IManagementReportNarrator`; `Infrastructure.Ai` implementa-a com o SDK; a API
 orquestra. `Infrastructure.SqlServer` **não** conhece o SDK. O teste de

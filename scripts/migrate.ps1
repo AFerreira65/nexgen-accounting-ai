@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$apiProject = Join-Path $projectRoot 'src\AccountingAI.Api\AccountingAI.Api.csproj'
+$apiProject = Join-Path $projectRoot 'src\NexGenAccountingAI.Api\NexGenAccountingAI.Api.csproj'
 $previousEnvironment = $env:ASPNETCORE_ENVIRONMENT
 $previousConnectionString = ${env:ConnectionStrings__Accounting}
 

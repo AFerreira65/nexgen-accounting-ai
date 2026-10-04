@@ -26,7 +26,7 @@ aceso; clicar nele abre as Tarefas. Sem nada pendente, o ponto apaga-se.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e nove testes de interface (um
+- `NexGenAccountingAI.Web`: lint, build e quarenta e nove testes de interface (um
   novo: clicar no sino abre as Tarefas);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

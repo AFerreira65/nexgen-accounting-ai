@@ -32,19 +32,19 @@ contra o razão atual ao reler, à imagem da persistência do apuramento de IVA
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `IrcEstimateFilingServiceTests` — antes de
+- `NexGenAccountingAI.IntegrationTests`: `IrcEstimateFilingServiceTests` — antes de
   guardar, acesso confirmado mas nada guardado; guardar com uma correção e
   21% dá o resultado certo e uma linha na tabela; reler devolve o guardado; um
   lançamento novo no período muda o resultado líquido lido a seguir sem
   perder a taxa guardada; guardar de novo com outra taxa atualiza a mesma
   linha (não duplica); histórico; sem acesso `null`. `SqlServerMigrationTests`
   inclui a migração nova.
-- `AccountingAI.Api.Tests`: `IrcEstimateSavedAndHistoryAreExposedReadOnly` —
+- `NexGenAccountingAI.Api.Tests`: `IrcEstimateSavedAndHistoryAreExposedReadOnly` —
   leitura `200`, `PUT` com taxa inválida `400` (sem escrever), sem acesso
   `404`. Sem escrita real no teste de API (base real partilhada — ver a
   nota de memória sobre isso); o ciclo de escrita foi verificado na
   integração e em direto.
-- `AccountingAI.Web`: `tsc`, `eslint` e os oitenta e três testes de interface
+- `NexGenAccountingAI.Web`: `tsc`, `eslint` e os oitenta e três testes de interface
   verdes.
 - `dotnet build`/`dotnet test` na solução (177 testes); `scripts/build.ps1
   -SyntheticOnly` e `scripts/verify-security.ps1` sem ocorrências.

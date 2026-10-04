@@ -26,7 +26,7 @@ Seguinte e abre de imediato.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e seis testes de interface (a
+- `NexGenAccountingAI.Web`: lint, build e quarenta e seis testes de interface (a
   paginação já está coberta pelos testes unitários de `paginate`);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

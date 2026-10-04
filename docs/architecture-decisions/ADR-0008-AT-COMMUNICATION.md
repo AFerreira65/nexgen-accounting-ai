@@ -11,7 +11,7 @@ autenticada por certificado**: a AT identifica o produtor/integrador na ligaçã
 SOAP por um certificado de transporte (PFX com chave privada, protegido por
 senha) — ver [`../CERTIFICACAO_AT.md`](../CERTIFICACAO_AT.md).
 
-A adesão do Accounting AI ao webservice como analisador autónomo **não está
+A adesão do NexGen Accounting AI ao webservice como analisador autónomo **não está
 garantida** (a AT enquadra a adesão nos produtores de faturação) — é um bloqueio
 externo. Mas a plataforma pode e deve ter já a configuração e o carregamento do
 certificado, para os testes usarem o certificado do PHC.
@@ -47,7 +47,7 @@ precisar de `System.ServiceModel.*` quando as chamadas SOAP entrarem).
   `Environment`, e `Problem` (texto pt-PT) quando algo falha (ficheiro
   inexistente, senha errada, expirado). **Nunca** expõe a senha nem os bytes da
   chave.
-- **Projeto novo `AccountingAI.Infrastructure.At`** — só referencia
+- **Projeto novo `NexGenAccountingAI.Infrastructure.At`** — só referencia
   `Application` (e, mais tarde, os pacotes de `System.ServiceModel` para o
   cliente SOAP). É o único sítio que carrega o certificado e, no futuro, fala
   com a AT. Entra no `.slnx`, na referência da API e no teste de arquitetura.

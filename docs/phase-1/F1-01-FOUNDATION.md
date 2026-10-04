@@ -32,7 +32,7 @@ Regras verificadas automaticamente:
 - `Application` conhece apenas `Domain`;
 - a infraestrutura conhece `Application` e `Domain`;
 - `Api` e `Worker` consomem as camadas internas sem inverter dependências;
-- a nova plataforma não depende de `AccountingAI.Core` nem de `AccountingAI.WinForms` nesta fase.
+- a nova plataforma não depende de `NexGenAccountingAI.Core` nem de `NexGenAccountingAI.WinForms` nesta fase.
 
 ## Executar a validação completa
 
@@ -51,7 +51,7 @@ O comando executa:
 ## Executar a API localmente
 
 ```powershell
-dotnet run --project .\src\AccountingAI.Api\AccountingAI.Api.csproj
+dotnet run --project .\src\NexGenAccountingAI.Api\NexGenAccountingAI.Api.csproj
 ```
 
 Endpoints locais:
@@ -79,7 +79,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\migrate.ps1 -Conne
 ## Executar a PWA
 
 ```powershell
-Set-Location .\src\AccountingAI.Web
+Set-Location .\src\NexGenAccountingAI.Web
 npm ci --ignore-scripts
 npm run dev
 ```

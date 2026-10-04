@@ -28,7 +28,7 @@ conta de origem. A decisão de fornecedor e as fronteiras estão na
   posição, rácios, resumo do cruzamento, maiores movimentos. Cada valor traz a
   conta ou a referência de origem.
 - **Narrador** — a fronteira `IManagementReportNarrator` (no `Application`),
-  implementada em `AccountingAI.Infrastructure.Ai` com o SDK oficial do Claude,
+  implementada em `NexGenAccountingAI.Infrastructure.Ai` com o SDK oficial do Claude,
   transforma o dossiê num `ManagementReportResult` estruturado. O `model` é
   configurável; sem chave, um narrador nulo devolve «IA não configurada».
 - **Modos** — pré-definidos (`sintese-mensal`, `analise-rentabilidade`,
@@ -86,7 +86,7 @@ Application/ManagementReports/
 
 ### Infrastructure.Ai (projeto novo)
 
-- `AccountingAI.Infrastructure.Ai` — referência ao pacote `Anthropic` e ao
+- `NexGenAccountingAI.Infrastructure.Ai` — referência ao pacote `Anthropic` e ao
   `Application`. `ClaudeManagementReportNarrator : IManagementReportNarrator`
   monta o pedido (sistema pt-PT por tipo em `ManagementReportPrompts`, o dossiê
   em JSON como mensagem do utilizador, `output_config` com o esquema de
@@ -96,7 +96,7 @@ Application/ManagementReports/
   `MaxOutputTokens`) ligado de `Ai:*`. `AddAccountingAi(configuration)` regista
   o narrador conforme haja chave.
 - O teste de arquitetura (`ModuleDependencyTests`) passa a incluir
-  `AccountingAI.Infrastructure.Ai` (só referencia `Application`) e a permiti-lo
+  `NexGenAccountingAI.Infrastructure.Ai` (só referencia `Application`) e a permiti-lo
   na lista da API.
 
 ### API
@@ -140,7 +140,7 @@ Application/ManagementReports/
 
 ### F2-05B — Narrador (projeto `Infrastructure.Ai` + Claude)
 
-- **Regras:** projeto `AccountingAI.Infrastructure.Ai` com o pacote `Anthropic`;
+- **Regras:** projeto `NexGenAccountingAI.Infrastructure.Ai` com o pacote `Anthropic`;
   `IManagementReportNarrator` + `ClaudeManagementReportNarrator` +
   `NullManagementReportNarrator` + `AiOptions` + `AddAccountingAi`;
   `ManagementReportPrompts` (pt-PT, por tipo) e a constante do aviso;

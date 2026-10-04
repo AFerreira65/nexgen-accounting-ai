@@ -46,16 +46,16 @@ linhas de cabeçalho, escolher a orientação, «Guardar modelo»; «Imprimir / 
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: teste novo `ReportTemplateTests` — chave
+- `NexGenAccountingAI.IntegrationTests`: teste novo `ReportTemplateTests` — chave
   desconhecida devolve `null`; o modelo por omissão traz a identificação da
   empresa e do gabinete; guardar apara as linhas em branco, limita a 6, grava a
   orientação, faz *upsert* (uma só linha) e carimba `CreatedBy`/`ModifiedAtUtc`;
   sem acesso devolve `null`. O teste da migração aplica `ReportTemplate` duas
   vezes.
-- `AccountingAI.Api.Tests`: teste novo — o `GET` devolve um modelo por omissão
+- `NexGenAccountingAI.Api.Tests`: teste novo — o `GET` devolve um modelo por omissão
   com `companyName`; o `PUT` grava as linhas e a orientação; chave desconhecida
   dá `404` (e o teste repõe o default).
-- `AccountingAI.Web`: lint, build e setenta e oito testes de interface (o
+- `NexGenAccountingAI.Web`: lint, build e setenta e oito testes de interface (o
   cabeçalho de impressão usa `<p>` e não `<h1>`, para não colidir com o
   cabeçalho do ecrã nos testes existentes);
 - `dotnet build`/`dotnet test` na solução inteira (cento e quarenta e oito

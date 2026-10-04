@@ -44,14 +44,14 @@ sintéticos; o consumidor (motor de regras) chega em F2-01D.
 
 ## Validação efetuada
 
-- `AccountingAI.Infrastructure.Files.Tests`: trinta e três testes (seis
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: trinta e três testes (seis
   novos) — lê cabeçalho, contas, diários e totais; assinala uma transação
   desequilibrada (e o total de linhas do ficheiro reflete-o), uma
   referência a conta inexistente, uma transação fora do período; um
   ficheiro sem movimentos reporta zero; XML mal formado lança;
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (94 testes
   .NET); testes de arquitetura verdes;
-- `AccountingAI.Web`: sessenta e três testes sem alteração;
+- `NexGenAccountingAI.Web`: sessenta e três testes sem alteração;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem
   segredos.
 

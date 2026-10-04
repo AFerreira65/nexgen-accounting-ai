@@ -39,14 +39,14 @@ apuramento ou importados; a linha mostra a origem e o CSV inclui-a.
 ## Validação efetuada
 
 - build .NET Debug sem avisos nem erros; suite .NET completa (72 testes);
-- `AccountingAI.Domain.Tests`: um lançamento novo tem `Source = Manual` e
+- `NexGenAccountingAI.Domain.Tests`: um lançamento novo tem `Source = Manual` e
   `SetSource` altera-o;
-- `AccountingAI.IntegrationTests` (LocalDB descartável): a migração
+- `NexGenAccountingAI.IntegrationTests` (LocalDB descartável): a migração
   `20260904102947_JournalEntrySource` é aplicada; os movimentos importados de um
   SAF-T ficam `SaftImport`, o apuramento fica `Closing` e a abertura `Opening`;
-- `AccountingAI.Api.Tests`: a lista de movimentos traz `"source":"Manual"` e
+- `NexGenAccountingAI.Api.Tests`: a lista de movimentos traz `"source":"Manual"` e
   `?source=SaftImport` não devolve os lançamentos manuais;
-- `AccountingAI.Web`: lint, build e trinta e seis testes de interface (o filtro da
+- `NexGenAccountingAI.Web`: lint, build e trinta e seis testes de interface (o filtro da
   lista passa também pela «Origem»: `Manual` mantém tudo, `SaftImport` esvazia);
 - verificação no browser contra a base `accountingAI`: ao arrancar, a migração
   retroage `AB-*`/`AB-2026-00001` para `Opening` e `AP-2026-00001` para `Closing`;

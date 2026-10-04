@@ -34,14 +34,14 @@ detalhe — ver «Fora deste incremento»).
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `CompanyAtCredentialsServiceTests`
+- `NexGenAccountingAI.IntegrationTests`: `CompanyAtCredentialsServiceTests`
   estendido — guardar com `Trimestral`/`Producao` devolve-os como texto;
   atualizar substitui os valores guardados. `SqlServerMigrationTests` inclui
   a migração nova.
-- `AccountingAI.Api.Tests`: `AtCertificateStatusIsReportedWithoutSecrets`
+- `NexGenAccountingAI.Api.Tests`: `AtCertificateStatusIsReportedWithoutSecrets`
   passa a verificar as chaves `periodicity`/`environment` no `at-credentials`
   não configurado.
-- `AccountingAI.Web`: `tsc`, `eslint` e os oitenta e três testes de
+- `NexGenAccountingAI.Web`: `tsc`, `eslint` e os oitenta e três testes de
   interface verdes.
 - `dotnet build`/`dotnet test` na solução (182 testes); `scripts/build.ps1
   -SyntheticOnly` e `scripts/verify-security.ps1` sem ocorrências.

@@ -29,7 +29,7 @@ ecrãs que dependem do exercício passam a usá-lo.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e cinco testes de interface
+- `NexGenAccountingAI.Web`: lint, build e quarenta e cinco testes de interface
   (um novo: mudar o exercício no topo para 2024 muda o rótulo e o filtro
   de exercício do livro diário passa a 2024);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

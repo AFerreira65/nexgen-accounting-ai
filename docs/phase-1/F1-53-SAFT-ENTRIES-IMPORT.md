@@ -52,10 +52,10 @@ ficheiro não cria nada de novo.
 ## Validação efetuada
 
 - build .NET Debug sem avisos nem erros; suite .NET completa (72 testes);
-- `AccountingAI.Infrastructure.Files.Tests`: o leitor devolve as três transações do
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: o leitor devolve as três transações do
   ficheiro de exemplo com diários, datas, contas e montantes; um ficheiro sem o
   bloco devolve lista vazia;
-- `AccountingAI.IntegrationTests` (LocalDB descartável): importar cinco transações
+- `NexGenAccountingAI.IntegrationTests` (LocalDB descartável): importar cinco transações
   para uma empresa criada a partir do SAF-T cria dois lançamentos e o diário em
   falta, e salta as três inválidas (desequilíbrio, conta inexistente, uma só
   linha) com o motivo certo; reimportar não duplica (as válidas passam a «já

@@ -25,7 +25,7 @@ navegação Anterior/Seguinte, e abre de imediato.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e sete testes de interface
+- `NexGenAccountingAI.Web`: lint, build e quarenta e sete testes de interface
   (um novo: abrir `/diarios/COMPRAS` mostra o diário e o seu lançamento de
   demonstração);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

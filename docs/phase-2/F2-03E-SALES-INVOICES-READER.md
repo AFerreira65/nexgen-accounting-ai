@@ -39,12 +39,12 @@ Content-Type: application/xml
 
 ## Validação efetuada
 
-- `AccountingAI.Infrastructure.Files.Tests`: quatro testes novos do
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: quatro testes novos do
   `SaftSalesInvoicesReader` (resumo por mês + totais declarados; anuladas
   excluídas mas contadas; ficheiro sem o bloco; XML mal formado);
-- `AccountingAI.Api.Tests`: um teste novo — o endpoint lê o bloco, está
+- `NexGenAccountingAI.Api.Tests`: um teste novo — o endpoint lê o bloco, está
   limitado à empresa do utilizador (`404`) e trata o XML mal formado (`400`);
-- `AccountingAI.Web`: lint, build e setenta e cinco testes de interface (sem
+- `NexGenAccountingAI.Web`: lint, build e setenta e cinco testes de interface (sem
   novos — o painel só aparece com ligação à base de dados);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (cento e vinte e
   nove testes .NET);

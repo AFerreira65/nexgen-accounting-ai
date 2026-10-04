@@ -42,7 +42,7 @@ guardar e voltar a carregar a análise.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e setenta e oito testes de interface (um
+- `NexGenAccountingAI.Web`: lint, build e setenta e oito testes de interface (um
   novo — a rota `/analises` mostra o cabeçalho);
 - `dotnet build`/`dotnet test` na solução inteira (cento e quarenta e seis
   testes .NET, sem alteração — incremento de frontend);

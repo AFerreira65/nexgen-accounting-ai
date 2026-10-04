@@ -12,7 +12,7 @@ O que existe hoje na nova plataforma:
 - A importação de movimentos reconcilia, no fim, os débitos e créditos do
   período do ficheiro com os totais declarados (`SaftAccountsReconciliation`,
   `SaftEntriesSummary`).
-- O monitor WinForms (`AccountingAI.Core/Parsing/SaftParser.cs`) faz uma
+- O monitor WinForms (`NexGenAccountingAI.Core/Parsing/SaftParser.cs`) faz uma
   verificação «estrutural e analítica» leve — reconhece as versões `1.03_01`
   e `1.04_01`, valida `TaxAccountingBasis` contra `{C,E,F,I,P,R,S,T}`, avisa
   se o cabeçalho indica contabilidade sem diários — e diz explicitamente que
@@ -266,7 +266,7 @@ Application/Saft/
   1.04_01.
 - Portaria n.º 1192/2009 e n.º 160/2013 — versão 1.03_01.
 - [Selo de Validação AT (SVAT)](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Negocios/Faturacao/SAF_T_PT/SVAT/Paginas/default.aspx)
-- `AccountingAI.Core/Parsing/SaftParser.cs` — verificação estrutural/analítica
+- `NexGenAccountingAI.Core/Parsing/SaftParser.cs` — verificação estrutural/analítica
   do monitor, a portar e alargar.
 - [`../CERTIFICACAO_AT.md`](../CERTIFICACAO_AT.md) — enquadramento de
   certificação e o que falta para produzir SAF-T.

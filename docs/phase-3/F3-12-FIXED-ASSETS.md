@@ -46,16 +46,16 @@ fiscal.
 
 **Validação efetuada**
 
-- `AccountingAI.Domain.Tests`: `FixedAssetTests` — quota inteira no primeiro
+- `NexGenAccountingAI.Domain.Tests`: `FixedAssetTests` — quota inteira no primeiro
   ano, duodécimos, valor residual e arredondamento, alienação nos dois
   regimes, dados inválidos.
-- `AccountingAI.IntegrationTests`: `FixedAssetServiceTests` — criar, código
+- `NexGenAccountingAI.IntegrationTests`: `FixedAssetServiceTests` — criar, código
   repetido, conta agregadora ou inexistente recusada, lista com e sem
   inativos, mapa de 2026 (só os ativos em funcionamento), diferença para os
   gastos lançados, efeito da alienação. `SqlServerMigrationTests` inclui a
   migração.
-- `AccountingAI.Api.Tests`: `FixedAssetsAreListedAndScheduled` (só leitura).
-- `AccountingAI.Web`: `tsc`, `eslint`, 97 testes, `vite build`.
+- `NexGenAccountingAI.Api.Tests`: `FixedAssetsAreListedAndScheduled` (só leitura).
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 97 testes, `vite build`.
 - A suite completa: 247 testes .NET.
 
 **Por verificar**
@@ -98,7 +98,7 @@ fiscal.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests` (`FixedAssetServiceTests`): recusa com
+- `NexGenAccountingAI.IntegrationTests` (`FixedAssetServiceTests`): recusa com
   gastos já lançados sem confirmação e com um ativo sem contas; lançamento
   com as duas depreciações somadas por conta, por conferir; segunda tentativa
   recusada com a referência do primeiro; o mapa passa a ver o gasto lançado.

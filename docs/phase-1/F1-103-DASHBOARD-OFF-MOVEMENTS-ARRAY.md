@@ -31,9 +31,9 @@ primeira página de oito movimentos, sem depender do histórico inteiro.
 
 ## Validação efetuada
 
-- `AccountingAI.Api`: dezasseis testes (o do resumo passou a exigir o
+- `NexGenAccountingAI.Api`: dezasseis testes (o do resumo passou a exigir o
   campo `voided`);
-- `AccountingAI.Web`: lint, build e setenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e três testes de interface
   (sem alteração — em demonstração o painel usa o array do contexto, como
   antes);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

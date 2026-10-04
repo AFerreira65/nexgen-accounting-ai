@@ -34,14 +34,14 @@ aconteceu; não havia com que o comparar a não ser o exercício anterior.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `BudgetServiceTests` — repartição por doze
+- `NexGenAccountingAI.IntegrationTests`: `BudgetServiceTests` — repartição por doze
   meses; grupo a somar as subcontas; linha por centro de custo; totais sem
   contar o detalhe duas vezes; realizado fora do orçamento; o exercício
   inteiro; sobreposição, conta inexistente, centro de custo inexistente e
   conta fora das classes 6 e 7 recusados; retirar uma linha.
   `SqlServerMigrationTests` inclui a migração.
-- `AccountingAI.Api.Tests`: o relatório e a recusa de um mês inválido.
-- `AccountingAI.Web`: `tsc`, `eslint`, 103 testes, `vite build`.
+- `NexGenAccountingAI.Api.Tests`: o relatório e a recusa de um mês inválido.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 103 testes, `vite build`.
 - A suite completa: 256 testes .NET.
 
 **Por verificar**
@@ -86,8 +86,8 @@ Sem migração: a tabela já guardava um valor por mês.
   (incluindo a linha por centro de custo); recusa de um destino com
   orçamento; cópia do realizado por grupo e por conta; origem vazia, origem
   igual ao destino e ajuste de -100 % recusados.
-- `AccountingAI.Api.Tests`: a recusa de uma origem desconhecida.
-- `AccountingAI.Web`: `tsc`, `eslint`, 103 testes, `vite build`.
+- `NexGenAccountingAI.Api.Tests`: a recusa de uma origem desconhecida.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 103 testes, `vite build`.
 - A suite completa: 256 testes .NET.
 
 **Por verificar**
@@ -129,7 +129,7 @@ rubricas da demonstração de resultados; o orçamento, por contas. A ligação:
 - `CashFlowAndEquityStatementsTests`: sem orçamento o mapa não muda; com
   orçamento, o valor por rubrica e por mês, o sinal dos gastos, o resultado
   orçamentado e a linha da classe 6 fora do mapa.
-- `AccountingAI.Web`: `tsc`, `eslint`, 103 testes, `vite build`.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 103 testes, `vite build`.
 - A suite completa: 256 testes .NET.
 
 **Por verificar**

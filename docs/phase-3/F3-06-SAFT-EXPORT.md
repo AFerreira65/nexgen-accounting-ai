@@ -20,7 +20,7 @@ faturação: a aplicação não emite.
   bloqueantes ou não) e a fronteira `ISaftAccountingWriter`. `SaftProducer`
   identifica o programa no cabeçalho: NIF do produtor `518104486`,
   `SoftwareCertificateNumber` zero (um programa de contabilidade não é
-  certificado) e `ProductID` «Accounting AI/RumaoAlgarismo - Unipessoal Lda».
+  certificado) e `ProductID` «NexGen Accounting AI/RumaoAlgarismo - Unipessoal Lda».
 - **`Infrastructure.Files/SaftAccountingWriter`** — escreve o XML em
   streaming, pela ordem do esquema. As moradas que a aplicação não conhece
   saem como «Desconhecido», que o formato admite.
@@ -62,17 +62,17 @@ faturação: a aplicação não emite.
   mesma transação, o validador acusa um erro em cada caso. Feito fora do
   repositório — o XSD continua a não ser redistribuído (ver
   `Infrastructure.Files/Schemas/README.md`).
-- `AccountingAI.Infrastructure.Files.Tests`: `SaftAccountingWriterTests` —
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: `SaftAccountingWriterTests` —
   codificação, ordem dos blocos, cabeçalho, categorias e taxonomia, totais,
   linhas; e o ficheiro é **relido pelos leitores da importação** (contas,
   movimentos e terceiros).
-- `AccountingAI.IntegrationTests`: `SaftExportServiceTests` — abertura como
+- `NexGenAccountingAI.IntegrationTests`: `SaftExportServiceTests` — abertura como
   saldos, agregadoras a somar, conta de um dígito e conta sem movimento de
   fora, referência importada preservada, lançamento anulado e de outro
   exercício excluídos, terceiro como cliente; com uma conta sem taxonomia e
   sem agregadora o ficheiro não é escrito.
-- `AccountingAI.Api.Tests`: `SaftExportReportsAndRefusesAnInvalidCompany`.
-- `AccountingAI.Web`: `tsc`, `eslint`, os 91 testes; o ecrã foi aberto no
+- `NexGenAccountingAI.Api.Tests`: `SaftExportReportsAndRefusesAnInvalidCompany`.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, os 91 testes; o ecrã foi aberto no
   navegador em modo de demonstração.
 - A suite completa: 231 testes .NET.
 
@@ -117,11 +117,11 @@ faturação: a aplicação não emite.
 - **XSD oficial:** um ficheiro com a morada da empresa, um cliente com morada
   completa e um fornecedor estrangeiro sem código postal validou com zero
   erros.
-- `AccountingAI.Domain.Tests`: morada opcional, limite, código postal
+- `NexGenAccountingAI.Domain.Tests`: morada opcional, limite, código postal
   português na empresa e livre no terceiro.
-- `AccountingAI.Infrastructure.Files.Tests`: o leitor de terceiros traz a
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: o leitor de terceiros traz a
   morada.
-- `AccountingAI.IntegrationTests`: a importação grava a morada e ignora
+- `NexGenAccountingAI.IntegrationTests`: a importação grava a morada e ignora
   «Desconhecido»; a edição de um terceiro guarda-a; a exportação leva a morada
   do terceiro e, depois de registada a da empresa, o aviso desaparece e o
   cabeçalho leva-a. `SqlServerMigrationTests` inclui a migração.

@@ -42,16 +42,16 @@ POST /api/v1/development/users/{userId}/companies/{companyId}/analyses
 
 ## Validação efetuada
 
-- `AccountingAI.Infrastructure.Files.Tests`: sete testes novos
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: sete testes novos
   (`AnalysisFieldCatalogTests`) — definição bem formada não gera erros; rejeita
   coluna desconhecida, agrupamento não agrupável, agregado não agregável
   (exceto `count`), operador inválido, sem colunas; a definição faz round-trip
   pelo JSON com enums em texto.
-- `AccountingAI.IntegrationTests`: teste novo `SavedAnalysisTests` — rejeita a
+- `NexGenAccountingAI.IntegrationTests`: teste novo `SavedAnalysisTests` — rejeita a
   definição com campo desconhecido; grava a válida com `CreatedBy` carimbado;
   recusa nome duplicado; lista, actualiza e apaga; sem acesso devolve `null`.
   O teste da migração aplica `SavedAnalysis` duas vezes.
-- `AccountingAI.Api.Tests`: teste novo — o catálogo traz a origem `Movimentos`,
+- `NexGenAccountingAI.Api.Tests`: teste novo — o catálogo traz a origem `Movimentos`,
   o campo `accountCode` e os operadores por tipo; a lista da empresa devolve um
   array; empresa sem acesso dá `404`.
 - `dotnet build`/`dotnet test` na solução inteira (cento e quarenta e quatro

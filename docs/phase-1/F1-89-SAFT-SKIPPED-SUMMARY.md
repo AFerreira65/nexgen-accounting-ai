@@ -28,7 +28,7 @@ resumo por motivo (com contagem e exemplos), não uma linha por transação.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e sete testes de interface (os
+- `NexGenAccountingAI.Web`: lint, build e quarenta e sete testes de interface (os
   testes da importação SAF-T continuam válidos — poucas transações
   saltadas, tabela linha a linha);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

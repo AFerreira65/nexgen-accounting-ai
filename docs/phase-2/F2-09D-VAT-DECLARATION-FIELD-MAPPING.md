@@ -39,19 +39,19 @@ numerado da declaração periódica de IVA em vigor — best-effort, nunca ofici
 
 ## Validação efetuada
 
-- `AccountingAI.Infrastructure.Files.Tests`: `VatDeclarationFieldCatalogTests`
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: `VatDeclarationFieldCatalogTests`
   — todas as combinações documentadas (base/imposto × taxa para operações
   internas; dedutível por categoria/taxa; isentas; intracomunitárias;
   regularizações); a nota do Anexo R aparece só fora de Continente e com o
   mesmo número; combinações sem correspondência (ex.: autoliquidação diversa,
   uma linha `outras`) devolvem `null`.
-- `AccountingAI.IntegrationTests`: `VatSummaryServiceTests` estendido —
+- `NexGenAccountingAI.IntegrationTests`: `VatSummaryServiceTests` estendido —
   a linha de vendas à taxa normal traz o campo 3 sem nota (sede em
   Continente), a de IVA liquidado o campo 4, a de IVA dedutível de outros bens
   e serviços o campo 24; a base de uma compra não traz campo.
-- `AccountingAI.Api.Tests`: `VatSummaryReturnsRowsGroupedByNatureRateAndRegion`
+- `NexGenAccountingAI.Api.Tests`: `VatSummaryReturnsRowsGroupedByNatureRateAndRegion`
   passa a verificar as chaves `fieldMappingSource`/`fieldMappingDisclaimer`.
-- `AccountingAI.Web`: `tsc`, `eslint` e os oitenta e três testes de interface
+- `NexGenAccountingAI.Web`: `tsc`, `eslint` e os oitenta e três testes de interface
   verdes.
 - `dotnet build`/`dotnet test` na solução (182 testes); `scripts/build.ps1
   -SyntheticOnly` e `scripts/verify-security.ps1` sem ocorrências.

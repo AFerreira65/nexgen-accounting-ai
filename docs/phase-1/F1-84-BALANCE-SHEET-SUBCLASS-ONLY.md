@@ -31,7 +31,7 @@ balancete.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e seis testes de interface (o
+- `NexGenAccountingAI.Web`: lint, build e quarenta e seis testes de interface (o
   teste do balanço continua válido — a empresa de demonstração tem poucas
   contas, por isso mostra-as na mesma);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

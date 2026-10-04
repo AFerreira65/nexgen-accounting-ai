@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>NexGenAccountingAI.Api</RootNamespace>
+    <AssemblyName>NexGenAccountingAI.Api</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <UserSecretsId>NexGenAccountingAI.Api-LocalDevelopment</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.11" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NexGenAccountingAI.Application/NexGenAccountingAI.Application.csproj" />
+    <ProjectReference Include="../NexGenAccountingAI.Infrastructure.Ai/NexGenAccountingAI.Infrastructure.Ai.csproj" />
+    <ProjectReference Include="../NexGenAccountingAI.Infrastructure.At/NexGenAccountingAI.Infrastructure.At.csproj" />
+    <ProjectReference Include="../NexGenAccountingAI.Infrastructure.Files/NexGenAccountingAI.Infrastructure.Files.csproj" />
+    <ProjectReference Include="../NexGenAccountingAI.Infrastructure.Persistence/NexGenAccountingAI.Infrastructure.Persistence.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

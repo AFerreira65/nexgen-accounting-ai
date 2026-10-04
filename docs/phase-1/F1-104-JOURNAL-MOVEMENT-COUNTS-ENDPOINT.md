@@ -29,9 +29,9 @@ a partir de um pedido agregado, não do histórico.
 
 ## Validação efetuada
 
-- `AccountingAI.Api`: dezassete testes (um novo — contagem por diário com
+- `NexGenAccountingAI.Api`: dezassete testes (um novo — contagem por diário com
   a chave do diário com lançamentos e o 404 de empresa sem acesso);
-- `AccountingAI.Web`: lint, build e setenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e três testes de interface
   (sem alteração — em demonstração conta no array, como antes);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

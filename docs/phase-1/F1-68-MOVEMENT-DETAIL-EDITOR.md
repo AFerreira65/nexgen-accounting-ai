@@ -24,7 +24,7 @@ No detalhe de um movimento por conferir, «Corrigir» abre o editor a corrigi-lo
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build (bundle idêntico depois da extração, confirmando
+- `NexGenAccountingAI.Web`: lint, build (bundle idêntico depois da extração, confirmando
   que não há duplicação nem perda de código) e trinta e sete testes de interface
   (um novo: abrir «Duplicar» e «Corrigir» a partir do detalhe mostra o título certo
   do editor);

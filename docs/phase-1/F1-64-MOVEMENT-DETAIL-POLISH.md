@@ -28,7 +28,7 @@ Abrir um movimento: a origem, o tipo de documento e o estado aparecem corretos;
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build de produção e trinta e seis testes de interface
+- `NexGenAccountingAI.Web`: lint, build de produção e trinta e seis testes de interface
   (o teste do detalhe passa também a confirmar que a origem mostra «Manual» e não
   o texto fixo antigo, e que o botão «Copiar ligação» está presente);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem segredos;

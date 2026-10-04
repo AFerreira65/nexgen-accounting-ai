@@ -30,7 +30,7 @@ Sem alteração de API nem de esquema.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: `App.test.tsx` — o ecrã `/apuramento-iva` monta e, sem
+- `NexGenAccountingAI.Web`: `App.test.tsx` — o ecrã `/apuramento-iva` monta e, sem
   ligação à base, mostra «Requer ligação ao SQL Server». `tsc`, `eslint` e os
   oitenta testes de interface verdes.
 - `dotnet build`/`dotnet test` na solução (cento e cinquenta e nove testes

@@ -1,4 +1,4 @@
-# Correr a Accounting AI como serviço do Windows
+# Correr a NexGen Accounting AI como serviço do Windows
 
 Como pôr a API (com a PWA embutida) sempre ativa, sem precisar de um
 terminal aberto. Ver [F2-11](phase-2/F2-11-AUTHENTICATION.md) e
@@ -17,9 +17,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish-service.ps
 ```
 
 Compila a PWA em modo de produção, copia-a para
-`src\AccountingAI.Api\wwwroot` (a API passa a servi-la ela própria — sem
+`src\NexGenAccountingAI.Api\wwwroot` (a API passa a servi-la ela própria — sem
 precisar do servidor de desenvolvimento do Vite) e publica a API em
-`artifacts\AccountingAI-Service\`. Para repetir isto sempre que o código
+`artifacts\NexGenAccountingAI-Service\`. Para repetir isto sempre que o código
 mudar, corra o script outra vez — substitui o publicado anterior.
 
 ## 2. Aplicar as migrações
@@ -29,14 +29,14 @@ ver `appsettings.Production.json`), aplique-as uma vez, à mão, antes do
 primeiro arranque e sempre que houver migrações novas:
 
 ```powershell
-& "artifacts\AccountingAI-Service\AccountingAI.Api.exe" --migrate-only
+& "artifacts\NexGenAccountingAI-Service\NexGenAccountingAI.Api.exe" --migrate-only
 ```
 
 ## 3. Criar o serviço (administrador)
 
 ```powershell
-sc.exe create AccountingAI binPath= "`"$PWD\artifacts\AccountingAI-Service\AccountingAI.Api.exe`"" start= auto DisplayName= "Accounting AI"
-sc.exe description AccountingAI "API e site da Accounting AI, sempre ativos em http://127.0.0.1:5080."
+sc.exe create NexGenAccountingAI binPath= "`"$PWD\artifacts\NexGenAccountingAI-Service\NexGenAccountingAI.Api.exe`"" start= auto DisplayName= "NexGen Accounting AI"
+sc.exe description NexGenAccountingAI "API e site da NexGen Accounting AI, sempre ativos em http://127.0.0.1:5080."
 ```
 
 (O caminho tem de ser absoluto — confirme que está na pasta do projeto antes
@@ -59,7 +59,7 @@ do Windows:
 Mude a conta pela consola de Serviços (mais seguro — não deixa a senha no
 histórico do terminal):
 
-1. `services.msc` → **Accounting AI** → Propriedades → separador **Log On**.
+1. `services.msc` → **NexGen Accounting AI** → Propriedades → separador **Log On**.
 2. **This account** → indique o seu utilizador do Windows (`.\<utilizador>`)
    e a sua senha → OK.
 3. Reinicie o serviço (o próprio painel de Serviços oferece isso).
@@ -67,11 +67,11 @@ histórico do terminal):
 ## 5. Arrancar e verificar
 
 ```powershell
-sc.exe start AccountingAI
-sc.exe query AccountingAI
+sc.exe start NexGenAccountingAI
+sc.exe query NexGenAccountingAI
 ```
 
-Abra `http://127.0.0.1:5080` no browser — deve mostrar a Accounting AI a
+Abra `http://127.0.0.1:5080` no browser — deve mostrar a NexGen Accounting AI a
 sério (não só o `/api/v1/foundation`), com o ecrã de login se não tiver
 sessão.
 
@@ -85,8 +85,8 @@ Firewall para uso local.
 ## Parar / desinstalar
 
 ```powershell
-sc.exe stop AccountingAI
-sc.exe delete AccountingAI
+sc.exe stop NexGenAccountingAI
+sc.exe delete NexGenAccountingAI
 ```
 
 ## Se a senha de alguém mudar, ou for preciso criar mais um utilizador
@@ -94,7 +94,7 @@ sc.exe delete AccountingAI
 Continua a ser só por linha de comandos — nunca por um formulário público:
 
 ```powershell
-& "artifacts\AccountingAI-Service\AccountingAI.Api.exe" set-user-password "<email>" "<nova senha>"
+& "artifacts\NexGenAccountingAI-Service\NexGenAccountingAI.Api.exe" set-user-password "<email>" "<nova senha>"
 ```
 
 ## Voltar a correr em modo de desenvolvimento

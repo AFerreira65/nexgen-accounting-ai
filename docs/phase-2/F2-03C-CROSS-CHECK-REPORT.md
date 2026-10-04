@@ -73,12 +73,12 @@ IVA liquidado 575).
 
 ## Validação efetuada
 
-- `AccountingAI.Infrastructure.Files.Tests`: oito testes novos do
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: oito testes novos do
   `CrossCheckBuilder` (correspondência dentro da tolerância, fatura só no
   e-Fatura, só na contabilidade, valores diferentes, agregação por mês, um
   lançamento não serve duas faturas, número curto de mais, passagem das vendas
   e dos totais);
-- `AccountingAI.Api.Tests`: um teste novo — o relatório exige um período
+- `NexGenAccountingAI.Api.Tests`: um teste novo — o relatório exige um período
   fechado (`400`), está limitado à empresa do utilizador (`404`), e devolve as
   três perspetivas;
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (cento e vinte e

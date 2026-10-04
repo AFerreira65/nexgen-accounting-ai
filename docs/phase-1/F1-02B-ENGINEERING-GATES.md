@@ -17,7 +17,7 @@ Implementada e validada localmente em 30 de agosto de 2026. O workflow só ficar
 ## Gates locais
 
 ```powershell
-dotnet restore ".\Accounting AI.slnx"
+dotnet restore ".\NexGen Accounting AI.slnx"
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build.ps1 -SyntheticOnly -NoRestore
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-security.ps1
 ```

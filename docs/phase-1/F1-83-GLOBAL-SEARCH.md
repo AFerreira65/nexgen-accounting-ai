@@ -29,7 +29,7 @@ correspondem; escolher um salta para o ecrã respetivo.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e seis testes de interface
+- `NexGenAccountingAI.Web`: lint, build e quarenta e seis testes de interface
   (um novo: escrever «6221» mostra a conta e escolhê-la abre a razão da
   conta 6221, deixando o campo limpo);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

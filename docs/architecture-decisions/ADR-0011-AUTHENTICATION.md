@@ -7,7 +7,7 @@
 
 Desde o [F1-03A](../phase-1/F1-03A-WORK-CONTEXT.md) (30 de agosto), toda a API
 vive atrás de `if (app.Environment.IsDevelopment())`
-([Program.cs](../../src/AccountingAI.Api/Program.cs)) e cada pedido recebe o
+([Program.cs](../../src/NexGenAccountingAI.Api/Program.cs)) e cada pedido recebe o
 `userId` diretamente da rota (`CurrentUserMiddleware`). Esse próprio documento
 já avisava: *"Esta API de desenvolvimento não representa autenticação: será
 substituída por contexto derivado da sessão quando identidade e autorização

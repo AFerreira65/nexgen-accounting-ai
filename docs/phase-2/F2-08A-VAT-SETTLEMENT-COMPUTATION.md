@@ -43,13 +43,13 @@ GET /api/v1/development/users/{userId}/companies/{companyId}/vat-return?from=202
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `VatReturnServiceTests` — empresa construída
+- `NexGenAccountingAI.IntegrationTests`: `VatReturnServiceTests` — empresa construída
   com IVA liquidado 230, dedutível 100, uma regularização a favor do Estado de
   20 e um excesso de 50 em `2437` do exercício anterior: resultado do período
   150, a entregar 100 (150 − 50), sem excesso a reportar; um período só com IVA
   dedutível devolve excesso a reportar 150 e nada a entregar; sem acesso
   devolve `null`.
-- `AccountingAI.Api.Tests`: `VatReturnIsComputedForTheClosedPeriod` — o
+- `NexGenAccountingAI.Api.Tests`: `VatReturnIsComputedForTheClosedPeriod` — o
   apuramento traz `outputVat`, `inputVat`, `netPayable`,
   `creditToCarryForward` e `lines`; sem datas `400`; empresa sem acesso `404`.
 - `dotnet build`/`dotnet test` na solução; `scripts/build.ps1 -SyntheticOnly` e

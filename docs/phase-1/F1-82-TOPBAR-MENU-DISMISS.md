@@ -26,7 +26,7 @@ em Escape: o menu fecha.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e cinco testes de interface
+- `NexGenAccountingAI.Web`: lint, build e quarenta e cinco testes de interface
   (o teste do seletor de exercício passa também por abrir o menu e fechá-lo
   com Escape sem escolher nada);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

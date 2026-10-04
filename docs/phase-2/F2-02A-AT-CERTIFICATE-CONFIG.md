@@ -10,7 +10,7 @@ nem a chave ([`ADR-0008`](../architecture-decisions/ADR-0008-AT-COMMUNICATION.md
   `Subject`, `Issuer`, `SerialNumber`, `Thumbprint`, `NotBeforeUtc`,
   `NotAfterUtc`, `HasPrivateKey`, `Environment`, `Problem`) e
   `IAtCertificateProvider.Describe()`.
-- **Projeto novo `AccountingAI.Infrastructure.At`** — só referencia
+- **Projeto novo `NexGenAccountingAI.Infrastructure.At`** — só referencia
   `Application`. `AtOptions` (secção `At`): `Certificate:Directory`,
   `Certificate:FileName`, `Certificate:Path` (absoluto, com prioridade),
   `Certificate:Password`, `Environment`. `AtCertificateProvider`:
@@ -34,7 +34,7 @@ nem a chave ([`ADR-0008`](../architecture-decisions/ADR-0008-AT-COMMUNICATION.md
   Core**, com o chaveiro em `%LOCALAPPDATA%\AccountingAI\dp-keys` protegido pelo
   DPAPI do Windows — os valores só se decifram na mesma máquina e conta.
   - **Ferramenta de linha de comandos:**
-    `dotnet run --project src/AccountingAI.Api --no-launch-profile -- protect-at-secret "<valor>"`
+    `dotnet run --project src/NexGenAccountingAI.Api --no-launch-profile -- protect-at-secret "<valor>"`
     imprime o valor `enc:v1:…` a colar na configuração (a senha e/ou o local do
     ficheiro).
 - **`.slnx`, referência da API e `ModuleDependencyTests`** atualizados
@@ -52,7 +52,7 @@ Sem alteração de esquema.
 
 ## Validação efetuada
 
-- `AccountingAI.Infrastructure.Files.Tests`: `AtCertificateProviderTests` — sem
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: `AtCertificateProviderTests` — sem
   caminho → não configurado; PFX auto-assinado gerado no teste → configurado,
   válido, com chave privada, ambiente normalizado, assunto correto, sem a senha
   em lado nenhum; **senha cifrada (`enc:v1:…`) na configuração → o certificado
@@ -60,11 +60,11 @@ Sem alteração de esquema.
   → `Problem` com «não existe». `AtSecretProtectorTests` — ida e volta com o
   prefixo `enc:v1:`, texto simples inalterado, e um chaveiro diferente não
   decifra.
-- `AccountingAI.Api.Tests`: `AtCertificateStatusIsReportedWithoutSecrets` — o
+- `NexGenAccountingAI.Api.Tests`: `AtCertificateStatusIsReportedWithoutSecrets` — o
   *endpoint* devolve `configured:false`, `environment:"Testes"`,
   `hasPrivateKey:false`, e o corpo não contém «password».
-- `AccountingAI.ArchitectureTests` verde com o módulo novo.
-- `AccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
+- `NexGenAccountingAI.ArchitectureTests` verde com o módulo novo.
+- `NexGenAccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
   `eslint` e os oitenta e um testes de interface verdes.
 - `dotnet build`/`dotnet test` na solução; `scripts/build.ps1 -SyntheticOnly` e
   `scripts/verify-security.ps1` (inventário e auditoria NuGet) sem ocorrências.

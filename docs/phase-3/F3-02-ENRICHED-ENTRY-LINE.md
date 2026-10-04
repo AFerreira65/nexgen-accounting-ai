@@ -44,14 +44,14 @@ trazem, e o que as importações futuras vão usar.
 
 **Validação efetuada**
 
-- `AccountingAI.Domain.Tests`: `LineCanCarryAPartyButNotAnEmptyOne`.
-- `AccountingAI.IntegrationTests`: `JournalPostingPartyTests` — lançar com
+- `NexGenAccountingAI.Domain.Tests`: `LineCanCarryAPartyButNotAnEmptyOne`.
+- `NexGenAccountingAI.IntegrationTests`: `JournalPostingPartyTests` — lançar com
   terceiro (NIF com espaços), corrigir para um terceiro estrangeiro, conferir
   devolve o terceiro lido da base; desconhecido, inativo e o mesmo NIF noutro
   país são recusados sem criar lançamento. `SqlServerMigrationTests` inclui a
   migração.
-- `AccountingAI.Api.Tests`: `MovementWithUnknownPartyIsRejectedBeforeWriting`.
-- `AccountingAI.Web`: `tsc`, `eslint`, os 85 testes; a coluna foi confirmada no
+- `NexGenAccountingAI.Api.Tests`: `MovementWithUnknownPartyIsRejectedBeforeWriting`.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, os 85 testes; a coluna foi confirmada no
   navegador em modo de demonstração (sem sugestões — essas vêm do servidor).
 - **Por verificar em direto:** as sugestões e a gravação com terceiro contra a
   base real.
@@ -87,11 +87,11 @@ documento com data posterior, e a validação fica para as regras analíticas.
 
 **Validação efetuada**
 
-- `AccountingAI.Domain.Tests`: `DocumentDateIsOptionalAndIndependentFromTheEntryDate`.
-- `AccountingAI.IntegrationTests`: `JournalPostingPartyTests` — lançar com
+- `NexGenAccountingAI.Domain.Tests`: `DocumentDateIsOptionalAndIndependentFromTheEntryDate`.
+- `NexGenAccountingAI.IntegrationTests`: `JournalPostingPartyTests` — lançar com
   data do documento e corrigir sem ela; `SqlServerMigrationTests` inclui a
   migração.
-- `AccountingAI.Web`: `tsc`, `eslint` e os 85 testes.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint` e os 85 testes.
 - **Por verificar em direto:** o campo no editor contra a base real.
 
 ### F3-02C — Terceiro na importação de movimentos do SAF-T (feito)
@@ -130,10 +130,10 @@ gravação no sistema de origem; nenhuma é a data do documento, e não se inven
 
 **Validação efetuada**
 
-- `AccountingAI.Infrastructure.Files.Tests`: `SaftEntriesReaderPartyTests` — a
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: `SaftEntriesReaderPartyTests` — a
   transação traz o cliente ou o fornecedor e os terceiros de `MasterFiles` são
   recolhidos.
-- `AccountingAI.IntegrationTests`: `SaftEntriesImportPartyTests` — terceiro
+- `NexGenAccountingAI.IntegrationTests`: `SaftEntriesImportPartyTests` — terceiro
   pela conta do ficheiro, pelo prefixo 21, fornecedor ainda inexistente
   (contado, sem terceiro), consumidor final (não contado) e transação sem
   terceiro.

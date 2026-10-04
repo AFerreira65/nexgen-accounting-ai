@@ -28,7 +28,7 @@ Abrir a lista de Movimentos mostra o exercício da empresa por omissão, com
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e cinquenta testes de interface (um novo:
+- `NexGenAccountingAI.Web`: lint, build e cinquenta testes de interface (um novo:
   a lista arranca em 2026-01-01 a 2026-12-31 e «Limpar datas» abre tudo);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

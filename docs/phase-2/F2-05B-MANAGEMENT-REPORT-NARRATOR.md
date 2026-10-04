@@ -9,10 +9,10 @@ projeto que fala com o modelo e a fronteira que o esconde do resto
 - **Fronteira (`Application/ManagementReports/`)** — `IManagementReportNarrator`:
   `IsConfigured` (há chave?) e `GenerateAsync(request, dossier)` →
   `ManagementReportNarration` (`{ Result, Model, PromptTokens, OutputTokens }`).
-- **Projeto novo `AccountingAI.Infrastructure.Ai`** — só referencia
-  `AccountingAI.Application` e o pacote `Anthropic` (12.46.0; a única
+- **Projeto novo `NexGenAccountingAI.Infrastructure.Ai`** — só referencia
+  `NexGenAccountingAI.Application` e o pacote `Anthropic` (12.46.0; a única
   dependência transitiva é `Microsoft.Extensions.AI.Abstractions`). É o único
-  sítio que conhece o SDK. Adicionado ao `Accounting AI.slnx`, à referência da
+  sítio que conhece o SDK. Adicionado ao `NexGen Accounting AI.slnx`, à referência da
   API, e ao teste de arquitetura (`ModuleDependencyTests`: `Infrastructure.Ai`
   → `Application`; a API passa a poder referenciá-lo).
 - **`AiOptions`** (secção `Ai`) — `Model` (por omissão `claude-opus-5`),
@@ -39,13 +39,13 @@ Sem alteração de esquema nem de API.
 
 ## Validação efetuada
 
-- `AccountingAI.Infrastructure.Files.Tests`: `ManagementReportNarratorTests` —
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: `ManagementReportNarratorTests` —
   o enunciado de sistema leva a tarefa do tipo e a forma do JSON; a mensagem do
   utilizador leva a pergunta e o dossiê; o *mapper* lê uma resposta bem formada
   (com cercas) e devolve as secções, referências, alertas e indicadores com o
   aviso fixo; degrada com um alerta quando a resposta é ilegível; o narrador sem
   chave diz «não configurado».
-- `AccountingAI.ArchitectureTests` verde com o módulo novo.
+- `NexGenAccountingAI.ArchitectureTests` verde com o módulo novo.
 - `dotnet build`/`dotnet test` na solução; `scripts/build.ps1 -SyntheticOnly` e
   `scripts/verify-security.ps1` (inventário e auditoria NuGet, incluindo o
   pacote novo) sem ocorrências.

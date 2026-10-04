@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>NexGenAccountingAI.Infrastructure.Ai</RootNamespace>
+    <AssemblyName>NexGenAccountingAI.Infrastructure.Ai</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NexGenAccountingAI.Application/NexGenAccountingAI.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Anthropic" Version="12.46.0" />
+  </ItemGroup>
+</Project>

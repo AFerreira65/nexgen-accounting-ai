@@ -35,7 +35,7 @@ movimentos, sem recarregar nem voltar a escolher o ficheiro.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e cinco testes de interface
+- `NexGenAccountingAI.Web`: lint, build e quarenta e cinco testes de interface
   (o teste da proposta de criação continua válido — a criação em si exige
   ligação ao SQL Server e não corre no modo de demonstração);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

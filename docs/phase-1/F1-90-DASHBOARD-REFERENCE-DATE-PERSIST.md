@@ -26,7 +26,7 @@ mantém-se; «Hoje» limpa-a e ela não volta.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e oito testes de interface (um
+- `NexGenAccountingAI.Web`: lint, build e quarenta e oito testes de interface (um
   novo: escolher a data de referência, desmontar e voltar a montar a
   aplicação — a data mantém-se; «Hoje» limpa-a);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

@@ -66,15 +66,15 @@ campos do modelo oficial, as somas de controlo e a conferência campo a campo.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `VatDeclarationServiceTests` — vendas a
+- `NexGenAccountingAI.IntegrationTests`: `VatDeclarationServiceTests` — vendas a
   duas taxas, venda localizada nos Açores, compras de inventários e de
   serviços, aquisição intracomunitária, regularização: campos, somas de
   controlo, contas de cada campo, avisos, diferença zero para o apuramento
   contabilístico, e o efeito do excesso a reportar; identificação do período.
   Os testes do resumo de IVA continuam a passar depois da refatoração.
-- `AccountingAI.Api.Tests`: `VatDeclarationFillsTheOfficialFields` (só
+- `NexGenAccountingAI.Api.Tests`: `VatDeclarationFillsTheOfficialFields` (só
   leitura).
-- `AccountingAI.Web`: `tsc`, `eslint`, 95 testes, `vite build`.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 95 testes, `vite build`.
 - A suite completa: 239 testes .NET.
 
 **Por verificar**
@@ -123,14 +123,14 @@ campos do modelo oficial, as somas de controlo e a conferência campo a campo.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `VatSettlementEntryServiceTests` — três
+- `NexGenAccountingAI.IntegrationTests`: `VatSettlementEntryServiceTests` — três
   trimestres seguidos: IVA a pagar; IVA a recuperar; crédito anterior a
   entrar no apuramento seguinte; conta de apuramento saldada; segunda
   tentativa recusada; o apuramento contabilístico e a declaração continuam a
   mostrar os valores do período depois do lançamento; sem movimento e conta
   em falta. Os testes do apuramento e do resumo de IVA da Fase 2 continuam a
   passar.
-- `AccountingAI.Api.Tests`: a proposta (só leitura).
+- `NexGenAccountingAI.Api.Tests`: a proposta (só leitura).
 - A suite completa: 253 testes .NET, 101 de interface.
 - **Por verificar em direto:** o painel, com a base real — é uma operação de
   escrita.

@@ -28,7 +28,7 @@ contas paginadas; recolher volta a esconder.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e seis testes de interface (o
+- `NexGenAccountingAI.Web`: lint, build e quarenta e seis testes de interface (o
   teste do balancete agrupado continua válido — a empresa de demonstração
   tem poucas contas, por isso mostra-as sempre sem o botão);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

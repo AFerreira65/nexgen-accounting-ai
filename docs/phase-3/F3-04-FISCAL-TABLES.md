@@ -57,14 +57,14 @@ se foi lido no texto oficial ou se vem de fonte secundária.
 
 **Validação efetuada**
 
-- `AccountingAI.Infrastructure.Files.Tests`: `FiscalTableCatalogTests` — a
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: `FiscalTableCatalogTests` — a
   transição 19 / 18 / 17%; anos fora do catálogo; a taxa reduzida só na
   primeira parcela (100 000 € de uma PME em 2026 → 17 000 €); a derrama
   estadual por parcelas; o IVA por região e o estado das fontes.
-- `AccountingAI.Api.Tests`: `FiscalTablesReturnTheYearWithItsSources`.
+- `NexGenAccountingAI.Api.Tests`: `FiscalTablesReturnTheYearWithItsSources`.
 - `VatCodeServiceTests` continua a confirmar as percentagens dos Açores, agora
   vindas da tabela.
-- `AccountingAI.Web`: `tsc`, `eslint`, os 89 testes; o ecrã foi aberto no
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, os 89 testes; o ecrã foi aberto no
   navegador em modo de demonstração.
 - A suite completa: 224 testes .NET.
 - **Por verificar em direto:** o ecrã com a API e a proposta da taxa na

@@ -32,7 +32,7 @@ resumo (antes eram dois ou três).
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e setenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e três testes de interface
   (sem alteração — o seletor mantém a assinatura);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

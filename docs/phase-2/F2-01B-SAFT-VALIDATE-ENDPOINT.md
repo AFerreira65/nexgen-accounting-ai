@@ -44,13 +44,13 @@ Sem alteração de esquema de base de dados.
 
 ## Validação efetuada
 
-- `AccountingAI.Api.Tests`: dezoito testes — o teste da fase passa a exigir
+- `NexGenAccountingAI.Api.Tests`: dezoito testes — o teste da fase passa a exigir
   `F2-01`; novo teste do `saft/validate` (ficheiro bem formado → `200` com
   `version` 1.04_01, `schemaAvailable:false`, `schemaValid:false` e um aviso;
   XML mal formado → `400`; utilizador desconhecido → `404`);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (88 testes
   .NET);
-- `AccountingAI.Web`: sessenta e três testes sem alteração;
+- `NexGenAccountingAI.Web`: sessenta e três testes sem alteração;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem
   segredos;
 - verificação com a API local: `/api/v1/foundation` devolve `F2-01`;

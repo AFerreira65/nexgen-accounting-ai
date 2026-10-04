@@ -23,7 +23,7 @@ financeiros reais.
   *runtime* partilhado do ASP.NET Core, sem pacote novo).
 - `AuthService` (`Infrastructure.SqlServer`) — `ValidateCredentialsAsync`,
   `SetPasswordAsync`. Sem endpoint de registo: só a ferramenta de linha de
-  comandos `dotnet run --project src/AccountingAI.Api -- set-user-password
+  comandos `dotnet run --project src/NexGenAccountingAI.Api -- set-user-password
   "<email>" "<senha>"` define uma senha, à imagem do `protect-at-secret`
   já existente para o certificado da AT.
 - Sessão por cookie (`AddAuthentication().AddCookie()`, 14 dias com

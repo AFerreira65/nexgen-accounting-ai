@@ -30,7 +30,7 @@ botões Reabrir e Anular ficam desativados com o motivo.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e trinta e seis testes de interface (o teste do
+- `NexGenAccountingAI.Web`: lint, build e trinta e seis testes de interface (o teste do
   detalhe passa também a confirmar os botões «Reabrir» e «Anular» num lançamento
   conferido);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem segredos;

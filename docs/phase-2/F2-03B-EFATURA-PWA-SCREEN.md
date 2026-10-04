@@ -31,7 +31,7 @@ Portal, pré-visualizar e importar; a lista mostra as faturas do período.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e setenta e quatro testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e quatro testes de interface
   (um novo — a rota `/compras-efatura` mostra o cabeçalho e, em
   demonstração, «Requer ligação ao SQL Server»);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (115 testes

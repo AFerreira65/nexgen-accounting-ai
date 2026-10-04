@@ -31,12 +31,12 @@ movimentos da conta 242.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `WithholdingServiceTests` — saldo de
+- `NexGenAccountingAI.IntegrationTests`: `WithholdingServiceTests` — saldo de
   abertura, retido e entregue por conta e por mês, beneficiário herdado do
   lançamento e beneficiário na linha, estimativa do rendimento, salários sem
   terceiro, lançamento anulado e de outro exercício de fora.
-- `AccountingAI.Api.Tests`: o endpoint e a recusa de um exercício inválido.
-- `AccountingAI.Web`: `tsc`, `eslint`, 100 testes, `vite build`.
+- `NexGenAccountingAI.Api.Tests`: o endpoint e a recusa de um exercício inválido.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 100 testes, `vite build`.
 - A suite completa: 251 testes .NET.
 
 **Por verificar**

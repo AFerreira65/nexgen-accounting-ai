@@ -3,8 +3,8 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$solution = Join-Path $projectRoot 'Accounting AI.slnx'
-$webProject = Join-Path $projectRoot 'src\AccountingAI.Web'
+$solution = Join-Path $projectRoot 'NexGen Accounting AI.slnx'
+$webProject = Join-Path $projectRoot 'src\NexGenAccountingAI.Web'
 $toolVersion = '8.30.1'
 $toolChecksum = 'd29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e'
 $toolDirectory = Join-Path $projectRoot ".tools\gitleaks\$toolVersion"

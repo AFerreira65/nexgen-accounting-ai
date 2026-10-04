@@ -43,20 +43,20 @@ reimportar não duplica; `GET .../efatura/purchases` lista-as.
 
 ## Validação efetuada
 
-- `AccountingAI.Infrastructure.Files.Tests`: cinquenta e um testes (sete
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: cinquenta e um testes (sete
   novos) — layout padrão do Portal (`;`, vírgula decimal, milhares),
   ficheiro com `,` e BOM e `ATCUD` entre aspas, Windows-1252, NIF extraído
   do nome, linhas sem número / NIF inválido assinaladas, aviso aos 300,
   ficheiro vazio a lançar;
-- `AccountingAI.IntegrationTests`: cinco testes — o de migrações confirma
+- `NexGenAccountingAI.IntegrationTests`: cinco testes — o de migrações confirma
   `20260908120313_EFaturaPurchase` e a unicidade de `(CompanyId,
   DocumentKey)`;
-- `AccountingAI.Api.Tests`: vinte e um testes (um novo — pré-visualização
+- `NexGenAccountingAI.Api.Tests`: vinte e um testes (um novo — pré-visualização
   `dryRun` devolve `imported`/`invalid`, CSV vazio → 400, lista devolve o
   envelope, empresa sem acesso → 404);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (115 testes
   .NET); testes de arquitetura verdes;
-- `AccountingAI.Web`: sessenta e três testes sem alteração (só backend);
+- `NexGenAccountingAI.Web`: sessenta e três testes sem alteração (só backend);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem
   segredos;
 - verificação com a API local contra `accountingAI`: importar um CSV de

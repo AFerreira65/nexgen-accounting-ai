@@ -29,16 +29,16 @@ introduzidas pelo utilizador, vezes uma taxa introduzida pelo utilizador
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `IrcEstimateServiceTests` — rendimento
+- `NexGenAccountingAI.IntegrationTests`: `IrcEstimateServiceTests` — rendimento
   10 000 e gasto 4 000 → resultado líquido 6 000; duas correções (+1000, −500)
   → resultado fiscal 6 500 e coleta 1 365 a 21%; uma correção que torna o
   resultado fiscal negativo → coleta 0; sem correções → coleta sobre o
   resultado líquido puro; um lançamento fora do período não entra; sem acesso
   `null`.
-- `AccountingAI.Api.Tests`: `IrcEstimateComputesFromNetIncomePlusAdjustments`
+- `NexGenAccountingAI.Api.Tests`: `IrcEstimateComputesFromNetIncomePlusAdjustments`
   — `200` com `netIncome`/`estimatedTax`; taxa `0` `400`; sem datas `400`;
   empresa sem acesso `404`.
-- `AccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
+- `NexGenAccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
   `eslint` e os oitenta e três testes de interface verdes.
 - `dotnet build`/`dotnet test` na solução (175 testes); `scripts/build.ps1
   -SyntheticOnly` e `scripts/verify-security.ps1` sem ocorrências.

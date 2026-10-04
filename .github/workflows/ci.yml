@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: accounting-ai-ci-${{ github.ref }}
+  group: nexgen-accounting-ai-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: src/AccountingAI.Web/package-lock.json
+          cache-dependency-path: src/NexGenAccountingAI.Web/package-lock.json
 
       # A imagem windows-2025 traz o PostgreSQL instalado mas com o serviço parado
       # (superutilizador postgres/root). Os testes de integração criam bases descartáveis
@@ -52,7 +52,7 @@ jobs:
 
       - name: Restore .NET
         shell: pwsh
-        run: dotnet restore '.\Accounting AI.slnx'
+        run: dotnet restore '.\NexGen Accounting AI.slnx'
 
       - name: Validate synthetic foundation
         shell: pwsh

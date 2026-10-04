@@ -30,7 +30,7 @@ voltar ao ecrã; um movimento novo que mude a posição de IVA volta a mostrá-l
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e trinta e oito testes de interface (o
+- `NexGenAccountingAI.Web`: lint, build e trinta e oito testes de interface (o
   teste das Tarefas passa a desmontar e voltar a montar a aplicação depois
   de dispensar, confirmando que o lembrete continua escondido);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

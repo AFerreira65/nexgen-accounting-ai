@@ -43,13 +43,13 @@ oficial**.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `FiscalDossierServiceTests` — os doze
+- `NexGenAccountingAI.IntegrationTests`: `FiscalDossierServiceTests` — os doze
   elementos, os indícios das contas 65, 7871 e 69, o apoio e a ligação,
   guardar e repor o estado e a nota, o estado separado por exercício, as
   recusas (elemento inexistente, estado desconhecido, nota demasiado longa).
   `SqlServerMigrationTests` inclui a migração.
-- `AccountingAI.Api.Tests`: o endpoint de leitura.
-- `AccountingAI.Web`: `tsc`, `eslint`, 101 testes, `vite build`.
+- `NexGenAccountingAI.Api.Tests`: o endpoint de leitura.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 101 testes, `vite build`.
 - A suite completa: 252 testes .NET.
 
 **Por verificar**

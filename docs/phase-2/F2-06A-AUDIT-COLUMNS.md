@@ -38,7 +38,7 @@ ou uma empresa e observar as colunas `CreatedBy`/`ModifiedBy` na base.
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: teste novo `AuditStampingTests` — criar uma
+- `NexGenAccountingAI.IntegrationTests`: teste novo `AuditStampingTests` — criar uma
   empresa carimba `CreatedBy`/`CreatedAtUtc` e deixa `Modified*` nulo; renomear
   carimba `ModifiedBy`/`ModifiedAtUtc` sem mexer na criação. O teste da
   migração aplica `AuditColumns` duas vezes.

@@ -43,15 +43,15 @@ n.º 3). A fase do `/foundation` mantém-se em `F2-01`.
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: cinco testes — o de migrações confirma
+- `NexGenAccountingAI.IntegrationTests`: cinco testes — o de migrações confirma
   `20260908092224_SaftValidationRun` e grava/relê um `SaftValidationRun`
   (contagens, `SchemaValid`, `CompanyId`, JSON das ocorrências,
   `CreatedAtUtc`);
-- `AccountingAI.Api.Tests`: vinte testes (um novo — `validation-reports`
+- `NexGenAccountingAI.Api.Tests`: vinte testes (um novo — `validation-reports`
   devolve um array e 404 para empresa sem acesso);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (107 testes
   .NET);
-- `AccountingAI.Web`: lint, build e sessenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e sessenta e três testes de interface
   (sem alteração — o painel só corre ligado à base de dados);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem
   segredos;

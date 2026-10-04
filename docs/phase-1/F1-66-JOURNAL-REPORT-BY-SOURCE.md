@@ -27,12 +27,12 @@ o CSV inclui a coluna «Origem».
 ## Validação efetuada
 
 - build .NET Debug sem avisos nem erros; suite .NET completa (72 testes);
-- `AccountingAI.IntegrationTests` (LocalDB descartável): `BuildAsync` com
+- `NexGenAccountingAI.IntegrationTests` (LocalDB descartável): `BuildAsync` com
   `source = "Manual"` devolve os mesmos lançamentos que sem filtro (todos manuais
   nessa fase), `"SaftImport"` devolve zero e um valor inválido é ignorado; cada
   lançamento traz `Source`;
-- `AccountingAI.Api.Tests`: o `/foundation` indica a fase `F1-66`;
-- `AccountingAI.Web`: lint, build e trinta e seis testes de interface (o teste do
+- `NexGenAccountingAI.Api.Tests`: o `/foundation` indica a fase `F1-66`;
+- `NexGenAccountingAI.Web`: lint, build e trinta e seis testes de interface (o teste do
   livro diário passa também pelo filtro «Origem»);
 - verificação no browser contra a base `accountingAI`: `?source=Opening` devolve os
   dois `AB-*` e `?source=Closing` o `AP-2026-00001`; no ecrã, «Origem = Abertura»

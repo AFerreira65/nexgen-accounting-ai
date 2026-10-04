@@ -52,13 +52,13 @@ homólogo:
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests` (`CashFlowAndEquityStatementsTests`): o mapa
+- `NexGenAccountingAI.IntegrationTests` (`CashFlowAndEquityStatementsTests`): o mapa
   (valores por mês, subtotais, total igual ao resultado do exercício, o
   apuramento de fora) e os rácios (valores, período homólogo, denominador
   zero).
-- `AccountingAI.Api.Tests`: os dois endpoints e a recusa de um período em dois
+- `NexGenAccountingAI.Api.Tests`: os dois endpoints e a recusa de um período em dois
   exercícios.
-- `AccountingAI.Web`: `tsc`, `eslint`, 94 testes, `vite build`.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 94 testes, `vite build`.
 - A suite completa: 236 testes .NET.
 
 **Por verificar**
@@ -96,10 +96,10 @@ homólogo:
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `PartyAgingServiceTests` — pagamento
+- `NexGenAccountingAI.IntegrationTests`: `PartyAgingServiceTests` — pagamento
   parcial a abater às faturas mais antigas, adiantamento sem fatura, data do
   documento diferente da do lançamento, documento posterior à data pedida.
-- `AccountingAI.Api.Tests`: o endpoint e a recusa de um tipo desconhecido.
+- `NexGenAccountingAI.Api.Tests`: o endpoint e a recusa de um tipo desconhecido.
 - A suite completa: 254 testes .NET, 102 de interface.
 
 **Por verificar e pressupostos**

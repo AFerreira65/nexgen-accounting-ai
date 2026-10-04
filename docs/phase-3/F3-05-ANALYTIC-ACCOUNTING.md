@@ -46,15 +46,15 @@ acompanha a linha da contabilidade geral.
 
 **Validação efetuada**
 
-- `AccountingAI.Domain.Tests`: normalização do código e a linha com centro.
-- `AccountingAI.IntegrationTests`: `CostCenterServiceTests` — cadastro
+- `NexGenAccountingAI.Domain.Tests`: normalização do código e a linha com centro.
+- `NexGenAccountingAI.IntegrationTests`: `CostCenterServiceTests` — cadastro
   (duplicado, código inválido, inativo), lançamentos com centro, centro
   desconhecido e inativo recusados, e o mapa: três centros com a linha «sem
   centro» no fim, sem o lançamento anulado, com gastos 370, rendimentos 1000 e
   resultado 630; fora do período vazio. `SqlServerMigrationTests` inclui a
   migração.
-- `AccountingAI.Api.Tests`: `CostCentersListReportAndValidateInput`.
-- `AccountingAI.Web`: `tsc`, `eslint`, os 90 testes; os dois ecrãs foram
+- `NexGenAccountingAI.Api.Tests`: `CostCentersListReportAndValidateInput`.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, os 90 testes; os dois ecrãs foram
   abertos no navegador em modo de demonstração, e confirmou-se que o editor
   não mostra a coluna quando não há centros.
 - A suite completa: 227 testes .NET.

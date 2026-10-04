@@ -11,7 +11,7 @@ enquadramento legal está em [`../CERTIFICACAO_AT.md`](../CERTIFICACAO_AT.md).
 
 - A AT identifica o produtor/integrador na ligação SOAP por um **certificado de
   transporte** — um PFX com chave privada, protegido por senha.
-- A adesão do Accounting AI ao webservice como analisador autónomo **não está
+- A adesão do NexGen Accounting AI ao webservice como analisador autónomo **não está
   garantida** (bloqueio externo — precisa de confirmação escrita da AT ou de
   associação a um programa de faturação certificado). Os **elementos de teste**
   (chave pública do sistema de autenticação, endpoints de teste) também
@@ -50,7 +50,7 @@ Application/At/
 
 ### Infrastructure.At (projeto novo)
 
-- `AccountingAI.Infrastructure.At` — só referencia `Application`.
+- `NexGenAccountingAI.Infrastructure.At` — só referencia `Application`.
   `AtOptions` (secção `At`: `Certificate:Directory`, `Certificate:FileName`,
   `Certificate:Path`, `Certificate:Password`, `Environment`).
   `AtCertificateProvider` carrega o PFX com a senha; erros (ficheiro

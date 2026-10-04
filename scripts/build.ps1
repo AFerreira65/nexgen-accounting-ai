@@ -7,12 +7,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$solution = Join-Path $projectRoot 'Accounting AI.slnx'
+$solution = Join-Path $projectRoot 'NexGen Accounting AI.slnx'
 $examples = Join-Path $projectRoot 'SAFTs Exemplo'
-$smokeProject = Join-Path $projectRoot 'tests\AccountingAI.Smoke\AccountingAI.Smoke.csproj'
-$uiSmokeProject = Join-Path $projectRoot 'tests\AccountingAI.WinForms.Smoke\AccountingAI.WinForms.Smoke.csproj'
-$appProject = Join-Path $projectRoot 'src\AccountingAI.WinForms\AccountingAI.WinForms.csproj'
-$webProject = Join-Path $projectRoot 'src\AccountingAI.Web'
+$smokeProject = Join-Path $projectRoot 'tests\NexGenAccountingAI.Smoke\NexGenAccountingAI.Smoke.csproj'
+$uiSmokeProject = Join-Path $projectRoot 'tests\NexGenAccountingAI.WinForms.Smoke\NexGenAccountingAI.WinForms.Smoke.csproj'
+$appProject = Join-Path $projectRoot 'src\NexGenAccountingAI.WinForms\NexGenAccountingAI.WinForms.csproj'
+$webProject = Join-Path $projectRoot 'src\NexGenAccountingAI.Web'
 
 if ($NoRestore) {
     dotnet build $solution -c Release --no-restore

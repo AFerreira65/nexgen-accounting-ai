@@ -40,14 +40,14 @@ lançamentos automáticos a partir do e-Fatura.
 
 **Validação efetuada**
 
-- `AccountingAI.Domain.Tests`: `PartyTests` — normalização, país por omissão,
+- `NexGenAccountingAI.Domain.Tests`: `PartyTests` — normalização, país por omissão,
   identificação em falta ou malformada, edição.
-- `AccountingAI.IntegrationTests`: `PartyServiceTests` — criação com subconta,
+- `NexGenAccountingAI.IntegrationTests`: `PartyServiceTests` — criação com subconta,
   contribuinte estrangeiro, NIF inválido, duplicado, conta desconhecida e de
   integração, lista (ordem, função, pesquisa, página), edição, inativos, sem
   acesso; `SqlServerMigrationTests` inclui a migração.
-- `AccountingAI.Api.Tests`: `PartiesListIsPagedAndValidatesInput` (só leitura).
-- `AccountingAI.Web`: `tsc`, `eslint`, e o teste do ecrã em `App.test.tsx`.
+- `NexGenAccountingAI.Api.Tests`: `PartiesListIsPagedAndValidatesInput` (só leitura).
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, e o teste do ecrã em `App.test.tsx`.
 - **Por verificar em direto:** o ecrã ligado à base real — precisa de uma
   sessão iniciada pelo utilizador.
 
@@ -80,13 +80,13 @@ lançamentos automáticos a partir do e-Fatura.
 
 **Validação efetuada**
 
-- `AccountingAI.Infrastructure.Files.Tests`: `SaftPartiesReaderTests` —
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: `SaftPartiesReaderTests` —
   clientes e fornecedores com conta e país, ficheiro sem terceiros, XML
   malformado, e o `Customer` dentro de `SourceDocuments` não é lido.
-- `AccountingAI.IntegrationTests`: `PartyImportServiceTests` — a análise não
+- `NexGenAccountingAI.IntegrationTests`: `PartyImportServiceTests` — a análise não
   escreve; a importação cria, funde e completa sem mudar o nome; reimportar
   não altera nada; e-Fatura com duas faturas do mesmo emitente; sem acesso.
-- `AccountingAI.Api.Tests`: `PartiesImportPreviewsAnalyseWithoutWriting` (só
+- `NexGenAccountingAI.Api.Tests`: `PartiesImportPreviewsAnalyseWithoutWriting` (só
   as análises, que não escrevem).
 - O leitor foi corrido contra os oito ficheiros de `SAFTs Exemplo`: as
   contagens batem com o ficheiro (ex.: 815 clientes e 271 fornecedores, todos
@@ -130,13 +130,13 @@ lançamentos sem terceiro.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `PartyLedgerServiceTests` — saldos sem o
+- `NexGenAccountingAI.IntegrationTests`: `PartyLedgerServiceTests` — saldos sem o
   lançamento anulado, até uma data, com pesquisa e segunda página; extrato de
   um mês com saldo anterior e acumulado; segunda página a continuar o
   acumulado; terceiro sem movimento, desconhecido e sem acesso; terceiros por
   subconta.
-- `AccountingAI.Api.Tests`: `PartyLedgerReturnsBalancesAndRejectsUnknownParties`.
-- `AccountingAI.Web`: `tsc`, `eslint`, os 88 testes; os dois ecrãs foram
+- `NexGenAccountingAI.Api.Tests`: `PartyLedgerReturnsBalancesAndRejectsUnknownParties`.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, os 88 testes; os dois ecrãs foram
   abertos no navegador em modo de demonstração.
 - A suite completa: 217 testes .NET.
 - **Por verificar em direto:** os saldos e o extrato com dados reais, e a
@@ -177,12 +177,12 @@ linhas que ficaram sem ele.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `SaftPartyLinkTests` — importa sem
+- `NexGenAccountingAI.IntegrationTests`: `SaftPartyLinkTests` — importa sem
   terceiros, cria o cliente, e ao reler: a análise não escreve; a ligação
   preenche só a linha da conta do cliente sem mudar o valor; o lançamento com
   linhas diferentes e a transação nunca importada são contados e não tocados;
   o fornecedor ainda inexistente é contado; repetir não liga nada de novo.
-- `AccountingAI.Api.Tests`: a análise devolve `applied: false`.
+- `NexGenAccountingAI.Api.Tests`: a análise devolve `applied: false`.
 - A suite completa: 218 testes .NET, 88 de interface.
 - **Por verificar em direto:** a ligação numa empresa real já importada — é o
   caso de uso para que isto existe, e convém começar pela análise.

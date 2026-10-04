@@ -25,7 +25,7 @@ ecrã respetivo.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e trinta e seis testes de interface (o teste da
+- `NexGenAccountingAI.Web`: lint, build e trinta e seis testes de interface (o teste da
   visão geral confirma os três novos cartões);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem segredos;
 - verificação no browser contra a base `accountingAI`: os cartões mostram «Caixa e

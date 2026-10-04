@@ -33,15 +33,15 @@ região — a desagregação que se transcreve para a declaração periódica
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `VatSummaryServiceTests` — uma venda e uma
+- `NexGenAccountingAI.IntegrationTests`: `VatSummaryServiceTests` — uma venda e uma
   compra com IVA, cada uma com a conta base e a conta 24.3 classificadas com a
   mesma natureza/taxa/região, dão as duas linhas `base`/`imposto` esperadas com
   os totais certos; uma conta de gasto não classificada e uma conta classificada
   sem movimento no período não aparecem; um lançamento fora do período não
   entra; sem acesso `null`.
-- `AccountingAI.Api.Tests`: `VatSummaryReturnsRowsGroupedByNatureRateAndRegion`
+- `NexGenAccountingAI.Api.Tests`: `VatSummaryReturnsRowsGroupedByNatureRateAndRegion`
   — `200` com `rows`; sem `from`/`to` `400`; empresa sem acesso `404`.
-- `AccountingAI.Web`: `tsc`, `eslint` e os oitenta e dois testes de interface
+- `NexGenAccountingAI.Web`: `tsc`, `eslint` e os oitenta e dois testes de interface
   verdes (o painel só aparece com dados reais, à imagem do resto do apuramento).
 - `dotnet build`/`dotnet test` na solução (173 testes); `scripts/build.ps1
   -SyntheticOnly` e `scripts/verify-security.ps1` sem ocorrências.

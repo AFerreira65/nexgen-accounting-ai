@@ -31,7 +31,7 @@ saldo aparece no seu painel; a data de corte limita aos movimentos até essa dat
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build de produção e trinta e seis testes de interface
+- `NexGenAccountingAI.Web`: lint, build de produção e trinta e seis testes de interface
   (um novo: na empresa de demonstração, o painel de clientes mostra `2111001` com
   saldo 3075, o de fornecedores fica vazio porque `2211001` liquida a zero, e o
   «Exportar CSV» gera o descarregamento);

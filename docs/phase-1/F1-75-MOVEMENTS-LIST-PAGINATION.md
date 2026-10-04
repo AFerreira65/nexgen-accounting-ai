@@ -38,7 +38,7 @@ Seguinte; o painel «Movimentos recentes» do dashboard nunca cresce além de
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e quatro testes de interface
+- `NexGenAccountingAI.Web`: lint, build e quarenta e quatro testes de interface
   (seis novos, unitários, para `paginate`: fatia e contagem de páginas
   corretas, página pedida a mais volta à última, página a menos volta à
   primeira, tudo cabe numa página quando a lista é mais pequena que o

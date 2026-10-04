@@ -45,12 +45,12 @@ POST /api/v1/development/users/{userId}/companies/{companyId}/analyses/run?from=
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: teste novo `AnalysisRunnerTests` — três
+- `NexGenAccountingAI.IntegrationTests`: teste novo `AnalysisRunnerTests` — três
   lançamentos, filtro `debit > 0`, agrupamento por conta: dois grupos
   (`6221` = 350 / 2 linhas, `6262` = 40), total geral 390 / 3; um período mais
   estreito devolve dois; definição inválida lança `ArgumentException`; sem
   acesso devolve `null`.
-- `AccountingAI.Api.Tests`: teste novo — `analyses/run` devolve `columns`,
+- `NexGenAccountingAI.Api.Tests`: teste novo — `analyses/run` devolve `columns`,
   `groups`, `grandTotal` e `debit:sum`; definição inválida `400`; empresa sem
   acesso `404`.
 - `dotnet build`/`dotnet test` na solução inteira (cento e quarenta e seis

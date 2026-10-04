@@ -40,16 +40,16 @@ torna-o um input explícito.
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `VatReturnFilingServiceTests` — antes de
+- `NexGenAccountingAI.IntegrationTests`: `VatReturnFilingServiceTests` — antes de
   guardar, não guardado e excesso assumido; guardar com excesso 30 grava a
   fotografia (`CreditToCarryForward` 130), aparece no histórico; o período
   seguinte propõe 130 como excesso anterior (`PriorFromPreviousFiling`); sem
   acesso devolve `null`. `SqlServerMigrationTests` inclui a migração nova.
   `VatReturnServiceTests` passou a `BuildAsync(..., null, ct)`.
-- `AccountingAI.Api.Tests`: `VatReturnIsComputedForTheClosedPeriod` acrescenta
+- `NexGenAccountingAI.Api.Tests`: `VatReturnIsComputedForTheClosedPeriod` acrescenta
   a leitura de `vat-return/saved` (`"saved":false`, `"suggestedPriorCredit"`,
   `"return"`) e de `vat-return/history` (lista). A escrita fica na integração.
-- `AccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
+- `NexGenAccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
   `eslint` e os oitenta testes de interface verdes.
 - `dotnet build`/`dotnet test` na solução; `scripts/build.ps1 -SyntheticOnly` e
   `scripts/verify-security.ps1` sem ocorrências.

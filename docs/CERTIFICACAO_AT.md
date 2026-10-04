@@ -2,13 +2,13 @@
 
 ## Três processos diferentes
 
-1. **Certificado digital para webservices (CSR/PFX)** — identifica o produtor/integrador na ligação técnica à AT. É o processo necessário para validar a consulta SOAP já existente no Accounting AI.
+1. **Certificado digital para webservices (CSR/PFX)** — identifica o produtor/integrador na ligação técnica à AT. É o processo necessário para validar a consulta SOAP já existente no NexGen Accounting AI.
 2. **Certificação de programa de faturação (Modelo 24)** — atribui um número de programa certificado a software que emite faturas ou outros documentos fiscalmente relevantes.
 3. **Selo de Validação AT (SVAT)** — processo facultativo para programas de contabilidade que produzem o SAF-T (PT) de contabilidade.
 
-No estado atual, o Accounting AI lê e analisa SAF-T, importa CSV e consulta compras. Não escreve na AT, não emite documentos fiscais nem produz um SAF-T de faturação ou de contabilidade. Assim, não deve ser apresentado neste estado como programa de faturação para efeitos da Modelo 24.
+No estado atual, o NexGen Accounting AI lê e analisa SAF-T, importa CSV e consulta compras. Não escreve na AT, não emite documentos fiscais nem produz um SAF-T de faturação ou de contabilidade. Assim, não deve ser apresentado neste estado como programa de faturação para efeitos da Modelo 24.
 
-O manual do webservice enquadra a adesão nos produtores de programas de faturação e, no pedido dos elementos de teste, solicita a designação do software e o respetivo número de certificado AT. Por isso, não se deve assumir que a AT aceitará a adesão do Accounting AI enquanto analisador autónomo. É necessário obter confirmação escrita da AT ou associar a integração a um programa de faturação certificado. A consulta pelo Portal e a importação CSV não dependem deste certificado de produtor.
+O manual do webservice enquadra a adesão nos produtores de programas de faturação e, no pedido dos elementos de teste, solicita a designação do software e o respetivo número de certificado AT. Por isso, não se deve assumir que a AT aceitará a adesão do NexGen Accounting AI enquanto analisador autónomo. É necessário obter confirmação escrita da AT ou associar a integração a um programa de faturação certificado. A consulta pelo Portal e a importação CSV não dependem deste certificado de produtor.
 
 ## Acesso ao webservice e-Fatura
 
@@ -22,7 +22,7 @@ O manual do webservice enquadra a adesão nos produtores de programas de fatura�
 
 O certificado de transporte e a sua chave privada pertencem ao produtor. Não devem ser entregues em texto, guardados no repositório ou confundidos com a chave RSA que assina documentos num programa de faturação certificado.
 
-## Caminho futuro para certificar o Accounting AI como programa de faturação
+## Caminho futuro para certificar o NexGen Accounting AI como programa de faturação
 
 Só se justifica iniciar este processo quando existir um módulo próprio que finalize e emita documentos com eficácia externa. Antes do pedido, a aplicação terá de incluir, entre outros pontos:
 
@@ -47,7 +47,7 @@ As versões seguintes mantêm o mesmo certificado se continuarem conformes. A al
 
 ## Integração com PHC
 
-Se o Accounting AI apenas preparar dados e os entregar ao PHC, ficando a finalização, numeração, assinatura, ATCUD, QR, comunicação e SAF-T sob o controlo da versão certificada do PHC, a fronteira de emissão continua, em princípio, no PHC. A integração não deve escrever diretamente nas tabelas fiscais nem conseguir contornar as regras do PHC. Antes de comercializar esse módulo, deve ser pedido enquadramento escrito à AT sobre a arquitetura concreta.
+Se o NexGen Accounting AI apenas preparar dados e os entregar ao PHC, ficando a finalização, numeração, assinatura, ATCUD, QR, comunicação e SAF-T sob o controlo da versão certificada do PHC, a fronteira de emissão continua, em princípio, no PHC. A integração não deve escrever diretamente nas tabelas fiscais nem conseguir contornar as regras do PHC. Antes de comercializar esse módulo, deve ser pedido enquadramento escrito à AT sobre a arquitetura concreta.
 
 ## Referências oficiais
 

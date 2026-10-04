@@ -42,9 +42,9 @@ só essa página; o CSV exporta tudo o que corresponde aos filtros.
 
 ## Validação efetuada
 
-- `AccountingAI.Api`: catorze testes (o de F1-97 passou a cobrir também o
+- `NexGenAccountingAI.Api`: catorze testes (o de F1-97 passou a cobrir também o
   filtro `journal`);
-- `AccountingAI.Web`: lint, build e setenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e três testes de interface
   (sem alteração — correm em modo de demonstração, o caminho do cliente,
   que se mantém igual);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

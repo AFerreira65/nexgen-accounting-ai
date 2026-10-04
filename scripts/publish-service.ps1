@@ -10,13 +10,13 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$apiProject = Join-Path $projectRoot 'src\AccountingAI.Api\AccountingAI.Api.csproj'
-$webProject = Join-Path $projectRoot 'src\AccountingAI.Web'
+$apiProject = Join-Path $projectRoot 'src\NexGenAccountingAI.Api\NexGenAccountingAI.Api.csproj'
+$webProject = Join-Path $projectRoot 'src\NexGenAccountingAI.Web'
 $webDist = Join-Path $webProject 'dist'
-$apiWwwroot = Join-Path $projectRoot 'src\AccountingAI.Api\wwwroot'
+$apiWwwroot = Join-Path $projectRoot 'src\NexGenAccountingAI.Api\wwwroot'
 
 if (-not $PublishDirectory) {
-    $PublishDirectory = Join-Path $projectRoot 'artifacts\AccountingAI-Service'
+    $PublishDirectory = Join-Path $projectRoot 'artifacts\NexGenAccountingAI-Service'
 }
 
 Write-Host "A construir a PWA (produção)..."

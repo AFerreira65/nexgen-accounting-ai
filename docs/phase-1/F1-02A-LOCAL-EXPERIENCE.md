@@ -8,7 +8,7 @@ Esta tarefa resolve o arranque local da aplicação, estabelece a primeira lingu
 
 ## Entregas
 
-- lançador `Abrir Accounting AI.cmd`, que inicia API e PWA e abre o endereço HTTP correto;
+- lançador `Abrir NexGen Accounting AI.cmd`, que inicia API e PWA e abre o endereço HTTP correto;
 - página explicativa quando `index.html` é aberto diretamente por `file://`, eliminando o ecrã branco sem fingir que a PWA funciona sem servidor;
 - painel responsivo com identidade visual em verde-petróleo, superfícies claras e estados acessíveis;
 - navegação contextual demonstrável `movimento → conta → movimentos relacionados` e `movimento → diário → movimentos do diário`;
@@ -19,7 +19,7 @@ Esta tarefa resolve o arranque local da aplicação, estabelece a primeira lingu
 
 ## Executar
 
-Na raiz do repositório, faça duplo clique em `Abrir Accounting AI.cmd` ou execute:
+Na raiz do repositório, faça duplo clique em `Abrir NexGen Accounting AI.cmd` ou execute:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
@@ -37,7 +37,7 @@ Endereços:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\migrate.ps1
 ```
 
-A configuração de desenvolvimento usa autenticação integrada do Windows e a base `AccountingAI_Development` na instância `(localdb)\MSSQLLocalDB`. Não existem credenciais na configuração versionada.
+A configuração de desenvolvimento usa autenticação integrada do Windows e a base `NexGenAccountingAI_Development` na instância `(localdb)\MSSQLLocalDB`. Não existem credenciais na configuração versionada.
 
 ## Critérios confirmados
 

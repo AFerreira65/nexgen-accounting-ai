@@ -27,7 +27,7 @@ Na lista de movimentos, filtrar (por período, diário, estado ou pesquisa) e us
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build de produção e trinta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build de produção e trinta e três testes de interface
   (o teste do filtro de datas passa também a exercitar o «Exportar CSV»,
   confirmando que gera um _blob_ e dispara o descarregamento);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem segredos;

@@ -14,7 +14,7 @@ Ficam disponíveis:
 ## Origem e limites
 
 O catálogo está em
-`src/AccountingAI.Infrastructure.SqlServer/Resources/taxonomy-catalog.json`,
+`src/NexGenAccountingAI.Infrastructure.SqlServer/Resources/taxonomy-catalog.json`,
 carregado por `TaxonomyCatalog` como recurso embutido. Foi **transcrito
 automaticamente** a partir do texto oficial do Diário da República (Portaria
 n.º 302/2016, de 2 de dezembro). Cada entrada tem `code`, `description` e a lista

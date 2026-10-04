@@ -39,10 +39,10 @@ depende do histórico inteiro.
 
 ## Validação efetuada
 
-- `AccountingAI.Api`: quinze testes (um novo — `total`, `pendingReview`,
+- `NexGenAccountingAI.Api`: quinze testes (um novo — `total`, `pendingReview`,
   `vatPosition` e a antevisão sem linhas, mais o 404 de empresa sem
   acesso);
-- `AccountingAI.Web`: lint, build e setenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e três testes de interface
   (sem alteração — em modo de demonstração o hook calcula no cliente, como
   antes);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

@@ -13,7 +13,7 @@ plataforma duas capacidades à imagem do PHC CS:
 ## Contexto
 
 - O domínio são entidades ricas (`sealed class`, setters privados, fábricas
-  `Create`) em `AccountingAI.Domain`; o EF Core mapeia-as para os esquemas
+  `Create`) em `NexGenAccountingAI.Domain`; o EF Core mapeia-as para os esquemas
   `organization` / `identity` / `accounting` / `infrastructure`.
 - **Nenhuma entidade tem hoje colunas de auditoria** de quem/quando. Só
   `EFaturaPurchase` e `SaftValidationRun` guardam um `CreatedAtUtc`, e nenhuma
@@ -150,8 +150,8 @@ uma trilha de auditoria completa); autenticação real.
 
 ## Referências
 
-- `src/AccountingAI.Infrastructure.SqlServer/Persistence/AccountingDbContext.cs`
+- `src/NexGenAccountingAI.Infrastructure.SqlServer/Persistence/AccountingDbContext.cs`
   e `Persistence/Configurations/` — o modelo a percorrer.
-- `src/AccountingAI.Web/src/app/AppLayout.tsx` — a barra de topo.
-- `src/AccountingAI.Web/src/app/csv.ts` — o padrão de exportação.
+- `src/NexGenAccountingAI.Web/src/app/AppLayout.tsx` — a barra de topo.
+- `src/NexGenAccountingAI.Web/src/app/csv.ts` — o padrão de exportação.
 - PHC CS «Dicionário de Dados» — a referência funcional.

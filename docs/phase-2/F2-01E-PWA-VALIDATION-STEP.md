@@ -38,7 +38,7 @@ importação até se ligar «Importar mesmo assim».
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e sessenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e sessenta e três testes de interface
   (sem alteração — o painel só aparece ligado à base de dados, que os
   testes não exercitam);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (106 testes

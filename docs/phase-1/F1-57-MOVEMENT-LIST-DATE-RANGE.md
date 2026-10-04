@@ -28,7 +28,7 @@ reduz as linhas às desse período; «Limpar datas» volta a mostrar tudo.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build de produção e trinta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build de produção e trinta e três testes de interface
   (um novo: filtrar a lista por `Data final` esconde o movimento de 2026-08-29 e
   mantém o de 2026-08-28, e «Limpar datas» repõe a lista);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem segredos;

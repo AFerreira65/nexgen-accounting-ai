@@ -36,7 +36,7 @@ Seguinte, sem alterar os totais nem os saldos apresentados.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e quatro testes de interface
+- `NexGenAccountingAI.Web`: lint, build e quarenta e quatro testes de interface
   (a paginação em si já estava coberta pelos testes unitários de
   `paginate` de F1-75);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

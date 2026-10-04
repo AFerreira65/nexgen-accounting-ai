@@ -5,8 +5,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$webRoot = Join-Path $projectRoot 'src\AccountingAI.Web'
-$apiProject = Join-Path $projectRoot 'src\AccountingAI.Api\AccountingAI.Api.csproj'
+$webRoot = Join-Path $projectRoot 'src\NexGenAccountingAI.Web'
+$apiProject = Join-Path $projectRoot 'src\NexGenAccountingAI.Api\NexGenAccountingAI.Api.csproj'
 $webUrl = 'http://127.0.0.1:5173/'
 $apiHealthUrl = 'http://127.0.0.1:5080/health/live'
 
@@ -45,5 +45,5 @@ if (-not $NoBrowser) {
     Start-Process $webUrl | Out-Null
 }
 
-Write-Host "Accounting AI disponível em $webUrl" -ForegroundColor Green
+Write-Host "NexGen Accounting AI disponível em $webUrl" -ForegroundColor Green
 Write-Host "API local: http://127.0.0.1:5080" -ForegroundColor DarkGray

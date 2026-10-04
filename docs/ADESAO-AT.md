@@ -1,7 +1,7 @@
 # Adesão aos webservices da AT — guia passo a passo
 
 O Bloco C da [Fase 3](phase-3/README.md) (consulta de faturas, validação e
-submissão de declarações) depende de a AT reconhecer o Accounting AI como
+submissão de declarações) depende de a AT reconhecer o NexGen Accounting AI como
 software de um produtor e emitir os certificados. Este guia junta o que os
 manuais da AT pedem e o que só o titular pode fazer. O enquadramento geral
 está em [`CERTIFICACAO_AT.md`](CERTIFICACAO_AT.md).
@@ -34,7 +34,7 @@ NIF 518104486**. Tudo o que se segue usa esse NIF.
 O manual do e-Fatura manda pedir por email a `asi-cd@at.gov.pt` a chave
 pública do sistema de autenticação e o certificado SSL de testes. O modelo
 oficial pressupõe um programa de faturação com número de certificado; o
-Accounting AI é um programa de contabilidade e não tem, por isso o pedido
+NexGen Accounting AI é um programa de contabilidade e não tem, por isso o pedido
 deve dizê-lo e pedir a confirmação de elegibilidade. Rascunho:
 
 > **Para:** asi-cd@at.gov.pt
@@ -52,7 +52,7 @@ deve dizê-lo e pedir a confirmação de elegibilidade. Rascunho:
 > - Certificado SSL para comunicação com os endereços de testes dos
 >   webservices.
 >
-> Estes elementos destinam-se ao programa **Accounting AI**, um programa de
+> Estes elementos destinam-se ao programa **NexGen Accounting AI**, um programa de
 > contabilidade para contabilistas certificados e sujeitos passivos. O
 > programa não emite faturas nem outros documentos fiscalmente relevantes,
 > pelo que não é um programa de faturação e não tem número de certificado

@@ -28,7 +28,7 @@ Resumo de IVA.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e trinta e oito testes de interface (o
+- `NexGenAccountingAI.Web`: lint, build e trinta e oito testes de interface (o
   teste das Tarefas passa a confirmar também a secção «IVA a entregar» com
   os 299,00 € da posição sintética e a ligação a `/iva`);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

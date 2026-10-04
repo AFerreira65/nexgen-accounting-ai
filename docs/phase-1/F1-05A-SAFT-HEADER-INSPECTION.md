@@ -12,12 +12,12 @@ Ficam disponíveis:
 - correspondência do ficheiro a uma empresa acessível pelo `TaxRegistrationNumber`;
 - um ecrã **Importar SAF-T** que apresenta o cabeçalho lido e o resultado da correspondência.
 
-## Novo módulo: `AccountingAI.Infrastructure.Files`
+## Novo módulo: `NexGenAccountingAI.Infrastructure.Files`
 
 A arquitetura já previa entradas por ficheiro (SAF-T, e-Fatura, extratos
 bancários). Este módulo é o adaptador de ficheiros da nova plataforma. Depende
 apenas de `Application` e `Domain`, tal como `Infrastructure.SqlServer`, e é
-verificado por `AccountingAI.ArchitectureTests`. Não referencia `AccountingAI.Core`.
+verificado por `NexGenAccountingAI.ArchitectureTests`. Não referencia `NexGenAccountingAI.Core`.
 
 `SaftHeaderReader` usa `XmlReader` com DTD proibido, `XmlResolver` desativado e
 `MaxCharactersFromEntities = 0`, e materializa apenas o subárvore `Header`; o resto
@@ -27,8 +27,8 @@ MB são aceites porque o leitor pára em `</Header>`.
 
 ## Domínio e fronteira
 
-- `AccountingAI.Domain.Saft.SaftHeader` — valor de leitura validado: versão, NIF, `TaxAccountingBasis`, nome, exercício, período, moeda e campos opcionais. Normaliza NIF e moeda, exige período coerente e expõe `IncludesAccounting` (verdadeiro para `C` e `I`).
-- `AccountingAI.Application.Saft.ISaftHeaderReader` — fronteira de leitura; `SaftFileFormatException` para conteúdo ilegível.
+- `NexGenAccountingAI.Domain.Saft.SaftHeader` — valor de leitura validado: versão, NIF, `TaxAccountingBasis`, nome, exercício, período, moeda e campos opcionais. Normaliza NIF e moeda, exige período coerente e expõe `IncludesAccounting` (verdadeiro para `C` e `I`).
+- `NexGenAccountingAI.Application.Saft.ISaftHeaderReader` — fronteira de leitura; `SaftFileFormatException` para conteúdo ilegível.
 - `SaftInspectionService` (em `Infrastructure.SqlServer`) compõe o leitor com a base: procura uma empresa ativa com o mesmo NIF a que o utilizador tem associação ativa. Devolve `ExistingCompany` (com norma e versão de configuração) ou `NewCompanyProposed`. Não escreve nada.
 
 ## Superfície de validação local
@@ -52,7 +52,7 @@ confirmar norma e referencial, provisionar os cadastros, pré-visualizar e impor
 
 ## Validação efetuada
 
-- build .NET Release sem avisos nem erros; `AccountingAI.ArchitectureTests` confirma que o novo módulo só depende de `Application` e `Domain` e não toca no legado;
+- build .NET Release sem avisos nem erros; `NexGenAccountingAI.ArchitectureTests` confirma que o novo módulo só depende de `Application` e `Domain` e não toca no legado;
 - testes de domínio para o `SaftHeader` (normalização, campos obrigatórios, período, exercício);
 - sete testes do `SaftHeaderReader`: cabeçalho de contabilidade e de faturação, com e sem namespace, Windows-1252, NIF em falta, conteúdo não-SAF-T e período inválido;
 - teste de API para a correspondência a uma empresa existente, a proposta de criação para NIF desconhecido, ficheiro ilegível e utilizador inexistente;

@@ -27,7 +27,7 @@ cada painel mostra uma página de cada vez com navegação Anterior/Seguinte.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e seis testes de interface (o
+- `NexGenAccountingAI.Web`: lint, build e quarenta e seis testes de interface (o
   teste das contas correntes continua válido — a empresa de demonstração
   tem uma conta de cliente e nenhuma de fornecedor);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

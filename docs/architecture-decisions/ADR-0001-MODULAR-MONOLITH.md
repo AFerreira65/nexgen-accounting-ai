@@ -27,4 +27,4 @@ As dependências apontam sempre para o interior e são protegidas por testes de 
 - módulos podem ser extraídos no futuro quando existirem necessidade e evidência;
 - a separação lógica terá de ser mantida ativamente através de testes e revisão.
 
-O monitor WinForms e `AccountingAI.Core` são preservados, mas não são dependências da nova fundação.
+O monitor WinForms e `NexGenAccountingAI.Core` são preservados, mas não são dependências da nova fundação.

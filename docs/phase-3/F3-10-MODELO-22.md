@@ -64,15 +64,15 @@ os pagamentos por conta.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `Modelo22ServiceTests` — o catálogo (100
+- `NexGenAccountingAI.IntegrationTests`: `Modelo22ServiceTests` — o catálogo (100
   campos, sem repetidos, lados certos, sem campos calculados); o apuramento
   sem nada indicado (taxa geral de 2026), a sugestão do campo 724 e o seu
   aviso; com acréscimos, deduções, prejuízos, PME, derrama municipal,
   retenções, pagamentos por conta e tributações autónomas (campo a campo até
   ao total a pagar); um prejuízo fiscal; a substituição ao guardar; as
   recusas. `SqlServerMigrationTests` inclui a migração.
-- `AccountingAI.Api.Tests`: `Modelo22IsComputedFromTheLedger` (só leitura).
-- `AccountingAI.Web`: `tsc`, `eslint`, 98 testes, `vite build`.
+- `NexGenAccountingAI.Api.Tests`: `Modelo22IsComputedFromTheLedger` (só leitura).
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 98 testes, `vite build`.
 - A suite completa: 250 testes .NET.
 
 **Por verificar**
@@ -130,7 +130,7 @@ previa.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests` (`Modelo22ServiceTests`): um prejuízo de
+- `NexGenAccountingAI.IntegrationTests` (`Modelo22ServiceTests`): um prejuízo de
   2025 transportado para 2026 e sugerido para o campo 309; dedução dentro e
   acima do saldo; saldo inicial indicado e aviso do limite de 65 %; encargos
   de tributação autónoma às taxas de 2026, a substituir o campo 365; taxas

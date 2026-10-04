@@ -35,11 +35,11 @@ os mapas e os relatórios de gestão eram só tabelas e texto.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests` (`CashFlowAndEquityStatementsTests`):
+- `NexGenAccountingAI.IntegrationTests` (`CashFlowAndEquityStatementsTests`):
   movimentos do mês sem o apuramento, saldos no fim do mês, exercício anterior,
   soma dos resultados mensais igual ao resultado do exercício.
-- `AccountingAI.Api.Tests`: o endpoint e a recusa de um exercício inválido.
-- `AccountingAI.Web`: `tsc`, `eslint`, 93 testes (o ecrã desenha os gráficos
+- `NexGenAccountingAI.Api.Tests`: o endpoint e a recusa de um exercício inválido.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 93 testes (o ecrã desenha os gráficos
   em modo de demonstração), `vite build`; os gráficos foram vistos no
   navegador.
 - A suite completa: 236 testes .NET.
@@ -74,10 +74,10 @@ os mapas e os relatórios de gestão eram só tabelas e texto.
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: a estrutura dos gastos e dos rendimentos
+- `NexGenAccountingAI.IntegrationTests`: a estrutura dos gastos e dos rendimentos
   (ordem, valores e pesos) no cenário das demonstrações.
-- `AccountingAI.Api.Tests`: o endpoint.
-- `AccountingAI.Web`: `tsc`, `eslint`, 102 testes (as listas de barras em
+- `NexGenAccountingAI.Api.Tests`: o endpoint.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 102 testes (as listas de barras em
   modo de demonstração), `vite build`; os painéis foram vistos no navegador
   com os dados de exemplo.
 - A suite completa: 254 testes .NET.

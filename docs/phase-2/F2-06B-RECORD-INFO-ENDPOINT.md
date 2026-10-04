@@ -39,10 +39,10 @@ GET /api/v1/development/users/{userId}/companies/{companyId}/record-info?table=c
 
 ## Validação efetuada
 
-- `AccountingAI.Api.Tests`: teste novo — um registo semeado devolve
+- `NexGenAccountingAI.Api.Tests`: teste novo — um registo semeado devolve
   `createdAtUtc` e `createdBy` nulo; tabela desconhecida e registo inexistente
   dão `404`; sem parâmetros dá `400`; empresa sem acesso dá `404`.
-- `AccountingAI.IntegrationTests`: o `AuditStampingTests` passou a verificar que
+- `NexGenAccountingAI.IntegrationTests`: o `AuditStampingTests` passou a verificar que
   o `RecordInfoService` lê os mesmos carimbos por nome lógico de tabela
   (`empresas`), e que nomes/registos desconhecidos devolvem `null`.
 - `dotnet build`/`dotnet test` na solução inteira (cento e trinta e um testes

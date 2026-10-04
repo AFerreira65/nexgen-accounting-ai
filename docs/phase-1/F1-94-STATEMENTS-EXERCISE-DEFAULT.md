@@ -28,7 +28,7 @@ da empresa por omissão, com «Limpar datas» à vista.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e cinquenta testes de interface (os
+- `NexGenAccountingAI.Web`: lint, build e cinquenta testes de interface (os
   testes da DR e do resumo de IVA passam a confirmar o arranque em
   2026-01-01 e «Limpar datas»);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

@@ -35,7 +35,7 @@ registo.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e setenta e sete testes de interface (sem
+- `NexGenAccountingAI.Web`: lint, build e setenta e sete testes de interface (sem
   novos — a saída de impressão depende de dados que o ambiente de testes não
   busca; verificada no browser);
 - `dotnet build`/`dotnet test` na solução inteira (cento e trinta e cinco

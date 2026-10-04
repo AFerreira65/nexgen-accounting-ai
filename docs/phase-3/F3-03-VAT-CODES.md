@@ -32,16 +32,16 @@ classificação por conta (F2-09) fica como recurso e como valor proposto.
 
 **Validação efetuada**
 
-- `AccountingAI.Domain.Tests`: `VatCodeTests` — normalização e as regras de
+- `NexGenAccountingAI.Domain.Tests`: `VatCodeTests` — normalização e as regras de
   coerência.
-- `AccountingAI.IntegrationTests`: `VatCodeServiceTests` — numa empresa dos
+- `NexGenAccountingAI.IntegrationTests`: `VatCodeServiceTests` — numa empresa dos
   Açores, os códigos por omissão trazem as percentagens da região e não
   substituem um código próprio com o mesmo nome; idempotência; edição,
   desativação, duplicado, isento com percentagem, sem acesso.
   `SqlServerMigrationTests` inclui a migração.
-- `AccountingAI.Api.Tests`: `VatCodesListAndValidateInput` (só leitura e
+- `NexGenAccountingAI.Api.Tests`: `VatCodesListAndValidateInput` (só leitura e
   recusas).
-- `AccountingAI.Web`: `tsc`, `eslint` e o teste do ecrã.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint` e o teste do ecrã.
 - **Por verificar em direto:** o ecrã contra a base real.
 
 ### F3-03B — Código de IVA na linha do lançamento (feito)
@@ -67,15 +67,15 @@ classificação por conta (F2-09) fica como recurso e como valor proposto.
 
 **Validação efetuada**
 
-- `AccountingAI.Domain.Tests`: a linha guarda o código e recusa um
+- `NexGenAccountingAI.Domain.Tests`: a linha guarda o código e recusa um
   identificador vazio.
-- `AccountingAI.IntegrationTests`: `JournalPostingPartyTests` — lançar com
+- `NexGenAccountingAI.IntegrationTests`: `JournalPostingPartyTests` — lançar com
   código, reler depois de reabrir, corrigir sem código, código desconhecido e
   inativo recusados; o código com lançamentos não muda de percentagem mas muda
   de nome, e um código sem lançamentos muda livremente.
   `SqlServerMigrationTests` inclui a migração.
-- `AccountingAI.Api.Tests`: um `vatCode` desconhecido dá `400`.
-- `AccountingAI.Web`: `tsc`, `eslint`, os 86 testes; a coluna foi confirmada no
+- `NexGenAccountingAI.Api.Tests`: um `vatCode` desconhecido dá `400`.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, os 86 testes; a coluna foi confirmada no
   navegador em modo de demonstração (sem códigos — vêm do servidor).
 - **Por verificar em direto:** a lista de códigos, a proposta pela conta e a
   gravação contra a base real.
@@ -99,7 +99,7 @@ campos oficiais ficam para a declaração periódica (F3-08).
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `VatSummaryLineCodeTests` — a mesma conta
+- `NexGenAccountingAI.IntegrationTests`: `VatSummaryLineCodeTests` — a mesma conta
   com uma linha sem código (taxa da conta) e outra com código de taxa reduzida
   (prevalece o código); compra em classe 3 com código entra como base; conta
   sem classificação com uma linha com código e outra sem — só a segunda fica
@@ -148,15 +148,15 @@ documento, a descrição proposta e as linhas, cada uma com um papel.
 
 **Validação efetuada**
 
-- `AccountingAI.Domain.Tests`: `EntryTemplateTests` — base + IVA + contrapartida;
+- `NexGenAccountingAI.Domain.Tests`: `EntryTemplateTests` — base + IVA + contrapartida;
   IVA incluído ao cêntimo (100,00 → 81,30 + 18,70); autoliquidação; linha
   isenta omitida; modelos e valores malformados.
-- `AccountingAI.IntegrationTests`: `EntryTemplateServiceTests` — guardar,
+- `NexGenAccountingAI.IntegrationTests`: `EntryTemplateServiceTests` — guardar,
   aplicar (sem lançar nada), IVA incluído, substituir as linhas sem duplicar,
   conta de integração / diário / código de IVA desconhecidos, inativo, sem
   acesso. `SqlServerMigrationTests` inclui a migração.
-- `AccountingAI.Api.Tests`: `EntryTemplatesListAndValidateInput`.
-- `AccountingAI.Web`: `tsc`, `eslint`, os 87 testes; o ecrã foi aberto no
+- `NexGenAccountingAI.Api.Tests`: `EntryTemplatesListAndValidateInput`.
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, os 87 testes; o ecrã foi aberto no
   navegador em modo de demonstração.
 - **Por verificar em direto:** criar um modelo e preencher um lançamento com
   ele contra a base real.

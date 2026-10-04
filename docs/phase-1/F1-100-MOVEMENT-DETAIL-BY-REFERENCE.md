@@ -33,9 +33,9 @@ chega, o detalhe passa a abrir na mesma.
 
 ## Validação efetuada
 
-- `AccountingAI.Api`: dezasseis testes (um novo — leitura por referência
+- `NexGenAccountingAI.Api`: dezasseis testes (um novo — leitura por referência
   com as linhas e o 404 de referência inexistente);
-- `AccountingAI.Web`: lint, build e setenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e três testes de interface
   (sem alteração — em demonstração o ecrã lê o contexto, como antes);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

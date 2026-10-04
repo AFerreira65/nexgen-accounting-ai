@@ -45,10 +45,10 @@ ficheiro exportado.
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `AnalysisRunnerTests` acrescenta o cenário
+- `NexGenAccountingAI.IntegrationTests`: `AnalysisRunnerTests` acrescenta o cenário
   `SaldosDeConta` — três contas de movimento, agrupar por classe, somar o
   saldo: classe 6 = 390, classe 2 = −390, total geral 0.
-- `AccountingAI.Web`: lint, build e setenta e oito testes de interface (sem
+- `NexGenAccountingAI.Web`: lint, build e setenta e oito testes de interface (sem
   novos — o selector de origem é uma adição ao construtor já testado);
 - `dotnet build`/`dotnet test` na solução inteira (cento e quarenta e oito
   testes .NET); `scripts/build.ps1 -SyntheticOnly` e

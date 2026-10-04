@@ -48,15 +48,15 @@ taxonomias do referencial `S`, 334 do `M`).
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `FinancialStatementsServiceTests` — o
+- `NexGenAccountingAI.IntegrationTests`: `FinancialStatementsServiceTests` — o
   catálogo (rubricas diferentes por modelo); e um exercício com abertura,
   imobilizado e depreciações, cliente devedor e cliente credor, compras,
   conta sem taxonomia, lançamento anulado e apuramento: rubricas, totais,
   comparativo, diferença explicada pelas contas de fora, resultado igual no
   balanço e na demonstração de resultados.
-- `AccountingAI.Api.Tests`: `FinancialStatementsAreBuiltFromTheTaxonomies`
+- `NexGenAccountingAI.Api.Tests`: `FinancialStatementsAreBuiltFromTheTaxonomies`
   (só leitura).
-- `AccountingAI.Web`: `tsc`, `eslint`, 92 testes, `vite build`; o ecrã foi
+- `NexGenAccountingAI.Web`: `tsc`, `eslint`, 92 testes, `vite build`; o ecrã foi
   aberto no navegador em modo de demonstração.
 - A suite completa: 235 testes .NET.
 
@@ -125,13 +125,13 @@ capital próprio do balanço, e as linhas:
 
 **Validação efetuada**
 
-- `AccountingAI.IntegrationTests`: `CashFlowAndEquityStatementsTests` — venda
+- `NexGenAccountingAI.IntegrationTests`: `CashFlowAndEquityStatementsTests` — venda
   a pronto com IVA, pagamento a fornecedor, empréstimo, compra de equipamento,
   juros, dividendos, aumento de capital, transferência entre caixa e banco,
   aplicação de resultados e apuramento: rubricas, comparativo, caixa inicial e
   final; a posição final do capital próprio e a caixa final batem com o
   balanço, que fecha; período a começar a meio do ano.
-- `AccountingAI.Api.Tests`: os dois endpoints e a recusa de um período em dois
+- `NexGenAccountingAI.Api.Tests`: os dois endpoints e a recusa de um período em dois
   exercícios (só leitura).
 - A suite completa: 236 testes .NET, 92 de interface.
 

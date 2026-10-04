@@ -36,7 +36,7 @@ contexto que a plataforma local ainda não tem:
 Quando houver um contexto de operação (agendamento, tetos de custo,
 monitorização):
 
-- o `Worker` passa a referenciar `AccountingAI.Infrastructure.Ai` (mais uma
+- o `Worker` passa a referenciar `NexGenAccountingAI.Infrastructure.Ai` (mais uma
   linha no teste de arquitetura) e regista um `BackgroundService` com um
   `PeriodicTimer` diário;
 - uma vez por dia, verifica se está no início de um mês novo e, em caso

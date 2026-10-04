@@ -12,7 +12,7 @@ separadas e mostra, por período, onde divergem.
   faturas ao nível do documento — isso é o **SAF-T de faturação**
   (`SalesInvoices`), que a nova plataforma **não** importa.
 - As **compras do e-Fatura** existem só no monitor WinForms legado
-  (`AccountingAI.Core/Efatura/`: `EfaturaCsvImporter` — vários CSV por
+  (`NexGenAccountingAI.Core/Efatura/`: `EfaturaCsvImporter` — vários CSV por
   lote, deteção de codificação/separador, canonização de cabeçalhos,
   aviso aos 300 registos; `AtEfaturaPurchaseSource` — consulta SOAP;
   Portal assistido em Edge). **Nada disto está na nova plataforma.**
@@ -152,6 +152,6 @@ Application/CrossCheck/
 
 ## Referências
 
-- `AccountingAI.Core/Efatura/` — a implementação legada a portar.
+- `NexGenAccountingAI.Core/Efatura/` — a implementação legada a portar.
 - `README.md` §«Compras do e-Fatura» — o comportamento do monitor.
 - F1-53/F1-54 — importação e reconciliação do SAF-T de contabilidade.

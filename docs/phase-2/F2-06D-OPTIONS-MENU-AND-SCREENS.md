@@ -42,7 +42,7 @@ Abrir um movimento/conta/diário, carregar «Opções → Sobre o Registo»; car
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e setenta e sete testes de interface (dois
+- `NexGenAccountingAI.Web`: lint, build e setenta e sete testes de interface (dois
   novos — a página `/dicionario-de-dados` mostra o cabeçalho; o menu «Opções»
   aparece em todos os ecrãs com as duas ações, e «Sobre o Registo» fica
   desativado sem ligação à base de dados);

@@ -47,7 +47,7 @@ totais do período. Sem alteração de esquema nem de contrato; a fase do
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e setenta e cinco testes de interface (um
+- `NexGenAccountingAI.Web`: lint, build e setenta e cinco testes de interface (um
   novo — a rota `/cruzamento` mostra o cabeçalho e, em demonstração, «Requer
   ligação ao SQL Server»);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (cento e vinte e

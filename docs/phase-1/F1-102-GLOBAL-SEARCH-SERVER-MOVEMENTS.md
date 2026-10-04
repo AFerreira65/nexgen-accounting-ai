@@ -30,7 +30,7 @@ correspondentes; `Ctrl`/`Cmd`+`K`, setas e Enter continuam iguais.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e setenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e três testes de interface
   (sem alteração — o teste da pesquisa cobre contas; em demonstração a
   parte dos movimentos filtra no cliente, como antes);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;

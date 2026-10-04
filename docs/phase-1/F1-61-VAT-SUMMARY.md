@@ -34,7 +34,7 @@ e dedutível desse período e a posição; «Exportar CSV» leva a tabela e os t
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build de produção e trinta e cinco testes de interface
+- `NexGenAccountingAI.Web`: lint, build de produção e trinta e cinco testes de interface
   (um novo: na empresa de demonstração, o resumo mostra `24323` (dedutível 276) e
   `24331` (liquidado 575), a posição de 299 «A entregar ao Estado», e o
   «Exportar CSV» gera o descarregamento);

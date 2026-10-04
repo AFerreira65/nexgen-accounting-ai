@@ -36,13 +36,13 @@ apurado é recusado com a razão.
 ## Validação efetuada
 
 - build .NET Debug sem avisos nem erros; suite .NET completa (72 testes);
-- `AccountingAI.Domain.Tests`: `Reopen()` leva de conferido a "por conferir" e
+- `NexGenAccountingAI.Domain.Tests`: `Reopen()` leva de conferido a "por conferir" e
   recusa a partir de "por conferir" ou "anulado";
-- `AccountingAI.IntegrationTests` (LocalDB descartável): depois de conferir um
+- `NexGenAccountingAI.IntegrationTests` (LocalDB descartável): depois de conferir um
   lançamento e de a correção ser recusada, `ReopenAsync` devolve-o a "por
   conferir" (e recusa uma segunda reabertura); a correção seguinte passa e o
   lançamento fica conferido com a nova descrição;
-- `AccountingAI.Web`: lint, build e trinta e quatro testes de interface (um novo:
+- `NexGenAccountingAI.Web`: lint, build e trinta e quatro testes de interface (um novo:
   «Reabrir» num movimento conferido de demonstração passa-o a "por conferir" e
   revela «Corrigir»);
 - verificação no browser contra a base `accountingAI`: reabrir na empresa da ilha

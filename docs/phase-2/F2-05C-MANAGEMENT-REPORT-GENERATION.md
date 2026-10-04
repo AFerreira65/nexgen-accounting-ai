@@ -44,12 +44,12 @@ interruptor, gera e persiste.
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `ManagementReportServiceTests` (narrador
+- `NexGenAccountingAI.IntegrationTests`: `ManagementReportServiceTests` (narrador
   falso) — desligado devolve `Disabled`; ligado gera, persiste (uma linha),
   aparece no histórico com o resultado, e o `GetAsync` traz o dossiê; a
   pergunta livre grava `Kind = "pergunta"`; sem acesso devolve `NotFound`.
   `SqlServerMigrationTests` inclui a migração nova.
-- `AccountingAI.Api.Tests`:
+- `NexGenAccountingAI.Api.Tests`:
   `ManagementReportSettingsGuardGenerationAndHistoryIsReadable` — as definições
   leem-se (desligado, sem chave); gerar com o interruptor desligado dá `409`;
   ligar dá `200` e gerar dá na mesma `409` (sem chave no servidor de teste);

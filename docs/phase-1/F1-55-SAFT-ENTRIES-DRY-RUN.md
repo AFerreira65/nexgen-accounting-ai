@@ -44,7 +44,7 @@ movimentos» produz o resultado real, que deve bater certo com a previsão.
 ## Validação efetuada
 
 - build .NET Debug sem avisos nem erros; suite .NET completa (72 testes);
-- `AccountingAI.IntegrationTests` (LocalDB descartável): antes de importar,
+- `NexGenAccountingAI.IntegrationTests` (LocalDB descartável): antes de importar,
   `AnalyzeAsync` prevê `WouldImportCount = 2`, `WouldSkipCount = 3`,
   `JournalsToCreate = ["CX"]`, `ProjectedPeriodDebit = 150` e
   `WouldMatchDeclaredTotals = true`, e a base fica intacta (a importação a seguir

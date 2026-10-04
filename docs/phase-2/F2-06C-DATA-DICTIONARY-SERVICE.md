@@ -40,12 +40,12 @@ GET /api/v1/development/data-dictionary/accounting/JournalEntries
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: três testes novos (`DataDictionaryTests`) —
+- `NexGenAccountingAI.IntegrationTests`: três testes novos (`DataDictionaryTests`) —
   lista todas as tabelas mapeadas com propósito não vazio; o detalhe de
   `accounting.Accounts` traz a PK primeiro, `CompanyId` como FK para
   `organization.Companies`, `Code` com comprimento e descrição, cobertura de
   descrições ≥ 70 %; tabela desconhecida devolve `null`.
-- `AccountingAI.Api.Tests`: um teste novo — `GET /data-dictionary` lista
+- `NexGenAccountingAI.Api.Tests`: um teste novo — `GET /data-dictionary` lista
   `Accounts` e o esquema `organization`; o detalhe traz `columns`,
   `primaryKey:true` e `organization.Companies`; tabela desconhecida dá `404`.
 - `dotnet build`/`dotnet test` na solução inteira (cento e trinta e cinco

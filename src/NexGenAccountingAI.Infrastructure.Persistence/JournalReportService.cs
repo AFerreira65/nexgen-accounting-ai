@@ -1,0 +1,123 @@
+using NexGenAccountingAI.Domain.Accounting;
+using NexGenAccountingAI.Infrastructure.Persistence.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace NexGenAccountingAI.Infrastructure.Persistence;
+
+public sealed record JournalReportLine(
+    string AccountCode,
+    string AccountName,
+    string Description,
+    decimal Debit,
+    decimal Credit);
+
+public sealed record JournalReportEntry(
+    string Reference,
+    DateOnly EntryDate,
+    string JournalCode,
+    string? DocumentType,
+    string DocumentReference,
+    string Description,
+    string Status,
+    EntrySource Source,
+    decimal Amount,
+    IReadOnlyList<JournalReportLine> Lines);
+
+public sealed record JournalReport(
+    decimal TotalDebit,
+    decimal TotalCredit,
+    IReadOnlyList<JournalReportEntry> Entries);
+
+/// <summary>
+/// Livro diário: lançamentos de uma empresa por ordem cronológica, com as linhas
+/// e os totais, opcionalmente filtrados por diário, tipo de documento, exercício,
+/// intervalo de datas, conta movimentada e origem. Exclui sempre os anulados.
+/// </summary>
+public sealed class JournalReportService(AccountingDbContext context)
+{
+    public async Task<JournalReport> BuildAsync(
+        Guid companyId,
+        string? journalCode,
+        string? documentTypeCode,
+        int? year,
+        DateOnly? fromDate = null,
+        DateOnly? toDate = null,
+        CancellationToken cancellationToken = default,
+        string? accountCode = null,
+        string? source = null)
+    {
+        var query = context.JournalEntries
+            .AsNoTracking()
+            .Where(entry => entry.CompanyId == companyId && entry.Status != JournalEntryStatus.Voided)
+            .Include(entry => entry.Journal)
+            .Include(entry => entry.DocumentType)
+            .Include(entry => entry.Lines)
+                .ThenInclude(line => line.Account)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(journalCode))
+        {
+            var normalizedJournal = journalCode.Trim().ToUpperInvariant();
+            query = query.Where(entry => entry.Journal.Code == normalizedJournal);
+        }
+
+        if (!string.IsNullOrWhiteSpace(documentTypeCode))
+        {
+            var normalizedDocumentType = documentTypeCode.Trim().ToUpperInvariant();
+            query = query.Where(entry => entry.DocumentType != null && entry.DocumentType.Code == normalizedDocumentType);
+        }
+
+        if (year is not null)
+        {
+            query = query.Where(entry => entry.EntryDate.Year == year);
+        }
+
+        if (fromDate is not null)
+        {
+            query = query.Where(entry => entry.EntryDate >= fromDate.Value);
+        }
+
+        if (toDate is not null)
+        {
+            query = query.Where(entry => entry.EntryDate <= toDate.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(accountCode))
+        {
+            var normalizedAccount = accountCode.Trim().ToUpperInvariant();
+            query = query.Where(entry => entry.Lines.Any(line => line.Account.Code == normalizedAccount));
+        }
+
+        if (!string.IsNullOrWhiteSpace(source) && Enum.TryParse<EntrySource>(source.Trim(), ignoreCase: true, out var entrySource))
+        {
+            query = query.Where(entry => entry.Source == entrySource);
+        }
+
+        var entries = await query
+            .OrderBy(entry => entry.EntryDate)
+            .ThenBy(entry => entry.Reference)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var report = entries.Select(entry => new JournalReportEntry(
+            entry.Reference,
+            entry.EntryDate,
+            entry.Journal.Code,
+            entry.DocumentType?.Code,
+            entry.DocumentReference,
+            entry.Description,
+            entry.Status == JournalEntryStatus.Reviewed ? "Conferido" : "Por conferir",
+            entry.Source,
+            entry.TotalAmount,
+            entry.Lines
+                .OrderBy(line => line.Sequence)
+                .Select(line => new JournalReportLine(
+                    line.Account.Code, line.Account.Name, line.Description, line.Debit, line.Credit))
+                .ToList())).ToList();
+
+        return new JournalReport(
+            report.Sum(entry => entry.Lines.Sum(line => line.Debit)),
+            report.Sum(entry => entry.Lines.Sum(line => line.Credit)),
+            report);
+    }
+}

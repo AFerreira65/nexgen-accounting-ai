@@ -31,15 +31,15 @@ subutilizador e a senha do perfil e-Fatura de cada empresa, com a senha
 
 ## Validação efetuada
 
-- `AccountingAI.IntegrationTests`: `CompanyAtCredentialsServiceTests` (protetor
+- `NexGenAccountingAI.IntegrationTests`: `CompanyAtCredentialsServiceTests` (protetor
   falso com prefixo) — não configurado → guardar cifra a senha (`enc:v1:…` na
   BD, decifra para o original), um valor já cifrado fica igual, atualizar muda o
   subutilizador, remover apaga, sem acesso devolve `null`/`false`.
   `SqlServerMigrationTests` inclui a migração nova.
-- `AccountingAI.Api.Tests`: `AtCertificateStatusIsReportedWithoutSecrets`
+- `NexGenAccountingAI.Api.Tests`: `AtCertificateStatusIsReportedWithoutSecrets`
   acrescenta a leitura de `at-credentials` (`"configured":false`, sem
   «password»).
-- `AccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
+- `NexGenAccountingAI.Web`: `App.test.tsx` (o ecrã e o gate de demonstração), `tsc`,
   `eslint` e os oitenta e um testes de interface verdes.
 - `dotnet build`/`dotnet test` na solução; `scripts/build.ps1 -SyntheticOnly` e
   `scripts/verify-security.ps1` sem ocorrências.

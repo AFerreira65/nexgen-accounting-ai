@@ -42,10 +42,10 @@ saltadas), aparece a linha amarela com a diferença.
 ## Validação efetuada
 
 - build .NET Debug sem avisos nem erros; suite .NET completa (72 testes);
-- `AccountingAI.Infrastructure.Files.Tests`: `ReadTransactionsAsync` devolve
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: `ReadTransactionsAsync` devolve
   `DeclaredEntryCount`/`DeclaredTotalDebit`/`DeclaredTotalCredit` do ficheiro de
   exemplo (3 / 150,00 / 150,00) e `null` quando o bloco não os tem;
-- `AccountingAI.IntegrationTests` (LocalDB descartável): importar para uma empresa
+- `NexGenAccountingAI.IntegrationTests` (LocalDB descartável): importar para uma empresa
   criada a partir do SAF-T dois lançamentos que somam 150 de débito e 150 de
   crédito, com o ficheiro a declarar 150/150 no período 2026-02-10 a 2026-03-03,
   dá `MatchesDeclaredTotals = true` e `CompanyPeriodDebit`/`CompanyPeriodCredit`

@@ -37,7 +37,7 @@ ano e os atalhos de período dos relatórios usam-no.
 
 ## Validação efetuada
 
-- `AccountingAI.Domain.Tests`: `SetDefaultFiscalYear` muda só o exercício
+- `NexGenAccountingAI.Domain.Tests`: `SetDefaultFiscalYear` muda só o exercício
   e preserva as restantes preferências; rejeita anos fora do intervalo
   2000–2200 (35 testes no total, dois novos);
 - `dotnet build`/`dotnet test` na solução inteira sem avisos nem falhas;

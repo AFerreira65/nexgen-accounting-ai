@@ -27,7 +27,7 @@ a linha de saldo de abertura e «Limpar datas» à vista.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e cinquenta testes de interface (o teste
+- `NexGenAccountingAI.Web`: lint, build e cinquenta testes de interface (o teste
   da razão passa a confirmar o arranque em 2026-01-01 e «Limpar datas»);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

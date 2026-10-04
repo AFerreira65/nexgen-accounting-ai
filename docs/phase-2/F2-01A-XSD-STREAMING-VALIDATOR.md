@@ -38,7 +38,7 @@ interface ainda — isso são F2-01B e F2-01D.
   assembly; os testes constroem um catálogo próprio com um esquema mínimo.
 - **Esquemas oficiais como drop-in.** Os `.xsd` da AT **não** estão no
   repositório (decisão de redistribuição em aberto). A pasta
-  `src/AccountingAI.Infrastructure.Files/Schemas/` tem um `README.md` a
+  `src/NexGenAccountingAI.Infrastructure.Files/Schemas/` tem um `README.md` a
   explicar como colocá-los; o `.csproj` embebe `Schemas/SAFTPT_*.xsd` (o
   glob não corresponde a nada até serem adicionados). Sem eles, o validador
   devolve `SchemaAvailable = false`, valida só a boa formação e avisa.
@@ -54,7 +54,7 @@ o SAF-T real fica ativa assim que os `SAFTPT_*.xsd` forem colocados.
 
 ## Validação efetuada
 
-- `AccountingAI.Infrastructure.Files.Tests`: vinte e sete testes (nove
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: vinte e sete testes (nove
   novos) — ficheiro conforme (0 erros, lê a versão), violação de tipo com
   linha/coluna, elemento fora de ordem, versão sem esquema (só boa
   formação + aviso, sem exceção), versão a cair no namespace quando o
@@ -63,7 +63,7 @@ o SAF-T real fica ativa assim que os `SAFTPT_*.xsd` forem colocados.
   `VersionFromNamespace`;
 - `dotnet build`/`dotnet test` na solução inteira sem falhas (87 testes
   .NET); testes de arquitetura verdes (camadas respeitadas);
-- `AccountingAI.Web`: sessenta e três testes sem alteração (incremento de
+- `NexGenAccountingAI.Web`: sessenta e três testes sem alteração (incremento de
   backend);
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem
   segredos.

@@ -32,12 +32,12 @@ saldo de abertura nem o saldo final.
 ## Validação efetuada
 
 - build .NET Debug sem avisos nem erros; suite .NET completa (72 testes);
-- `AccountingAI.IntegrationTests` (LocalDB descartável): filtrar a razão da conta
+- `NexGenAccountingAI.IntegrationTests` (LocalDB descartável): filtrar a razão da conta
   `6221` por `"Manual"` mantém o mesmo saldo final da razão sem filtro; filtrar
   por `"Opening"` (sem linhas dessa origem) devolve zero linhas mas o mesmo saldo
   de abertura e final;
-- `AccountingAI.Api.Tests`: o `/foundation` indica a fase `F1-71`;
-- `AccountingAI.Web`: lint, build e trinta e oito testes de interface (o teste da
+- `NexGenAccountingAI.Api.Tests`: o `/foundation` indica a fase `F1-71`;
+- `NexGenAccountingAI.Web`: lint, build e trinta e oito testes de interface (o teste da
   razão de conta passa também pelo filtro «Origem», confirmando que o saldo não
   muda);
 - verificação no browser contra a base `accountingAI`: a conta `6221` (zerada pelo

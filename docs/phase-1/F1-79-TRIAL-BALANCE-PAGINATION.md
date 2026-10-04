@@ -33,7 +33,7 @@ abre de imediato só com os subtotais por classe/taxonomia.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e quarenta e quatro testes de interface
+- `NexGenAccountingAI.Web`: lint, build e quarenta e quatro testes de interface
   (a paginação já está coberta pelos testes unitários de `paginate`);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

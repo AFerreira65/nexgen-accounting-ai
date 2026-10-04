@@ -30,7 +30,7 @@ servidor; o «Seguinte»/«Anterior» pede a página respetiva.
 
 ## Validação efetuada
 
-- `AccountingAI.Web`: lint, build e setenta e três testes de interface
+- `NexGenAccountingAI.Web`: lint, build e setenta e três testes de interface
   (sem alteração — em demonstração o ecrã pagina no cliente, como antes);
 - `dotnet build`/`dotnet test` na solução inteira sem falhas;
 - `scripts/build.ps1 -SyntheticOnly` sem ocorrências e `gitleaks` sem

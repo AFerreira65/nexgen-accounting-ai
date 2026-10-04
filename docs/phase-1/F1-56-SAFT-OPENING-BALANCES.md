@@ -49,9 +49,9 @@ das contas passam a mostrar o saldo de abertura. Repetir não duplica.
 ## Validação efetuada
 
 - build .NET Debug sem avisos nem erros; suite .NET completa (72 testes);
-- `AccountingAI.Infrastructure.Files.Tests`: o leitor devolve
+- `NexGenAccountingAI.Infrastructure.Files.Tests`: o leitor devolve
   `OpeningDebit`/`OpeningCredit` das contas do ficheiro de exemplo (1500 / 0);
-- `AccountingAI.IntegrationTests` (LocalDB descartável): importar saldos para uma
+- `NexGenAccountingAI.IntegrationTests` (LocalDB descartável): importar saldos para uma
   empresa criada a partir do SAF-T cria um lançamento `AB` datado de 2026-01-01
   com três linhas equilibradas (débito 1500, crédito 1500), ignorando a conta
   agregadora; repetir devolve `AlreadyImported` com a mesma referência; sem
