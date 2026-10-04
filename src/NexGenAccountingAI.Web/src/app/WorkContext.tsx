@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type BalanceSheetStatement, type BudgetReport, type SuggestedEntriesReport, type BankAccountRow, type BankEntryRuleRow, type BankEntrySuggestion, type BankStatementImportResult, type BankStatementLineRow, type BankReconciliationReport, type SalesDocumentsImportResult, type SalesSuggestedEntriesReport, type SalesEntryRuleRow, type SuggestedEntryOutcome, type SupplierEntryRuleRow, type ExerciseStructure, type PartyAging, type VatSettlementEntryPreview, type FiscalDossier, type WithholdingReport, type IesAnnexA, type Modelo22Return, type FixedAssetRow, type DepreciationSchedule, type RecapitulativeStatement, type VatDeclaration, type OperatingMap, type FinancialRatios, type MonthlyEvolution, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type AppliedTemplate, type SaftExportReport, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type BalanceSheetStatement, type BudgetReport, type SuggestedEntriesReport, type BankAccountRow, type DocumentAttachmentRow, type InvoiceQrLookup, type BankEntryRuleRow, type BankEntrySuggestion, type BankStatementImportResult, type BankStatementLineRow, type BankReconciliationReport, type SalesDocumentsImportResult, type SalesSuggestedEntriesReport, type SalesEntryRuleRow, type SuggestedEntryOutcome, type SupplierEntryRuleRow, type ExerciseStructure, type PartyAging, type VatSettlementEntryPreview, type FiscalDossier, type WithholdingReport, type IesAnnexA, type Modelo22Return, type FixedAssetRow, type DepreciationSchedule, type RecapitulativeStatement, type VatDeclaration, type OperatingMap, type FinancialRatios, type MonthlyEvolution, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type AppliedTemplate, type SaftExportReport, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -154,6 +154,12 @@ type WorkContextValue = WorkContextData & {
   deleteBankEntryRule: (companyId: string, pattern: string) => Promise<void>
   bankEntrySuggestions: (companyId: string, accountCode: string, range: { from: string; to: string }) => Promise<BankEntrySuggestion[]>
   postBankLines: (companyId: string, lineIds: string[]) => Promise<SuggestedEntryOutcome[]>
+  attachments: (companyId: string, filter: { entryReference?: string; unlinked?: boolean; search?: string }) => Promise<DocumentAttachmentRow[]>
+  uploadAttachment: (companyId: string, file: File, options: { entryReference?: string | null; qr?: string | null }) => Promise<DocumentAttachmentRow>
+  updateAttachment: (companyId: string, id: string, input: { entryReference: string | null; notes: string | null; qrText: string | null }) => Promise<DocumentAttachmentRow>
+  deleteAttachment: (companyId: string, id: string) => Promise<void>
+  attachmentUrl: (companyId: string, id: string, download?: boolean) => string
+  lookupInvoiceQr: (companyId: string, qr: string) => Promise<InvoiceQrLookup>
   operatingMap: (companyId: string, year: number) => Promise<OperatingMap>
   financialRatios: (companyId: string, params: { from: string; to: string }) => Promise<FinancialRatios>
   cashFlowStatement: (companyId: string, params: { from: string; to: string }) => Promise<CashFlowStatement>
@@ -1245,6 +1251,50 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as SuggestedEntryOutcome[]
+    },
+    attachments: async (companyId, filter) => {
+      const params = new URLSearchParams()
+      if (filter.entryReference) params.set('entryReference', filter.entryReference)
+      if (filter.unlinked) params.set('unlinked', 'true')
+      if (filter.search) params.set('search', filter.search)
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/attachments?${params}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as DocumentAttachmentRow[]
+    },
+    uploadAttachment: async (companyId, file, options) => {
+      const params = new URLSearchParams({ fileName: file.name })
+      if (options.entryReference) params.set('entryReference', options.entryReference)
+      if (options.qr) params.set('qr', options.qr)
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/attachments?${params}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/octet-stream' },
+        body: file,
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as DocumentAttachmentRow
+    },
+    updateAttachment: async (companyId, id, input) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/attachments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as DocumentAttachmentRow
+    },
+    deleteAttachment: async (companyId, id) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/attachments/${id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error(await problemMessage(response))
+    },
+    attachmentUrl: (companyId, id, download) => `/api/v1/development/users/${data.user.id}/companies/${companyId}/attachments/${id}/content${download ? '?download=true' : ''}`,
+    lookupInvoiceQr: async (companyId, qr) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/invoice-qr/lookup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qr }),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as InvoiceQrLookup
     },
     exerciseStructure: async (companyId, year) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/management/structure?year=${year}`)

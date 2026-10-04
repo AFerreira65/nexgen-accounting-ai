@@ -1223,6 +1223,96 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("VatReturnFiling", "accounting");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Archive.DocumentAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<string>("JournalEntryReference")
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateOnly?>("QrDocumentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("QrDocumentNo")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<decimal?>("QrGrossTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("QrIssuerTaxId")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal?>("QrTaxTotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("QrText")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("UploadedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid?>("UploadedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "JournalEntryReference");
+
+                    b.HasIndex("CompanyId", "Sha256")
+                        .IsUnique();
+
+                    b.ToTable("DocumentAttachments", "accounting");
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Archive.DocumentAttachmentContent", b =>
+                {
+                    b.Property<Guid>("AttachmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.HasKey("AttachmentId");
+
+                    b.ToTable("DocumentAttachmentContents", "accounting");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Banking.BankEntryRule", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2487,6 +2577,24 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Archive.DocumentAttachment", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Archive.DocumentAttachmentContent", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Archive.DocumentAttachment", null)
+                        .WithOne()
+                        .HasForeignKey("NexGenAccountingAI.Domain.Archive.DocumentAttachmentContent", "AttachmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

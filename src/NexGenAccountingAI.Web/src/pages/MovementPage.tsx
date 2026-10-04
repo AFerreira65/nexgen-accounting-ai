@@ -6,6 +6,7 @@ import { entrySourceLabel } from '../app/entrySources'
 import { useMovementGuards } from '../app/movementGuards'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
+import { MovementDocuments } from './MovementDocuments'
 import { MovementEditor } from './MovementEditor'
 
 export function MovementPage() {
@@ -87,7 +88,9 @@ export function MovementPage() {
     <section className="context-grid" aria-label="Atalhos contextuais">
       <Link className="context-card" to={`/diarios/${movement.journalId}`}><span className="context-icon navy"><Landmark /></span><span><small>Diário</small><strong>{movement.journalName}</strong><em>Abrir diário e movimentos relacionados</em></span><ArrowLeft className="rotate-180" size={17} /></Link>
       <Link className="context-card" to={`/contas/${mainAccount.account}`}><span className="context-icon teal"><BookOpen /></span><span><small>Conta principal</small><strong>{mainAccount.account} · {mainAccount.accountName}</strong><em>Ver razão e saldo da conta</em></span><ArrowLeft className="rotate-180" size={17} /></Link>
-      <Link className="context-card" to="/documentos"><span className="context-icon amber"><FileText /></span><span><small>Documento de origem</small><strong>{movement.document}{movement.documentDate ? ` · ${formatMovementDate(movement.documentDate)}` : ''}</strong><em>Abrir documento digitalizado</em></span><ArrowLeft className="rotate-180" size={17} /></Link>
+      {onDatabase
+        ? <a className="context-card" href="#documentos"><span className="context-icon amber"><FileText /></span><span><small>Documento de origem</small><strong>{movement.document}{movement.documentDate ? ` · ${formatMovementDate(movement.documentDate)}` : ''}</strong><em>Ver os documentos anexados</em></span><ArrowLeft className="rotate-180" size={17} /></a>
+        : <Link className="context-card" to="/documentos"><span className="context-icon amber"><FileText /></span><span><small>Documento de origem</small><strong>{movement.document}{movement.documentDate ? ` · ${formatMovementDate(movement.documentDate)}` : ''}</strong><em>Tipos de documento</em></span><ArrowLeft className="rotate-180" size={17} /></Link>}
     </section>
 
     <section className="panel">
@@ -96,6 +99,8 @@ export function MovementPage() {
         {movement.lines.map((line) => <tr key={`${line.account}-${line.description}`}><td><Link className="primary-cell" to={`/contas/${line.account}`}>{line.account}</Link><small>{line.accountName}</small></td><td>{line.description}{line.vatCode && <small>IVA {line.vatCode}</small>}{line.costCenter && <small>C. custo {line.costCenter}</small>}{line.partyTaxNumber && <small>{line.partyName} · {line.partyCountryCode && line.partyCountryCode !== 'PT' ? `${line.partyCountryCode} ` : ''}{line.partyTaxNumber}</small>}</td><td className="numeric">{line.debit ? euro.format(line.debit) : '—'}</td><td className="numeric">{line.credit ? euro.format(line.credit) : '—'}</td></tr>)}
       </tbody><tfoot><tr><td colSpan={2}>Totais</td><td className="numeric">{euro.format(movement.amount)}</td><td className="numeric">{euro.format(movement.amount)}</td></tr></tfoot></table></div>
     </section>
+
+    {onDatabase && <MovementDocuments reference={movement.id} />}
 
     {movement.notes ? <section className="panel notes-panel"><div className="panel-heading"><div><h2>Observações</h2><p>Nota interna, não sai em documentos oficiais</p></div></div><p className="notes-body">{movement.notes}</p></section> : null}
 

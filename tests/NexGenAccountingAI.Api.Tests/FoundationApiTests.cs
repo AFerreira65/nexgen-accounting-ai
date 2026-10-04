@@ -1481,6 +1481,12 @@ public sealed class FoundationApiTests
         using var notSaftBody = new StringContent("isto não é XML", System.Text.Encoding.UTF8, "application/xml");
         using var notSaft = await client.PostAsync($"{basePath}/sales-documents/import?dryRun=true", notSaftBody).ConfigureAwait(false);
         using var bankAccounts = await client.GetAsync($"{basePath}/bank-accounts").ConfigureAwait(false);
+        using var attachments = await client.GetAsync($"{basePath}/attachments?unlinked=true").ConfigureAwait(false);
+        using var exeBody = new ByteArrayContent([1, 2, 3]);
+        using var exeUpload = await client.PostAsync($"{basePath}/attachments?fileName=programa.exe", exeBody).ConfigureAwait(false);
+        using var badQrBody = new StringContent("{\"qr\":\"https://exemplo.pt\"}", System.Text.Encoding.UTF8, "application/json");
+        using var badQr = await client.PostAsync($"{basePath}/invoice-qr/lookup", badQrBody).ConfigureAwait(false);
+        using var missingAttachment = await client.GetAsync($"{basePath}/attachments/{Guid.NewGuid()}/content").ConfigureAwait(false);
         using var bankRules = await client.GetAsync($"{basePath}/bank-entry-rules").ConfigureAwait(false);
         using var shortBankRuleBody = new StringContent("{\"pattern\":\"ab\",\"entryTemplateCode\":\"X\"}", System.Text.Encoding.UTF8, "application/json");
         using var shortBankRule = await client.PutAsync($"{basePath}/bank-entry-rules", shortBankRuleBody).ConfigureAwait(false);
@@ -1535,6 +1541,10 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.BadRequest, badSalesRule.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, notSaft.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, bankAccounts.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, attachments.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, exeUpload.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, badQr.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, missingAttachment.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, bankRules.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, shortBankRule.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, emptyBankPost.StatusCode);

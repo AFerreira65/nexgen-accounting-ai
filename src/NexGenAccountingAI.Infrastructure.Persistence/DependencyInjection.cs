@@ -81,6 +81,7 @@ public static class DependencyInjection
         services.AddScoped<SalesSuggestedEntryService>();
         services.AddScoped<BankStatementService>();
         services.AddScoped<BankEntryService>();
+        services.AddScoped<DocumentArchiveService>();
         services.AddScoped<FiscalDossierService>();
         services.AddScoped<PartyImportService>();
         services.AddScoped<PartyLedgerService>();

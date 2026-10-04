@@ -1,4 +1,5 @@
 import {
+  Archive,
   Banknote,
   BarChart3,
   Bell,
@@ -60,6 +61,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/movimentos', label: 'Movimentos', icon: WalletCards },
     { to: '/lancamentos-sugeridos', label: 'Lançamentos sugeridos', icon: WandSparkles },
     { to: '/bancos', label: 'Bancos', icon: Banknote },
+    { to: '/arquivo', label: 'Arquivo digital', icon: Archive },
   ] },
   { label: 'Mapas', links: [
     { to: '/livro-diario', label: 'Livro diário', icon: BookText },

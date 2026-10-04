@@ -6,6 +6,7 @@ using NexGenAccountingAI.Application.ManagementReports;
 using NexGenAccountingAI.Application.Reporting;
 using NexGenAccountingAI.Application.Saft;
 using NexGenAccountingAI.Domain.Accounting;
+using NexGenAccountingAI.Domain.Archive;
 using NexGenAccountingAI.Domain.Organizations;
 using NexGenAccountingAI.Domain.Saft;
 using NexGenAccountingAI.Infrastructure.Ai;
@@ -2815,6 +2816,101 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Arquivo digital (F3-20A): documentos com SHA-256, ligados a lançamentos, e leitura do código QR das faturas.
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/attachments", async (
+        Guid userId,
+        Guid companyId,
+        HttpRequest request,
+        DocumentArchiveService archive,
+        CancellationToken cancellationToken,
+        string? fileName,
+        string? entryReference,
+        string? qr) =>
+    {
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = DocumentAttachment.MaxSizeBytes + 1024;
+        }
+
+        try
+        {
+            var row = await archive
+                .UploadAsync(userId, companyId, fileName ?? string.Empty, request.Body, entryReference, qr, cancellationToken)
+                .ConfigureAwait(false);
+            return row is null ? Results.NotFound() : Results.Ok(row);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["documento"] = [exception.Message] });
+        }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/attachments", async (
+        Guid userId, Guid companyId, string? entryReference, bool? unlinked, string? search, DocumentArchiveService archive, CancellationToken cancellationToken) =>
+    {
+        var rows = await archive.ListAsync(userId, companyId, entryReference, unlinked ?? false, search, cancellationToken).ConfigureAwait(false);
+        return rows is null ? Results.NotFound() : Results.Ok(rows);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/attachments/{id:guid}/content", async (
+        Guid userId, Guid companyId, Guid id, bool? download, DocumentArchiveService archive, CancellationToken cancellationToken) =>
+    {
+        var file = await archive.GetContentAsync(userId, companyId, id, cancellationToken).ConfigureAwait(false);
+        if (file is null)
+        {
+            return Results.NotFound();
+        }
+
+        return download is true
+            ? Results.File(file.Value.Content, file.Value.Row.ContentType, file.Value.Row.FileName)
+            : Results.File(file.Value.Content, file.Value.Row.ContentType);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/attachments/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, DocumentAttachmentRequest request, DocumentArchiveService archive, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var row = await archive
+                .UpdateAsync(userId, companyId, id, new DocumentAttachmentUpdate(request?.EntryReference, request?.Notes, request?.QrText), cancellationToken)
+                .ConfigureAwait(false);
+            return row is null ? Results.NotFound() : Results.Ok(row);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["documento"] = [exception.Message] });
+        }
+    });
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/attachments/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, DocumentArchiveService archive, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var deleted = await archive.DeleteAsync(userId, companyId, id, cancellationToken).ConfigureAwait(false);
+            return deleted is true ? Results.NoContent() : Results.NotFound();
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["documento"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/invoice-qr/lookup", async (
+        Guid userId, Guid companyId, InvoiceQrRequest request, DocumentArchiveService archive, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var lookup = await archive.LookupQrAsync(userId, companyId, request?.Qr ?? string.Empty, cancellationToken).ConfigureAwait(false);
+            return lookup is null ? Results.NotFound() : Results.Ok(lookup);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["qr"] = [exception.Message] });
+        }
+    });
+
     // Estrutura do exercício: gastos e rendimentos por natureza, maiores clientes e fornecedores.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/structure", async (
         Guid userId, Guid companyId, int year, FinancialStatementsService statements, CancellationToken cancellationToken) =>
@@ -4615,6 +4711,10 @@ public sealed record BankReconcileRequest(string? EntryReference);
 public sealed record BankEntryRuleRequest(string? Pattern, string? EntryTemplateCode, bool IsActive = true);
 
 public sealed record PostBankLinesRequest(IReadOnlyList<Guid>? LineIds);
+
+public sealed record DocumentAttachmentRequest(string? EntryReference, string? Notes, string? QrText);
+
+public sealed record InvoiceQrRequest(string? Qr);
 
 public sealed record VatCodeRequest(
     string? Code,

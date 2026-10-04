@@ -1,4 +1,5 @@
 using NexGenAccountingAI.Domain.Accounting;
+using NexGenAccountingAI.Domain.Archive;
 using NexGenAccountingAI.Domain.Banking;
 using NexGenAccountingAI.Domain.Billing;
 using NexGenAccountingAI.Domain.Efatura;
@@ -83,6 +84,10 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<BankEntryRule> BankEntryRules => Set<BankEntryRule>();
 
+    public DbSet<DocumentAttachment> DocumentAttachments => Set<DocumentAttachment>();
+
+    public DbSet<DocumentAttachmentContent> DocumentAttachmentContents => Set<DocumentAttachmentContent>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     /// <summary>Collation ICU sem distinção de maiúsculas (equivalente ao CI_AS do SQL Server).</summary>
@@ -130,6 +135,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new BankStatementImportConfiguration());
         modelBuilder.ApplyConfiguration(new BankStatementLineConfiguration());
         modelBuilder.ApplyConfiguration(new BankEntryRuleConfiguration());
+        modelBuilder.ApplyConfiguration(new DocumentAttachmentConfiguration());
+        modelBuilder.ApplyConfiguration(new DocumentAttachmentContentConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

@@ -858,6 +858,9 @@ export type BankReconciliationReport = {
 }
 export type BankEntryRuleRow = { pattern: string; entryTemplateCode: string; entryTemplateName: string; isActive: boolean }
 export type BankEntrySuggestion = { lineId: string; bookingDate: string; description: string; amount: number; pattern: string; entryTemplateCode: string; journalCode: string | null; documentTypeCode: string | null; entryDescription: string; lines: SuggestedEntryLine[]; problem: string | null; ready: boolean }
+export type DocumentAttachmentRow = { id: string; fileName: string; contentType: string; sizeBytes: number; sha256: string; uploadedAtUtc: string; notes: string | null; entryReference: string | null; qrIssuerTaxId: string | null; qrDocumentNo: string | null; qrDocumentDate: string | null; qrGrossTotal: number | null; qrTaxTotal: number | null; canDelete: boolean }
+export type InvoiceQrCode = { issuerTaxId: string; buyerTaxId: string | null; documentType: string | null; documentDate: string | null; documentNo: string; atcud: string | null; taxTotal: number; grossTotal: number; netTotal: number; warnings: string[] }
+export type InvoiceQrLookup = { qr: InvoiceQrCode; isSale: boolean; eFaturaPurchaseId: string | null; eFaturaPurchaseEntryReference: string | null; salesDocumentId: string | null; entryReferences: string[]; attachmentIds: string[] }
 export type SupplierEntryRuleRow = { supplierTaxId: string; supplierName: string | null; entryTemplateCode: string; entryTemplateName: string; description: string | null; isActive: boolean }
 export type StructureItem = { label: string; amount: number; share: number }
 export type ExerciseStructure = { year: number; expenses: StructureItem[]; income: StructureItem[]; topCustomers: StructureItem[]; topSuppliers: StructureItem[] }

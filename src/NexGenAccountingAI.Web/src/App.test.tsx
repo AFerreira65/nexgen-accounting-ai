@@ -882,6 +882,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
+  it('shows the digital archive screen (requires the database)', () => {
+    window.history.pushState({}, '', '/arquivo')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Arquivo digital', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)
