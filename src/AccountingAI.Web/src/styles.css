@@ -546,6 +546,11 @@ html[data-text-size='larger'] .workspace { zoom: 1.12; }
 .segmented button.selected { color: #0b6a64; background: #e1f4f0; }
 .filterbar label.inline-check { width: auto; gap: 6px; padding: 0 4px; border: 0; background: transparent; color: #5a6b72; font-size: 11px; font-weight: 600; cursor: pointer; }
 .filterbar label.inline-check input { width: auto; }
+/* Os doze meses de uma linha do orçamento. */
+.budget-months { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.budget-months label { display: grid; gap: 3px; color: #5a6b72; font-size: 11px; font-weight: 600; }
+.budget-months input { width: 100%; text-align: right; }
+@media (max-width: 720px) { .budget-months { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 html[data-theme='dark'] .segmented { background: #182d36; border-color: #29414a; }
 html[data-theme='dark'] .segmented button.selected { color: #b6f1e6; background: #17423f; }
 

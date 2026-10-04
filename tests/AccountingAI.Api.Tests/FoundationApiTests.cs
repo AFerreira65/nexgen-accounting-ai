@@ -1615,6 +1615,8 @@ public sealed class FoundationApiTests
         using var budget = await client.GetAsync($"{basePath}/budget?year=2026&month=6").ConfigureAwait(false);
         var budgetPayload = await budget.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badBudget = await client.GetAsync($"{basePath}/budget?year=2026&month=13").ConfigureAwait(false);
+        using var badBudgetCopyBody = new StringContent("{\"source\":\"outro\",\"sourceYear\":2025}", System.Text.Encoding.UTF8, "application/json");
+        using var badBudgetCopy = await client.PostAsync($"{basePath}/budget/copy?year=2026", badBudgetCopyBody).ConfigureAwait(false);
         using var map = await client.GetAsync($"{basePath}/management/operating-map?year=2026").ConfigureAwait(false);
         var mapPayload = await map.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var ratios = await client.GetAsync($"{basePath}/management/ratios?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
@@ -1642,6 +1644,8 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, budget.StatusCode);
         StringAssert.Contains(budgetPayload, "\"month\":6");
         Assert.AreEqual(HttpStatusCode.BadRequest, badBudget.StatusCode);
+        StringAssert.Contains(budgetPayload, "\"lines\":");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badBudgetCopy.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, structure.StatusCode);
         StringAssert.Contains(structurePayload, "\"topCustomers\":");
         Assert.AreEqual(HttpStatusCode.OK, map.StatusCode);

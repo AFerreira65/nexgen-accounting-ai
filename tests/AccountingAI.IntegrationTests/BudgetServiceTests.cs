@@ -151,6 +151,55 @@ public sealed class BudgetServiceTests
             Assert.AreEqual(150m, without.BudgetExpenses, "Sem o orçamento geral, a linha do centro de custo passa a contar.");
             Assert.AreEqual(24, await context.BudgetLines.CountAsync(line => line.CompanyId == companyId).ConfigureAwait(false));
 
+            // Valores por mês: a sazonalidade muda o orçamentado até ao mês pedido.
+            var seasonal = new[] { 0m, 0m, 900m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 300m };
+            await service.SetAsync(userId, companyId, 2026, "62", null, 0m, CancellationToken.None, seasonal).ConfigureAwait(false);
+            var february = await service.ReportAsync(userId, companyId, 2026, 2, CancellationToken.None).ConfigureAwait(false);
+            var seasonalLine = february!.Lines.Single(line => line.AccountCode == "62");
+            Assert.AreEqual((1200m, 0m), (seasonalLine.AnnualBudget, seasonalLine.Budget));
+            Assert.IsNull(seasonalLine.DeviationPercent);
+            CollectionAssert.AreEqual(seasonal, seasonalLine.MonthlyBudget.ToArray());
+            var march = await service.ReportAsync(userId, companyId, 2026, 3, CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual(900m, march!.Lines.Single(line => line.AccountCode == "62").Budget);
+            await Assert.ThrowsExactlyAsync<ArgumentException>(
+                () => service.SetAsync(userId, companyId, 2026, "62", null, 0m, CancellationToken.None, new[] { 1m, 2m })).ConfigureAwait(false);
+            await Assert.ThrowsExactlyAsync<ArgumentException>(
+                () => service.SetAsync(userId, companyId, 2026, "62", null, 0m, CancellationToken.None, seasonal.Select(amount => amount - 1m).ToArray())).ConfigureAwait(false);
+
+            // Copiar o orçamento para o exercício seguinte, com mais 10 %: as mesmas linhas, mês a mês.
+            Assert.AreEqual(3, await service.CopyAsync(userId, companyId, 2027, BudgetCopySource.Budget, 2026, 10m, CancellationToken.None).ConfigureAwait(false));
+            var next = await service.ReportAsync(userId, companyId, 2027, 12, CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual(6600m, next!.Lines.Single(line => line.AccountCode == "7211").AnnualBudget);
+            Assert.AreEqual(990m, next.Lines.Single(line => line.AccountCode == "62").MonthlyBudget[2]);
+            var nextSite = next.Lines.Single(line => line.AccountCode == "6221");
+            Assert.AreEqual(("OBRA", 660m), (nextSite.CostCenterCode, nextSite.AnnualBudget));
+
+            // Um exercício que já tem orçamento não é copiado por cima.
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+                () => service.CopyAsync(userId, companyId, 2027, BudgetCopySource.Actual, 2026, 0m, CancellationToken.None)).ConfigureAwait(false);
+
+            // A partir do realizado: o grupo de dois dígitos quando existe no plano (62), senão a própria conta.
+            Assert.AreEqual(3, await service.CopyAsync(userId, companyId, 2028, BudgetCopySource.Actual, 2026, 0m, CancellationToken.None).ConfigureAwait(false));
+            var fromActual = await service.ReportAsync(userId, companyId, 2028, 12, CancellationToken.None).ConfigureAwait(false);
+            CollectionAssert.AreEqual(new[] { "7211", "62", "6311" }, fromActual!.Lines.Select(line => line.AccountCode).ToArray());
+            CollectionAssert.AreEqual(
+                new[] { 300m, 100m, 0m, 50m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m },
+                fromActual.Lines[1].MonthlyBudget.ToArray(),
+                "O realizado de cada mês de 2026 no grupo 62.");
+            Assert.AreEqual(2000m, fromActual.Lines[0].MonthlyBudget[2]);
+            Assert.AreEqual(500m, fromActual.Lines[2].AnnualBudget);
+
+            // Origem sem nada, a própria origem e um ajuste impossível são recusados.
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+                () => service.CopyAsync(userId, companyId, 2030, BudgetCopySource.Budget, 2029, 0m, CancellationToken.None)).ConfigureAwait(false);
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(
+                () => service.CopyAsync(userId, companyId, 2030, BudgetCopySource.Actual, 2029, 0m, CancellationToken.None)).ConfigureAwait(false);
+            await Assert.ThrowsExactlyAsync<ArgumentException>(
+                () => service.CopyAsync(userId, companyId, 2030, BudgetCopySource.Budget, 2030, 0m, CancellationToken.None)).ConfigureAwait(false);
+            await Assert.ThrowsExactlyAsync<ArgumentException>(
+                () => service.CopyAsync(userId, companyId, 2030, BudgetCopySource.Budget, 2026, -100m, CancellationToken.None)).ConfigureAwait(false);
+            Assert.IsNull(await service.CopyAsync(Guid.NewGuid(), companyId, 2030, BudgetCopySource.Budget, 2026, 0m, CancellationToken.None).ConfigureAwait(false));
+
             Assert.IsNull(await service.ReportAsync(Guid.NewGuid(), companyId, 2026, 3, CancellationToken.None).ConfigureAwait(false));
             Assert.IsNull(await service.SetAsync(Guid.NewGuid(), companyId, 2026, "62", null, 1m, CancellationToken.None).ConfigureAwait(false));
         }

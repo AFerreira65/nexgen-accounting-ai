@@ -778,7 +778,7 @@ export type FinancialRatios = { from: string; to: string; model: string; days: n
 export type BudgetReport = {
   year: number
   month: number
-  lines: { accountCode: string; accountName: string; costCenterCode: string | null; kind: 'rendimento' | 'gasto'; annualBudget: number; budget: number; actual: number; deviation: number; deviationPercent: number | null; favourable: boolean }[]
+  lines: { accountCode: string; accountName: string; costCenterCode: string | null; kind: 'rendimento' | 'gasto'; annualBudget: number; budget: number; actual: number; deviation: number; deviationPercent: number | null; favourable: boolean; monthlyBudget: number[] }[]
   budgetIncome: number
   actualIncome: number
   budgetExpenses: number

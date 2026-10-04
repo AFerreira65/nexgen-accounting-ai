@@ -2411,9 +2411,47 @@ if (applicationEndpointsAvailable)
         try
         {
             var saved = await budget
-                .SetAsync(userId, companyId, year, request?.AccountCode ?? string.Empty, request?.CostCenterCode, request?.AnnualAmount ?? 0m, cancellationToken)
+                .SetAsync(userId, companyId, year, request?.AccountCode ?? string.Empty, request?.CostCenterCode, request?.AnnualAmount ?? 0m, cancellationToken, request?.MonthlyAmounts)
                 .ConfigureAwait(false);
             if (saved is null)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(await budget.ReportAsync(userId, companyId, year, month ?? 12, cancellationToken).ConfigureAwait(false));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["orcamento"] = [exception.Message] });
+        }
+    });
+
+    // Preenche um exercício sem orçamento a partir do orçamento ou do realizado de outro exercício.
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget/copy", async (
+        Guid userId, Guid companyId, int year, int? month, BudgetCopyRequest request, BudgetService budget, CancellationToken cancellationToken) =>
+    {
+        if (month is < 1 or > 12)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["month"] = ["Indique um mês válido."] });
+        }
+
+        BudgetCopySource? source = request?.Source switch
+        {
+            "orcamento" => BudgetCopySource.Budget,
+            "realizado" => BudgetCopySource.Actual,
+            _ => null,
+        };
+        if (source is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["source"] = ["Indique a origem: orcamento ou realizado."] });
+        }
+
+        try
+        {
+            var copied = await budget
+                .CopyAsync(userId, companyId, year, source.Value, request!.SourceYear, request.AdjustmentPercent ?? 0m, cancellationToken)
+                .ConfigureAwait(false);
+            if (copied is null)
             {
                 return Results.NotFound();
             }
@@ -4207,7 +4245,9 @@ public sealed record CostCenterRequest(string? Code, string? Name, bool IsActive
 
 public sealed record FiscalDossierItemRequest(string? Status, string? Note);
 
-public sealed record BudgetLineRequest(string? AccountCode, string? CostCenterCode, decimal AnnualAmount);
+public sealed record BudgetLineRequest(string? AccountCode, string? CostCenterCode, decimal AnnualAmount, IReadOnlyList<decimal>? MonthlyAmounts = null);
+
+public sealed record BudgetCopyRequest(string? Source, int SourceYear, decimal? AdjustmentPercent);
 
 public sealed record VatCodeRequest(
     string? Code,

@@ -50,14 +50,57 @@ aconteceu; não havia com que o comparar a não ser o exercício anterior.
 
 **Limitações**
 
-- **Sem sazonalidade**: os meses são iguais. A tabela já guarda um valor por
-  mês, pelo que editar mês a mês é só uma questão de ecrã.
+- **Sem sazonalidade**: os meses são iguais (resolvido no F3-24B).
 - Só gastos e rendimentos; não há orçamento de tesouraria nem de
   investimento.
 - Os códigos são os do plano de contas: mudar o código de uma conta deixa a
   linha do orçamento a apontar para o código antigo.
 
+### F3-24B — Valores por mês e cópia de outro exercício (feito)
+
+Sem migração: a tabela já guardava um valor por mês.
+
+| Parte | Regra |
+|---|---|
+| Valores por mês | Uma linha pode levar doze valores em vez de um valor anual; o total anual é a soma. Meses em branco ficam a zero; um total zero retira a linha. O orçamentado «até ao mês» passa a refletir a sazonalidade. |
+| Cópia do orçamento | As mesmas linhas (conta, centro de custo) do exercício de origem, mês a mês. |
+| Cópia do realizado | Uma linha por **grupo de dois dígitos** (62, 63, 72…) quando o grupo existe no plano de contas, senão pela própria conta; o valor de cada mês é o realizado desse mês, sem centro de custo. Um grupo com um mês de saldo contrário (nota de crédito, regularização) fica com o total do exercício repartido por igual; um grupo com total nulo ou contrário não é copiado. |
+| Ajuste | Uma percentagem aplicada a todos os valores (por exemplo +3 ou -5), acima de -100 %. |
+| Destino | Só um exercício **ainda sem orçamento** — a cópia nunca escreve por cima. |
+
+- **`BudgetService`**: `SetAsync` aceita os doze valores; `CopyAsync`
+  (origem `Budget` ou `Actual`); cada linha do relatório traz
+  `MonthlyBudget`.
+- **API:** `PUT .../budget` aceita `monthlyAmounts` (doze valores);
+  `POST .../budget/copy?year=&month=` com `source` (`orcamento` ou
+  `realizado`), `sourceYear` e `adjustmentPercent`; devolve o relatório.
+- **PWA:** no ecrã «Orçamento», a opção **«Valores por mês»** abre os doze
+  campos com o total anual; cada linha da tabela tem um botão para editar os
+  meses; num exercício sem orçamento aparece **«Copiar de outro
+  exercício»**; o CSV leva o orçamento de cada mês.
+
+**Validação efetuada**
+
+- `BudgetServiceTests`: os doze valores e o orçamentado até ao mês; doze
+  valores em falta ou negativos recusados; cópia do orçamento com +10 %
+  (incluindo a linha por centro de custo); recusa de um destino com
+  orçamento; cópia do realizado por grupo e por conta; origem vazia, origem
+  igual ao destino e ajuste de -100 % recusados.
+- `AccountingAI.Api.Tests`: a recusa de uma origem desconhecida.
+- `AccountingAI.Web`: `tsc`, `eslint`, 103 testes, `vite build`.
+- A suite completa: 256 testes .NET.
+
+**Por verificar**
+
+- O ecrã com a base real — os campos por mês e a cópia não foram vistos no
+  navegador.
+
+**Limitações**
+
+- A cópia do realizado não reparte por centro de custo.
+- A cópia do orçamento não confere se as contas e os centros de custo de
+  origem ainda existem.
+
 ### A seguir
 
-- **F3-24B** — valores por mês (sazonalidade), cópia do orçamento do
-  exercício anterior ou do realizado, e o orçamento no mapa de exploração.
+- **F3-24C** — o orçamento no mapa de exploração.

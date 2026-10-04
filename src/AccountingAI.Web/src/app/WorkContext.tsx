@@ -127,7 +127,8 @@ type WorkContextValue = WorkContextData & {
   monthlyEvolution: (companyId: string, year: number) => Promise<MonthlyEvolution>
   exerciseStructure: (companyId: string, year: number) => Promise<ExerciseStructure>
   budgetReport: (companyId: string, year: number, month: number) => Promise<BudgetReport>
-  setBudgetLine: (companyId: string, year: number, month: number, input: { accountCode: string; costCenterCode: string | null; annualAmount: number }) => Promise<BudgetReport>
+  setBudgetLine: (companyId: string, year: number, month: number, input: { accountCode: string; costCenterCode: string | null; annualAmount: number; monthlyAmounts?: number[] }) => Promise<BudgetReport>
+  copyBudget: (companyId: string, year: number, month: number, input: { source: 'orcamento' | 'realizado'; sourceYear: number; adjustmentPercent: number }) => Promise<BudgetReport>
   operatingMap: (companyId: string, year: number) => Promise<OperatingMap>
   financialRatios: (companyId: string, params: { from: string; to: string }) => Promise<FinancialRatios>
   cashFlowStatement: (companyId: string, params: { from: string; to: string }) => Promise<CashFlowStatement>
@@ -1034,6 +1035,15 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
     setBudgetLine: async (companyId, year, month, input) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/budget?year=${year}&month=${month}`, {
         method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as BudgetReport
+    },
+    copyBudget: async (companyId, year, month, input) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/budget/copy?year=${year}&month=${month}`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       })
