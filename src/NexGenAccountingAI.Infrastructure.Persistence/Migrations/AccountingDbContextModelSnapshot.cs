@@ -1223,6 +1223,140 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("VatReturnFiling", "accounting");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Banking.BankStatementImport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ClosingBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateOnly?>("ClosingDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateOnly?>("From")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Iban")
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
+                    b.Property<DateTimeOffset>("ImportedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<int>("LineCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("OpeningBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateOnly?>("To")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("CompanyId", "AccountId", "ClosingDate");
+
+                    b.ToTable("BankStatementImports", "accounting");
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Banking.BankStatementLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal?>("Balance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateOnly>("BookingDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("ImportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LineKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("ReconciledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("ReconciledAutomatically")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ReconciledEntryReference")
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateOnly?>("ValueDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("ImportId");
+
+                    b.HasIndex("CompanyId", "ReconciledEntryReference");
+
+                    b.HasIndex("CompanyId", "AccountId", "BookingDate");
+
+                    b.HasIndex("CompanyId", "AccountId", "LineKey")
+                        .IsUnique();
+
+                    b.ToTable("BankStatementLines", "accounting");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Billing.SalesDocument", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2302,6 +2436,42 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
                         .WithMany()
                         .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Banking.BankStatementImport", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Accounting.LedgerAccount", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Banking.BankStatementLine", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Accounting.LedgerAccount", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NexGenAccountingAI.Domain.Banking.BankStatementImport", null)
+                        .WithMany()
+                        .HasForeignKey("ImportId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

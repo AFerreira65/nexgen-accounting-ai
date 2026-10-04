@@ -1480,6 +1480,10 @@ public sealed class FoundationApiTests
         using var badSalesRule = await client.PutAsync($"{basePath}/sales-entry-rules/23", badSalesRuleBody).ConfigureAwait(false);
         using var notSaftBody = new StringContent("isto não é XML", System.Text.Encoding.UTF8, "application/xml");
         using var notSaft = await client.PostAsync($"{basePath}/sales-documents/import?dryRun=true", notSaftBody).ConfigureAwait(false);
+        using var bankAccounts = await client.GetAsync($"{basePath}/bank-accounts").ConfigureAwait(false);
+        using var notBankBody = new StringContent("a;b\n1;2\n", System.Text.Encoding.UTF8, "text/csv");
+        using var notBank = await client.PostAsync($"{basePath}/bank-statements/import?accountCode=12&dryRun=true", notBankBody).ConfigureAwait(false);
+        using var wrongBankAccount = await client.GetAsync($"{basePath}/bank-statements/lines?accountCode=2111&from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
         using var map = await client.GetAsync($"{basePath}/management/operating-map?year=2026").ConfigureAwait(false);
         var mapPayload = await map.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var ratios = await client.GetAsync($"{basePath}/management/ratios?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
@@ -1525,6 +1529,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, salesRules.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badSalesRule.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, notSaft.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, bankAccounts.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, notBank.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, wrongBankAccount.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, map.StatusCode);
         StringAssert.Contains(mapPayload, "\"label\":\"Resultado líquido do período\"");
         Assert.AreEqual(HttpStatusCode.OK, ratios.StatusCode);

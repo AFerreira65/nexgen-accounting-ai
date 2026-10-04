@@ -874,6 +874,14 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: /Lançamentos sugeridos/ })).toBeInTheDocument()
   })
 
+  it('shows the banks screen (requires the database)', () => {
+    window.history.pushState({}, '', '/bancos')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Bancos', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)

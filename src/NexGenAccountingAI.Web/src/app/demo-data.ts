@@ -837,6 +837,25 @@ export type SalesSuggestedEntry = {
 }
 export type SalesSuggestedEntriesReport = { from: string; to: string; documentCount: number; bookedCount: number; voidedCount: number; readyCount: number; percentagesWithoutRule: number[]; items: SalesSuggestedEntry[] }
 export type SalesEntryRuleRow = { taxPercentage: number; entryTemplateCode: string; entryTemplateName: string; isActive: boolean }
+export type BankAccountRow = { accountCode: string; accountName: string; lineCount: number; unreconciledCount: number; lastMovementDate: string | null; iban: string | null }
+export type BankStatementImportResult = { importId: string | null; format: string; iban: string | null; read: number; imported: number; alreadyExisted: number; invalid: number; invalidRows: { lineNumber: number; reason: string }[]; from: string | null; to: string | null; openingBalance: number | null; closingBalance: number | null; warnings: string[] }
+export type BankBookEntry = { reference: string; entryDate: string; documentReference: string; description: string; amount: number; status: string }
+export type BankStatementLineRow = { id: string; bookingDate: string; valueDate: string | null; description: string; reference: string | null; amount: number; balance: number | null; reconciledEntry: BankBookEntry | null; reconciledAutomatically: boolean }
+export type BankReconciliationReport = {
+  accountCode: string
+  accountName: string
+  date: string
+  bookBalance: number
+  statementBalance: number | null
+  statementBalanceDate: string | null
+  statementOnly: BankStatementLineRow[]
+  bookOnly: BankBookEntry[]
+  reconciledCount: number
+  statementOnlyTotal: number
+  bookOnlyTotal: number
+  expectedStatementBalance: number
+  difference: number | null
+}
 export type SupplierEntryRuleRow = { supplierTaxId: string; supplierName: string | null; entryTemplateCode: string; entryTemplateName: string; description: string | null; isActive: boolean }
 export type StructureItem = { label: string; amount: number; share: number }
 export type ExerciseStructure = { year: number; expenses: StructureItem[]; income: StructureItem[]; topCustomers: StructureItem[]; topSuppliers: StructureItem[] }

@@ -1,3 +1,4 @@
+using NexGenAccountingAI.Application.Banking;
 using NexGenAccountingAI.Application.Efatura;
 using NexGenAccountingAI.Application.Saft;
 using NexGenAccountingAI.Application.Saft.Rules;
@@ -21,6 +22,7 @@ public static class DependencyInjection
         services.AddSingleton<ISaftSchemaValidator, SaftSchemaValidator>();
         services.AddSingleton<ISaftValidationModelReader, SaftValidationModelReader>();
         services.AddSingleton<IEFaturaCsvReader, EFaturaCsvReader>();
+        services.AddSingleton<IBankStatementReader, BankStatementReader>();
 
         services.AddSingleton<ISaftAnalyticalRule, NifCheckDigitRule>();
         services.AddSingleton<ISaftAnalyticalRule, AccountingBasisRule>();

@@ -42,6 +42,7 @@ import { VatCodesPage } from './pages/VatCodesPage'
 import { FiscalTablesPage } from './pages/FiscalTablesPage'
 import { BudgetPage } from './pages/BudgetPage'
 import { SuggestedEntriesPage } from './pages/SuggestedEntriesPage'
+import { BanksPage } from './pages/BanksPage'
 import { FinancialStatementsPage } from './pages/FinancialStatementsPage'
 import { FiscalDossierPage } from './pages/FiscalDossierPage'
 import { DepreciationSchedulePage, FixedAssetsPage } from './pages/FixedAssetsPages'
@@ -89,6 +90,7 @@ export function App() {
             <Route path="/racios" element={<RatiosPage />} />
             <Route path="/orcamento" element={<BudgetPage />} />
             <Route path="/lancamentos-sugeridos" element={<SuggestedEntriesPage />} />
+            <Route path="/bancos" element={<BanksPage />} />
             <Route path="/analises" element={<AnalysesPage />} />
             <Route path="/relatorios-gestao" element={<ManagementReportsPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />

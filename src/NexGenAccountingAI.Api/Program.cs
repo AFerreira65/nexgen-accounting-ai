@@ -1,4 +1,5 @@
 using NexGenAccountingAI.Api;
+using NexGenAccountingAI.Application.Banking;
 using NexGenAccountingAI.Application.CrossCheck;
 using NexGenAccountingAI.Application.Efatura;
 using NexGenAccountingAI.Application.ManagementReports;
@@ -2654,6 +2655,107 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Bancos (F3-19A): extratos importados por conta de depósitos, conciliação e mapa de reconciliação.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-accounts", async (
+        Guid userId, Guid companyId, BankStatementService banks, CancellationToken cancellationToken) =>
+    {
+        var accounts = await banks.ListAccountsAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return accounts is null ? Results.NotFound() : Results.Ok(accounts);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-statements/import", async (
+        Guid userId,
+        Guid companyId,
+        HttpRequest request,
+        BankStatementService banks,
+        CancellationToken cancellationToken,
+        string? accountCode,
+        bool? dryRun,
+        string? fileName) =>
+    {
+        var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (maxBodySize is { IsReadOnly: false })
+        {
+            maxBodySize.MaxRequestBodySize = null;
+        }
+
+        try
+        {
+            var result = await banks
+                .ImportAsync(userId, companyId, accountCode ?? string.Empty, request.Body,
+                    string.IsNullOrWhiteSpace(fileName) ? "(sem nome)" : fileName, dryRun ?? false, cancellationToken)
+                .ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }
+        catch (Exception exception) when (exception is BankStatementFormatException or ArgumentException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["extrato"] = [exception.Message] });
+        }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-statements/lines", async (
+        Guid userId, Guid companyId, string? accountCode, DateOnly from, DateOnly to, BankStatementService banks, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var lines = await banks.ListLinesAsync(userId, companyId, accountCode ?? string.Empty, from, to, cancellationToken).ConfigureAwait(false);
+            return lines is null ? Results.NotFound() : Results.Ok(lines);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["extrato"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-statements/auto-reconcile", async (
+        Guid userId, Guid companyId, string? accountCode, DateOnly from, DateOnly to, BankStatementService banks, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var matched = await banks.AutoReconcileAsync(userId, companyId, accountCode ?? string.Empty, from, to, cancellationToken).ConfigureAwait(false);
+            return matched is null ? Results.NotFound() : Results.Ok(new { matched });
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["extrato"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-statements/lines/{lineId:guid}/reconciliation", async (
+        Guid userId, Guid companyId, Guid lineId, BankReconcileRequest request, BankStatementService banks, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var line = await banks.ReconcileAsync(userId, companyId, lineId, request?.EntryReference ?? string.Empty, cancellationToken).ConfigureAwait(false);
+            return line is null ? Results.NotFound() : Results.Ok(line);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["conciliacao"] = [exception.Message] });
+        }
+    });
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-statements/lines/{lineId:guid}/reconciliation", async (
+        Guid userId, Guid companyId, Guid lineId, BankStatementService banks, CancellationToken cancellationToken) =>
+    {
+        var done = await banks.UnreconcileAsync(userId, companyId, lineId, cancellationToken).ConfigureAwait(false);
+        return done is true ? Results.NoContent() : Results.NotFound();
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-statements/reconciliation", async (
+        Guid userId, Guid companyId, string? accountCode, DateOnly date, BankStatementService banks, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var report = await banks.ReconciliationAsync(userId, companyId, accountCode ?? string.Empty, date, cancellationToken).ConfigureAwait(false);
+            return report is null ? Results.NotFound() : Results.Ok(report);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["extrato"] = [exception.Message] });
+        }
+    });
+
     // Estrutura do exercício: gastos e rendimentos por natureza, maiores clientes e fornecedores.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/structure", async (
         Guid userId, Guid companyId, int year, FinancialStatementsService statements, CancellationToken cancellationToken) =>
@@ -4448,6 +4550,8 @@ public sealed record SupplierEntryRuleRequest(string? EntryTemplateCode, string?
 public sealed record FinalizeSalesSuggestedEntriesRequest(IReadOnlyList<Guid>? DocumentIds);
 
 public sealed record SalesEntryRuleRequest(string? EntryTemplateCode, bool IsActive = true);
+
+public sealed record BankReconcileRequest(string? EntryReference);
 
 public sealed record VatCodeRequest(
     string? Code,

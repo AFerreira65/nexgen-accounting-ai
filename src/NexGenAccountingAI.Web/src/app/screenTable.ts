@@ -41,6 +41,7 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/racios': { schema: 'accounting', name: 'JournalEntryLines' },
   '/orcamento': { schema: 'accounting', name: 'BudgetLines' },
   '/lancamentos-sugeridos': { schema: 'accounting', name: 'SupplierEntryRules' },
+  '/bancos': { schema: 'accounting', name: 'BankStatementLines' },
   '/lancamentos-tipo': { schema: 'accounting', name: 'EntryTemplates' },
   '/saldos-terceiros': { schema: 'accounting', name: 'JournalEntryLines' },
   '/terceiros': { schema: 'accounting', name: 'Parties' },

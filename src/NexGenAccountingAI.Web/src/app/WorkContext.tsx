@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type BalanceSheetStatement, type BudgetReport, type SuggestedEntriesReport, type SalesDocumentsImportResult, type SalesSuggestedEntriesReport, type SalesEntryRuleRow, type SuggestedEntryOutcome, type SupplierEntryRuleRow, type ExerciseStructure, type PartyAging, type VatSettlementEntryPreview, type FiscalDossier, type WithholdingReport, type IesAnnexA, type Modelo22Return, type FixedAssetRow, type DepreciationSchedule, type RecapitulativeStatement, type VatDeclaration, type OperatingMap, type FinancialRatios, type MonthlyEvolution, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type AppliedTemplate, type SaftExportReport, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type BalanceSheetStatement, type BudgetReport, type SuggestedEntriesReport, type BankAccountRow, type BankStatementImportResult, type BankStatementLineRow, type BankReconciliationReport, type SalesDocumentsImportResult, type SalesSuggestedEntriesReport, type SalesEntryRuleRow, type SuggestedEntryOutcome, type SupplierEntryRuleRow, type ExerciseStructure, type PartyAging, type VatSettlementEntryPreview, type FiscalDossier, type WithholdingReport, type IesAnnexA, type Modelo22Return, type FixedAssetRow, type DepreciationSchedule, type RecapitulativeStatement, type VatDeclaration, type OperatingMap, type FinancialRatios, type MonthlyEvolution, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type AppliedTemplate, type SaftExportReport, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -142,6 +142,13 @@ type WorkContextValue = WorkContextData & {
   salesEntryRules: (companyId: string) => Promise<SalesEntryRuleRow[]>
   saveSalesEntryRule: (companyId: string, percentage: number, input: { entryTemplateCode: string; isActive: boolean }) => Promise<SalesEntryRuleRow>
   deleteSalesEntryRule: (companyId: string, percentage: number) => Promise<void>
+  bankAccounts: (companyId: string) => Promise<BankAccountRow[]>
+  importBankStatement: (companyId: string, accountCode: string, file: File, dryRun: boolean) => Promise<BankStatementImportResult>
+  bankStatementLines: (companyId: string, accountCode: string, range: { from: string; to: string }) => Promise<BankStatementLineRow[]>
+  autoReconcileBank: (companyId: string, accountCode: string, range: { from: string; to: string }) => Promise<number>
+  reconcileBankLine: (companyId: string, lineId: string, entryReference: string) => Promise<BankStatementLineRow>
+  unreconcileBankLine: (companyId: string, lineId: string) => Promise<void>
+  bankReconciliation: (companyId: string, accountCode: string, date: string) => Promise<BankReconciliationReport>
   operatingMap: (companyId: string, year: number) => Promise<OperatingMap>
   financialRatios: (companyId: string, params: { from: string; to: string }) => Promise<FinancialRatios>
   cashFlowStatement: (companyId: string, params: { from: string; to: string }) => Promise<CashFlowStatement>
@@ -1153,6 +1160,53 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
     deleteSalesEntryRule: async (companyId, percentage) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/sales-entry-rules/${percentage}`, { method: 'DELETE' })
       if (!response.ok) throw new Error(await problemMessage(response))
+    },
+    bankAccounts: async (companyId) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/bank-accounts`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as BankAccountRow[]
+    },
+    importBankStatement: async (companyId, accountCode, file, dryRun) => {
+      const params = new URLSearchParams({ accountCode, fileName: file.name })
+      if (dryRun) params.set('dryRun', 'true')
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/bank-statements/import?${params}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/octet-stream' },
+        body: file,
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as BankStatementImportResult
+    },
+    bankStatementLines: async (companyId, accountCode, range) => {
+      const params = new URLSearchParams({ accountCode, from: range.from, to: range.to })
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/bank-statements/lines?${params}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as BankStatementLineRow[]
+    },
+    autoReconcileBank: async (companyId, accountCode, range) => {
+      const params = new URLSearchParams({ accountCode, from: range.from, to: range.to })
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/bank-statements/auto-reconcile?${params}`, { method: 'POST' })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return (await response.json() as { matched: number }).matched
+    },
+    reconcileBankLine: async (companyId, lineId, entryReference) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/bank-statements/lines/${lineId}/reconciliation`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entryReference }),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as BankStatementLineRow
+    },
+    unreconcileBankLine: async (companyId, lineId) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/bank-statements/lines/${lineId}/reconciliation`, { method: 'DELETE' })
+      if (!response.ok) throw new Error(await problemMessage(response))
+    },
+    bankReconciliation: async (companyId, accountCode, date) => {
+      const params = new URLSearchParams({ accountCode, date })
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/bank-statements/reconciliation?${params}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as BankReconciliationReport
     },
     exerciseStructure: async (companyId, year) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/management/structure?year=${year}`)
