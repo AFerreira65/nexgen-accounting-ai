@@ -906,6 +906,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
+  it('shows the obligations calendar screen (requires the database)', () => {
+    window.history.pushState({}, '', '/obrigacoes')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Calendário de obrigações', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)

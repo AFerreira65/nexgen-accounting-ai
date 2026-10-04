@@ -39,7 +39,8 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | E | **F3-24** | Orçamento | **Concluído** — [`F3-24`](F3-24-BUDGET.md); F3-24A (orçamento anual por conta e centro de custo, com desvios), F3-24B (valores por mês e cópia do orçamento ou do realizado de outro exercício) e F3-24C (o orçamento no mapa de exploração, por rubrica) feitos |
 | E | **F3-25** | Assistente de gestão | **Em curso** — [`F3-25`](F3-25-MANAGEMENT-ASSISTANT.md); F3-25A (previsão de tesouraria por critérios à vista: documentos em aberto, prazos e gastos fixos) feito; a conversa já existe na pergunta livre do F2-05; faltam o índice de saúde e a comparação setorial (sem fonte de referência) |
 | E | **F3-26** | Relatório para o empresário | **Em curso** — [`F3-26`](F3-26-OWNER-REPORT.md); F3-26A (relatório do mês sem IA: números com o homólogo, posição, frases e alertas factuais, gráficos, impressão) feito; a geração automática mantém a fronteira do F2-05E |
-| F | F3-27 … F3-28 | Gabinete: calendário de obrigações e painel | Por especificar |
+| F | **F3-27** | Calendário de obrigações | **Em curso** — [`F3-27`](F3-27-OBLIGATIONS-CALENDAR.md); F3-27A (prazos confirmados no texto legal, aplicados pelos dados da empresa, com estado, entrega, nota e prorrogação; alerta nas Tarefas) feito; faltam a comunicação de faturas e de inventários, o Imposto do Selo, o dossier fiscal e o RCBE |
+| F | F3-28 | Painel do gabinete | Por especificar |
 
 O **Bloco A está fechado** (2026-10-03); o F3-04B ficou resolvido no Modelo 22 (F3-10B). A ordem acordada: Bloco A primeiro; depois F3-06 e F3-07, com os gráficos
 (F3-22/23) em paralelo; a seguir o resto do Bloco B; o Bloco C assim que houver

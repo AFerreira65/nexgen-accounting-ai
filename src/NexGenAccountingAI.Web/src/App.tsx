@@ -46,6 +46,7 @@ import { BanksPage } from './pages/BanksPage'
 import { ArchivePage } from './pages/ArchivePage'
 import { OwnerReportPage } from './pages/OwnerReportPage'
 import { TreasuryForecastPage } from './pages/TreasuryForecastPage'
+import { ObligationsPage } from './pages/ObligationsPage'
 import { FinancialStatementsPage } from './pages/FinancialStatementsPage'
 import { FiscalDossierPage } from './pages/FiscalDossierPage'
 import { DepreciationSchedulePage, FixedAssetsPage } from './pages/FixedAssetsPages'
@@ -97,6 +98,7 @@ export function App() {
             <Route path="/arquivo" element={<ArchivePage />} />
             <Route path="/relatorio-empresario" element={<OwnerReportPage />} />
             <Route path="/previsao-tesouraria" element={<TreasuryForecastPage />} />
+            <Route path="/obrigacoes" element={<ObligationsPage />} />
             <Route path="/analises" element={<AnalysesPage />} />
             <Route path="/relatorios-gestao" element={<ManagementReportsPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />

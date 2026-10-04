@@ -43,6 +43,7 @@ const EXACT: Record<string, ScreenTable | null> = {
   '/lancamentos-sugeridos': { schema: 'accounting', name: 'SupplierEntryRules' },
   '/bancos': { schema: 'accounting', name: 'BankStatementLines' },
   '/arquivo': { schema: 'accounting', name: 'DocumentAttachments' },
+  '/obrigacoes': { schema: 'accounting', name: 'TaxObligationRecords' },
   '/lancamentos-tipo': { schema: 'accounting', name: 'EntryTemplates' },
   '/saldos-terceiros': { schema: 'accounting', name: 'JournalEntryLines' },
   '/terceiros': { schema: 'accounting', name: 'Parties' },

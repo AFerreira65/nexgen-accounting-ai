@@ -2428,6 +2428,37 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Calendário de obrigações (F3-27A): prazos legais com fonte, aplicados pelos dados da empresa, e o estado de cada período.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/obligations", async (
+        Guid userId, Guid companyId, DateOnly from, DateOnly to, ObligationCalendarService obligations, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var calendar = await obligations.CalendarAsync(userId, companyId, from, to, cancellationToken).ConfigureAwait(false);
+            return calendar is null ? Results.NotFound() : Results.Ok(calendar);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/obligations/{code}/{periodKey}", async (
+        Guid userId, Guid companyId, string code, string periodKey, ObligationUpdateRequest request, ObligationCalendarService obligations, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var done = await obligations
+                .UpdateAsync(userId, companyId, code, periodKey, new ObligationUpdate(request?.State ?? string.Empty, request?.DeliveredOn, request?.Note, request?.DueDateOverride), cancellationToken)
+                .ConfigureAwait(false);
+            return done is null ? Results.NotFound() : Results.NoContent();
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["obrigacao"] = [exception.Message] });
+        }
+    });
+
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
         Guid userId, Guid companyId, int year, int? month, BudgetService budget, CancellationToken cancellationToken) =>
@@ -4771,6 +4802,8 @@ public sealed record FiscalDossierItemRequest(string? Status, string? Note);
 public sealed record BudgetLineRequest(string? AccountCode, string? CostCenterCode, decimal AnnualAmount, IReadOnlyList<decimal>? MonthlyAmounts = null);
 
 public sealed record BudgetCopyRequest(string? Source, int SourceYear, decimal? AdjustmentPercent);
+
+public sealed record ObligationUpdateRequest(string? State, DateOnly? DeliveredOn, string? Note, DateOnly? DueDateOverride);
 
 public sealed record FinalizeSuggestedEntriesRequest(IReadOnlyList<Guid>? PurchaseIds);
 

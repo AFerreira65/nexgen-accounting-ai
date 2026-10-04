@@ -49,6 +49,7 @@ internal static class AuditShadowProperties
         typeof(SupplierEntryRule),
         typeof(SalesEntryRule),
         typeof(BankEntryRule),
+        typeof(TaxObligationRecord),
     ];
 
     public static void Apply(ModelBuilder modelBuilder)

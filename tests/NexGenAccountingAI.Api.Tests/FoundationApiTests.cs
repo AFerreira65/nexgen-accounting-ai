@@ -1503,6 +1503,10 @@ public sealed class FoundationApiTests
         using var ownerReport = await client.GetAsync($"{basePath}/management/owner-report?year=2026&month=3").ConfigureAwait(false);
         var ownerReportPayload = await ownerReport.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badOwnerReport = await client.GetAsync($"{basePath}/management/owner-report?year=2026&month=0").ConfigureAwait(false);
+        using var obligations = await client.GetAsync($"{basePath}/obligations?from=2026-05-01&to=2026-05-31").ConfigureAwait(false);
+        var obligationsPayload = await obligations.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badObligationBody = new StringContent("{\"state\":\"Entregue\"}", System.Text.Encoding.UTF8, "application/json");
+        using var badObligation = await client.PutAsync($"{basePath}/obligations/IES/2025", badObligationBody).ConfigureAwait(false);
         using var forecast = await client.GetAsync($"{basePath}/management/treasury-forecast?date=2026-03-31").ConfigureAwait(false);
         var forecastPayload = await forecast.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badForecast = await client.GetAsync($"{basePath}/management/treasury-forecast?date=2026-03-31&months=20").ConfigureAwait(false);
@@ -1567,6 +1571,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, ownerReport.StatusCode);
         StringAssert.Contains(ownerReportPayload, "\"monthLabel\":\"Março de 2026\"");
         Assert.AreEqual(HttpStatusCode.BadRequest, badOwnerReport.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, obligations.StatusCode);
+        StringAssert.Contains(obligationsPayload, "\"code\":\"MOD22\"");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badObligation.StatusCode, "Entregue sem data.");
         Assert.AreEqual(HttpStatusCode.OK, forecast.StatusCode);
         StringAssert.Contains(forecastPayload, "\"collectionDays\":30");
         Assert.AreEqual(HttpStatusCode.BadRequest, badForecast.StatusCode);

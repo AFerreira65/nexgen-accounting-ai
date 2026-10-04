@@ -8,6 +8,7 @@ import {
   Building2,
   Calculator,
   CalendarCheck,
+  CalendarClock,
   ChevronDown,
   CircleGauge,
   Contact,
@@ -78,6 +79,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/mapa-depreciacoes', label: 'Mapa de depreciações', icon: Factory },
   ] },
   { label: 'Fiscal', links: [
+    { to: '/obrigacoes', label: 'Calendário de obrigações', icon: CalendarClock },
     { to: '/iva', label: 'Resumo de IVA', icon: Receipt },
     { to: '/apuramento-iva', label: 'Apuramento de IVA', icon: Receipt },
     { to: '/declaracao-iva', label: 'Declaração de IVA', icon: Receipt },

@@ -1,7 +1,7 @@
-import { ArrowLeftRight, ArrowRight, CircleCheck, Clock3, Receipt, Tags, WandSparkles, X } from 'lucide-react'
+import { ArrowLeftRight, ArrowRight, CalendarClock, CircleCheck, Clock3, Receipt, Tags, WandSparkles, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { euro, formatMovementDate } from '../app/demo-data'
+import { euro, formatMovementDate, type ObligationRow } from '../app/demo-data'
 import { yearRange } from '../app/periods'
 import { useMovementsSummary, useWorkContext } from '../app/WorkContext'
 
@@ -21,7 +21,7 @@ function readDismissedVatCents(companyId: string): number | null {
 }
 
 export function TasksPage() {
-  const { activeCompany, crossCheck, source, taxonomyReview } = useWorkContext()
+  const { activeCompany, crossCheck, obligations, source, taxonomyReview } = useWorkContext()
   // Posição de IVA e movimentos por conferir vêm do resumo da fila de
   // trabalho (`useMovementsSummary`) — agregados no servidor numa empresa
   // ligada à base de dados, sem carregar o histórico inteiro.
@@ -54,7 +54,23 @@ export function TasksPage() {
     return () => controller.abort()
   }, [activeCompany.companyId, crossCheck, fiscalYear, source])
 
-  const nothingPending = pendingCount === 0 && taxonomyPending === 0 && !vatDue && unbooked === 0
+  // Obrigações pendentes em atraso ou a vencer nos próximos 15 dias (calendário de obrigações).
+  const [dueSoon, setDueSoon] = useState<ObligationRow[]>([])
+  useEffect(() => {
+    if (source !== 'database') { setDueSoon([]); return }
+    const controller = new AbortController()
+    const today = new Date()
+    const iso = (date: Date) => date.toISOString().slice(0, 10)
+    const from = new Date(today); from.setDate(from.getDate() - 60)
+    const to = new Date(today); to.setDate(to.getDate() + 15)
+    void obligations(activeCompany.companyId, { from: iso(from), to: iso(to) })
+      .then((calendar) => { if (!controller.signal.aborted) setDueSoon(calendar.rows.filter((row) => row.state === 'Pendente')) })
+      .catch(() => { if (!controller.signal.aborted) setDueSoon([]) })
+    return () => controller.abort()
+  }, [activeCompany.companyId, obligations, source])
+  const todayIso = new Date().toISOString().slice(0, 10)
+
+  const nothingPending = pendingCount === 0 && taxonomyPending === 0 && !vatDue && unbooked === 0 && dueSoon.length === 0
 
   return <div className="page-stack">
     <header className="page-heading"><div><p className="eyebrow">NexGen Accounting AI</p><h1>Tarefas</h1><p>O que precisa da sua atenção na empresa ativa.</p></div></header>
@@ -69,6 +85,16 @@ export function TasksPage() {
         <ArrowRight size={16} />
       </Link>
       <button type="button" className="text-link" onClick={dismissVat}><X size={15} /> Dispensar até à próxima entrega</button>
+    </section>}
+
+    {dueSoon.length > 0 && <section className="panel attention-panel">
+      <div className="panel-heading"><div><h2>Obrigações a cumprir</h2><p>Em atraso ou com prazo nos próximos 15 dias, ainda por entregar.</p></div><span className="attention-count">{dueSoon.length}</span></div>
+      {dueSoon.slice(0, VISIBLE_PENDING).map((row) => <Link className="attention-item" key={`${row.code}-${row.periodKey}`} to="/obrigacoes">
+        <span className={`attention-icon ${row.dueDate < todayIso ? 'rose' : 'amber'}`}><CalendarClock /></span>
+        <span><strong>{row.name}</strong><small>{row.periodLabel} · prazo {formatMovementDate(row.dueDate)}{row.dueDate < todayIso ? ' · em atraso' : ''}</small></span>
+        <ArrowRight size={16} />
+      </Link>)}
+      {dueSoon.length > VISIBLE_PENDING && <Link className="text-link" to="/obrigacoes">Ver todas as {dueSoon.length} <ArrowRight size={15} /></Link>}
     </section>}
 
     {pendingCount > 0 && <section className="panel attention-panel">
