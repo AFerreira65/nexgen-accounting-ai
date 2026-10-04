@@ -37,7 +37,7 @@ Ficam fora de âmbito, por decisão do utilizador (2026-10-03): a faturação
 | E | **F3-22** | Gráficos | **Em curso** — [`F3-22`](F3-22-CHARTS.md); F3-22A (componente de gráficos e ecrã «Evolução mensal») e F3-22B (gráficos de estrutura e gráfico na visão geral) feitos; faltam os gráficos nos relatórios de gestão |
 | E | **F3-23** | Mapa de exploração e rácios | **Concluído** — [`F3-23`](F3-23-RATIOS-OPERATING-MAP.md); F3-23A (mapa de exploração mensal e rácios com fórmula e período homólogo) e F3-23B (idade de saldos de clientes e fornecedores) feitos |
 | E | **F3-24** | Orçamento | **Concluído** — [`F3-24`](F3-24-BUDGET.md); F3-24A (orçamento anual por conta e centro de custo, com desvios), F3-24B (valores por mês e cópia do orçamento ou do realizado de outro exercício) e F3-24C (o orçamento no mapa de exploração, por rubrica) feitos |
-| E | F3-25 | Assistente de gestão com IA | Por especificar |
+| E | **F3-25** | Assistente de gestão | **Em curso** — [`F3-25`](F3-25-MANAGEMENT-ASSISTANT.md); F3-25A (previsão de tesouraria por critérios à vista: documentos em aberto, prazos e gastos fixos) feito; a conversa já existe na pergunta livre do F2-05; faltam o índice de saúde e a comparação setorial (sem fonte de referência) |
 | E | **F3-26** | Relatório para o empresário | **Em curso** — [`F3-26`](F3-26-OWNER-REPORT.md); F3-26A (relatório do mês sem IA: números com o homólogo, posição, frases e alertas factuais, gráficos, impressão) feito; a geração automática mantém a fronteira do F2-05E |
 | F | F3-27 … F3-28 | Gabinete: calendário de obrigações e painel | Por especificar |
 

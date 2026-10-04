@@ -2410,6 +2410,24 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Previsão de tesouraria (F3-25A): documentos em aberto, prazos e gastos fixos à vista.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/treasury-forecast", async (
+        Guid userId, Guid companyId, DateOnly date, int? months, int? collectionDays, int? paymentDays, decimal? fixedMonthly,
+        TreasuryForecastService forecasts, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var forecast = await forecasts
+                .BuildAsync(userId, companyId, date, months ?? 3, collectionDays ?? 30, paymentDays ?? 30, fixedMonthly, cancellationToken)
+                .ConfigureAwait(false);
+            return forecast is null ? Results.NotFound() : Results.Ok(forecast);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["previsao"] = [exception.Message] });
+        }
+    });
+
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
         Guid userId, Guid companyId, int year, int? month, BudgetService budget, CancellationToken cancellationToken) =>

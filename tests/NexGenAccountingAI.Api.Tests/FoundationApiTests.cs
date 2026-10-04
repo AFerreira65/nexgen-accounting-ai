@@ -1503,6 +1503,9 @@ public sealed class FoundationApiTests
         using var ownerReport = await client.GetAsync($"{basePath}/management/owner-report?year=2026&month=3").ConfigureAwait(false);
         var ownerReportPayload = await ownerReport.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var badOwnerReport = await client.GetAsync($"{basePath}/management/owner-report?year=2026&month=0").ConfigureAwait(false);
+        using var forecast = await client.GetAsync($"{basePath}/management/treasury-forecast?date=2026-03-31").ConfigureAwait(false);
+        var forecastPayload = await forecast.Content.ReadAsStringAsync().ConfigureAwait(false);
+        using var badForecast = await client.GetAsync($"{basePath}/management/treasury-forecast?date=2026-03-31&months=20").ConfigureAwait(false);
         using var map = await client.GetAsync($"{basePath}/management/operating-map?year=2026").ConfigureAwait(false);
         var mapPayload = await map.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var ratios = await client.GetAsync($"{basePath}/management/ratios?from=2026-01-01&to=2026-12-31").ConfigureAwait(false);
@@ -1564,6 +1567,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, ownerReport.StatusCode);
         StringAssert.Contains(ownerReportPayload, "\"monthLabel\":\"Março de 2026\"");
         Assert.AreEqual(HttpStatusCode.BadRequest, badOwnerReport.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, forecast.StatusCode);
+        StringAssert.Contains(forecastPayload, "\"collectionDays\":30");
+        Assert.AreEqual(HttpStatusCode.BadRequest, badForecast.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, map.StatusCode);
         StringAssert.Contains(mapPayload, "\"label\":\"Resultado líquido do período\"");
         Assert.AreEqual(HttpStatusCode.OK, ratios.StatusCode);

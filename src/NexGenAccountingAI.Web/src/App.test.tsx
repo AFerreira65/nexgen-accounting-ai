@@ -898,6 +898,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
+  it('shows the treasury forecast screen (requires the database)', () => {
+    window.history.pushState({}, '', '/previsao-tesouraria')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Previsão de tesouraria', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)

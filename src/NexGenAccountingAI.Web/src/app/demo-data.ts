@@ -878,6 +878,22 @@ export type OwnerReport = {
   payables: PartyAging
   budget: BudgetReport | null
 }
+export type TreasuryForecastItem = { partyName: string; partyTaxNumber: string; documentDate: string; expectedDate: string; amount: number }
+export type TreasuryForecast = {
+  date: string
+  openingCash: number
+  collectionDays: number
+  paymentDays: number
+  fixedMonthly: number
+  fixedFromHistory: boolean
+  doubtfulAfterDays: number
+  months: { year: number; month: number; opening: number; receipts: number; payments: number; fixed: number; closing: number }[]
+  doubtfulReceivables: number
+  doubtfulPayables: number
+  topReceipts: TreasuryForecastItem[]
+  topPayments: TreasuryForecastItem[]
+  lowestClosing: number
+}
 export type SupplierEntryRuleRow = { supplierTaxId: string; supplierName: string | null; entryTemplateCode: string; entryTemplateName: string; description: string | null; isActive: boolean }
 export type StructureItem = { label: string; amount: number; share: number }
 export type ExerciseStructure = { year: number; expenses: StructureItem[]; income: StructureItem[]; topCustomers: StructureItem[]; topSuppliers: StructureItem[] }
