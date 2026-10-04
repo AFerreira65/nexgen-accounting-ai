@@ -26,6 +26,7 @@ import {
   FileUp,
   FolderTree,
   Landmark,
+  LayoutDashboard,
   LayoutTemplate,
   ListOrdered,
   Newspaper,
@@ -61,6 +62,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
   { label: 'Trabalho', links: [
     { to: '/', label: 'Visão geral', icon: CircleGauge, end: true },
     { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
+    { to: '/painel-gabinete', label: 'Painel do gabinete', icon: LayoutDashboard },
     { to: '/movimentos', label: 'Movimentos', icon: WalletCards },
     { to: '/lancamentos-sugeridos', label: 'Lançamentos sugeridos', icon: WandSparkles },
     { to: '/bancos', label: 'Bancos', icon: Banknote },

@@ -2459,6 +2459,11 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Painel do gabinete (F3-28A): todas as empresas do utilizador, pelo que precisa de atenção.
+    app.MapGet("/api/v1/development/users/{userId:guid}/firm-dashboard", async (
+        Guid userId, DateOnly? date, FirmDashboardService dashboard, CancellationToken cancellationToken) =>
+        Results.Ok(await dashboard.BuildAsync(userId, date ?? DateOnly.FromDateTime(DateTime.Today), cancellationToken).ConfigureAwait(false)));
+
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
         Guid userId, Guid companyId, int year, int? month, BudgetService budget, CancellationToken cancellationToken) =>

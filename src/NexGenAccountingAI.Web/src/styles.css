@@ -317,6 +317,7 @@ tr.subtotal-row td { border-top: 1px solid #d5dfe1; background: #fbfdfd; color: 
 .period-chip.active { border-color: #0b9286; color: white; background: #0b9286; }
 .statement-note { margin: 0; color: #5d727a; font-size: 11px; }
 .section-title { margin: 6px 0 -6px; font-size: 14px; }
+.muted-zero { color: #9fb0b6; }
 .owner-highlights { display: grid; gap: 8px; margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
 .owner-alerts { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 12px; }
 .owner-alerts li { display: flex; align-items: flex-start; gap: 6px; }

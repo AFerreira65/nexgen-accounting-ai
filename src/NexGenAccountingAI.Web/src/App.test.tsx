@@ -914,6 +914,14 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
+  it('shows the firm dashboard screen (requires the database)', () => {
+    window.history.pushState({}, '', '/painel-gabinete')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Painel do gabinete', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
+  })
+
   it('shows the analytic screens (require the database)', () => {
     window.history.pushState({}, '', '/centros-custo')
     const { unmount } = render(<App />)
