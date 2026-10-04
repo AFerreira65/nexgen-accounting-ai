@@ -1,8 +1,8 @@
-import { Ban, CircleAlert, CircleCheck, Database, Download, FileQuestion, RotateCcw, Trash2, WandSparkles } from 'lucide-react'
+import { Ban, CircleAlert, CircleCheck, Database, Download, FileQuestion, History, RotateCcw, Sparkles, Trash2, WandSparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
-import { euro, formatMovementDate, type EntryTemplateRow, type SuggestedEntriesReport, type SuggestedEntry, type SuggestedEntryOutcome, type SupplierEntryRuleRow } from '../app/demo-data'
+import { euro, formatMovementDate, type EntryTemplateRow, type SuggestedEntriesReport, type SuggestedEntry, type SuggestedEntryOutcome, type SupplierClassificationProposal, type SupplierEntryRuleRow } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
@@ -46,7 +46,7 @@ export function SuggestedEntriesPage() {
 
 /** O separador «Compras»: faturas do e-Fatura, com regra por fornecedor. */
 function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: string }) {
-  const { activeCompany, suggestedEntries, finalizeSuggestedEntries, dismissPurchases, restorePurchases, supplierEntryRules, saveSupplierEntryRule, deleteSupplierEntryRule, entryTemplates } = useWorkContext()
+  const { activeCompany, suggestedEntries, finalizeSuggestedEntries, dismissPurchases, restorePurchases, classificationFromHistory, classificationAiStatus, classificationFromAi, acceptClassification, supplierEntryRules, saveSupplierEntryRule, deleteSupplierEntryRule, entryTemplates } = useWorkContext()
   const companyId = activeCompany.companyId
   const [report, setReport] = useState<SuggestedEntriesReport | null>(null)
   const [rules, setRules] = useState<SupplierEntryRuleRow[]>([])
@@ -55,6 +55,9 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
   const [ruleTemplate, setRuleTemplate] = useState<Record<string, string>>({})
   const [outcomes, setOutcomes] = useState<SuggestedEntryOutcome[]>([])
   const [dismissReason, setDismissReason] = useState('')
+  const [proposals, setProposals] = useState<Record<string, SupplierClassificationProposal>>({})
+  const [accountEdits, setAccountEdits] = useState<Record<string, string>>({})
+  const [aiConfigured, setAiConfigured] = useState(false)
   const [reload, setReload] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -81,6 +84,20 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
     for (const item of items) if (item.entryTemplateCode === null && !seen.has(item.supplierTaxId)) seen.set(item.supplierTaxId, item)
     return [...seen.values()]
   }, [items])
+
+  // As propostas pelo histórico dos fornecedores sem regra, e se a IA está disponível para os outros.
+  useEffect(() => {
+    if (withoutRule.length === 0) { setProposals({}); return }
+    const controller = new AbortController()
+    void Promise.all([classificationFromHistory(companyId, withoutRule.map((item) => item.supplierTaxId)), classificationAiStatus(companyId)])
+      .then(([rows, configured]) => {
+        if (controller.signal.aborted) return
+        setProposals(Object.fromEntries(rows.map((row) => [row.supplierTaxId, row])))
+        setAiConfigured(configured)
+      })
+      .catch(() => { if (!controller.signal.aborted) setProposals({}) })
+    return () => controller.abort()
+  }, [classificationAiStatus, classificationFromHistory, companyId, withoutRule])
 
   async function run(action: () => Promise<void>, fallback: string) {
     setBusy(true)
@@ -137,6 +154,24 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
     setReload((value) => value + 1)
   }, 'Não foi possível guardar a regra.')
 
+  const askAi = (supplierTaxId: string) => void run(async () => {
+    const proposal = await classificationFromAi(companyId, supplierTaxId)
+    setProposals((current) => ({ ...current, [supplierTaxId]: proposal }))
+  }, 'Não foi possível obter a proposta da IA.')
+
+  const accept = (proposal: SupplierClassificationProposal) => void run(async () => {
+    if (!proposal.supplierAccount) throw new Error('A proposta não tem conta de fornecedor: crie o lançamento-tipo à mão.')
+    await acceptClassification(companyId, {
+      supplierTaxId: proposal.supplierTaxId,
+      accountCode: (accountEdits[proposal.supplierTaxId] ?? proposal.account.code).trim(),
+      vatCode: proposal.vatCode?.code ?? null,
+      vatAccountCode: proposal.vatAccount?.code ?? null,
+      supplierAccountCode: proposal.supplierAccount.code,
+      journalCode: proposal.journalCode,
+    })
+    setReload((value) => value + 1)
+  }, 'Não foi possível aceitar a proposta.')
+
   const removeRule = (supplierTaxId: string) => void run(async () => {
     await deleteSupplierEntryRule(companyId, supplierTaxId)
     setReload((value) => value + 1)
@@ -175,7 +210,26 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
     {report && report.purchaseCount > 0 && items.length === 0 && <section className="panel empty-state"><span className="empty-icon"><CircleCheck /></span><h2>Tudo lançado</h2><p>Todas as faturas do período têm lançamento na contabilidade.</p></section>}
 
     {withoutRule.length > 0 && <section className="panel settings-panel">
-      <div className="panel-heading"><div><h2>Fornecedores sem regra</h2><p>Escolha o lançamento-tipo com que as faturas de cada fornecedor passam a ser sugeridas. A contrapartida usa a conta própria do fornecedor quando a ficha de terceiro a tiver.</p></div></div>
+      <div className="panel-heading"><div><h2>Fornecedores sem regra</h2><p>Escolha o lançamento-tipo com que as faturas de cada fornecedor passam a ser sugeridas — ou aceite a proposta tirada das compras já lançadas dele{aiConfigured ? ', ou peça uma à IA quando não as há' : ''}. Aceitar cria o lançamento-tipo «H-NIF» e a regra; pode corrigir a conta antes. A contrapartida usa a conta própria do fornecedor quando a ficha de terceiro a tiver.</p></div></div>
+      {withoutRule.some((item) => proposals[item.supplierTaxId]) || aiConfigured ? <div className="table-wrap"><table>
+        <thead><tr><th>Fornecedor</th><th>Proposta</th><th /></tr></thead>
+        <tbody>{withoutRule.map((item) => {
+          const proposal = proposals[item.supplierTaxId]
+          return <tr key={`proposta-${item.supplierTaxId}`}>
+            <td>{item.supplierName}<small>NIF {item.supplierTaxId}</small></td>
+            <td>{proposal
+              ? <>
+                <span className="inline-check">{proposal.source === 'ia' ? <Sparkles size={14} /> : <History size={14} />} Conta <input aria-label={`Conta proposta para ${item.supplierTaxId}`} value={accountEdits[item.supplierTaxId] ?? proposal.account.code} onChange={(event) => setAccountEdits((current) => ({ ...current, [item.supplierTaxId]: event.target.value }))} style={{ width: '8em' }} />{proposal.account.name ? ` ${proposal.account.name}` : ''}</span>
+                <small>{proposal.vatCode ? `IVA ${proposal.vatCode.code} na ${proposal.vatAccount?.code ?? '—'} · ` : 'sem IVA dedutível · '}fornecedor {proposal.supplierAccount?.code ?? '—'} · diário {proposal.journalCode}{proposal.source === 'historico' ? ` · ${Math.round(proposal.confidence * 100)} % das compras` : ''}</small>
+                <small>{proposal.explanation}</small>
+              </>
+              : <small>Sem compras lançadas deste fornecedor.</small>}</td>
+            <td>{proposal
+              ? <button className="button button-secondary" type="button" disabled={busy || !proposal.supplierAccount} onClick={() => accept(proposal)}>Aceitar proposta</button>
+              : aiConfigured && <button className="button button-secondary" type="button" disabled={busy} onClick={() => askAi(item.supplierTaxId)}><Sparkles size={15} /> Pedir à IA</button>}</td>
+          </tr>
+        })}</tbody>
+      </table></div> : null}
       {templates.length === 0
         ? <p className="save-status"><CircleAlert size={15} /> Ainda não há lançamentos-tipo ativos. Crie um em <Link to="/lancamentos-tipo">Lançamentos-tipo</Link> (por exemplo, gasto + IVA dedutível + fornecedor).</p>
         : <div className="table-wrap"><table>

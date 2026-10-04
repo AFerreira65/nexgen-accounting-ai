@@ -1469,6 +1469,11 @@ public sealed class FoundationApiTests
         using var emptyFinalize = await client.PostAsync($"{basePath}/suggested-entries/finalize", emptyFinalizeBody).ConfigureAwait(false);
         using var emptyDismissBody = new StringContent("{\"purchaseIds\":[],\"reason\":\"Duplicado\"}", System.Text.Encoding.UTF8, "application/json");
         using var emptyDismiss = await client.PostAsync($"{basePath}/suggested-entries/dismiss", emptyDismissBody).ConfigureAwait(false);
+        using var historyBody = new StringContent("{\"supplierTaxIds\":[\"500584095\"]}", System.Text.Encoding.UTF8, "application/json");
+        using var history = await client.PostAsync($"{basePath}/suggested-entries/classification/history", historyBody).ConfigureAwait(false);
+        using var aiStatus = await client.GetAsync($"{basePath}/suggested-entries/classification/ai-status").ConfigureAwait(false);
+        using var badAcceptBody = new StringContent("{\"supplierTaxId\":\"500584095\",\"accountCode\":\"6221\",\"vatCode\":\"X\",\"supplierAccountCode\":\"2211\",\"journalCode\":\"GERAL\"}", System.Text.Encoding.UTF8, "application/json");
+        using var badAccept = await client.PostAsync($"{basePath}/suggested-entries/classification/accept", badAcceptBody).ConfigureAwait(false);
         using var rules = await client.GetAsync($"{basePath}/supplier-entry-rules").ConfigureAwait(false);
         using var badRuleBody = new StringContent("{\"entryTemplateCode\":\"NAO-HA\"}", System.Text.Encoding.UTF8, "application/json");
         using var badRule = await client.PutAsync($"{basePath}/supplier-entry-rules/500584095", badRuleBody).ConfigureAwait(false);
@@ -1532,6 +1537,9 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.BadRequest, badSuggested.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, emptyFinalize.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, emptyDismiss.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, history.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, aiStatus.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, badAccept.StatusCode, "Com código de IVA, falta a conta de IVA.");
         Assert.AreEqual(HttpStatusCode.OK, rules.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badRule.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, missingRule.StatusCode);

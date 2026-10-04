@@ -1,3 +1,4 @@
+using NexGenAccountingAI.Application.Classification;
 using NexGenAccountingAI.Application.ManagementReports;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +28,7 @@ public static class DependencyInjection
                 : options.ApiKey);
 
         services.AddSingleton<IManagementReportNarrator, ClaudeManagementReportNarrator>();
+        services.AddSingleton<IPurchaseClassifier, ClaudePurchaseClassifier>();
         return services;
     }
 }

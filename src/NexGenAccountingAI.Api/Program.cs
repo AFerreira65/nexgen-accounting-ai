@@ -1,5 +1,6 @@
 using NexGenAccountingAI.Api;
 using NexGenAccountingAI.Application.Banking;
+using NexGenAccountingAI.Application.Classification;
 using NexGenAccountingAI.Application.CrossCheck;
 using NexGenAccountingAI.Application.Efatura;
 using NexGenAccountingAI.Application.ManagementReports;
@@ -2521,6 +2522,48 @@ if (applicationEndpointsAvailable)
         return changed is null ? Results.NotFound() : Results.Ok(new { changed });
     });
 
+    // Classificação das compras (F3-21): proposta pelo histórico do fornecedor ou, sem histórico, pela IA; aceitar cria o lançamento-tipo e a regra.
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/suggested-entries/classification/history", async (
+        Guid userId, Guid companyId, ClassificationHistoryRequest request, PurchaseClassificationService classification, CancellationToken cancellationToken) =>
+    {
+        var proposals = await classification.ProposeAsync(userId, companyId, request?.SupplierTaxIds ?? [], cancellationToken).ConfigureAwait(false);
+        return proposals is null ? Results.NotFound() : Results.Ok(proposals);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/suggested-entries/classification/ai-status", (
+        IPurchaseClassifier classifier) => Results.Ok(new { configured = classifier.IsConfigured }));
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/suggested-entries/classification/ai", async (
+        Guid userId, Guid companyId, ClassificationAiRequest request, PurchaseClassificationService classification, IPurchaseClassifier classifier, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var proposal = await classification.ProposeWithAiAsync(userId, companyId, request?.SupplierTaxId ?? string.Empty, classifier, cancellationToken).ConfigureAwait(false);
+            return proposal is null ? Results.NotFound() : Results.Ok(proposal);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["ia"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/suggested-entries/classification/accept", async (
+        Guid userId, Guid companyId, ClassificationAcceptRequest request, PurchaseClassificationService classification, SuggestedEntryService suggestions, EntryTemplateService templates, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var rule = await classification.AcceptChoiceAsync(
+                userId, companyId, request?.SupplierTaxId ?? string.Empty,
+                new SupplierClassificationChoice(request?.AccountCode ?? string.Empty, request?.VatCode, request?.VatAccountCode, request?.SupplierAccountCode ?? string.Empty, request?.JournalCode ?? string.Empty),
+                suggestions, templates, cancellationToken).ConfigureAwait(false);
+            return rule is null ? Results.NotFound() : Results.Ok(rule);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["classificacao"] = [exception.Message] });
+        }
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/supplier-entry-rules", async (
         Guid userId, Guid companyId, SuggestedEntryService suggestions, CancellationToken cancellationToken) =>
     {
@@ -4699,6 +4742,13 @@ public sealed record BudgetCopyRequest(string? Source, int SourceYear, decimal? 
 public sealed record FinalizeSuggestedEntriesRequest(IReadOnlyList<Guid>? PurchaseIds);
 
 public sealed record DismissPurchasesRequest(IReadOnlyList<Guid>? PurchaseIds, string? Reason);
+
+public sealed record ClassificationHistoryRequest(IReadOnlyList<string>? SupplierTaxIds);
+
+public sealed record ClassificationAiRequest(string? SupplierTaxId);
+
+public sealed record ClassificationAcceptRequest(
+    string? SupplierTaxId, string? AccountCode, string? VatCode, string? VatAccountCode, string? SupplierAccountCode, string? JournalCode);
 
 public sealed record SupplierEntryRuleRequest(string? EntryTemplateCode, string? Description, bool IsActive = true);
 
