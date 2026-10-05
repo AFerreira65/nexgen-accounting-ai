@@ -245,12 +245,20 @@ app.MapGet("/api/v1/auth/me", (HttpContext context) => Results.Ok(new
 var applicationEndpointsAvailable = true;
 if (applicationEndpointsAvailable)
 {
+    // O cadastro visto por quem pede: só os gabinetes e as empresas a que tem
+    // acesso ativo; os acessos dos outros utilizadores, só nas empresas que administra.
     app.MapGet("/api/v1/development/organization", async (
+        ClaimsPrincipal principal,
         AccountingDbContext context,
         CancellationToken cancellationToken) =>
     {
+        var actingUserId = SessionUserId(principal);
+        bool Visible(Company company) => company.UserMemberships.Any(membership => membership.UserId == actingUserId && membership.IsActive);
+        bool Manages(Company company) => company.UserMemberships.Any(membership =>
+            membership.UserId == actingUserId && membership.IsActive && OrganizationAdminService.IsManager(membership.Role));
         var firmEntities = await context.AccountingFirms
             .AsNoTracking()
+            .Where(item => item.Companies.Any(company => company.UserMemberships.Any(membership => membership.UserId == actingUserId && membership.IsActive)))
             .Include(item => item.Companies)
                 .ThenInclude(company => company.UserMemberships)
                     .ThenInclude(membership => membership.User)
@@ -266,11 +274,14 @@ if (applicationEndpointsAvailable)
             item.Id,
             item.Name,
             item.Slug,
+            CanCreateCompanies = item.Companies.Any(Manages),
             Companies = item.Companies
+                    .Where(Visible)
                     .OrderBy(company => company.LegalName)
                     .Select(company => new
                     {
                         company.Id,
+                        CanManage = Manages(company),
                         company.LegalName,
                         company.TaxRegistrationNumber,
                         Region = company.TaxRegion.ToString(),
@@ -281,6 +292,7 @@ if (applicationEndpointsAvailable)
                         company.City,
                         company.PostalCode,
                         Users = company.UserMemberships
+                            .Where(membership => membership.UserId == actingUserId || Manages(company))
                             .OrderBy(membership => membership.User.DisplayName)
                             .Select(membership => new
                             {
@@ -4433,6 +4445,7 @@ if (applicationEndpointsAvailable)
     });
 
     app.MapPost("/api/v1/development/organization/companies", async (
+        ClaimsPrincipal principal,
         CreateOrganizationCompanyRequest request,
         OrganizationAdminService admin,
         CancellationToken cancellationToken) =>
@@ -4450,16 +4463,20 @@ if (applicationEndpointsAvailable)
         {
             var company = await admin
                 .CreateCompanyAsync(
+                    SessionUserId(principal),
                     request.AccountingFirmId,
                     request.LegalName,
                     request.TaxRegistrationNumber,
                     region,
                     standard,
                     string.IsNullOrWhiteSpace(request.BaseCurrency) ? "EUR" : request.BaseCurrency!,
-                    cancellationToken,
-                    associateUserId: DevelopmentDataSeeder.DemoUserId)
+                    cancellationToken)
                 .ConfigureAwait(false);
             return Results.Ok(company);
+        }
+        catch (OrganizationAccessDeniedException exception)
+        {
+            return OrganizationAccessDenied("company", exception);
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {
@@ -4468,6 +4485,7 @@ if (applicationEndpointsAvailable)
     });
 
     app.MapPut("/api/v1/development/organization/companies/{companyId:guid}", async (
+        ClaimsPrincipal principal,
         Guid companyId,
         UpdateOrganizationCompanyRequest request,
         OrganizationAdminService admin,
@@ -4493,10 +4511,18 @@ if (applicationEndpointsAvailable)
         {
             var company = await admin
                 .UpdateCompanyAsync(
-                    companyId, request.LegalName, region, request.BaseCurrency, request.IsActive, postingLockDate, cancellationToken,
+                    SessionUserId(principal), companyId, request.LegalName, region, request.BaseCurrency, request.IsActive, postingLockDate, cancellationToken,
                     request.AddressDetail, request.City, request.PostalCode)
                 .ConfigureAwait(false);
             return Results.Ok(company);
+        }
+        catch (KeyNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (OrganizationAccessDeniedException exception)
+        {
+            return OrganizationAccessDenied("company", exception);
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {
@@ -4505,14 +4531,19 @@ if (applicationEndpointsAvailable)
     });
 
     app.MapPost("/api/v1/development/organization/users", async (
+        ClaimsPrincipal principal,
         CreateOrganizationUserRequest request,
         OrganizationAdminService admin,
         CancellationToken cancellationToken) =>
     {
         try
         {
-            var user = await admin.CreateUserAsync(request.DisplayName, request.Email, cancellationToken).ConfigureAwait(false);
+            var user = await admin.CreateUserAsync(SessionUserId(principal), request.DisplayName, request.Email, cancellationToken).ConfigureAwait(false);
             return Results.Ok(user);
+        }
+        catch (OrganizationAccessDeniedException exception)
+        {
+            return OrganizationAccessDenied("user", exception);
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {
@@ -4520,8 +4551,11 @@ if (applicationEndpointsAvailable)
         }
     });
 
-    app.MapPut("/api/v1/development/organization/users/{userId:guid}", async (
-        Guid userId,
+    // `{accountId}` e não `{userId}`: o `userId` da rota é, por regra, o da
+    // sessão (CurrentUserMiddleware), e aqui o alvo pode ser outro utilizador.
+    app.MapPut("/api/v1/development/organization/users/{accountId:guid}", async (
+        ClaimsPrincipal principal,
+        Guid accountId,
         UpdateOrganizationUserRequest request,
         OrganizationAdminService admin,
         CancellationToken cancellationToken) =>
@@ -4529,9 +4563,17 @@ if (applicationEndpointsAvailable)
         try
         {
             var user = await admin
-                .UpdateUserAsync(userId, request.DisplayName, request.Email, request.IsActive, cancellationToken)
+                .UpdateUserAsync(SessionUserId(principal), accountId, request.DisplayName, request.Email, request.IsActive, cancellationToken)
                 .ConfigureAwait(false);
             return Results.Ok(user);
+        }
+        catch (KeyNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (OrganizationAccessDeniedException exception)
+        {
+            return OrganizationAccessDenied("user", exception);
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {
@@ -4539,9 +4581,10 @@ if (applicationEndpointsAvailable)
         }
     });
 
-    app.MapPut("/api/v1/development/organization/companies/{companyId:guid}/members/{userId:guid}", async (
+    app.MapPut("/api/v1/development/organization/companies/{companyId:guid}/members/{memberId:guid}", async (
+        ClaimsPrincipal principal,
         Guid companyId,
-        Guid userId,
+        Guid memberId,
         SetMembershipRequest request,
         OrganizationAdminService admin,
         CancellationToken cancellationToken) =>
@@ -4554,9 +4597,17 @@ if (applicationEndpointsAvailable)
         try
         {
             var membership = await admin
-                .SetMembershipAsync(companyId, userId, role, request.IsActive, cancellationToken)
+                .SetMembershipAsync(SessionUserId(principal), companyId, memberId, role, request.IsActive, cancellationToken)
                 .ConfigureAwait(false);
             return Results.Ok(membership);
+        }
+        catch (KeyNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (OrganizationAccessDeniedException exception)
+        {
+            return OrganizationAccessDenied("membership", exception);
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {
@@ -4576,6 +4627,13 @@ await app.RunAsync().ConfigureAwait(false);
 
 public partial class Program
 {
+    /// <summary>O utilizador da sessão: os endpoints só correm autenticados (FallbackPolicy).</summary>
+    private static Guid SessionUserId(ClaimsPrincipal principal) =>
+        Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    private static IResult OrganizationAccessDenied(string field, OrganizationAccessDeniedException exception) =>
+        Results.ValidationProblem(new Dictionary<string, string[]> { [field] = [exception.Message] }, statusCode: StatusCodes.Status403Forbidden);
+
     private static object ToMovementResponse(PostedMovement movement) => new
     {
         Id = movement.Reference,

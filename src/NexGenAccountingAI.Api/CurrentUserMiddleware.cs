@@ -30,6 +30,12 @@ public sealed class CurrentUserMiddleware(RequestDelegate next)
 
             currentUser.UserId = userId;
         }
+        else if (Guid.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var sessionUserId))
+        {
+            // Sem `userId` na rota (o cadastro organizacional, por exemplo), o
+            // carimbo de auditoria fica com o utilizador da sessão.
+            currentUser.UserId = sessionUserId;
+        }
 
         await next(context).ConfigureAwait(false);
     }

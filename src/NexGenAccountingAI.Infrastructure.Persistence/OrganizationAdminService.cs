@@ -31,24 +31,65 @@ public sealed record MembershipData(
     string Role,
     bool IsActive);
 
+/// <summary>Quem pede não pode fazer esta alteração no cadastro (HTTP 403).</summary>
+public sealed class OrganizationAccessDeniedException(string message) : Exception(message);
+
 /// <summary>
-/// Manutenção do cadastro organizacional em desenvolvimento — empresas, utilizadores
-/// e associações. A criação de empresa provisiona o plano standard da norma na mesma
-/// transação e recusa duplicados de NIF.
+/// Manutenção do cadastro organizacional — empresas, utilizadores e associações.
+/// A criação de empresa provisiona o plano standard da norma na mesma transação e
+/// recusa duplicados de NIF.
+/// <para>
+/// Quem pode o quê: cada operação recebe o utilizador da sessão (<c>actingUserId</c>).
+/// Só o dono ou um administrador ativo de uma empresa a altera e gere os acessos
+/// a ela; só um dono dá ou tira a função de dono, e a empresa nunca fica sem um
+/// dono ativo. Criar empresas num gabinete pede quem já administre uma empresa
+/// desse gabinete; criar utilizadores, quem administre alguma empresa. Uma
+/// empresa a que o utilizador não tem acesso responde como inexistente
+/// (<see cref="KeyNotFoundException"/>); com acesso mas sem a função, recusa
+/// (<see cref="OrganizationAccessDeniedException"/>).
+/// </para>
 /// </summary>
 public sealed class OrganizationAdminService(
     CompanyAccountingProvisioner provisioner,
     AccountingDbContext context)
 {
+    private static readonly CompanyUserRole[] ManagerRoles = [CompanyUserRole.Owner, CompanyUserRole.Administrator];
+
+    /// <summary>A função ativa do utilizador na empresa, ou null sem acesso.</summary>
+    public Task<CompanyUserRole?> ActiveRoleAsync(Guid userId, Guid companyId, CancellationToken cancellationToken = default) =>
+        context.CompanyUsers
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId && item.UserId == userId && item.IsActive && item.User.IsActive)
+            .Select(item => (CompanyUserRole?)item.Role)
+            .SingleOrDefaultAsync(cancellationToken);
+
+    /// <summary>Se o utilizador é dono ou administrador ativo da empresa.</summary>
+    public static bool IsManager(CompanyUserRole? role) => role is CompanyUserRole.Owner or CompanyUserRole.Administrator;
+
+    private async Task<CompanyUserRole> RequireManagerAsync(Guid actingUserId, Guid companyId, CancellationToken cancellationToken)
+    {
+        var role = await ActiveRoleAsync(actingUserId, companyId, cancellationToken).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException("A empresa não existe.");
+        return IsManager(role)
+            ? role
+            : throw new OrganizationAccessDeniedException("Só o dono ou um administrador da empresa pode fazer esta alteração.");
+    }
+
+    private Task<bool> ManagesAnyCompanyAsync(Guid actingUserId, Guid? firmId, CancellationToken cancellationToken) =>
+        context.CompanyUsers
+            .AsNoTracking()
+            .AnyAsync(item => item.UserId == actingUserId && item.IsActive && item.User.IsActive &&
+                ManagerRoles.Contains(item.Role) &&
+                (firmId == null || item.Company.AccountingFirmId == firmId), cancellationToken);
     public async Task<CompanyAdminData> CreateCompanyAsync(
+        Guid actingUserId,
         Guid accountingFirmId,
         string legalName,
         string taxRegistrationNumber,
         TaxRegion taxRegion,
         AccountingStandard accountingStandard,
         string baseCurrency,
-        CancellationToken cancellationToken = default,
-        Guid? associateUserId = null)
+        CancellationToken cancellationToken = default)
     {
         var normalizedTaxNumber = (taxRegistrationNumber ?? string.Empty).Trim().ToUpperInvariant();
         if (string.IsNullOrWhiteSpace(normalizedTaxNumber))
@@ -62,6 +103,11 @@ public sealed class OrganizationAdminService(
         if (!firmExists)
         {
             throw new InvalidOperationException("O gabinete indicado não existe.");
+        }
+
+        if (!await ManagesAnyCompanyAsync(actingUserId, accountingFirmId, cancellationToken).ConfigureAwait(false))
+        {
+            throw new OrganizationAccessDeniedException("Só quem é dono ou administrador de uma empresa deste gabinete pode criar empresas nele.");
         }
 
         CompanyAdminData? result = null;
@@ -91,19 +137,9 @@ public sealed class OrganizationAdminService(
             context.Companies.Add(company);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            // Em desenvolvimento, associa o utilizador atual à empresa que acabou de
-            // criar para que ela apareça de imediato no seletor de empresa.
-            if (associateUserId is { } userId)
-            {
-                var userExists = await context.UserAccounts
-                    .AnyAsync(item => item.Id == userId, cancellationToken)
-                    .ConfigureAwait(false);
-                if (userExists)
-                {
-                    context.CompanyUsers.Add(new CompanyUser(company.Id, userId, CompanyUserRole.Owner));
-                    await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                }
-            }
+            // Quem cria fica dono: a empresa aparece logo no seletor e nunca fica sem dono.
+            context.CompanyUsers.Add(new CompanyUser(company.Id, actingUserId, CompanyUserRole.Owner));
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             await provisioner.ProvisionAsync(company.Id, cancellationToken).ConfigureAwait(false);
 
@@ -115,6 +151,7 @@ public sealed class OrganizationAdminService(
     }
 
     public async Task<CompanyAdminData> UpdateCompanyAsync(
+        Guid actingUserId,
         Guid companyId,
         string legalName,
         TaxRegion taxRegion,
@@ -126,6 +163,7 @@ public sealed class OrganizationAdminService(
         string? city = null,
         string? postalCode = null)
     {
+        await RequireManagerAsync(actingUserId, companyId, cancellationToken).ConfigureAwait(false);
         var company = await context.Companies
             .SingleOrDefaultAsync(item => item.Id == companyId, cancellationToken)
             .ConfigureAwait(false)
@@ -155,10 +193,16 @@ public sealed class OrganizationAdminService(
     }
 
     public async Task<UserAdminData> CreateUserAsync(
+        Guid actingUserId,
         string displayName,
         string email,
         CancellationToken cancellationToken = default)
     {
+        if (!await ManagesAnyCompanyAsync(actingUserId, null, cancellationToken).ConfigureAwait(false))
+        {
+            throw new OrganizationAccessDeniedException("Só quem é dono ou administrador de uma empresa pode criar utilizadores.");
+        }
+
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
         var normalizedEmail = email.Trim().ToUpperInvariant();
         var inUse = await context.UserAccounts
@@ -176,6 +220,7 @@ public sealed class OrganizationAdminService(
     }
 
     public async Task<UserAdminData> UpdateUserAsync(
+        Guid actingUserId,
         Guid userId,
         string displayName,
         string email,
@@ -185,7 +230,19 @@ public sealed class OrganizationAdminService(
         var user = await context.UserAccounts
             .SingleOrDefaultAsync(item => item.Id == userId, cancellationToken)
             .ConfigureAwait(false)
-            ?? throw new InvalidOperationException("O utilizador não existe.");
+            ?? throw new KeyNotFoundException("O utilizador não existe.");
+
+        if (userId == actingUserId)
+        {
+            if (!isActive)
+            {
+                throw new InvalidOperationException("Não pode desativar o seu próprio utilizador.");
+            }
+        }
+        else
+        {
+            await RequireManagesUserAsync(actingUserId, userId, cancellationToken).ConfigureAwait(false);
+        }
 
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
         var normalizedEmail = email.Trim().ToUpperInvariant();
@@ -213,21 +270,20 @@ public sealed class OrganizationAdminService(
     }
 
     public async Task<MembershipData> SetMembershipAsync(
+        Guid actingUserId,
         Guid companyId,
         Guid userId,
         CompanyUserRole role,
         bool isActive,
         CancellationToken cancellationToken = default)
     {
-        var companyExists = await context.Companies
-            .AnyAsync(item => item.Id == companyId, cancellationToken)
-            .ConfigureAwait(false);
+        var actingRole = await RequireManagerAsync(actingUserId, companyId, cancellationToken).ConfigureAwait(false);
         var userExists = await context.UserAccounts
             .AnyAsync(item => item.Id == userId, cancellationToken)
             .ConfigureAwait(false);
-        if (!companyExists || !userExists)
+        if (!userExists)
         {
-            throw new InvalidOperationException("A empresa ou o utilizador não existem.");
+            throw new InvalidOperationException("O utilizador não existe.");
         }
 
         var membership = await context.CompanyUsers
@@ -235,6 +291,24 @@ public sealed class OrganizationAdminService(
                 item => item.CompanyId == companyId && item.UserId == userId,
                 cancellationToken)
             .ConfigureAwait(false);
+
+        var wasOwner = membership is { Role: CompanyUserRole.Owner };
+        if (actingRole != CompanyUserRole.Owner && (wasOwner || role == CompanyUserRole.Owner))
+        {
+            throw new OrganizationAccessDeniedException("Só um dono pode dar ou tirar a função de dono, ou alterar o acesso de um dono.");
+        }
+
+        if (membership is { Role: CompanyUserRole.Owner, IsActive: true } && (role != CompanyUserRole.Owner || !isActive))
+        {
+            var otherOwners = await context.CompanyUsers
+                .CountAsync(item => item.CompanyId == companyId && item.UserId != userId &&
+                    item.Role == CompanyUserRole.Owner && item.IsActive && item.User.IsActive, cancellationToken)
+                .ConfigureAwait(false);
+            if (otherOwners == 0)
+            {
+                throw new InvalidOperationException("A empresa ficaria sem nenhum dono ativo: dê primeiro a função de dono a outro utilizador.");
+            }
+        }
         if (membership is null)
         {
             membership = new CompanyUser(companyId, userId, role);
@@ -272,4 +346,50 @@ public sealed class OrganizationAdminService(
         company.AddressDetail,
         company.City,
         company.PostalCode);
+
+    /// <summary>
+    /// Para alterar outro utilizador — o nome, o email ou desativá-lo, o que vale
+    /// em todas as empresas dele — quem pede tem de administrar todas as empresas
+    /// onde ele tem acesso ativo, e ser dono naquelas onde ele é dono. Um
+    /// utilizador ainda sem acessos pode ser alterado por quem administre alguma empresa.
+    /// </summary>
+    private async Task RequireManagesUserAsync(Guid actingUserId, Guid userId, CancellationToken cancellationToken)
+    {
+        var targetRoles = await context.CompanyUsers
+            .AsNoTracking()
+            .Where(item => item.UserId == userId && item.IsActive)
+            .Select(item => new { item.CompanyId, item.Role })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (targetRoles.Count == 0)
+        {
+            if (!await ManagesAnyCompanyAsync(actingUserId, null, cancellationToken).ConfigureAwait(false))
+            {
+                throw new OrganizationAccessDeniedException("Só quem é dono ou administrador de uma empresa pode alterar utilizadores.");
+            }
+
+            return;
+        }
+
+        var companyIds = targetRoles.Select(item => item.CompanyId).ToList();
+        var actingRoles = await context.CompanyUsers
+            .AsNoTracking()
+            .Where(item => item.UserId == actingUserId && item.IsActive && item.User.IsActive && companyIds.Contains(item.CompanyId))
+            .ToDictionaryAsync(item => item.CompanyId, item => item.Role, cancellationToken)
+            .ConfigureAwait(false);
+        if (actingRoles.Count == 0)
+        {
+            throw new KeyNotFoundException("O utilizador não existe.");
+        }
+
+        foreach (var target in targetRoles)
+        {
+            var allowed = actingRoles.TryGetValue(target.CompanyId, out var acting) &&
+                (acting == CompanyUserRole.Owner || (acting == CompanyUserRole.Administrator && target.Role != CompanyUserRole.Owner));
+            if (!allowed)
+            {
+                throw new OrganizationAccessDeniedException("Este utilizador tem acesso a empresas que não administra, ou é dono onde não é: só quem as administra o pode alterar.");
+            }
+        }
+    }
 }

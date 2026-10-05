@@ -4,8 +4,8 @@ import { ACCOUNTING_STANDARDS, accountingStandardName } from '../app/accountingS
 import { useWorkContext } from '../app/WorkContext'
 
 type OrgUser = { userId: string; displayName: string; email: string; role: string; isActive: boolean }
-type OrgCompany = { id: string; legalName: string; taxRegistrationNumber: string; region: string; baseCurrency: string; isActive: boolean; postingLockDate: string | null; addressDetail?: string | null; city?: string | null; postalCode?: string | null; users: OrgUser[] }
-type OrgFirm = { id: string; name: string; slug: string; companies: OrgCompany[] }
+type OrgCompany = { id: string; canManage: boolean; legalName: string; taxRegistrationNumber: string; region: string; baseCurrency: string; isActive: boolean; postingLockDate: string | null; addressDetail?: string | null; city?: string | null; postalCode?: string | null; users: OrgUser[] }
+type OrgFirm = { id: string; name: string; slug: string; canCreateCompanies: boolean; companies: OrgCompany[] }
 
 const REGION_LABELS: Record<string, string> = { Mainland: 'Continente', Azores: 'Açores', Madeira: 'Madeira' }
 
@@ -51,6 +51,9 @@ export function OrganizationPage() {
     return () => controller.abort()
   }, [database, revision])
 
+  // O que o servidor diz que o utilizador pode fazer; é também o servidor que o garante.
+  const creationFirm = firms.find((firm) => firm.canCreateCompanies)
+  const managesAny = firms.some((firm) => firm.companies.some((company) => company.canManage))
   const companies = useMemo(() => firms.flatMap((firm) => firm.companies.map((company) => ({ ...company, firmId: firm.id }))), [firms])
   const users = useMemo(() => {
     const map = new Map<string, OrgUser & { companies: number }>()
@@ -65,7 +68,7 @@ export function OrganizationPage() {
 
   return <div className="page-stack">
     <header className="page-heading">
-      <div><p className="eyebrow">Cadastro organizacional</p><h1>Empresas e utilizadores</h1><p>Gabinetes, empresas e associações de utilizadores. A criação de empresa provisiona o plano standard da norma.</p></div>
+      <div><p className="eyebrow">Cadastro organizacional</p><h1>Empresas e utilizadores</h1><p>As empresas a que tem acesso e os utilizadores delas. Só o dono ou um administrador de uma empresa a altera e vê quem lhe tem acesso; quem cria uma empresa fica dono dela. A criação de empresa provisiona o plano standard da norma.</p></div>
       <span className={`connection-badge ${database ? 'database' : 'demonstration'}`}><Database size={15} />{database ? 'Ligado à base de dados' : 'Modo de demonstração'}</span>
     </header>
 
@@ -81,16 +84,16 @@ export function OrganizationPage() {
 
     {!loadError && <section className="panel">
       <div className="panel-heading"><div><h2><Building2 size={17} /> Empresas</h2><p>{loading ? 'A carregar…' : `${companies.length} ${companies.length === 1 ? 'empresa' : 'empresas'}`}</p></div>
-        {database && firms[0] && <button className="button button-primary" type="button" onClick={() => setEditor({ kind: 'company', company: null, firmId: firms[0].id })}><Plus size={16} /> Nova empresa</button>}</div>
+        {database && creationFirm && <button className="button button-primary" type="button" onClick={() => setEditor({ kind: 'company', company: null, firmId: creationFirm.id })}><Plus size={16} /> Nova empresa</button>}</div>
       <div className="table-wrap"><table><thead><tr><th>Empresa</th><th>NIF</th><th>Região</th><th>Moeda</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
-        {companies.map((company) => <tr key={company.id}><td>{company.legalName}</td><td>{company.taxRegistrationNumber}</td><td>{REGION_LABELS[company.region] ?? company.region}</td><td>{company.baseCurrency}</td><td><span className={`badge ${company.isActive ? 'success' : 'warning'}`}>{company.isActive ? 'Ativa' : 'Inativa'}</span></td><td>{database && <button className="button button-secondary" type="button" onClick={() => setEditor({ kind: 'company', company, firmId: company.firmId })}>Editar</button>}</td></tr>)}
+        {companies.map((company) => <tr key={company.id}><td>{company.legalName}</td><td>{company.taxRegistrationNumber}</td><td>{REGION_LABELS[company.region] ?? company.region}</td><td>{company.baseCurrency}</td><td><span className={`badge ${company.isActive ? 'success' : 'warning'}`}>{company.isActive ? 'Ativa' : 'Inativa'}</span></td><td>{database && company.canManage && <button className="button button-secondary" type="button" onClick={() => setEditor({ kind: 'company', company, firmId: company.firmId })}>Editar</button>}</td></tr>)}
         {!loading && companies.length === 0 && <tr><td colSpan={6} className="empty-state">Ainda não há empresas. Use «Nova empresa» ou importe um SAF-T.</td></tr>}
       </tbody></table></div>
     </section>}
 
     {!loadError && <section className="panel">
       <div className="panel-heading"><div><h2><Users size={17} /> Utilizadores</h2><p>{users.length} {users.length === 1 ? 'utilizador' : 'utilizadores'}</p></div>
-        {database && <button className="button button-primary" type="button" onClick={() => setEditor({ kind: 'user', user: null })}><Plus size={16} /> Novo utilizador</button>}</div>
+        {database && managesAny && <button className="button button-primary" type="button" onClick={() => setEditor({ kind: 'user', user: null })}><Plus size={16} /> Novo utilizador</button>}</div>
       <div className="table-wrap"><table><thead><tr><th>Utilizador</th><th>Email</th><th className="numeric">Empresas</th><th>Estado</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
         {users.map((user) => <tr key={user.userId}><td>{user.displayName}</td><td>{user.email}</td><td className="numeric strong">{user.companies}</td><td><span className={`badge ${user.isActive ? 'success' : 'warning'}`}>{user.isActive ? 'Ativo' : 'Inativo'}</span></td><td>{database && <button className="button button-secondary" type="button" onClick={() => setEditor({ kind: 'user', user: { userId: user.userId, displayName: user.displayName, email: user.email, isActive: user.isActive } })}>Editar</button>}</td></tr>)}
         {!loading && users.length === 0 && <tr><td colSpan={5} className="empty-state">Ainda não há utilizadores.</td></tr>}

@@ -699,8 +699,8 @@ public sealed class DatabaseMigrationTests
                 var admin = adminScope.ServiceProvider.GetRequiredService<OrganizationAdminService>();
 
                 var adminCompany = await admin
-                    .CreateCompanyAsync(firmId, "Empresa de Gabinete, Lda.", "515222000", TaxRegion.Mainland,
-                        AccountingStandard.SncGeneral, "EUR", associateUserId: DevelopmentDataSeeder.DemoUserId)
+                    .CreateCompanyAsync(DevelopmentDataSeeder.DemoUserId, DevelopmentDataSeeder.DemoFirmId, "Empresa de Gabinete, Lda.", "515222000", TaxRegion.Mainland,
+                        AccountingStandard.SncGeneral, "EUR")
                     .ConfigureAwait(false);
                 Assert.AreEqual("515222000", adminCompany.TaxRegistrationNumber);
                 var adminCompanyMembership = await context.CompanyUsers.AsNoTracking()
@@ -710,24 +710,24 @@ public sealed class DatabaseMigrationTests
                 Assert.IsTrue(adminCompanyMembership.IsActive);
 
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                    await admin.CreateCompanyAsync(firmId, "Duplicada", "515222000", TaxRegion.Mainland,
+                    await admin.CreateCompanyAsync(DevelopmentDataSeeder.DemoUserId, DevelopmentDataSeeder.DemoFirmId, "Duplicada", "515222000", TaxRegion.Mainland,
                         AccountingStandard.SncGeneral, "EUR").ConfigureAwait(false));
 
-                var newUser = await admin.CreateUserAsync("Utilizador de Gabinete", "gabinete@teste.invalid").ConfigureAwait(false);
+                var newUser = await admin.CreateUserAsync(DevelopmentDataSeeder.DemoUserId, "Utilizador de Gabinete", "gabinete@teste.invalid").ConfigureAwait(false);
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                    await admin.CreateUserAsync("Outro", "GABINETE@teste.invalid").ConfigureAwait(false));
+                    await admin.CreateUserAsync(DevelopmentDataSeeder.DemoUserId, "Outro", "GABINETE@teste.invalid").ConfigureAwait(false));
 
                 var adminMembership = await admin
-                    .SetMembershipAsync(adminCompany.Id, newUser.Id, CompanyUserRole.Accountant, isActive: true)
+                    .SetMembershipAsync(DevelopmentDataSeeder.DemoUserId, adminCompany.Id, newUser.Id, CompanyUserRole.Accountant, isActive: true)
                     .ConfigureAwait(false);
                 Assert.AreEqual("Accountant", adminMembership.Role);
                 var rerole = await admin
-                    .SetMembershipAsync(adminCompany.Id, newUser.Id, CompanyUserRole.Viewer, isActive: true)
+                    .SetMembershipAsync(DevelopmentDataSeeder.DemoUserId, adminCompany.Id, newUser.Id, CompanyUserRole.Viewer, isActive: true)
                     .ConfigureAwait(false);
                 Assert.AreEqual("Viewer", rerole.Role);
 
                 var updated = await admin
-                    .UpdateCompanyAsync(adminCompany.Id, "Empresa de Gabinete II, Lda.", TaxRegion.Azores, "USD", isActive: false, postingLockDate: new DateOnly(2025, 12, 31))
+                    .UpdateCompanyAsync(DevelopmentDataSeeder.DemoUserId, adminCompany.Id, "Empresa de Gabinete II, Lda.", TaxRegion.Azores, "USD", isActive: false, postingLockDate: new DateOnly(2025, 12, 31))
                     .ConfigureAwait(false);
                 Assert.AreEqual("Empresa de Gabinete II, Lda.", updated.LegalName);
                 Assert.IsFalse(updated.IsActive);

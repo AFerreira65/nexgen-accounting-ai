@@ -599,10 +599,17 @@ public sealed class FoundationApiTests
         StringAssert.Contains(duplicateCompanyPayload, "NIF DEMO-PT-0001");
         Assert.AreEqual(HttpStatusCode.BadRequest, badRegion.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, duplicateUser.StatusCode);
-        Assert.AreEqual(HttpStatusCode.BadRequest, unknownCompany.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, unknownCompany.StatusCode, "Uma empresa a que não tem acesso responde como inexistente.");
         Assert.AreEqual(HttpStatusCode.BadRequest, badRole.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badLockDate.StatusCode);
         StringAssert.Contains(badLockDatePayload, "Data de bloqueio");
+
+        // O cadastro visto pelo utilizador de demonstração: só as empresas dele, que administra.
+        using var organization = await client.GetAsync("/api/v1/development/organization").ConfigureAwait(false);
+        var organizationPayload = await organization.Content.ReadAsStringAsync().ConfigureAwait(false);
+        Assert.AreEqual(HttpStatusCode.OK, organization.StatusCode);
+        StringAssert.Contains(organizationPayload, "\"canManage\":true");
+        StringAssert.Contains(organizationPayload, "\"canCreateCompanies\":true");
     }
 
     [TestMethod]
