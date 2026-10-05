@@ -87,6 +87,11 @@ public sealed class SaftAccountsImportService(ISaftAccountsReader accountsReader
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
+        if (created.Count > 0)
+        {
+            await context.RefreshAfterImportAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         return new SaftAccountsImportResult(created.Count, alreadyExisted, created);
     }
 }

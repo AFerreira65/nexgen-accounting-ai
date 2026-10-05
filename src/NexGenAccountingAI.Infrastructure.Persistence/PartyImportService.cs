@@ -198,6 +198,7 @@ public sealed class PartyImportService(ISaftPartiesReader partiesReader, Account
         if (apply)
         {
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await context.RefreshAfterImportAsync(cancellationToken).ConfigureAwait(false);
         }
 
         return new PartyImportResult(

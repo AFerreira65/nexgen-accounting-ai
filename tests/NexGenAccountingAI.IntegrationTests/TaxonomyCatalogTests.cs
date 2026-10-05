@@ -1,3 +1,4 @@
+using System.Linq;
 using NexGenAccountingAI.Infrastructure.Persistence;
 
 namespace NexGenAccountingAI.IntegrationTests;
@@ -48,5 +49,39 @@ public sealed class TaxonomyCatalogTests
         Assert.IsNull(TaxonomyCatalog.SuggestFor("S", "219"));
         // A synthetic detail account that is not in the annex.
         Assert.IsNull(TaxonomyCatalog.SuggestFor("S", "2111001"));
+    }
+
+    [TestMethod]
+    public void IndexedSuggestionsMatchTheOriginalScan()
+    {
+        // O algoritmo de antes do índice (percorria o catálogo para cada conta).
+        static int? Scan(string reference, string code)
+        {
+            var entries = TaxonomyCatalog.For(reference);
+            var exact = entries.Where(entry => entry.SncAccounts.Contains(code, StringComparer.Ordinal)).ToList();
+            if (exact.Count > 0)
+            {
+                return exact.Count == 1 ? exact[0].Code : null;
+            }
+
+            var byPrefix = entries
+                .Where(entry => entry.SncAccounts.Any(snc => snc.Length == 2 && code.Length > 2 && code.StartsWith(snc, StringComparison.Ordinal)))
+                .ToList();
+            return byPrefix.Count == 1 ? byPrefix[0].Code : null;
+        }
+
+        foreach (var reference in new[] { "S", "M", "N" })
+        {
+            var codes = TaxonomyCatalog.For(reference).SelectMany(entry => entry.SncAccounts)
+                .SelectMany(snc => new[] { snc, snc + "1", snc + "99", snc + "0001" })
+                .Concat(Enumerable.Range(10, 80).Select(ledger => $"{ledger}{ledger}"))
+                .Distinct()
+                .ToList();
+            Assert.IsGreaterThan(1000, codes.Count);
+            foreach (var code in codes)
+            {
+                Assert.AreEqual(Scan(reference, code), TaxonomyCatalog.SuggestFor(reference, code), $"{reference} {code}");
+            }
+        }
     }
 }

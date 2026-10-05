@@ -78,6 +78,13 @@ export function JournalReportPage() {
     return () => controller.abort()
   }, [account, activeCompany.companyId, documentType, fromDate, journal, movements, source, sourceFilter, toDate, user.id, year])
 
+  // As sugestões da conta: só as que começam pelo que está escrito, no máximo 100.
+  // Um plano importado pode ter dezenas de milhares de contas (uma por cliente), e
+  // pô-las todas na lista bloqueava o ecrã mais de 10 segundos.
+  const accountSuggestions = useMemo(() => {
+    const typed = account.trim().toUpperCase()
+    return accountingSetup.accounts.filter((item) => item.allowsPosting && item.code.toUpperCase().startsWith(typed)).slice(0, 100)
+  }, [account, accountingSetup.accounts])
   const balanced = useMemo(() => Math.round((data.totalDebit - data.totalCredit) * 100) === 0, [data.totalDebit, data.totalCredit])
 
   // Uma empresa grande (SAF-T com anos de histórico) tem lançamentos a mais
@@ -110,7 +117,7 @@ export function JournalReportPage() {
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       <label><span className="sr-only">Conta</span><input aria-label="Conta" list="journal-report-accounts" value={account} onChange={(event) => setAccount(event.target.value)} placeholder="Conta" /></label>
-      <datalist id="journal-report-accounts">{accountingSetup.accounts.filter((item) => item.allowsPosting).map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</datalist>
+      <datalist id="journal-report-accounts">{accountSuggestions.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</datalist>
       <label><span className="sr-only">Origem</span><select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="">Todas as origens</option>{ENTRY_SOURCES.map((code) => <option key={code} value={code}>{ENTRY_SOURCE_LABELS[code]}</option>)}</select></label>
       <span className="catalog-count">{data.entries.length} lançamentos</span>
       <button type="button" className="button button-secondary" onClick={exportCsv} disabled={data.entries.length === 0}><Download size={15} /> Exportar CSV</button>

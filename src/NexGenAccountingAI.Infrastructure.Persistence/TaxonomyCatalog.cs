@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -51,37 +52,57 @@ public static class TaxonomyCatalog
             return 1;
         }
 
-        var entries = For(reference);
-        var exact = entries
-            .Where(entry => entry.SncAccounts.Contains(normalized, StringComparer.Ordinal))
-            .ToList();
-        if (exact.Count == 1)
+        // Índice por conta SNC, feito uma vez por referencial: um SAF-T real tem
+        // dezenas de milhares de contas, e percorrer o catálogo para cada uma levava
+        // segundos em cada abertura da aplicação.
+        var index = Indexes.GetOrAdd(reference?.Trim().ToUpperInvariant() ?? string.Empty, key => SuggestIndex.Build(For(key)));
+        if (index.Exact.TryGetValue(normalized, out var exact))
         {
-            return exact[0].Code;
-        }
-
-        if (exact.Count > 1)
-        {
-            return null;
+            return exact.Count == 1 ? exact[0] : null;
         }
 
         // Sem correspondência exata: uma subconta de movimento herda a taxonomia da
         // conta-razão (código de 2 dígitos) de que é prefixo, se for inequívoca. Só
         // se aplica a razões que a taxonomia não subdivide (ex. 11 → 111, 12 → 121).
-        var byPrefix = entries
-            .Select(entry => (entry.Code, Prefix: entry.SncAccounts
-                .Where(snc => snc.Length == 2 && normalized.Length > 2 && normalized.StartsWith(snc, StringComparison.Ordinal))
-                .FirstOrDefault()))
-            .Where(match => match.Prefix is not null)
-            .ToList();
-        if (byPrefix.Count == 0)
+        return normalized.Length > 2 && index.Ledger.TryGetValue(normalized[..2], out var byLedger) && byLedger.Count == 1
+            ? byLedger[0]
+            : null;
+    }
+
+    private static readonly ConcurrentDictionary<string, SuggestIndex> Indexes = new(StringComparer.Ordinal);
+
+    /// <summary>Os códigos de taxonomia que indicam cada conta SNC, e cada razão de 2 dígitos.</summary>
+    private sealed record SuggestIndex(Dictionary<string, List<int>> Exact, Dictionary<string, List<int>> Ledger)
+    {
+        public static SuggestIndex Build(IReadOnlyList<TaxonomyCode> entries)
         {
-            return null;
+            var exact = new Dictionary<string, List<int>>(StringComparer.Ordinal);
+            var ledger = new Dictionary<string, List<int>>(StringComparer.Ordinal);
+            foreach (var entry in entries)
+            {
+                // Uma entrada conta uma vez por conta, mesmo que a repita.
+                foreach (var snc in entry.SncAccounts.Distinct(StringComparer.Ordinal))
+                {
+                    Add(exact, snc, entry.Code);
+                    if (snc.Length == 2)
+                    {
+                        Add(ledger, snc, entry.Code);
+                    }
+                }
+            }
+
+            return new SuggestIndex(exact, ledger);
         }
 
-        var longest = byPrefix.Max(match => match.Prefix!.Length);
-        var best = byPrefix.Where(match => match.Prefix!.Length == longest).ToList();
-        return best.Count == 1 ? best[0].Code : null;
+        private static void Add(Dictionary<string, List<int>> map, string key, int code)
+        {
+            if (!map.TryGetValue(key, out var codes))
+            {
+                map[key] = codes = [];
+            }
+
+            codes.Add(code);
+        }
     }
 
     private static CatalogData Load()

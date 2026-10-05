@@ -145,6 +145,11 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
+        if (imported > 0)
+        {
+            await context.RefreshAfterImportAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         var (companyDebit, companyCredit) = await PeriodTotalsAsync(
             companyId, periodFrom, periodTo, cancellationToken).ConfigureAwait(false);
 
@@ -286,6 +291,7 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
 
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             }).ConfigureAwait(false);
+            await context.RefreshAfterImportAsync(cancellationToken).ConfigureAwait(false);
         }
 
         return new SaftPartyLinkResult(

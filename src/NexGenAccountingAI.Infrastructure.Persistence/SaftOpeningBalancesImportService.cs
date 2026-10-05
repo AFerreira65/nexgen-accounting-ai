@@ -129,6 +129,7 @@ public sealed class SaftOpeningBalancesImportService(
             documentTypeCode: OpeningDocumentType,
             source: EntrySource.Opening).ConfigureAwait(false);
 
+        await context.RefreshAfterImportAsync(cancellationToken).ConfigureAwait(false);
         return new SaftOpeningBalancesImportResult(
             posted.Lines.Count,
             posted.Lines.Sum(line => line.Debit),
