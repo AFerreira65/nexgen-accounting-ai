@@ -35,6 +35,7 @@ internal static class DataDictionaryText
         ["SaftValidationRun"] = "Registo de uma validação de ficheiro SAF-T (esquema + regras analíticas).",
         ["EFaturaPurchase"] = "Fatura de compra conhecida pelo Portal e-Fatura, importada de um CSV, para o cruzamento.",
         ["SavedAnalysis"] = "Definição de uma análise configurável guardada por uma empresa (origem, colunas, filtros, agrupamentos, totais).",
+        ["FinancialMap"] = "Mapa desenhado pelo utilizador para uma empresa (linhas de contas e fórmulas por colunas), calculado pelo motor de mapas de cada vez que é pedido.",
         ["ReportTemplate"] = "Configuração de impressão de um relatório fixo numa empresa (linhas de cabeçalho, identificação, orientação).",
         ["ManagementReport"] = "Relatório de gestão gerado por IA: o tipo, o período, o modelo, e o dossiê e o resultado guardados.",
         ["CompanyAiSettings"] = "Interruptor dos relatórios de gestão com IA de uma empresa (ativo, geração mensal automática).",
@@ -203,6 +204,9 @@ internal static class DataDictionaryText
         ["SavedAnalysis.Name"] = "Nome da análise (único por empresa).",
         ["SavedAnalysis.Description"] = "Descrição livre da análise.",
         ["SavedAnalysis.DefinitionJson"] = "A definição da análise (origem, colunas, filtros, agrupamentos, ordenação, agregados) em JSON.",
+        ["FinancialMap.Name"] = "Nome do mapa (único por empresa).",
+        ["FinancialMap.Description"] = "Descrição livre do mapa.",
+        ["FinancialMap.DefinitionJson"] = "A definição do mapa (linhas, colunas, fórmulas) em JSON.",
 
         ["ReportTemplate.ReportKey"] = "Chave do relatório a que o modelo se aplica (balancete, razao, …).",
         ["ReportTemplate.HeaderLinesJson"] = "Linhas de cabeçalho livres, em JSON (lista de texto).",

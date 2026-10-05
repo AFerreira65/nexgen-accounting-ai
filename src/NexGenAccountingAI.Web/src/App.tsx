@@ -15,6 +15,8 @@ import { SettingsPage } from './pages/SettingsPage'
 import { TasksPage } from './pages/TasksPage'
 import { TrialBalancePage } from './pages/TrialBalancePage'
 import { BalancetePage } from './pages/BalancetePage'
+import { MapsPage } from './pages/MapsPage'
+import { MapPage } from './pages/MapPage'
 import { useWorkContext } from './app/WorkContext'
 import { PartyBalancesPage } from './pages/PartyBalancesPage'
 import { VatSummaryPage } from './pages/VatSummaryPage'
@@ -116,6 +118,10 @@ export function App() {
             <Route path="/organizacao" element={<OrganizationPage />} />
             <Route path="/balancete" element={<BalanceteRoute />} />
             <Route path="/balancete/lista" element={<TrialBalancePage />} />
+            <Route path="/mapas" element={<MapsPage />} />
+            <Route path="/mapas/novo" element={<MapPage />} />
+            <Route path="/mapas/modelo/:template" element={<MapPage />} />
+            <Route path="/mapas/:id" element={<MapPage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />
             <Route path="/balanco" element={<BalanceSheetPage />} />
             <Route path="/iva" element={<VatSummaryPage />} />

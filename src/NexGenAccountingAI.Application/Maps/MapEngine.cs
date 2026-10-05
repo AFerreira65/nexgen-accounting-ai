@@ -229,35 +229,53 @@ public static partial class MapEngine
     }
 
     /// <summary>
-    /// As contas com valor que nenhuma linha de contas apanha, e as que mais de uma
-    /// linha visível apanha — o que faz um balanço não fechar.
+    /// As contas com valor que nenhuma linha de contas apanha (só nas classes que o mapa
+    /// toca — uma demonstração de resultados não tem de apanhar a caixa), e as que mais
+    /// de uma linha visível apanha — o que faz um balanço não fechar. Uma conta numa
+    /// linha de saldo devedor e noutra de saldo credor (o Estado no ativo e no passivo)
+    /// não é repetição.
     /// </summary>
     public static (IReadOnlyList<string> Uncovered, IReadOnlyList<string> Repeated) Coverage(
         MapDefinition definition, MapRequest request, IReadOnlyList<MapAccount> accounts)
     {
         ArgumentNullException.ThrowIfNull(definition);
-        var selectors = definition.Rows
+        var rows = definition.Rows
             .Where(row => row.Kind == MapRowKind.Accounts && !row.Hidden)
-            .Select(row => MapAccountSelector.Parse(row.Accounts))
+            .Select(row => (Selector: MapAccountSelector.Parse(row.Accounts), row.Measure))
             .ToList();
+        var classes = rows.SelectMany(row => row.Selector.Classes).ToHashSet();
         var uncovered = new List<string>();
         var repeated = new List<string>();
         var whole = new MapColumn("_", "_", Scope: MapScope.YearToDate);
         foreach (var account in accounts)
         {
-            var hits = selectors.Count(selector => selector.Matches(account.Code));
-            if (hits == 1)
+            if (account.Code.Length == 0 || !classes.Contains(account.Code[0]))
             {
                 continue;
             }
 
-            if (hits > 1)
+            var hits = rows.Where(row => row.Selector.Matches(account.Code)).Select(row => row.Measure).ToList();
+            if (hits.Count == 1)
+            {
+                continue;
+            }
+
+            if (hits.Count == 0)
+            {
+                if (Amount(account, whole, MapMeasure.Debit, request) != 0m || Amount(account, whole, MapMeasure.Credit, request) != 0m)
+                {
+                    uncovered.Add(account.Code);
+                }
+
+                continue;
+            }
+
+            var debitSide = hits.Count(measure => measure == MapMeasure.DebitBalance);
+            var creditSide = hits.Count(measure => measure == MapMeasure.CreditBalance);
+            var both = hits.Count - debitSide - creditSide;
+            if (both > 1 || debitSide > 1 || creditSide > 1 || (both > 0 && hits.Count > 1))
             {
                 repeated.Add(account.Code);
-            }
-            else if (Amount(account, whole, MapMeasure.Debit, request) != 0m || Amount(account, whole, MapMeasure.Credit, request) != 0m)
-            {
-                uncovered.Add(account.Code);
             }
         }
 

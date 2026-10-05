@@ -1720,6 +1720,86 @@ if (applicationEndpointsAvailable)
             .ConfigureAwait(false);
     });
 
+    // Mapas desenhados pelo utilizador (F4B-03): os guardados, os modelos do sistema,
+    // correr e explicar. Correr e explicar são leituras; gravar é de quem edita.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/maps", async (
+        Guid userId, Guid companyId, FinancialMapService maps, CancellationToken cancellationToken) =>
+    {
+        var list = await maps.ListAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Json(new
+        {
+            Maps = list,
+            Templates = NexGenAccountingAI.Application.Maps.MapTemplates.All.Select(template => new { template.Key, template.Name, template.Description, template.ExcludeClosing }),
+            ColumnSets = NexGenAccountingAI.Application.Maps.MapColumnSets.All,
+        }, NexGenAccountingAI.Application.Maps.MapJson.Options);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/maps/templates/{key}", (string key) =>
+        NexGenAccountingAI.Application.Maps.MapTemplates.Find(key) is { } template
+            ? Results.Json(template, NexGenAccountingAI.Application.Maps.MapJson.Options)
+            : Results.NotFound());
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/maps", async (
+        Guid userId, Guid companyId, HttpRequest request, FinancialMapService maps, CancellationToken cancellationToken) =>
+    {
+        var body = await ReadMapRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        if (body?.Definition is null || string.IsNullOrWhiteSpace(body.Name))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["mapa"] = ["Indique o nome e a definição do mapa."] });
+        }
+
+        var result = await maps.CreateAsync(userId, companyId, body.Name, body.Description, body.Definition, cancellationToken).ConfigureAwait(false);
+        return MapWriteResult(result);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/maps/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, HttpRequest request, FinancialMapService maps, CancellationToken cancellationToken) =>
+    {
+        var body = await ReadMapRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        if (body?.Definition is null || string.IsNullOrWhiteSpace(body.Name))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["mapa"] = ["Indique o nome e a definição do mapa."] });
+        }
+
+        var result = await maps.UpdateAsync(userId, companyId, id, body.Name, body.Description, body.Definition, cancellationToken).ConfigureAwait(false);
+        return MapWriteResult(result);
+    });
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/maps/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, FinancialMapService maps, CancellationToken cancellationToken) =>
+    {
+        var deleted = await maps.DeleteAsync(userId, companyId, id, cancellationToken).ConfigureAwait(false);
+        return deleted ? Results.NoContent() : Results.NotFound();
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/maps/run", async (
+        Guid userId, Guid companyId, HttpRequest request, FinancialMapService maps, CancellationToken cancellationToken) =>
+    {
+        var body = await ReadMapRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        if (body?.Definition is null || body.Year is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["mapa"] = ["Indique a definição do mapa e o exercício."] });
+        }
+
+        try
+        {
+            var period = new NexGenAccountingAI.Application.Maps.MapRequest(body.Year.Value, body.FromMonth ?? 1, body.ToMonth ?? 12, body.IncludeClosing ?? false);
+            if (!string.IsNullOrWhiteSpace(body.RowCode))
+            {
+                var accounts = await maps.ExplainAsync(userId, companyId, body.Definition, period, body.RowCode, cancellationToken).ConfigureAwait(false);
+                return accounts is null ? Results.NotFound() : Results.Json(accounts, NexGenAccountingAI.Application.Maps.MapJson.Options);
+            }
+
+            var result = await maps.RunAsync(userId, companyId, body.Definition, period, cancellationToken).ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Json(result, NexGenAccountingAI.Application.Maps.MapJson.Options);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["mapa"] = [exception.Message] });
+        }
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Corre um mapa sem o gravar."));
+
     // Tabelas fiscais por ano: valores propostos, com a fonte de cada grupo.
     app.MapGet("/api/v1/development/fiscal-tables/{year:int}", (int year) =>
         NexGenAccountingAI.Application.Fiscal.FiscalTableCatalog.For(year) is { } table ? Results.Ok(table) : Results.NotFound());
@@ -5061,6 +5141,35 @@ public partial class Program
         }
     }
 
+    private static async Task<SaveMapRequest?> ReadMapRequestAsync(HttpRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await request
+                .ReadFromJsonAsync<SaveMapRequest>(NexGenAccountingAI.Application.Maps.MapJson.Options, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static IResult MapWriteResult(FinancialMapWriteResult result)
+    {
+        if (result.NotFound)
+        {
+            return Results.NotFound();
+        }
+
+        if (result.Errors.Count > 0)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["mapa"] = [.. result.Errors] });
+        }
+
+        return Results.Json(result.Saved, NexGenAccountingAI.Application.Maps.MapJson.Options);
+    }
+
     private static IResult AnalysisWriteResult(SavedAnalysisWriteResult result)
     {
         if (result.NotFound)
@@ -5173,6 +5282,17 @@ public sealed record CreateDocumentTypeRequest(string Code, string Name, string 
 public sealed record UpdateDocumentTypeRequest(string Name, string DefaultJournalCode, bool IsActive);
 
 public sealed record UpdateDocumentNumberSeriesRequest(int NextNumber, int? Width = null);
+
+/// <summary>Gravar ou correr um mapa: a definição, o nome (ao gravar) e o período (ao correr); <c>RowCode</c> pede a explicação de uma linha.</summary>
+public sealed record SaveMapRequest(
+    string? Name,
+    string? Description,
+    NexGenAccountingAI.Application.Maps.MapDefinition? Definition,
+    int? Year,
+    int? FromMonth,
+    int? ToMonth,
+    bool? IncludeClosing,
+    string? RowCode);
 
 public sealed record SaveAnalysisRequest(
     string? Name,

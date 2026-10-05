@@ -686,3 +686,41 @@ html[data-theme='dark'] .balancete-table tbody tr:hover td { background: #203a41
 @media print { .balancete-wrap { max-height: none; overflow: visible; } .balancete-toggle { display: none; } }
 .balancete-table tbody td.numeric.negative { color: #b4472f; }
 html[data-theme='dark'] .balancete-table tbody td.numeric.negative { color: #f0957d; }
+
+/* Mapas à medida (F4B-03): a lista de modelos, o desenhador e a tabela do mapa. */
+.maps-templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.maps-template { padding: 14px 16px; border: 1px solid #e0e8ea; border-radius: 12px; background: #fbfdfd; }
+.maps-template h3 { margin: 0 0 6px; font-size: 13px; }
+.maps-template h3 a { color: #16736a; text-decoration: none; }
+.maps-template p { margin: 0; color: #5a6b72; font-size: 11px; line-height: 1.5; }
+.map-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+.map-help { margin: 0 0 10px; color: #5a6b72; font-size: 11px; line-height: 1.5; }
+.map-help code { padding: 1px 5px; border-radius: 4px; background: #eef3f4; font-size: 10.5px; }
+.map-editor th, .map-editor td { padding: 4px 5px; }
+.map-editor input:not([type='checkbox']), .map-editor select { width: 100%; min-width: 84px; min-height: 32px; padding: 0 7px; border: 1px solid #d4dfe2; border-radius: 7px; background: #fbfcfc; font-size: 11px; }
+.map-editor input.map-level { min-width: 52px; width: 52px; }
+.map-editor td:nth-child(2) input { min-width: 200px; }
+.map-editor td:nth-child(4) input { min-width: 170px; font-family: ui-monospace, Consolas, monospace; }
+.map-row-actions { white-space: nowrap; }
+.map-row-actions .icon-button { width: 28px; height: 28px; border-radius: 6px; }
+.map-designer .builder-section + .builder-section { margin-top: 14px; }
+.map-designer .builder-section > .button { margin-top: 8px; }
+.map-table.is-loading tbody { opacity: .55; }
+.map-table tbody tr.map-row-accounts { cursor: pointer; }
+.map-table tbody tr.map-row-accounts:hover td { background: #eef7f6; }
+.map-table tr.map-row-bold td { font-weight: 800; color: #1d2f37; border-top: 1px solid #cfdcdf; }
+.map-table tr.map-row-title td { font-weight: 800; color: #33474f; text-transform: uppercase; font-size: 10px; letter-spacing: .04em; background: #f2f6f7; }
+.map-table tr.map-row-open td { background: #e9f3f2; }
+.map-table tr.map-explain > td { padding: 10px 14px 14px; background: #f7fafa; }
+.map-explain-head { margin-bottom: 8px; font-size: 11px; color: #3f515a; }
+.map-table tr.map-explain table { width: 100%; }
+.map-table tr.map-explain table th { font-size: 9px; }
+.map-table tbody td.numeric.negative { color: #b4472f; }
+html[data-theme='dark'] .maps-template { background: #13242a; border-color: #2a4047; }
+html[data-theme='dark'] .map-help code { background: #1c333a; }
+html[data-theme='dark'] .map-editor input:not([type='checkbox']), html[data-theme='dark'] .map-editor select { background: #13242a; color: #dbe7e9; border-color: #2a4047; }
+html[data-theme='dark'] .map-table tr.map-row-bold td { color: #e6f0f1; border-top-color: #35505a; }
+html[data-theme='dark'] .map-table tr.map-row-title td { background: #16292f; color: #d5e2e4; }
+html[data-theme='dark'] .map-table tr.map-row-open td, html[data-theme='dark'] .map-table tbody tr.map-row-accounts:hover td { background: #203a41; }
+html[data-theme='dark'] .map-table tr.map-explain > td { background: #13242a; }
+html[data-theme='dark'] .map-table tbody td.numeric.negative { color: #f0957d; }

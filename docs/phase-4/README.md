@@ -243,17 +243,46 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   balancete do ano inteiro já não sai a zero — a abertura tem o seu lugar
   próprio, separada dos meses.
 
+### F4B-03 — Mapas desenhados pelo utilizador
+
+- `reporting.FinancialMap` (migração `20261005232025_FinancialMaps`): nome
+  único por empresa e a `MapDefinition` em JSON (`MapJson`, enumerados por
+  nome). `FinancialMapService`: listar, criar, alterar, apagar, correr e
+  explicar; correr devolve avisos de cobertura — contas com valores que
+  nenhuma linha apanha (só nas classes que o mapa toca) e contas que duas
+  linhas apanham (uma linha de saldo devedor e outra de saldo credor não é
+  repetição: o Estado está no ativo e no passivo).
+- `MapTemplates`: modelos de partida pelo código de contas SNC — demonstração
+  de resultados por naturezas (comparativo com o ano anterior), balanço
+  sintético (corrente/não corrente por conta, a acertar ao plano da empresa) e
+  mapa de exploração mensal. Um teste confirma que, num exercício pequeno, a DR
+  e o balanço batem certo e o balanço fecha.
+- Endpoints `…/maps` (lista + modelos + conjuntos de colunas), `…/maps/templates/{key}`,
+  `POST/PUT/DELETE …/maps[/{id}]`, `POST …/maps/run` (definição + período;
+  com `rowCode` devolve as contas por trás da linha; permitido a Consulta).
+- PWA: `/mapas` (os da empresa e os modelos), `/mapas/{id}`, `/mapas/modelo/{key}`,
+  `/mapas/novo`. O ecrã lê o mapa no período pedido (antes ou com o apuramento),
+  clicar numa linha de contas mostra as contas que a formam (com ligação à
+  razão), «Desenhar» abre o desenhador — linhas (código, descrição, tipo,
+  contas ou fórmula, medida, sinal, quando mostrar, nível, negrito, oculta) e
+  colunas (tipo, âmbito, exercício, mês, fórmula, medida, %), com os conjuntos
+  prontos — «Testar» calcula sem gravar e «Guardar» faz do modelo um mapa da
+  empresa. Exportação CSV/Excel/PDF.
+- Validado na Vidreira: os três modelos correm em 0,3–0,6 s; os números do
+  balanço não fecham nessa empresa por razões dos dados (compras da classe 31
+  não transferidas, resultado de 2024 por aplicar) — o próprio mapa avisa.
+
 ### Por fazer na 4B
 
-- F4B-03 — mapas desenhados pelo utilizador: guardar definições por empresa,
-  modelos do sistema (balanço e demonstração de resultados sintéticos, mapa de
-  exploração) para duplicar e alterar, o desenhador, «explicar» uma célula.
 - O balanço e a DR oficiais assentes no motor (hoje continuam no serviço das
-  demonstrações).
+  demonstrações), e a pré-visualização em PDF de relato (capa, cabeçalho,
+  notas) de que o relatório para a banca vai precisar.
+- Guardar, por mapa, o período preferido (antes/com apuramento) e partilhar
+  mapas entre as empresas de um gabinete.
 
 ## Validação
 
-- .NET: 316 testes. PWA: 126 testes.
+- .NET: 319 testes. PWA: 129 testes.
 - Vistos a funcionar com a base real: a validação e a exportação do SAF-T, a
   exportação para PDF e Excel pela API, e a tarefa diária a correr sozinha.
 - **Ainda não vistos no browser** com a sessão do utilizador: o painel do

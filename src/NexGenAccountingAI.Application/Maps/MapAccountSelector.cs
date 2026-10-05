@@ -17,6 +17,9 @@ public sealed class MapAccountSelector
 
     public bool IsEmpty => _include.Count == 0;
 
+    /// <summary>As classes (primeiro algarismo) que a escolha abrange.</summary>
+    public IEnumerable<char> Classes => _include.SelectMany(range => Enumerable.Range(range.From[0], range.To[0] - range.From[0] + 1)).Select(code => (char)code).Distinct();
+
     /// <exception cref="FormatException">O texto não é uma escolha de contas válida (mensagem em português).</exception>
     public static MapAccountSelector Parse(string? text)
     {

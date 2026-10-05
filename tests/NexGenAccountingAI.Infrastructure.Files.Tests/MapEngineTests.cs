@@ -167,6 +167,9 @@ public sealed class MapEngineTests
                 new("L1", "Fornecimentos", Accounts: "62"),
                 new("L2", "Trabalhos especializados", Accounts: "6221"),
                 new("L3", "Rendimentos", Accounts: "7", Sign: MapSign.Inverted),
+                new("L4", "Bancos", Accounts: "12"),
+                new("L5", "Clientes a receber", Accounts: "21", Measure: MapMeasure.DebitBalance),
+                new("L6", "Clientes a pagar", Accounts: "21", Measure: MapMeasure.CreditBalance),
             ],
             [new("A", "Acumulado", Scope: MapScope.YearToDate)]);
         var request = new MapRequest(2026, 1, 12);
@@ -178,8 +181,8 @@ public sealed class MapEngineTests
         Assert.AreEqual(0, MapEngine.Explain(definition, request, Books, "NAO").Count);
 
         var (uncovered, repeated) = MapEngine.Coverage(definition, request, Books);
-        CollectionAssert.AreEqual(new[] { "111", "2111", "2112", "511" }, uncovered.ToArray());
-        CollectionAssert.AreEqual(new[] { "6221" }, repeated.ToArray());
+        CollectionAssert.AreEqual(new[] { "111" }, uncovered.ToArray(), "Só nas classes que o mapa toca: a 511 não conta.");
+        CollectionAssert.AreEqual(new[] { "6221" }, repeated.ToArray(), "Uma conta a saldo devedor numa linha e a saldo credor noutra não é repetição.");
     }
 
     [TestMethod]
