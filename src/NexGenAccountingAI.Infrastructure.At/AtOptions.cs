@@ -9,6 +9,19 @@ public sealed class AtOptions
     public string Environment { get; set; } = "Testes";
 
     public AtCertificateOptions Certificate { get; set; } = new();
+
+    public AtPublicKeyOptions PublicKey { get; set; } = new();
+}
+
+/// <summary>
+/// A chave pública do sistema de autenticação do Portal das Finanças, com que se cifram
+/// as senhas enviadas aos webservices. É um certificado (.cer) que a AT disponibiliza
+/// aos produtores de software; muda de tempos a tempos (a atual vale até 15/04/2027).
+/// </summary>
+public sealed class AtPublicKeyOptions
+{
+    /// <summary>Caminho do ficheiro .cer.</summary>
+    public string? Path { get; set; }
 }
 
 /// <summary>

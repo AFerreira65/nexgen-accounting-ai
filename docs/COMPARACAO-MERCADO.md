@@ -16,9 +16,11 @@ nelas que se decide se fica «à altura dos melhores»:
    webservices da AT na plataforma. Os melhores nacionais submetem a DP de
    IVA, a recapitulativa, o Modelo 22 e as obrigações acessórias sem sair do
    programa, e recolhem o comprovativo e a guia de pagamento.
-   **O bloqueio que tínhamos deixou de existir:** o certificado de testes e a
-   chave pública da AT estão em descarregamento público, e os esquemas XML da
-   DP de IVA e do Modelo 22 também (confirmei os quatro ficheiros).
+   Os esquemas XML da DP de IVA e do Modelo 22 estão em descarregamento
+   público. O certificado de testes e a chave pública da AT também, **mas
+   protegidos por senha** (correção de 2026-10-05: ao abri-los verificou-se
+   que a senha não está publicada; vem da AT por email ou da área de
+   produtores).
 2. **Modelos oficiais: mostramos listas de campos, não os impressos.** O
    Modelo 22 tem só os quadros 07, 09 e 10; a IES só dois quadros do Anexo A;
    a DP de IVA só o quadro 06. Nenhum gera o ficheiro oficial.
@@ -155,10 +157,11 @@ precisa do NIF do cliente. Testes nas portas 7xx, produção nas 4xx.
 
 ### 4.3 Factos que mudam o nosso plano
 
-1. **O certificado de testes é público** (`TesteWebservices.pfx`, válido até
-   06/01/2027), tal como a chave pública (válida até 15/04/2027). O Bloco C
-   estava parado à espera de um email da AT que já não é preciso para
-   começar a testar.
+1. **O certificado de testes descarrega-se livremente**
+   (`TesteWebservices.pfx`, válido até 06/01/2027), tal como a chave pública
+   (válida até 15/04/2027), **mas ambos têm senha**, que não está publicada.
+   Continua a ser precisa a resposta da AT (ou a área de produtores) para
+   testar; o desenvolvimento não depende disso.
 2. **O esquema da DP de IVA existe.** O incremento F3-08C estava marcado
    «bloqueado: esquema não encontrado». Está em
    `Suporte_informatico_IVA_2023.zip`.

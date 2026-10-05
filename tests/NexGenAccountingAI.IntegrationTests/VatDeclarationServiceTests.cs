@@ -144,6 +144,32 @@ public sealed class VatDeclarationServiceTests
             Assert.IsFalse(declaration.Warnings.Any(warning => warning.Contains("correspondência rigorosa", StringComparison.Ordinal)));
             Assert.IsFalse(declaration.Warnings.Any(warning => warning.Contains("difere do apuramento", StringComparison.Ordinal)));
 
+            // O ficheiro XML da AT (F4A-02). Este período tem operações noutra região (campo 66),
+            // que exigem o Anexo R: sem ele o ficheiro é recusado com a explicação.
+            var filing = new VatDeclarationFiling("500584095", "123456789", WithinDeadline: true, FiledRecapitulativeStatement: true);
+            var refusal = Assert.ThrowsExactly<InvalidOperationException>(() => VatDeclarationXmlWriter.Write(declaration, filing));
+            StringAssert.Contains(refusal.Message, "Anexo R");
+
+            // Sem essas operações, o ficheiro sai e é válido face ao esquema oficial dpiva-06.xsd.
+            var mainlandOnly = declaration with { Fields = declaration.Fields.Select(field => field.Number is 65 or 66 or 67 or 68 ? field with { Amount = 0m } : field).ToList() };
+            var xml = System.Text.Encoding.UTF8.GetString(VatDeclarationXmlWriter.Write(mainlandOnly, filing));
+            StringAssert.Contains(xml, "<dpiva version=\"06\" xmlns=\"http://www.at.gov.pt/schemas/dpiva\">");
+            StringAssert.Contains(xml, "<btTaxaNormal>100000</btTaxaNormal>", "1 000,00 € em cêntimos.");
+            StringAssert.Contains(xml, "<ivaTaxaNormal>23000</ivaTaxaNormal>");
+            StringAssert.Contains(xml, "<ivaAEntregar>12700</ivaAEntregar>");
+            StringAssert.Contains(xml, "<ivaARecuperar>0</ivaARecuperar>", "Os totais vão sempre, mesmo a zero.");
+            StringAssert.Contains(xml, "<ivaDedutivelTotal>23000</ivaDedutivelTotal>", "Soma dos campos 20 a 24: 207 + 23.");
+            StringAssert.Contains(xml, "<periodoDeclaracao>03T</periodoDeclaracao>");
+            StringAssert.Contains(xml, "<localizacaoSede>1</localizacaoSede>");
+            StringAssert.Contains(xml, "<nif>500584095</nif>");
+            StringAssert.Contains(xml, "<nifCC>123456789</nifCC>");
+            StringAssert.Contains(xml, "<prazo>1</prazo>");
+            Assert.IsFalse(xml.Contains("btBensUEArtigo15", StringComparison.Ordinal), "Um campo a zero sem ser total não vai no ficheiro.");
+            XsdValidation.ValidateIfConfigured(xml, "ACCOUNTINGAI_DPIVA_XSD", VatDeclarationXmlWriter.Namespace, "dpiva-06.xsd");
+
+            Assert.ThrowsExactly<InvalidOperationException>(() => VatDeclarationXmlWriter.Write(mainlandOnly, filing with { TaxRegistrationNumber = "DEMO-PT-0001" }));
+            Assert.ThrowsExactly<InvalidOperationException>(() => VatDeclarationXmlWriter.Write(mainlandOnly with { Period = null }, filing));
+
             // Com excesso a reportar do período anterior, passa a haver imposto a recuperar.
             var withCredit = await service
                 .BuildAsync(userId, companyId, new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), 200m, CancellationToken.None)

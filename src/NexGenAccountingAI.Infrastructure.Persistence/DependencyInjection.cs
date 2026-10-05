@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<SaftOpeningBalancesImportService>();
         services.AddScoped<JournalEntryHistoryService>();
         services.AddScoped<BackgroundJobLog>();
+        services.AddScoped<VatDeclarationFilingService>();
         services.AddScoped<IBackgroundJob, MonthlyAiReportJob>();
         services.AddScoped<IBackgroundJob, DatabaseStatisticsJob>();
         services.AddScoped<SaftEntriesPreviewService>();

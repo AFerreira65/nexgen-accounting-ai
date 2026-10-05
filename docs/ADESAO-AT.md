@@ -3,8 +3,11 @@
 > **Atualização de 2026-10-05.** O certificado de testes (`TesteWebservices.pfx`,
 > válido até 06/01/2027) e a chave pública da AT (válida até 15/04/2027) estão
 > em descarregamento público na página «Certificados de segurança» do Suporte
-> tecnológico do Portal das Finanças. Os testes já não dependem da resposta ao
-> email. Ver [`COMPARACAO-MERCADO.md`](COMPARACAO-MERCADO.md), secção 4.
+> tecnológico do Portal das Finanças, **mas protegidos por senha**, que não
+> está publicada. A senha vem na resposta da AT ao email, ou na área de
+> produtores de software do e-Fatura (com login). Os testes continuam, por
+> isso, a depender disso. O que já está feito e o que falta configurar está em
+> [`phase-4/README.md`](phase-4/README.md), «Fase 4A».
 
 O Bloco C da [Fase 3](phase-3/README.md) (consulta de faturas, validação e
 submissão de declarações) depende de a AT reconhecer o NexGen Accounting AI como

@@ -8,6 +8,7 @@ import { monthRange, periodReference, quarterRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 import { VatSettlementEntryPanel } from './VatSettlementEntryPanel'
+import { VatDeclarationFilingPanel } from './VatDeclarationFilingPanel'
 
 const shortDate = (value: string) => value.split('-').reverse().join('/')
 const seatLabels: Record<string, string> = { Continente: 'Continente', Acores: 'Açores', Madeira: 'Madeira' }
@@ -129,6 +130,7 @@ export function VatDeclarationPage() {
         </table></div>
       </section>
 
+      <VatDeclarationFilingPanel companyId={companyId} from={range.from} to={range.to} priorCredit={priorCredit.trim() === '' ? null : Number(priorCredit.replace(',', '.'))} />
       <VatSettlementEntryPanel companyId={companyId} from={range.from} to={range.to} />
 
       <p className="statement-note">{declaration.disclaimer}</p>

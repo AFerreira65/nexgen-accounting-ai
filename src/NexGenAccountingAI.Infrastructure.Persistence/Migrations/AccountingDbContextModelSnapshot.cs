@@ -1817,6 +1817,72 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("EFaturaPurchase", "accounting");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Operations.AtExchange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AlertCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("DeclarationId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DurationMilliseconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ErrorCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("HttpStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Operation")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("Period")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("Production")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Reached")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("RequestedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RequestedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("ResultCode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Service")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "RequestedAtUtc");
+
+                    b.ToTable("AtExchanges", "infrastructure");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Operations.BackgroundJobRun", b =>
                 {
                     b.Property<Guid>("Id")

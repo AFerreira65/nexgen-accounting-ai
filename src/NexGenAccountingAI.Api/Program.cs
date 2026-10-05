@@ -1908,6 +1908,61 @@ if (applicationEndpointsAvailable)
         return declaration is null ? Results.NotFound() : Results.Ok(declaration);
     });
 
+    // Declaração periódica de IVA na AT (F4A-02): o ficheiro XML oficial, validar e submeter.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-declaration/xml", async (
+        Guid userId, Guid companyId, string? from, string? to, decimal? priorCredit, bool? lateFiling, bool? recapitulative,
+        VatDeclarationFilingService filing, CancellationToken cancellationToken) =>
+    {
+        if (!TryVatFilingRequest(from, to, priorCredit, lateFiling, recapitulative, out var request, out var problem))
+        {
+            return problem!;
+        }
+
+        try
+        {
+            var file = await filing.BuildXmlAsync(userId, companyId, request!, cancellationToken).ConfigureAwait(false);
+            return file is null ? Results.NotFound() : Results.File(file.Value.Content, "application/xml", file.Value.FileName);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["declaracao"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-declaration/at/{operation}", async (
+        Guid userId, Guid companyId, string operation, string? from, string? to, decimal? priorCredit, bool? lateFiling, bool? recapitulative,
+        bool? acceptAlerts, VatDeclarationFilingService filing, CancellationToken cancellationToken) =>
+    {
+        if (operation is not ("validate" or "submit"))
+        {
+            return Results.NotFound();
+        }
+
+        if (!TryVatFilingRequest(from, to, priorCredit, lateFiling, recapitulative, out var request, out var problem))
+        {
+            return problem!;
+        }
+
+        try
+        {
+            var outcome = operation == "submit"
+                ? await filing.SubmitAsync(userId, companyId, request!, acceptAlerts ?? false, cancellationToken).ConfigureAwait(false)
+                : await filing.ValidateAsync(userId, companyId, request!, cancellationToken).ConfigureAwait(false);
+            return outcome is null ? Results.NotFound() : Results.Ok(outcome);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["declaracao"] = [exception.Message] });
+        }
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/at/exchanges", async (
+        Guid userId, Guid companyId, VatDeclarationFilingService filing, NexGenAccountingAI.Application.At.IVatReturnAtGateway gateway, CancellationToken cancellationToken) =>
+    {
+        var rows = await filing.RecentAsync(userId, companyId, 30, cancellationToken).ConfigureAwait(false);
+        return rows is null ? Results.NotFound() : Results.Ok(new { Gateway = gateway.Status(), Exchanges = rows });
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-return", async (
         Guid userId, Guid companyId, string? from, string? to,
         NexGenAccountingAI.Application.Vat.IVatReturnService vat, CancellationToken cancellationToken) =>
@@ -4724,6 +4779,29 @@ await app.RunAsync().ConfigureAwait(false);
 
 public partial class Program
 {
+    /// <summary>Lê os parâmetros comuns da entrega da declaração de IVA.</summary>
+    private static bool TryVatFilingRequest(
+        string? from, string? to, decimal? priorCredit, bool? lateFiling, bool? recapitulative,
+        out VatDeclarationFilingRequest? request, out IResult? problem)
+    {
+        request = null;
+        problem = null;
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) || !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) || end < start)
+        {
+            problem = Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = ["Indique um período válido (aaaa-mm-dd)."] });
+            return false;
+        }
+
+        if (priorCredit is < 0m)
+        {
+            problem = Results.ValidationProblem(new Dictionary<string, string[]> { ["priorCredit"] = ["O excesso a reportar não pode ser negativo."] });
+            return false;
+        }
+
+        request = new VatDeclarationFilingRequest(start, end, priorCredit, WithinDeadline: lateFiling != true, FiledRecapitulativeStatement: recapitulative == true);
+        return true;
+    }
+
     /// <summary>O utilizador da sessão: os endpoints só correm autenticados (FallbackPolicy).</summary>
     private static Guid SessionUserId(ClaimsPrincipal principal) =>
         Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);

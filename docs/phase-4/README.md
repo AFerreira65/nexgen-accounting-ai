@@ -113,9 +113,91 @@ Defeitos encontrados ao ler o código para a comparação com o mercado.
 - **A seguir** (dependem de outras partes): recolha diária do e-Fatura
   (fase 4A), avisos por email (F4-06), cópias de segurança (F4-07).
 
+## Fase 4A — Comunicação com a AT
+
+| # | O quê | Estado |
+|---|---|---|
+| F4A-01 | Cliente dos webservices da AT (autenticação, certificado, registo dos pedidos) | **Feito**, por testar contra a AT |
+| F4A-02 | Declaração periódica de IVA: ficheiro XML oficial, validar e submeter | **Feito**, por testar contra a AT |
+| F4A-03 | e-Fatura por webservice | Por fazer |
+| F4A-04 | Declaração recapitulativa | Por fazer |
+
+### O que falta para testar contra a AT
+
+O certificado de testes e a chave pública estão em descarregamento público
+no Portal das Finanças, mas **protegidos por senha**, que não está publicada
+(nem na página, nem nos manuais). Vem na resposta da AT ao pedido por email
+(enviado a 2026-10-03) ou na área de produtores de software do e-Fatura,
+com o login do produtor. Com isso:
+
+1. pôr o `TesteWebservices.pfx` numa pasta e indicar `At:Certificate:Path` e
+   a senha (`AT_CERTIFICATE_PASSWORD` ou *user-secrets*);
+2. extrair a chave pública (`.cer`) e indicar `At:PublicKey:Path`;
+3. guardar o subutilizador e a senha da empresa em «Comunicação com a AT»
+   (subutilizador com a autorização **WVA**);
+4. carregar em «Validar na AT» no ecrã da declaração de IVA.
+
+Até lá, tudo o que não depende da AT está testado: a cifra das credenciais
+(fazendo o papel da AT, com a chave privada), o envelope SOAP, a leitura das
+respostas e o ficheiro da declaração contra o esquema oficial.
+
+### F4A-01 — Cliente dos webservices da AT
+
+- **`AtWsSecurity`**: o cabeçalho de autenticação descrito nos manuais de
+  integração (igual na DP de IVA, no Modelo 22, na IES e nas obrigações
+  acessórias). Por cada autenticação, uma chave AES de 128 bits nova; a
+  senha vai cifrada com ela (AES, ECB, PKCS5); a chave vai cifrada com a
+  chave pública da AT (RSA); o `Digest` é o SHA-1 de chave + data + senha,
+  cifrado; a data vai em claro, em UTC. Suporta o sujeito passivo e o
+  contabilista certificado no mesmo pedido (versão «2»); um contribuinte sem
+  senha leva só o utilizador (plenos poderes).
+- **`VatReturnAtGateway`**: SOAP 1.1 sobre HTTPS com o certificado do
+  produtor; testes na porta 706, produção na 406. Lê o código, a mensagem,
+  os erros e alertas (anexo, quadro, campo, código) e o identificador da
+  declaração; uma falha de rede ou de configuração vem explicada, sem
+  exceção.
+- **`infrastructure.AtExchanges`** (migração `AtExchanges`): cada pedido à
+  AT fica registado — serviço, operação, ambiente, período, quem pediu,
+  tempo e resposta. Não guarda senhas nem o conteúdo enviado.
+- **Configuração nova:** `At:PublicKey:Path`.
+
+### F4A-02 — Declaração periódica de IVA
+
+- **`VatDeclarationXmlWriter`** escreve o ficheiro pelo esquema oficial
+  `dpiva-06.xsd`. A correspondência entre os campos do impresso e os
+  elementos do ficheiro vem da documentação do próprio esquema («Campo 3.»
+  em `btTaxaNormal`, etc.).
+- **O que o esquema não diz** e foi tirado de um ficheiro exportado do
+  Portal, publicado por terceiros
+  (`github.com/filipef101/dp-iva-anexo-fornecedores`): valores em cêntimos;
+  período «01» a «12» ou «03T», «06T», «09T», «12T»; atributo
+  `version="06"`; sede 1, 2 ou 3; prazo 1 ou 2; sim e não como «01» e «02».
+  **A confirmar pela validação da AT.**
+- **Só leva o quadro 06.** O quadro 06-A vai a zero e os anexos não são
+  gerados. Um período com operações noutra região (campos 65 a 68) é
+  recusado com a explicação, porque exigia o Anexo R. Um campo negativo
+  também.
+- **A declaração vai comprimida**: «base64 do base64 do ZIP», como diz o
+  manual, com `versaoDeclaracao` «2016».
+- **Autenticação:** como sujeito passivo, com o subutilizador e a senha
+  guardados para a empresa. A autenticação do contabilista certificado com
+  plenos poderes fica para depois (falta guardar as credenciais do CC).
+- **Submeter só no ambiente de testes.** Em produção a aplicação valida mas
+  recusa submeter, até aderir ao serviço com certificado próprio.
+- **API:** `GET .../vat-declaration/xml`, `POST .../vat-declaration/at/validate`,
+  `POST .../vat-declaration/at/submit`, `GET .../at/exchanges`.
+- **PWA:** painel «Entrega na AT» no ecrã da declaração de IVA: ficheiro
+  XML, «Validar na AT», «Submeter (testes)», os erros e alertas da AT por
+  campo e os últimos pedidos.
+- **Visto com dados reais:** os ficheiros de setembro e do 3.º trimestre de
+  2025 da Vidreira são válidos face ao esquema oficial. **Saem a zeros**,
+  porque as contas importadas do SAF-T não têm classificação de IVA: é
+  preciso classificá-las em «Configuração de IVA» (ou a importação passar a
+  propor essa classificação — por fazer).
+
 ## Validação
 
-- .NET: 300 testes. PWA: 124 testes.
+- .NET: 304 testes. PWA: 124 testes.
 - Vistos a funcionar com a base real: a validação e a exportação do SAF-T, a
   exportação para PDF e Excel pela API, e a tarefa diária a correr sozinha.
 - **Ainda não vistos no browser** com a sessão do utilizador: o painel do
