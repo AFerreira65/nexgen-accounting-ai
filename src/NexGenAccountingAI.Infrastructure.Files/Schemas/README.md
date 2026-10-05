@@ -1,35 +1,51 @@
-# Esquemas oficiais do SAF-T (PT)
+# Esquemas oficiais da AT
 
-O validador de esquema (`SaftSchemaValidator`) valida os ficheiros SAF-T
-importados contra o XSD **oficial da Autoridade Tributária**. Esse XSD **não
-está no repositório** — a redistribuição está por confirmar (ver
-`docs/phase-2/F2-01-SAFT-XSD-VALIDATION.md`, «Decisões em aberto»).
+Os XSD oficiais da Autoridade Tributária **não estão no repositório** (a
+redistribuição está por confirmar): descarregam-se sempre da origem.
 
-## Como ativar a validação de esquema
+## Como os obter
 
-1. Obter os esquemas oficiais no Portal das Finanças:
-   - **1.04_01** (Portaria n.º 302/2016) — SAF-T de contabilidade atual;
-   - **1.03_01** (Portaria n.º 1192/2009 / n.º 160/2013) — versão anterior.
-2. Colocar os ficheiros nesta pasta com estes nomes exatos:
-   - `SAFTPT_1.04_01.xsd`
-   - `SAFTPT_1.03_01.xsd`
-3. Reconstruir a solução. Os ficheiros `SAFTPT_*.xsd` são embebidos no
-   assembly (`NexGenAccountingAI.Infrastructure.Files.csproj`) e o catálogo
-   (`SaftSchemaCatalog.Official`) passa a indexá-los pelo `targetNamespace`
-   de cada um.
+```powershell
+.\scripts\get-official-schemas.ps1          # descarrega os que faltam
+.\scripts\get-official-schemas.ps1 -Force   # atualiza todos
+```
+
+O script deixa nesta pasta (que o git ignora):
+
+| Ficheiro | Para quê |
+|---|---|
+| `SAFTPT_1.04_01.xsd`, `SAFTPT_1.03_01.xsd` | Validação dos SAF-T importados e exportados |
+| `DossierFiscal.xsd` | Ficheiro dos mapas 30, 31 e 32 do dossier fiscal |
+| `dpiva-06.xsd` | Declaração periódica de IVA |
+| `Modelo22IRCv2026.xsd`, `types.xsd` | Modelo 22 |
+| `dr-1.0.xsd` | Declaração recapitulativa |
+
+Depois de os descarregar, **reconstruir a solução**: os `SAFTPT_*.xsd` são
+embebidos no assembly e a aplicação passa a validar contra o esquema oficial.
+Os testes que geram ficheiros oficiais validam-nos contra o que estiver nesta
+pasta.
+
+## O que a validação cobre
+
+O SAF-T 1.04_01 é um esquema **XSD 1.1** e o validador do .NET só suporta
+XSD 1.0. Ao carregar (`SaftSchemaCatalog.Load`):
+
+- tiram-se as 20 regras `xs:assert` (condições entre campos, por exemplo
+  «conta de movimento tem de ter taxonomia»);
+- o grupo `xs:all` das linhas de um movimento passa a «um ou mais débitos ou
+  créditos, por qualquer ordem» (deixa de exigir pelo menos um de cada).
+
+A estrutura, os tipos, as obrigatoriedades e as listas de valores são
+validados. O relatório diz quantas regras ficaram por verificar. Antes desta
+adaptação, o esquema oficial não chegava a carregar e a validação dava erro.
 
 ## Sem os ficheiros
 
-Enquanto a pasta não tiver nenhum `SAFTPT_*.xsd`, o validador **não falha**:
-devolve um relatório com `schemaAvailable = false`, valida apenas a boa
-formação do XML e assinala, com um aviso, que o esquema oficial não está
-carregado. O resto da plataforma (leitura, pré-visualização, importação e
-reconciliação) funciona na mesma.
+Sem nenhum `SAFTPT_*.xsd` na pasta, o validador **não falha**: devolve
+`schemaAvailable = false`, valida só a boa formação do XML e avisa que o
+esquema oficial não está carregado.
 
 ## Notas
 
-- Um `.xsd` com um `targetNamespace` diferente de
-  `urn:OECD:StandardAuditFile-Tax:PT_1.04_01` /
-  `…PT_1.03_01` é aceite na mesma — o catálogo indexa pelo namespace que o
-  próprio ficheiro declara.
+- O catálogo indexa cada esquema pelo `targetNamespace` que ele declara.
 - Não colocar aqui esquemas de terceiros nem versões modificadas.

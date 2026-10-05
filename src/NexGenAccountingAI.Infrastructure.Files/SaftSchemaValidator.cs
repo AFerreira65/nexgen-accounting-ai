@@ -145,6 +145,13 @@ public sealed class SaftSchemaValidator : ISaftSchemaValidator
             }
 
             var hasError = issues.Any(issue => issue.Severity == SaftValidationSeverity.Error);
+            var notChecked = _catalog.AssertionsNotChecked(namespaceUri!);
+            if (notChecked > 0)
+            {
+                Add(new SaftValidationIssue(null, SaftValidationSeverity.Information, "Ficheiro",
+                    $"Validado contra o esquema oficial {version}. As {notChecked} regras condicionais do esquema (XSD 1.1, por exemplo «conta de movimento tem de ter taxonomia») não são verificadas aqui; o validador da AT verifica-as."));
+            }
+
             return new SaftValidationReport(version, SchemaAvailable: true, SchemaValid: !hasError, issues, truncated);
         }
         finally

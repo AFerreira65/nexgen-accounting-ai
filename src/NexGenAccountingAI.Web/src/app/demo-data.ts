@@ -1271,6 +1271,7 @@ export type SaftAccountsPreview = {
 export type SaftAccountsImport = {
   createdCount: number
   alreadyExistedCount: number
+  taxonomyAssignedCount?: number
   created: { code: string; name: string; parentCode: string | null; allowsPosting: boolean }[]
 }
 

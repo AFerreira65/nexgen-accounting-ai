@@ -104,7 +104,7 @@ public sealed class ProvisionMapServiceTests
             var xml = System.Text.Encoding.UTF8.GetString(DossierMapsXmlWriter.Write("500584095", 2026, emptyMaps, after));
             StringAssert.Contains(xml, "<Q02-01_1>OUTROS</Q02-01_1>");
             StringAssert.Contains(xml, "<Q02-Somas_III>");
-            XsdValidation.ValidateIfConfigured(xml, "ACCOUNTINGAI_DOSSIER_XSD", DossierMapsXmlWriter.Namespace);
+            XsdValidation.ValidateIfConfigured(xml, "ACCOUNTINGAI_DOSSIER_XSD", DossierMapsXmlWriter.Namespace, "DossierFiscal.xsd");
         }
         finally
         {

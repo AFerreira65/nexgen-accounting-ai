@@ -53,9 +53,36 @@ public sealed class SaftAccountsImportService(ISaftAccountsReader accountsReader
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Count(existingCodes.Contains);
 
+        // As contas que já existem sem taxonomia recebem a do ficheiro (as que já têm uma
+        // ficam como estão): um plano importado antes de a importação guardar a taxonomia,
+        // ou o plano base da empresa, ficam prontos para as demonstrações e para exportar.
+        var taxonomyByCode = fileAccounts
+            .Where(account => account.TaxonomyCode is not null)
+            .GroupBy(account => account.Code, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        var taxonomyAssigned = 0;
+        if (taxonomyByCode.Count > 0)
+        {
+            var unclassified = await context.Accounts
+                .Where(account => account.CompanyId == companyId && account.AllowsPosting && account.TaxonomyCode == null)
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var existing in unclassified)
+            {
+                if (taxonomyByCode.TryGetValue(existing.Code, out var fileAccount) && ApplyTaxonomy(existing, fileAccount))
+                {
+                    taxonomyAssigned++;
+                }
+            }
+
+            if (taxonomyAssigned > 0)
+            {
+                await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+
         if (toCreate.Count == 0)
         {
-            return new SaftAccountsImportResult(0, alreadyExisted, []);
+            return new SaftAccountsImportResult(0, alreadyExisted, [], taxonomyAssigned);
         }
 
         var known = new HashSet<string>(existingCodes, StringComparer.Ordinal);
@@ -91,8 +118,10 @@ public sealed class SaftAccountsImportService(ISaftAccountsReader accountsReader
                     : string.Equals(category, "GM", StringComparison.OrdinalIgnoreCase);
                 var name = string.IsNullOrWhiteSpace(account.Description) ? account.Code : account.Description;
 
-                context.Accounts.Add(new LedgerAccount(
-                    Guid.NewGuid(), companyId, account.Code, name, parentCode, allowsPosting));
+                var ledgerAccount = new LedgerAccount(
+                    Guid.NewGuid(), companyId, account.Code, name, parentCode, allowsPosting);
+                ApplyTaxonomy(ledgerAccount, account);
+                context.Accounts.Add(ledgerAccount);
                 known.Add(account.Code);
                 created.Add(new SaftAccountCreated(account.Code, name, parentCode, allowsPosting));
             }
@@ -106,6 +135,25 @@ public sealed class SaftAccountsImportService(ISaftAccountsReader accountsReader
             await context.RefreshAfterImportAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        return new SaftAccountsImportResult(created.Count, alreadyExisted, created);
+        return new SaftAccountsImportResult(created.Count, alreadyExisted, created, taxonomyAssigned);
+    }
+
+    /// <summary>Dá à conta de movimento a taxonomia que o ficheiro indica; ignora uma combinação inválida.</summary>
+    private static bool ApplyTaxonomy(LedgerAccount account, SaftAccount fileAccount)
+    {
+        if (!account.AllowsPosting || fileAccount.TaxonomyCode is not { } code || fileAccount.TaxonomyReference is not { } reference)
+        {
+            return false;
+        }
+
+        try
+        {
+            account.AssignTaxonomy(reference, code);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 }

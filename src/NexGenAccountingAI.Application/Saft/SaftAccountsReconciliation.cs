@@ -4,13 +4,17 @@ namespace NexGenAccountingAI.Application.Saft;
 /// Uma conta do plano geral lida do bloco <c>GeneralLedgerAccounts</c> de um SAF-T,
 /// com os saldos de abertura declarados (0 quando ausentes) e a categoria
 /// (<c>GroupingCategory</c>): <c>GR</c> 1.º grau, <c>GA</c> agregadora, <c>GM</c> de movimento.
+/// As contas de movimento trazem o código de taxonomia; o referencial
+/// (<c>TaxonomyReference</c>: S, M, N ou O) é o do bloco e repete-se em cada conta.
 /// </summary>
 public sealed record SaftAccount(
     string Code,
     string Description,
     decimal OpeningDebit = 0m,
     decimal OpeningCredit = 0m,
-    string? GroupingCategory = null);
+    string? GroupingCategory = null,
+    int? TaxonomyCode = null,
+    string? TaxonomyReference = null);
 
 /// <summary>Situação de uma conta do ficheiro face ao plano de contas da empresa.</summary>
 public enum SaftAccountState
@@ -46,7 +50,8 @@ public sealed record SaftAccountCreated(string Code, string Name, string? Parent
 public sealed record SaftAccountsImportResult(
     int CreatedCount,
     int AlreadyExistedCount,
-    IReadOnlyList<SaftAccountCreated> Created);
+    IReadOnlyList<SaftAccountCreated> Created,
+    int TaxonomyAssignedCount = 0);
 
 /// <summary>
 /// Resultado de importar os saldos de abertura do plano de contas de um SAF-T como

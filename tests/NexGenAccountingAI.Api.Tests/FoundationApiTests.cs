@@ -813,10 +813,19 @@ public sealed class FoundationApiTests
 
         Assert.AreEqual(HttpStatusCode.OK, wellFormed.StatusCode);
         StringAssert.Contains(wellFormedPayload, "\"version\":\"1.04_01\"");
-        // Sem o XSD oficial colocado (drop-in), valida-se só a boa formação.
-        StringAssert.Contains(wellFormedPayload, "\"schemaAvailable\":false");
+        // O ficheiro de teste é mínimo e não cumpre o esquema: sem o XSD oficial na pasta
+        // (scripts/get-official-schemas.ps1) valida-se só a boa formação e sai um aviso; com
+        // ele, saem os erros do esquema. Em ambos os casos não é dado como válido.
         StringAssert.Contains(wellFormedPayload, "\"schemaValid\":false");
-        StringAssert.Contains(wellFormedPayload, "\"severity\":\"Warning\"");
+        if (wellFormedPayload.Contains("\"schemaAvailable\":false", StringComparison.Ordinal))
+        {
+            StringAssert.Contains(wellFormedPayload, "\"severity\":\"Warning\"");
+        }
+        else
+        {
+            StringAssert.Contains(wellFormedPayload, "\"schemaAvailable\":true");
+            StringAssert.Contains(wellFormedPayload, "\"severity\":\"Error\"");
+        }
         // XML mal formado é 400; XML válido mas não conforme seria 200.
         Assert.AreEqual(HttpStatusCode.BadRequest, malformed.StatusCode);
         Assert.AreEqual(HttpStatusCode.Forbidden, unknownUser.StatusCode);

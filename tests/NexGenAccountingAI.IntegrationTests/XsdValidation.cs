@@ -7,16 +7,23 @@ namespace NexGenAccountingAI.IntegrationTests;
 /// <summary>
 /// Valida um XML contra um esquema oficial quando a variável de ambiente indica
 /// o ficheiro: os XSD da AT não estão no repositório (ver
-/// <c>Infrastructure.Files/Schemas/README.md</c>). Sem a variável, não faz nada.
+/// <c>Infrastructure.Files/Schemas/README.md</c>). Sem a variável, procura o ficheiro
+/// na pasta <c>Schemas</c>, onde <c>scripts/get-official-schemas.ps1</c> os deixa; se
+/// também não estiver lá, não faz nada.
 /// </summary>
 internal static class XsdValidation
 {
-    public static void ValidateIfConfigured(string xml, string environmentVariable, string targetNamespace)
+    public static void ValidateIfConfigured(string xml, string environmentVariable, string targetNamespace, string? fallbackFileName = null)
     {
         var path = Environment.GetEnvironmentVariable(environmentVariable);
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
         {
-            return;
+            // Sem a variável, usa o que `scripts/get-official-schemas.ps1` descarregou.
+            path = fallbackFileName is null ? null : FindInSchemasFolder(fallbackFileName);
+            if (path is null)
+            {
+                return;
+            }
         }
 
         // Os esquemas da AT vêm em Windows-1252.
@@ -36,5 +43,19 @@ internal static class XsdValidation
         }
 
         Assert.AreEqual(0, errors.Count, string.Join(Environment.NewLine, errors));
+    }
+
+    private static string? FindInSchemasFolder(string fileName)
+    {
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+        {
+            var candidate = Path.Combine(directory.FullName, "src", "NexGenAccountingAI.Infrastructure.Files", "Schemas", fileName);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 }

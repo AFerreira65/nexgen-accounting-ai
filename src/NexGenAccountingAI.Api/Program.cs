@@ -4170,6 +4170,7 @@ if (applicationEndpointsAvailable)
             {
                 result.CreatedCount,
                 result.AlreadyExistedCount,
+                result.TaxonomyAssignedCount,
                 Created = result.Created.Select(account => new
                 {
                     account.Code,

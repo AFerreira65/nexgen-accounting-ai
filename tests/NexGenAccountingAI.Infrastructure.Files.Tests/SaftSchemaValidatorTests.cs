@@ -218,4 +218,47 @@ public sealed class SaftSchemaValidatorTests
             base.Dispose(disposing);
         }
     }
+
+    [TestMethod]
+    public void LoadsAnXsd11SchemaInWindows1252WithoutItsAssertions()
+    {
+        // Como o SAF-T 1.04_01 oficial: Windows-1252, vc:minVersion 1.1 e regras xs:assert,
+        // que o validador do .NET (XSD 1.0) recusava ao compilar — a validação dava erro 500.
+        const string xsd = """
+            <?xml version="1.0" encoding="Windows-1252"?>
+            <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+                xmlns:ns="urn:teste:assert" targetNamespace="urn:teste:assert" elementFormDefault="qualified" vc:minVersion="1.1">
+              <xs:element name="Conta">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="Código" type="xs:string"/>
+                    <xs:element name="Taxonomia" type="xs:int" minOccurs="0"/>
+                  </xs:sequence>
+                  <xs:assert test="if (ns:Taxonomia) then true() else false()"/>
+                </xs:complexType>
+              </xs:element>
+            </xs:schema>
+            """;
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        using var stream = new MemoryStream(System.Text.Encoding.GetEncoding(1252).GetBytes(xsd.TrimStart()));
+
+        var (set, targetNamespace, removed) = SaftSchemaCatalog.Load(stream);
+
+        Assert.AreEqual("urn:teste:assert", targetNamespace);
+        Assert.AreEqual(1, removed);
+        Assert.IsTrue(set.IsCompiled);
+        var catalog = new SaftSchemaCatalog(
+            new Dictionary<string, XmlSchemaSet> { [targetNamespace!] = set },
+            new Dictionary<string, int> { [targetNamespace!] = removed });
+        Assert.AreEqual(1, catalog.AssertionsNotChecked("urn:teste:assert"));
+        Assert.AreEqual(0, catalog.AssertionsNotChecked("urn:outro"));
+    }
+
+    [TestMethod]
+    public void TheOfficialSchemasInTheFolderAllLoad()
+    {
+        // Sem esquemas na pasta (scripts/get-official-schemas.ps1 não corrido) o catálogo fica
+        // vazio e o teste passa; com eles, nenhum pode ficar por carregar.
+        Assert.AreEqual(0, SaftSchemaCatalog.Official.LoadProblems.Count, string.Join(Environment.NewLine, SaftSchemaCatalog.Official.LoadProblems));
+    }
 }

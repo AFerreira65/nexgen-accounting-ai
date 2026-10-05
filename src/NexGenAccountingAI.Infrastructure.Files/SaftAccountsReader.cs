@@ -72,6 +72,13 @@ public sealed class SaftAccountsReader : ISaftAccountsReader
     {
         var result = new List<SaftAccount>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var taxonomyReference = accounts.Elements()
+            .FirstOrDefault(element => element.Name.LocalName.Equals("TaxonomyReference", StringComparison.OrdinalIgnoreCase))
+            ?.Value.Trim().ToUpperInvariant();
+        if (taxonomyReference is not ("S" or "M" or "N" or "O"))
+        {
+            taxonomyReference = null;
+        }
 
         foreach (var account in accounts.Elements().Where(element =>
             element.Name.LocalName.Equals("Account", StringComparison.OrdinalIgnoreCase)))
@@ -93,7 +100,12 @@ public sealed class SaftAccountsReader : ISaftAccountsReader
                 Field("AccountDescription") ?? string.Empty,
                 ParseAmount(Field("OpeningDebitBalance")),
                 ParseAmount(Field("OpeningCreditBalance")),
-                Field("GroupingCategory")));
+                Field("GroupingCategory"),
+                taxonomyReference is not null &&
+                int.TryParse(Field("TaxonomyCode"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var taxonomyCode) && taxonomyCode > 0
+                    ? taxonomyCode
+                    : null,
+                taxonomyReference));
         }
 
         return result;

@@ -30,3 +30,6 @@ tabelas PHC/
 *.mdf
 *.ldf
 *.bak
+
+# Esquemas oficiais da AT: descarregados por scripts/get-official-schemas.ps1, não versionados
+src/NexGenAccountingAI.Infrastructure.Files/Schemas/*.xsd

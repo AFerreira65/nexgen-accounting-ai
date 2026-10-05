@@ -482,7 +482,9 @@ public sealed class DatabaseMigrationTests
                         new FixedAccountsReader(
                         [
                             new SaftAccount("139", "Agregadora no ficheiro", 0m, 0m, "GA"),
-                            new SaftAccount("1391", "De movimento no ficheiro", 0m, 0m, "GM"),
+                            new SaftAccount("1391", "De movimento no ficheiro", 0m, 0m, "GM", 3, "S"),
+                            // A 131 já existe, criada acima sem taxonomia: recebe a do ficheiro.
+                            new SaftAccount("131", "Cofre", 0m, 0m, "GM", 2, "S"),
                         ]),
                         importContext)
                     .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
@@ -491,6 +493,14 @@ public sealed class DatabaseMigrationTests
                 var categorizedPosting = categorized.Created.Single(item => item.Code == "1391");
                 Assert.IsTrue(categorizedPosting.AllowsPosting);
                 Assert.AreEqual("139", categorizedPosting.ParentCode);
+                Assert.AreEqual(1, categorized.TaxonomyAssignedCount, "Só a 131, que já existia sem taxonomia.");
+                var taxonomies = await importContext.Accounts.AsNoTracking()
+                    .Where(item => item.CompanyId == created.CompanyId && (item.Code == "1391" || item.Code == "131" || item.Code == "139"))
+                    .ToDictionaryAsync(item => item.Code, item => (item.TaxonomyReference, item.TaxonomyCode))
+                    .ConfigureAwait(false);
+                Assert.AreEqual(("S", (int?)3), taxonomies["1391"]);
+                Assert.AreEqual(("S", (int?)2), taxonomies["131"]);
+                Assert.AreEqual(((string?)null, (int?)null), taxonomies["139"], "Uma agregadora não tem taxonomia.");
 
                 var noAccess = await importService
                     .ImportAsync(Guid.NewGuid(), created.CompanyId, Stream.Null)

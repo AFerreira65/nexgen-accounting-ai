@@ -220,7 +220,7 @@ function ImportAllPanel({ companyId, file, fiscalYear, importBlocked }: { compan
       current = 'accounts'
       update(current, { state: 'running' })
       const accounts = await importSaftAccounts(companyId, file, fiscalYear)
-      update(current, { state: 'done', detail: `${accounts.createdCount} contas criadas, ${accounts.alreadyExistedCount} já existiam.` })
+      update(current, { state: 'done', detail: `${accounts.createdCount} contas criadas, ${accounts.alreadyExistedCount} já existiam${(accounts.taxonomyAssignedCount ?? 0) > 0 ? `; ${accounts.taxonomyAssignedCount} receberam a taxonomia do ficheiro` : ''}.` })
 
       // Os terceiros e os saldos iniciais não impedem os movimentos: uma falha fica
       // marcada, o resto continua, e o passo repete-se depois sem duplicar.
@@ -347,10 +347,10 @@ function AccountsPreviewPanel({ companyId, file, fiscalYear, importBlocked }: { 
     <div className="panel-heading"><div><h2>Plano de contas do ficheiro</h2><p>Compara os códigos do <code>GeneralLedgerAccounts</code> com o plano da empresa. Os saldos de abertura das contas de movimento podem entrar como um lançamento de abertura ({fiscalYear}).</p></div></div>
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
       <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A ler…' : 'Pré-visualizar plano de contas'}</button>
-      {preview && preview.newCount > 0 && source === 'database' && <button className="button button-primary" type="button" disabled={importState === 'importing' || importBlocked} onClick={() => void importNew()}>{importState === 'importing' ? 'A criar…' : `Criar as ${preview.newCount} contas novas`}</button>}
+      {preview && preview.fileAccountCount > 0 && source === 'database' && <button className="button button-primary" type="button" disabled={importState === 'importing' || importBlocked} onClick={() => void importNew()}>{importState === 'importing' ? 'A importar…' : preview.newCount > 0 ? `Criar as ${preview.newCount} contas novas` : 'Atualizar as taxonomias pelo ficheiro'}</button>}
       {preview && preview.fileAccountCount > 0 && source === 'database' && <button className="button button-secondary" type="button" disabled={openingState === 'importing' || importBlocked} onClick={() => void importOpening()}>{openingState === 'importing' ? 'A importar…' : 'Importar saldos iniciais'}</button>}
     </div>
-    {imported && <p className="save-status success"><CircleCheck size={15} /> {imported.createdCount} contas criadas ({imported.alreadyExistedCount} já existiam); exercício de {fiscalYear} definido como o seu exercício nesta empresa.</p>}
+    {imported && <p className="save-status success"><CircleCheck size={15} /> {imported.createdCount} contas criadas ({imported.alreadyExistedCount} já existiam{(imported.taxonomyAssignedCount ?? 0) > 0 ? `, ${imported.taxonomyAssignedCount} receberam a taxonomia do ficheiro` : ''}); exercício de {fiscalYear} definido como o seu exercício nesta empresa.</p>}
     {opening && <p className={`save-status ${opening.alreadyImported ? 'warning' : opening.lineCount > 0 ? 'success' : ''}`}>{opening.alreadyImported ? <Info size={15} /> : opening.lineCount > 0 ? <CircleCheck size={15} /> : <Info size={15} />} {opening.alreadyImported
       ? `Já existe abertura para ${fiscalYear}${opening.entryReference ? ` (${opening.entryReference})` : ''}; os saldos iniciais não foram reimportados.`
       : opening.lineCount > 0

@@ -103,7 +103,7 @@ public sealed class DossierMapsServiceTests
             StringAssert.Contains(xml, "<Q02-12>+</Q02-12>");
             StringAssert.Contains(xml, "<Q02-11>1.05</Q02-11>");
             Assert.ThrowsExactly<InvalidOperationException>(() => DossierMapsXmlWriter.Write("MP-PT-0001", 2025, maps, null));
-            XsdValidation.ValidateIfConfigured(xml, "ACCOUNTINGAI_DOSSIER_XSD", DossierMapsXmlWriter.Namespace);
+            XsdValidation.ValidateIfConfigured(xml, "ACCOUNTINGAI_DOSSIER_XSD", DossierMapsXmlWriter.Namespace, "DossierFiscal.xsd");
             await Assert.ThrowsExactlyAsync<ArgumentException>(() => new DossierMapsService(context).BuildAsync(userId, companyId, 99, CancellationToken.None)).ConfigureAwait(false);
             Assert.IsNull(await new DossierMapsService(context).BuildAsync(Guid.NewGuid(), companyId, 2025, CancellationToken.None).ConfigureAwait(false));
         }
