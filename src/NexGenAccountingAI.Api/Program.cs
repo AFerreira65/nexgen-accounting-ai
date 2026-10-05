@@ -2327,6 +2327,29 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Ficheiro «Mapas do dossier fiscal» (F3-14D), no esquema oficial DossierFiscal.xsd.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fiscal-dossier/maps/xml", async (
+        Guid userId, Guid companyId, int year, AccountingDbContext context, DossierMapsService maps, ProvisionMapService provisions, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var built = await maps.BuildAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+            var modelo30 = await provisions.BuildAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+            if (built is null)
+            {
+                return Results.NotFound();
+            }
+
+            var nif = await context.Companies.AsNoTracking().Where(company => company.Id == companyId).Select(company => company.TaxRegistrationNumber).SingleAsync(cancellationToken).ConfigureAwait(false);
+            var content = DossierMapsXmlWriter.Write(nif, year, built, modelo30);
+            return Results.File(content, "application/xml", $"mapas-dossier-fiscal-{year}.xml");
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["mapas"] = [exception.Message] });
+        }
+    });
+
     // Modelo 30 (F3-14C): provisões, imparidades em créditos e ajustamentos em inventários.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fiscal-dossier/modelo30", async (
         Guid userId, Guid companyId, int year, ProvisionMapService provisions, CancellationToken cancellationToken) =>

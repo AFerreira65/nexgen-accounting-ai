@@ -181,7 +181,48 @@ coluna (10) é igual a (2) − (5) − (6) − (7) − (8) + (9).
 - a recusa de uma conta fora do mapa, de uma provisão no grupo I e de um
   valor negativo.
 
+### F3-14D — Ficheiro XML dos mapas (feito)
+
+**Esquema oficial.** É o `DossierFiscal.xsd`, versão 1.02.00, com o
+namespace `http://www.dgci.gov.pt/2012/DOSSIER-FISCAL`. Está referenciado
+pelo validador da AT em `info.portaldasfinancas.gov.pt/apps/saft-pt_df/` e
+foi descarregado a 2026-10-05. A «Estrutura de dados» oficial (anexo III da
+Portaria n.º 92-A/2011, alterada pela Portaria n.º 94/2013) explica os
+códigos. Como os outros esquemas da AT, **não está no repositório**.
+
+**`DossierMapsXmlWriter`** escreve o cabeçalho (NIF e exercício), o Modelo 30
+por grupos, os anexos do Modelo 31 (até 5) e os do Modelo 32 (até 12), pela
+ordem do esquema, com montantes sem sinal e taxas com duas casas. Pontos que
+o esquema obriga e que convém saber:
+
+- No **Modelo 31**, a natureza 3 é «Propriedades de investimento» e a 4
+  «Biológicos», ao contrário do Modelo 32. O ficheiro converte.
+- No **Modelo 32**, as colunas 10 e 11 são uma escolha: com quotas
+  constantes, só vai a 10.
+- No grupo I do **Modelo 30**, a descrição é tipificada: as imparidades de
+  inventários vão como «AJUSTAMENTOS EM INVENTÁRIOS» e as de créditos como
+  «OUTROS», com o nome da conta, porque a contabilidade não distingue o
+  contencioso da mora.
+- O **sinal** do Modelo 31 vai nas colunas 7 e 12. Um montante negativo,
+  vindo de dados inconsistentes, sai como zero.
+- O **NIF** tem de ter nove dígitos; sem isso, o ficheiro é recusado com a
+  explicação.
+
+**API:** `GET .../fiscal-dossier/maps/xml?year=` (descarga
+`mapas-dossier-fiscal-<ano>.xml`). **PWA:** botão «Ficheiro XML» no ecrã dos
+mapas.
+
+**Validação:**
+
+- **Contra o XSD oficial.** Os testes `DossierMapsServiceTests` e
+  `ProvisionMapServiceTests` validam o XML gerado quando a variável
+  `ACCOUNTINGAI_DOSSIER_XSD` aponta para o `DossierFiscal.xsd`
+  (`tests/.../XsdValidation.cs`). Foram corridos assim e o validador do .NET
+  não deu erros, depois de corrigir a escolha 10/11 que ele apanhou. Sem a
+  variável, verificam só o conteúdo.
+- **API:** o ficheiro sai, ou é recusado com a explicação.
+
 ### A seguir
 
-- O ficheiro XML «Mapas do dossier fiscal», cujo esquema
-  `Mapasdodossierfiscal.xsd` é publicado pela AT e não está no projeto.
+- Entregar o ficheiro pelo validador da AT a partir da aplicação, quando
+  houver Bloco C.

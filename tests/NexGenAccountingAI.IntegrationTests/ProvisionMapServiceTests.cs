@@ -98,6 +98,13 @@ public sealed class ProvisionMapServiceTests
             Assert.IsFalse(after.Warnings.Any(warning => warning.Contains("grupo II")));
 
             Assert.IsNull(await service.BuildAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
+
+            // No ficheiro, o grupo I leva a descrição tipificada e o grupo III a conta.
+            var emptyMaps = new DossierMaps(2026, [], 0m, 0, [], [], []);
+            var xml = System.Text.Encoding.UTF8.GetString(DossierMapsXmlWriter.Write("500584095", 2026, emptyMaps, after));
+            StringAssert.Contains(xml, "<Q02-01_1>OUTROS</Q02-01_1>");
+            StringAssert.Contains(xml, "<Q02-Somas_III>");
+            XsdValidation.ValidateIfConfigured(xml, "ACCOUNTINGAI_DOSSIER_XSD", DossierMapsXmlWriter.Namespace);
         }
         finally
         {

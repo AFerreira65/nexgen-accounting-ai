@@ -95,6 +95,15 @@ public sealed class DossierMapsServiceTests
             Assert.AreEqual(900m, maps.Modelo31TaxGain);
 
             CollectionAssert.Contains(maps.Sources.ToList(), DossierMapsService.Modelo32Source);
+
+            // O ficheiro XML: o cabeçalho, a natureza do Modelo 31 na codificação desse mapa e os montantes sem sinal.
+            var xml = System.Text.Encoding.UTF8.GetString(DossierMapsXmlWriter.Write("500584095", 2025, maps, null));
+            StringAssert.Contains(xml, "<NIF>500584095</NIF>");
+            StringAssert.Contains(xml, "<Q02-15>500.00</Q02-15>");
+            StringAssert.Contains(xml, "<Q02-12>+</Q02-12>");
+            StringAssert.Contains(xml, "<Q02-11>1.05</Q02-11>");
+            Assert.ThrowsExactly<InvalidOperationException>(() => DossierMapsXmlWriter.Write("MP-PT-0001", 2025, maps, null));
+            XsdValidation.ValidateIfConfigured(xml, "ACCOUNTINGAI_DOSSIER_XSD", DossierMapsXmlWriter.Namespace);
             await Assert.ThrowsExactlyAsync<ArgumentException>(() => new DossierMapsService(context).BuildAsync(userId, companyId, 99, CancellationToken.None)).ConfigureAwait(false);
             Assert.IsNull(await new DossierMapsService(context).BuildAsync(Guid.NewGuid(), companyId, 2025, CancellationToken.None).ConfigureAwait(false));
         }
