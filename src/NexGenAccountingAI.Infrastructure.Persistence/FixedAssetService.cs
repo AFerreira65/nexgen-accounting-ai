@@ -17,7 +17,9 @@ public sealed record FixedAssetInput(
     string? AccumulatedAccountCode,
     string? ExpenseAccountCode,
     DateOnly? DisposalDate,
-    bool IsActive = true);
+    bool IsActive = true,
+    string? TaxTableCode = null,
+    decimal? TaxRate = null);
 
 public sealed record FixedAssetRow(
     string Code,
@@ -32,7 +34,11 @@ public sealed record FixedAssetRow(
     string? AccumulatedAccountCode,
     string? ExpenseAccountCode,
     DateOnly? DisposalDate,
-    bool IsActive);
+    bool IsActive,
+    string? TaxTableCode = null,
+    decimal? TaxRate = null,
+    decimal? DisposalPrice = null,
+    decimal? MonetaryCoefficient = null);
 
 /// <summary>Um ativo no mapa de depreciações de um exercício.</summary>
 public sealed record DepreciationScheduleRow(
@@ -62,7 +68,7 @@ public sealed record DepreciationSchedule(
     decimal Difference);
 
 /// <summary>Os dados de uma alienação (ou de um abate, com preço zero).</summary>
-public sealed record AssetDisposalInput(DateOnly Date, decimal SalePrice, string? CounterpartAccountCode, string JournalCode, string? DocumentReference);
+public sealed record AssetDisposalInput(DateOnly Date, decimal SalePrice, string? CounterpartAccountCode, string JournalCode, string? DocumentReference, decimal? MonetaryCoefficient = null);
 
 /// <summary>A conta de uma linha do lançamento da alienação, com o valor a débito ou a crédito.</summary>
 public sealed record AssetDisposalLine(string AccountCode, string AccountName, decimal Debit, decimal Credit);
@@ -115,7 +121,7 @@ public sealed class FixedAssetService(AccountingDbContext context, JournalPostin
             .Select(item => new FixedAssetRow(
                 item.Code, item.Description, item.AcquisitionDate, item.StartOfUseDate, item.AcquisitionValue, item.ResidualValue,
                 item.AnnualRate, item.ByMonths, item.AssetAccount!.Code, item.AccumulatedAccount!.Code, item.ExpenseAccount!.Code,
-                item.DisposalDate, item.IsActive))
+                item.DisposalDate, item.IsActive, item.TaxTableCode, item.TaxRate, item.DisposalPrice, item.MonetaryCoefficient))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }
@@ -363,7 +369,7 @@ public sealed class FixedAssetService(AccountingDbContext context, JournalPostin
         var tracked = await context.FixedAssets
             .SingleAsync(item => item.CompanyId == companyId && item.Code == code, cancellationToken)
             .ConfigureAwait(false);
-        tracked.RecordDisposal(input.Date, movement.Reference);
+        tracked.RecordDisposal(input.Date, movement.Reference, preview.SalePrice, input.MonetaryCoefficient);
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return new AssetDisposalResult(preview, movement);
     }
@@ -446,6 +452,29 @@ public sealed class FixedAssetService(AccountingDbContext context, JournalPostin
             asset.Code, asset.Description, input.Date, asset.AcquisitionValue, accumulated, netBookValue, price, result, kind, lines, warning);
     }
 
+    /// <summary>Indica (ou limpa) o coeficiente de desvalorização da moeda de um ativo, para o Modelo 31.</summary>
+    public async Task<bool> SetMonetaryCoefficientAsync(
+        Guid userId, Guid companyId, string assetCode, decimal? coefficient, CancellationToken cancellationToken = default)
+    {
+        if (!await HasAccessAsync(userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return false;
+        }
+
+        var code = FixedAsset.NormalizeCode(assetCode);
+        var asset = await context.FixedAssets
+            .SingleOrDefaultAsync(item => item.CompanyId == companyId && item.Code == code, cancellationToken)
+            .ConfigureAwait(false);
+        if (asset is null)
+        {
+            return false;
+        }
+
+        asset.SetMonetaryCoefficient(coefficient);
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
     private async Task<(string? Asset, string? Accumulated, string? Expense)> ApplyAsync(
         FixedAsset asset, Guid companyId, FixedAssetInput input, CancellationToken cancellationToken)
     {
@@ -453,6 +482,7 @@ public sealed class FixedAssetService(AccountingDbContext context, JournalPostin
             input.Description ?? string.Empty, input.AcquisitionDate, input.StartOfUseDate, input.AcquisitionValue,
             input.ResidualValue, input.AnnualRate, input.ByMonths, input.DisposalDate);
         asset.SetActive(input.IsActive);
+        asset.SetTaxData(input.TaxTableCode, input.TaxRate);
 
         var assetAccount = await AccountAsync(companyId, input.AssetAccountCode, "do ativo", cancellationToken).ConfigureAwait(false);
         var accumulated = await AccountAsync(companyId, input.AccumulatedAccountCode, "das depreciações acumuladas", cancellationToken).ConfigureAwait(false);
@@ -490,7 +520,8 @@ public sealed class FixedAssetService(AccountingDbContext context, JournalPostin
 
     private static FixedAssetRow RowOf(FixedAsset asset, (string? Asset, string? Accumulated, string? Expense) codes) => new(
         asset.Code, asset.Description, asset.AcquisitionDate, asset.StartOfUseDate, asset.AcquisitionValue, asset.ResidualValue,
-        asset.AnnualRate, asset.ByMonths, codes.Asset, codes.Accumulated, codes.Expense, asset.DisposalDate, asset.IsActive);
+        asset.AnnualRate, asset.ByMonths, codes.Asset, codes.Accumulated, codes.Expense, asset.DisposalDate, asset.IsActive,
+        asset.TaxTableCode, asset.TaxRate, asset.DisposalPrice, asset.MonetaryCoefficient);
 
     private Task<bool> HasAccessAsync(Guid userId, Guid companyId, CancellationToken cancellationToken) =>
         context.Companies

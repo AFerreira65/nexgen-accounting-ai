@@ -672,7 +672,16 @@ export type FixedAssetRow = {
   expenseAccountCode: string | null
   disposalDate: string | null
   isActive: boolean
+  taxTableCode?: string | null
+  taxRate?: number | null
+  disposalPrice?: number | null
+  monetaryCoefficient?: number | null
 }
+export type Modelo32Line = { assetCode: string; taxTableCode: string | null; description: string; startMonth: number | null; startYear: number; bookValue: number; taxValue: number; usefulLifeYears: number | null; bookedInPeriod: number; acceptedInPriorPeriods: number; rate: number; correctedRate: number | null; taxLimit: number; acceptedImpairment: number; lostRates: number | null; notAccepted: number; recovered: number; rateFromAccounting: boolean }
+export type Modelo32Map = { nature: number; natureLabel: string; method: number; lines: Modelo32Line[]; bookValue: number; taxValue: number; bookedInPeriod: number; acceptedInPriorPeriods: number; taxLimit: number; acceptedImpairment: number; notAccepted: number; recovered: number }
+export type Modelo31Line = { assetCode: string; description: string; disposalDate: string; realisationValue: number; taxAcquisitionValue: number; acquisitionYear: number; bookAcquisitionValue: number; bookDepreciation: number; bookGain: number; untaxedGain: number; acceptedDepreciation: number; coefficient: number; coefficientIndicated: boolean; taxGain: number }
+export type Modelo31Map = { nature: number; natureLabel: string; lines: Modelo31Line[]; bookGain: number; taxGain: number }
+export type DossierMaps = { year: number; modelo32: Modelo32Map[]; ledgerDepreciation: number; fullyDepreciatedOmitted: number; modelo31: Modelo31Map[]; warnings: string[]; sources: string[]; modelo32Booked: number; modelo32NotAccepted: number; modelo31BookGain: number; modelo31TaxGain: number }
 export type DepreciationSchedule = {
   year: number
   rows: { code: string; description: string; startOfUseDate: string; disposalDate: string | null; acquisitionValue: number; annualRate: number; accumulatedAtStart: number; depreciation: number; accumulatedAtEnd: number; netValue: number; expenseAccountCode: string | null }[]

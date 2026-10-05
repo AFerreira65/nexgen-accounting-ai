@@ -2312,6 +2312,35 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Mapas do dossier fiscal (F3-14B): Modelo 32 e Modelo 31 a partir do cadastro dos ativos.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fiscal-dossier/maps", async (
+        Guid userId, Guid companyId, int year, DossierMapsService maps, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var result = await maps.BuildAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/{code}/monetary-coefficient", async (
+        Guid userId, Guid companyId, string code, MonetaryCoefficientRequest request, FixedAssetService assets, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var done = await assets.SetMonetaryCoefficientAsync(userId, companyId, code, request?.Coefficient, cancellationToken).ConfigureAwait(false);
+            return done ? Results.NoContent() : Results.NotFound();
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["coeficiente"] = [exception.Message] });
+        }
+    });
+
     // Alienação ou abate de um ativo (F3-12C): pré-visualização e lançamento.
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/{code}/disposal/preview", async (
         Guid userId, Guid companyId, string code, AssetDisposalRequest request, FixedAssetService assets, CancellationToken cancellationToken) =>
@@ -4854,10 +4883,12 @@ public sealed record BudgetLineRequest(string? AccountCode, string? CostCenterCo
 
 public sealed record BudgetCopyRequest(string? Source, int SourceYear, decimal? AdjustmentPercent);
 
-public sealed record AssetDisposalRequest(DateOnly Date, decimal SalePrice, string? CounterpartAccountCode, string? JournalCode, string? DocumentReference)
+public sealed record AssetDisposalRequest(DateOnly Date, decimal SalePrice, string? CounterpartAccountCode, string? JournalCode, string? DocumentReference, decimal? MonetaryCoefficient = null)
 {
-    public AssetDisposalInput ToInput() => new(Date, SalePrice, CounterpartAccountCode, JournalCode ?? string.Empty, DocumentReference);
+    public AssetDisposalInput ToInput() => new(Date, SalePrice, CounterpartAccountCode, JournalCode ?? string.Empty, DocumentReference, MonetaryCoefficient);
 }
+
+public sealed record MonetaryCoefficientRequest(decimal? Coefficient);
 
 public sealed record ObligationUpdateRequest(string? State, DateOnly? DeliveredOn, string? Note, DateOnly? DueDateOverride);
 

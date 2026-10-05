@@ -67,6 +67,25 @@ public sealed class FixedAsset
     /// <summary>A referência do lançamento da alienação ou do abate, quando foi gerado pela aplicação.</summary>
     public string? DisposalEntryReference { get; private set; }
 
+    /// <summary>O preço de venda (sem IVA) na alienação; zero num abate.</summary>
+    public decimal? DisposalPrice { get; private set; }
+
+    /// <summary>
+    /// O coeficiente de desvalorização da moeda aplicado na mais-valia fiscal
+    /// (artigo 47.º do CIRC), indicado pelo utilizador a partir da portaria do ano;
+    /// `null` conta como 1.
+    /// </summary>
+    public decimal? MonetaryCoefficient { get; private set; }
+
+    /// <summary>O código do ativo nas tabelas anexas ao Decreto Regulamentar n.º 25/2009 (quatro dígitos), para o Modelo 32.</summary>
+    public string? TaxTableCode { get; private set; }
+
+    /// <summary>
+    /// A taxa máxima fiscal das tabelas do Decreto Regulamentar n.º 25/2009, em
+    /// percentagem, indicada pelo utilizador; `null` assume a taxa da contabilidade.
+    /// </summary>
+    public decimal? TaxRate { get; private set; }
+
     public bool IsActive { get; private set; }
 
     public uint RowVersion { get; private set; }
@@ -158,9 +177,74 @@ public sealed class FixedAsset
 
     public void SetActive(bool isActive) => IsActive = isActive;
 
-    /// <summary>Regista a saída do ativo: a data (que acerta as depreciações desse ano) e o lançamento que a contabiliza.</summary>
-    public void RecordDisposal(DateOnly date, string entryReference)
+    /// <summary>Os dados fiscais do Modelo 32: o código e a taxa máxima das tabelas do DR n.º 25/2009.</summary>
+    public void SetTaxData(string? taxTableCode, decimal? taxRate)
     {
+        var code = string.IsNullOrWhiteSpace(taxTableCode) ? null : taxTableCode.Trim();
+        if (code is not null && (code.Length != 4 || !code.All(char.IsAsciiDigit)))
+        {
+            throw new ArgumentException("O código das tabelas do DR n.º 25/2009 tem quatro dígitos.", nameof(taxTableCode));
+        }
+
+        if (taxRate is { } rate && (rate <= 0m || rate > 100m))
+        {
+            throw new ArgumentException("A taxa fiscal tem de estar entre 0 e 100 %.", nameof(taxRate));
+        }
+
+        TaxTableCode = code;
+        TaxRate = taxRate is null ? null : decimal.Round(taxRate.Value, 4, MidpointRounding.AwayFromZero);
+    }
+
+    /// <summary>O coeficiente de desvalorização, indicado depois de lançada a alienação.</summary>
+    public void SetMonetaryCoefficient(decimal? coefficient)
+    {
+        if (coefficient is <= 0m)
+        {
+            throw new ArgumentException("O coeficiente de desvalorização tem de ser positivo.", nameof(coefficient));
+        }
+
+        MonetaryCoefficient = coefficient;
+    }
+
+    /// <summary>
+    /// O limite fiscal do exercício (coluna 12 do Modelo 32): a taxa máxima — ou,
+    /// sem ela, a da contabilidade — sobre o valor de aquisição (coluna 6), com a
+    /// mesma regra de início e de fim (duodécimos ou ano inteiro).
+    /// </summary>
+    public decimal FiscalLimitFor(int year) =>
+        AccumulatedWith(year, TaxRate ?? AnnualRate, AcquisitionValue) - AccumulatedWith(year - 1, TaxRate ?? AnnualRate, AcquisitionValue);
+
+    /// <summary>
+    /// As depreciações aceites fiscalmente até ao fim do exercício: em cada ano, a
+    /// contabilizada até ao limite fiscal. O excesso de um ano não se recupera
+    /// aqui (a recuperação do artigo 20.º do DR n.º 25/2009 não está calculada).
+    /// </summary>
+    public decimal FiscalAcceptedAtEndOf(int year)
+    {
+        var accepted = 0m;
+        for (var current = StartOfUseDate.Year; current <= year; current++)
+        {
+            accepted += Math.Min(DepreciationFor(current), FiscalLimitFor(current));
+        }
+
+        return accepted;
+    }
+
+    /// <summary>Regista a saída do ativo: a data (que acerta as depreciações desse ano) e o lançamento que a contabiliza.</summary>
+    public void RecordDisposal(DateOnly date, string entryReference, decimal price = 0m, decimal? monetaryCoefficient = null)
+    {
+        if (price < 0m)
+        {
+            throw new ArgumentException("O preço de venda não pode ser negativo.", nameof(price));
+        }
+
+        if (monetaryCoefficient is <= 0m)
+        {
+            throw new ArgumentException("O coeficiente de desvalorização tem de ser positivo.", nameof(monetaryCoefficient));
+        }
+
+        DisposalPrice = decimal.Round(price, 2, MidpointRounding.AwayFromZero);
+        MonetaryCoefficient = monetaryCoefficient;
         if (date < StartOfUseDate)
         {
             throw new ArgumentException("A alienação não pode ser anterior à entrada em funcionamento.", nameof(date));
@@ -195,9 +279,11 @@ public sealed class FixedAsset
     public decimal DepreciationFor(int year) => AccumulatedAtEndOf(year) - AccumulatedAtEndOf(year - 1);
 
     /// <summary>As depreciações acumuladas no fim do exercício <paramref name="year"/>; nunca passam o valor depreciável.</summary>
-    public decimal AccumulatedAtEndOf(int year)
+    public decimal AccumulatedAtEndOf(int year) => AccumulatedWith(year, AnnualRate, DepreciableValue);
+
+    private decimal AccumulatedWith(int year, decimal rate, decimal baseValue)
     {
-        var annual = decimal.Round(DepreciableValue * AnnualRate / 100m, 2, MidpointRounding.AwayFromZero);
+        var annual = decimal.Round(baseValue * rate / 100m, 2, MidpointRounding.AwayFromZero);
         var accumulated = 0m;
         for (var current = StartOfUseDate.Year; current <= year; current++)
         {
@@ -219,8 +305,8 @@ public sealed class FixedAsset
                 quota = 0m;
             }
 
-            accumulated = Math.Min(DepreciableValue, accumulated + quota);
-            if (accumulated == DepreciableValue)
+            accumulated = Math.Min(baseValue, accumulated + quota);
+            if (accumulated == baseValue)
             {
                 break;
             }

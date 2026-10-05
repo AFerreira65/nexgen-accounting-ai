@@ -559,6 +559,10 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(48)
                         .HasColumnType("character varying(48)");
 
+                    b.Property<decimal?>("DisposalPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<Guid?>("ExpenseAccountId")
                         .HasColumnType("uuid");
 
@@ -573,6 +577,10 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("MonetaryCoefficient")
+                        .HasPrecision(8, 4)
+                        .HasColumnType("numeric(8,4)");
+
                     b.Property<decimal>("ResidualValue")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
@@ -585,6 +593,14 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
 
                     b.Property<DateOnly>("StartOfUseDate")
                         .HasColumnType("date");
+
+                    b.Property<decimal?>("TaxRate")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)");
+
+                    b.Property<string>("TaxTableCode")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)");
 
                     b.HasKey("Id");
 

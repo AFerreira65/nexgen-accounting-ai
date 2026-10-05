@@ -66,8 +66,84 @@ oficial**.
   plano de contas que se afaste deles dá indícios errados.
 - Não trata os elementos próprios do IRS nem o prazo de constituição.
 
+### F3-14B — Modelo 32 e Modelo 31 (feito)
+
+**Fontes.** Ambas as portarias foram lidas no Diário da República a
+2026-10-05:
+
+- **Modelo 32:** Portaria n.º 94/2013, de 4 de março (DR n.º 44, 1.ª série).
+  O anexo I traz o impresso e as instruções das 16 colunas; o anexo II, a
+  estrutura de dados.
+- **Modelo 31:** Portaria n.º 92-A/2011, de 28 de fevereiro (DR n.º 41, 1.ª
+  série, suplemento). Traz o impresso e as instruções das 13 colunas.
+
+**Cadastro dos ativos.** Migração aditiva `20261005085547_AssetTaxData`:
+
+- **Código e taxa máxima** das tabelas do DR n.º 25/2009, indicados pelo
+  utilizador, porque as tabelas não estão na aplicação.
+- **Preço de venda**, guardado ao lançar a alienação (F3-12C).
+- **Coeficiente de desvalorização da moeda** (art. 47.º do CIRC), indicado à
+  mão, porque a portaria anual também não está na aplicação.
+
+**`FixedAsset.FiscalLimitFor` / `FiscalAcceptedAtEndOf`:**
+
+- O limite fiscal de cada ano é a taxa máxima, ou sem ela a da contabilidade,
+  sobre o valor de aquisição (coluna 6), com a mesma regra de duodécimos.
+- O aceite de cada ano é o contabilizado até esse limite.
+- A recuperação do art. 20.º do DR n.º 25/2009 não é calculada.
+
+**`DossierMapsService`** monta os dois mapas do exercício:
+
+| Mapa | Como se preenche |
+|---|---|
+| Modelo 32 | Um mapa por natureza, tirada da conta do ativo: 43 tangíveis, 44 intangíveis, 42 propriedades de investimento, 37 biológicos. O método é sempre o das quotas constantes. (1) código; (2) descrição; (3) mês, só com duodécimos; (4) ano; (5) e (6) valor de aquisição; (8) depreciação calculada do exercício; (9) aceite antes; (10) taxa; (12) limite; (15) = (8) − [(12) + (13)]. Os totalmente depreciados ficam de fora (alínea a) das instruções) e são contados. |
+| Modelo 31 | As alienações e os abates lançados pela aplicação no exercício. (8) = (2) − [(5) − (6)]; (13) = (2) − [((3) − (9) − (10)) × (11)], com o coeficiente indicado ou 1. |
+
+**Avisos do mapa:**
+
+- falta de taxa fiscal (o limite fica igual ao gasto) ou de código;
+- conta do ativo de natureza desconhecida;
+- coluna 8 diferente dos gastos lançados nas contas 64;
+- falta de coeficiente;
+- alienação sem preço conhecido.
+
+**O que não se calcula:** a coluna (7), as perdas por imparidade (13), as
+taxas perdidas (14), a recuperação (16), as quotas decrescentes, a mais-valia
+não tributada (9) e as partes de capital.
+
+**API:**
+
+- `GET .../fiscal-dossier/maps?year=`;
+- `PUT .../fixed-assets/{código}/monetary-coefficient`;
+- o coeficiente pode também ir no pedido da alienação.
+
+**PWA:**
+
+- **Ecrã «Mapas do dossier fiscal»** (`/mapas-dossier`, grupo «Fiscal»),
+  ligado a partir do dossier fiscal: os totais (incluindo o «não aceite» a
+  acrescer no quadro 07), um quadro por natureza com as colunas numeradas, o
+  coeficiente editável no Modelo 31, os avisos, as fontes, CSV e impressão.
+- **Ficha do ativo:** ganhou o código e a taxa máxima fiscal.
+- **Painel da alienação:** ganhou o coeficiente.
+
+**Validação:** `DossierMapsServiceTests`, em PostgreSQL, com valores feitos à
+mão:
+
+- taxa contabilística de 25 % contra fiscal de 20 %: 2 500 contabilizados,
+  2 000 de limite, 500 não aceites e 2 000 aceites no ano anterior;
+- alienação em julho com duodécimos;
+- intangível sem taxa fiscal, com aviso;
+- ativo totalmente depreciado omitido;
+- aviso das contas 64;
+- Modelo 31: mais-valia contabilística de 1 500 e fiscal de 900, com
+  coeficiente de 1,05;
+- código fiscal inválido.
+
+A API devolve os mapas.
+
 ### A seguir
 
-- **F3-14B** — mapa de provisões e imparidades (modelo 30) e mapa de
-  mais-valias e menos-valias (modelo 31) a partir da contabilidade e do
-  cadastro de ativos; mapa de depreciações no modelo 32.
+- **Modelo 30** (provisões, perdas por imparidade em créditos e ajustamentos
+  em inventários), também da Portaria n.º 92-A/2011.
+- O ficheiro XML «Mapas do dossier fiscal», cujo esquema
+  `Mapasdodossierfiscal.xsd` é publicado pela AT e não está no projeto.

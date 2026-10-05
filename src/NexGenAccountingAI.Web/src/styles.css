@@ -317,6 +317,8 @@ tr.subtotal-row td { border-top: 1px solid #d5dfe1; background: #fbfdfd; color: 
 .period-chip.active { border-color: #0b9286; color: white; background: #0b9286; }
 .statement-note { margin: 0; color: #5d727a; font-size: 11px; }
 .section-title { margin: 6px 0 -6px; font-size: 14px; }
+.dense-table th, .dense-table td { padding: 6px 8px; font-size: 11px; }
+.dense-table th { white-space: normal; vertical-align: bottom; }
 .management-report-charts { margin: 12px 0; }
 .management-report-charts h3 { margin: 0 0 6px; font-size: 13px; }
 .muted-zero { color: #9fb0b6; }

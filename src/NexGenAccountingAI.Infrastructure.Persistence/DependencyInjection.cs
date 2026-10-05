@@ -87,6 +87,7 @@ public static class DependencyInjection
         services.AddScoped<TreasuryForecastService>();
         services.AddScoped<ObligationCalendarService>();
         services.AddScoped<FirmDashboardService>();
+        services.AddScoped<DossierMapsService>();
         services.AddScoped<FiscalDossierService>();
         services.AddScoped<PartyImportService>();
         services.AddScoped<PartyLedgerService>();

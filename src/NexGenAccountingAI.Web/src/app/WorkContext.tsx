@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type BalanceSheetStatement, type BudgetReport, type SuggestedEntriesReport, type BankAccountRow, type FirmDashboard, type ObligationCalendar, type TreasuryForecast, type OwnerReport, type SupplierClassificationProposal, type DocumentAttachmentRow, type InvoiceQrLookup, type BankEntryRuleRow, type BankEntrySuggestion, type BankStatementImportResult, type BankStatementLineRow, type BankReconciliationReport, type SalesDocumentsImportResult, type SalesSuggestedEntriesReport, type SalesEntryRuleRow, type SuggestedEntryOutcome, type SupplierEntryRuleRow, type ExerciseStructure, type PartyAging, type VatSettlementEntryPreview, type FiscalDossier, type WithholdingReport, type IesAnnexA, type Modelo22Return, type FixedAssetRow, type AssetDisposalPreview, type DepreciationSchedule, type RecapitulativeStatement, type VatDeclaration, type OperatingMap, type FinancialRatios, type MonthlyEvolution, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type AppliedTemplate, type SaftExportReport, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
+import { buildTaxonomyReview, demoTaxonomyCatalog, fallbackAccountingSetupsByCompany, fallbackMovementsByCompany, movements as fallbackMovements, parseSaftAccountsFromXml, parseSaftHeaderFromXml, templateTaxonomySuggestions, type AccountingSetup, type AiSettings, type AtCertificateStatus, type AtCredentials, type VatClassificationRow, type AnalyticReport, type BalanceSheetStatement, type BudgetReport, type SuggestedEntriesReport, type BankAccountRow, type FirmDashboard, type ObligationCalendar, type TreasuryForecast, type OwnerReport, type SupplierClassificationProposal, type DocumentAttachmentRow, type InvoiceQrLookup, type BankEntryRuleRow, type BankEntrySuggestion, type BankStatementImportResult, type BankStatementLineRow, type BankReconciliationReport, type SalesDocumentsImportResult, type SalesSuggestedEntriesReport, type SalesEntryRuleRow, type SuggestedEntryOutcome, type SupplierEntryRuleRow, type ExerciseStructure, type PartyAging, type VatSettlementEntryPreview, type FiscalDossier, type WithholdingReport, type IesAnnexA, type Modelo22Return, type FixedAssetRow, type DossierMaps, type AssetDisposalPreview, type DepreciationSchedule, type RecapitulativeStatement, type VatDeclaration, type OperatingMap, type FinancialRatios, type MonthlyEvolution, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type AppliedTemplate, type SaftExportReport, type CostCenterRow, type EntryTemplateRow, type FiscalTable, type VatCodeRow, type PartyBalances, type PartyStatement, type SaftPartyLinkResult, type PartyImportResult, type PartyPage, type PartyRow, type VatSummary, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingView, type IrcEstimateFilingSummary, type Movement, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftCompanyCreationInput, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type AnalysisCatalog, type AnalysisDefinition, type AnalysisResult, type ManagementReportCatalogEntry, type ManagementReportView, type ReportTemplate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type CrossCheckReport, type DataDictionaryTable, type DataDictionaryTableSummary, type EFaturaImportResult, type EFaturaPurchasesPage, type RecordInfo, type SavedAnalysisView, type SaftInspection, type SaftOpeningBalancesImport, type SaftSalesInvoicesSummary, type SaftValidation, type SaftValidationRunSummary, type TaxonomyCatalog, type TaxonomyReview } from './demo-data'
 import { EMPTY_MOVEMENTS_SUMMARY, summaryFromMovements, type MovementsSummary } from './movementsSummary'
 
 export type NewAccountInput = { code: string; name: string; parentCode: string | null; allowsPosting: boolean }
@@ -8,7 +8,7 @@ export type NewJournalInput = { code: string; name: string }
 export type JournalEditInput = { name: string; isActive: boolean }
 export type NewDocumentTypeInput = { code: string; name: string; defaultJournalCode: string }
 export type DocumentTypeEditInput = { name: string; defaultJournalCode: string; isActive: boolean }
-export type AssetDisposalInput = { date: string; salePrice: number; counterpartAccountCode: string | null; journalCode: string; documentReference: string | null }
+export type AssetDisposalInput = { date: string; salePrice: number; counterpartAccountCode: string | null; journalCode: string; documentReference: string | null; monetaryCoefficient?: number | null }
 export type EntryTemplateInput = { name: string; journalCode: string; documentTypeCode: string | null; description: string | null; isActive: boolean; lines: { kind: string; side: string; accountCode: string; vatCode: string | null; description: string | null }[] }
 export type VatCodeInput = { code: string; name: string; rate: string; percentage: number; nature: string; region: string; isActive: boolean }
 export type PartyListParams = { search: string; role: 'Todos' | 'Clientes' | 'Fornecedores'; includeInactive: boolean; page: number; pageSize: number; accountCode?: string }
@@ -182,6 +182,8 @@ type WorkContextValue = WorkContextData & {
   fixedAssets: (companyId: string, includeInactive: boolean) => Promise<FixedAssetRow[]>
   saveFixedAsset: (companyId: string, input: FixedAssetRow, isNew: boolean) => Promise<FixedAssetRow>
   previewAssetDisposal: (companyId: string, code: string, input: AssetDisposalInput) => Promise<AssetDisposalPreview>
+  dossierMaps: (companyId: string, year: number) => Promise<DossierMaps>
+  setMonetaryCoefficient: (companyId: string, code: string, coefficient: number | null) => Promise<void>
   postAssetDisposal: (companyId: string, code: string, input: AssetDisposalInput) => Promise<{ movement: Movement }>
   depreciationSchedule: (companyId: string, year: number) => Promise<DepreciationSchedule>
   postDepreciation: (companyId: string, params: { year: number; journal: string; allowExisting: boolean }) => Promise<{ reference: string }>
@@ -951,6 +953,19 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as CostCenterRow
+    },
+    dossierMaps: async (companyId, year) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/fiscal-dossier/maps?year=${year}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as DossierMaps
+    },
+    setMonetaryCoefficient: async (companyId, code, coefficient) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/fixed-assets/${encodeURIComponent(code)}/monetary-coefficient`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ coefficient }),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
     },
     previewAssetDisposal: async (companyId, code, input) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/fixed-assets/${encodeURIComponent(code)}/disposal/preview`, {

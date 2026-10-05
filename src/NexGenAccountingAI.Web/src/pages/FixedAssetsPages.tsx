@@ -25,6 +25,8 @@ function FixedAssetEditor({ asset, onSaved, onClose }: { asset: FixedAssetRow | 
   const [accumulatedAccountCode, setAccumulatedAccountCode] = useState(asset?.accumulatedAccountCode ?? '')
   const [expenseAccountCode, setExpenseAccountCode] = useState(asset?.expenseAccountCode ?? '')
   const [disposalDate, setDisposalDate] = useState(asset?.disposalDate ?? '')
+  const [taxTableCode, setTaxTableCode] = useState(asset?.taxTableCode ?? '')
+  const [taxRate, setTaxRate] = useState(asset?.taxRate != null ? String(asset.taxRate) : '')
   const [isActive, setIsActive] = useState(asset?.isActive ?? true)
   const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
   const [error, setError] = useState('')
@@ -49,6 +51,8 @@ function FixedAssetEditor({ asset, onSaved, onClose }: { asset: FixedAssetRow | 
         expenseAccountCode: expenseAccountCode.trim() || null,
         disposalDate: disposalDate || null,
         isActive,
+        taxTableCode: taxTableCode.trim() || null,
+        taxRate: taxRate.trim() ? number(taxRate) : null,
       }, isCreate)
       onSaved()
     } catch (submitError) {
@@ -74,6 +78,8 @@ function FixedAssetEditor({ asset, onSaved, onClose }: { asset: FixedAssetRow | 
       <label><span>Conta do ativo</span><input value={assetAccountCode} onChange={(event) => setAssetAccountCode(event.target.value)} placeholder="Opcional — ex.: 433" /></label>
       <label><span>Conta das depreciações acumuladas</span><input value={accumulatedAccountCode} onChange={(event) => setAccumulatedAccountCode(event.target.value)} placeholder="Opcional — ex.: 4383" /></label>
       <label><span>Conta do gasto de depreciação</span><input value={expenseAccountCode} onChange={(event) => setExpenseAccountCode(event.target.value)} placeholder="Opcional — ex.: 6423" /></label>
+      <label><span>Código no DR n.º 25/2009</span><input value={taxTableCode} onChange={(event) => setTaxTableCode(event.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="Opcional — quatro dígitos" inputMode="numeric" /></label>
+      <label><span>Taxa máxima fiscal (%)</span><input inputMode="decimal" value={taxRate} onChange={(event) => setTaxRate(event.target.value)} placeholder="Opcional — a das tabelas do DR n.º 25/2009" /></label>
       <label><span>Data de alienação ou abate</span><input type="date" value={disposalDate} onChange={(event) => setDisposalDate(event.target.value)} /></label>
       {!isCreate && <label className="toggle-field"><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /><span><strong>Ativo no cadastro</strong><small>Um ativo inativo deixa de aparecer no mapa de depreciações.</small></span></label>}
       <footer className="settings-actions">
@@ -283,12 +289,13 @@ function AssetDisposalPanel({ asset, onDone, onClose }: { asset: FixedAssetRow; 
   const [counterpart, setCounterpart] = useState('')
   const [journal, setJournal] = useState('')
   const [document, setDocument] = useState('')
+  const [coefficient, setCoefficient] = useState('')
   const [preview, setPreview] = useState<AssetDisposalPreview | null>(null)
   const [posted, setPosted] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const input = () => ({ date, salePrice: Number(price.replace(/\s/g, '').replace(',', '.')) || 0, counterpartAccountCode: counterpart.trim() || null, journalCode: journal.trim(), documentReference: document.trim() || null })
+  const input = () => ({ date, salePrice: Number(price.replace(/\s/g, '').replace(',', '.')) || 0, counterpartAccountCode: counterpart.trim() || null, journalCode: journal.trim(), documentReference: document.trim() || null, monetaryCoefficient: coefficient.trim() ? Number(coefficient.replace(',', '.')) : null })
   const run = async (action: () => Promise<void>) => {
     setBusy(true)
     setError('')
@@ -303,6 +310,7 @@ function AssetDisposalPanel({ asset, onDone, onClose }: { asset: FixedAssetRow; 
       <label className="inline-check">Conta do preço <input aria-label="Conta que recebe o preço" value={counterpart} onChange={(event) => { setCounterpart(event.target.value); setPreview(null) }} placeholder="ex.: 2781 ou 12" style={{ width: '8em' }} /></label>
       <label className="inline-check">Diário <input aria-label="Diário" value={journal} onChange={(event) => setJournal(event.target.value.toUpperCase())} placeholder="código" style={{ width: '7em' }} /></label>
       <label className="inline-check">Documento <input aria-label="Documento" value={document} onChange={(event) => setDocument(event.target.value)} placeholder="opcional" style={{ width: '9em' }} /></label>
+      <label className="inline-check" title="Artigo 47.º do CIRC: o coeficiente da portaria do ano, para o Modelo 31">Coef. desvalorização <input aria-label="Coeficiente de desvalorização da moeda" inputMode="decimal" value={coefficient} onChange={(event) => setCoefficient(event.target.value)} placeholder="1,00" style={{ width: '6em' }} /></label>
       <button className="button button-secondary" type="button" disabled={busy || !date} onClick={() => void run(async () => setPreview(await previewAssetDisposal(companyId, asset.code, input())))}>Calcular</button>
     </div>
     {error && <p className="save-status error">{error}</p>}
