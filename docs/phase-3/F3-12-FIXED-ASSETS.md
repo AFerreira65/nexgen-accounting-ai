@@ -156,5 +156,5 @@ fiscal.
 
 ### A seguir
 
-- O mapa fiscal (Modelo 32, mais e menos-valias para o Modelo 22) e as
-  tabelas do Decreto Regulamentar n.º 25/2009, com fonte.
+- As tabelas do Decreto Regulamentar n.º 25/2009, com fonte. O mapa fiscal
+  (Modelos 32 e 31) ficou feito no [F3-14](F3-14-FISCAL-DOSSIER.md).

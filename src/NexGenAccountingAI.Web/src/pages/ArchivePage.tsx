@@ -107,7 +107,7 @@ export function ArchivePage() {
     {notice && <p className="save-status"><CircleCheck size={15} /> {notice}</p>}
 
     <section className="panel">
-      <div className="panel-heading"><div><h2>Arquivar</h2><p>PDF, PNG, JPEG, WebP, TIFF ou XML, até 15 MB cada. {canScanQrInBrowser() ? 'Nas imagens, o código QR da fatura é lido automaticamente.' : 'Este navegador não lê códigos QR em imagens: use o leitor de códigos abaixo.'}</p></div></div>
+      <div className="panel-heading"><div><h2>Arquivar</h2><p>PDF, PNG, JPEG, WebP, TIFF ou XML, até 15 MB cada. {canScanQrInBrowser() ? 'O código QR da fatura é lido automaticamente nas imagens e nas três primeiras páginas dos PDF, sem o documento sair do computador.' : 'Este navegador não lê códigos QR: use o leitor de códigos abaixo.'}</p></div></div>
       <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
         <input ref={inputRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.tif,.tiff,.xml" className="sr-only" aria-label="Escolher documentos" onChange={(event) => upload(event.target.files)} />
         <button className="button button-primary" type="button" disabled={busy} onClick={() => inputRef.current?.click()}><FileUp size={16} /> Escolher documentos</button>

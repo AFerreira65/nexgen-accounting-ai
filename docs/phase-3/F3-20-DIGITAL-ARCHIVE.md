@@ -82,8 +82,38 @@ documento de origem, mas o documento em si ficava fora da plataforma.
   conteúdo inexistente.
 - PWA: rota e estado sem base de dados.
 
+### F3-20B — Código QR nos PDF e nas imagens em qualquer browser (feito)
+
+**Problema encontrado.** A leitura automática do F3-20A usava só a
+`BarcodeDetector` API, que o Edge e o Chrome **não têm no Windows**
+(confirmado no Edge da máquina de desenvolvimento). Nesta máquina, e no
+WebView2 do posto, o código nunca era lido; e nos PDF nunca o foi.
+
+**`app/qrScan.ts`**, tudo no browser, sem o documento sair do computador:
+
+- **Imagens:** a `BarcodeDetector`, quando existe; senão, o **jsQR**
+  (Apache-2.0) sobre os pixels da imagem.
+- **PDF:** o **pdf.js** (Mozilla, Apache-2.0) desenha as três primeiras
+  páginas a 3× (um código de 30 mm fica com cerca de 255 pixels) e o jsQR
+  procura o código no resultado. Serve tanto para o código desenhado na
+  página, em vetores, como para o que vem como imagem. O pdf.js só é
+  carregado quando aparece um PDF (430 kB, mais o worker).
+- Só aceita um código que comece por `A:` (o NIF do emitente), como antes.
+
+**Validação efetuada**
+
+- `app/qrScan.test.ts` (vitest, em Node com `@napi-rs/canvas`), com PDF A4
+  gerados para o efeito em `src/test-fixtures/` a partir dos exemplos das
+  especificações da AT: o exemplo 1 (código versão 17, 30 × 30 mm)
+  desenhado em vetores e como imagem, um PDF sem código e uma imagem PNG do
+  exemplo 2.
+- **No Edge real**, sem janela: os mesmos ficheiros lidos pela página
+  servida pelo Vite, com o worker do pdf.js — código vetorial em 0,4–0,75 s,
+  imagem em 0,3–0,45 s, PNG em menos de 30 ms; `BarcodeDetector` ausente.
+- O `Microsoft.AspNetCore.StaticFiles` do .NET 10 serve `.mjs` (o worker),
+  como precisa a publicação no serviço do Windows.
+
 ### Por fazer
 
-- Ler o código QR dentro de um PDF (na página, sem imagem).
 - Prazos de conservação por tipo de documento, com a fonte legal.
 - Ver o documento ao lado das linhas no editor de lançamentos.
