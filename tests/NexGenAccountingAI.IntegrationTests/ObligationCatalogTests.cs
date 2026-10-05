@@ -25,6 +25,9 @@ public sealed class ObligationCatalogTests
         Assert.AreEqual(new DateOnly(2026, 7, 31), Due(ObligationCatalog.AdvancePayment1, 2026, 12), "Os pagamentos por conta são do próprio ano.");
         Assert.AreEqual(new DateOnly(2026, 9, 30), Due(ObligationCatalog.AdvancePayment2, 2026, 12));
         Assert.AreEqual(new DateOnly(2026, 12, 15), Due(ObligationCatalog.AdvancePayment3, 2026, 12));
+        Assert.AreEqual(new DateOnly(2026, 4, 20), Due(ObligationCatalog.StampDuty, 2026, 3));
+        Assert.AreEqual(new DateOnly(2026, 4, 5), Due(ObligationCatalog.InvoiceCommunication, 2026, 3));
+        Assert.AreEqual(new DateOnly(2027, 7, 15), Due(ObligationCatalog.FiscalDossier, 2026, 12), "O dossier fiscal acompanha a IES.");
     }
 
     [TestMethod]

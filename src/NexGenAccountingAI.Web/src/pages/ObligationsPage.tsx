@@ -16,6 +16,7 @@ export function ObligationsPage() {
   const [calendar, setCalendar] = useState<ObligationCalendar | null>(null)
   const [editing, setEditing] = useState<{ row: ObligationRow; deliveredOn: string; note: string; dueDate: string } | null>(null)
   const [reload, setReload] = useState(0)
+  const [includeAll, setIncludeAll] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   usePublishRecord(undefined, undefined)
@@ -24,11 +25,11 @@ export function ObligationsPage() {
     if (!onDatabase || !from || !to) { setCalendar(null); return }
     const controller = new AbortController()
     setError('')
-    void obligations(companyId, { from, to })
+    void obligations(companyId, { from, to }, includeAll)
       .then((value) => { if (!controller.signal.aborted) setCalendar(value) })
       .catch((problem: unknown) => { if (!controller.signal.aborted) { setCalendar(null); setError(problem instanceof Error ? problem.message : 'Não foi possível carregar o calendário.') } })
     return () => controller.abort()
-  }, [companyId, from, obligations, onDatabase, reload, to])
+  }, [companyId, from, includeAll, obligations, onDatabase, reload, to])
 
   if (!onDatabase) {
     return <div className="page-stack">
@@ -64,6 +65,7 @@ export function ObligationsPage() {
     <div className="filterbar no-print">
       <label className="inline-check">De <input type="date" aria-label="Data inicial" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
       <label className="inline-check">Até <input type="date" aria-label="Data final" value={to} onChange={(event) => setTo(event.target.value)} /></label>
+      <label className="inline-check"><input type="checkbox" checked={includeAll} onChange={(event) => setIncludeAll(event.target.checked)} /> Mostrar também as que os lançamentos não indicam</label>
     </div>
 
     {error && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
@@ -104,6 +106,6 @@ export function ObligationsPage() {
       </table></div>
     </section>}
 
-    {calendar && <p className="statement-note">Cada prazo vem do texto dos códigos publicado no Portal das Finanças (a fonte está em cada linha). A aplicação mostra o IVA pela periodicidade indicada; a recapitulativa quando há operações intracomunitárias; a declaração mensal de remunerações e a entrega das retenções quando há gastos com pessoal (63) ou retenções (242) no mês; o Modelo 22, a IES e os pagamentos por conta sempre. {calendar.notIncluded}</p>}
+    {calendar && <p className="statement-note">Cada prazo vem do texto dos códigos publicado no Portal das Finanças (a fonte está em cada linha). A aplicação mostra o IVA pela periodicidade indicada; a recapitulativa quando há operações intracomunitárias; a declaração mensal de remunerações e a entrega das retenções quando há gastos com pessoal (63) ou retenções (242) no mês; a comunicação de faturas quando há vendas no mês; o Modelo 22, a IES, o dossier fiscal e os pagamentos por conta sempre. O Imposto do Selo regista-se à mão, com «Mostrar também as que os lançamentos não indicam». {calendar.notIncluded}</p>}
   </div>
 }

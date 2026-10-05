@@ -2459,11 +2459,11 @@ if (applicationEndpointsAvailable)
 
     // Calendário de obrigações (F3-27A): prazos legais com fonte, aplicados pelos dados da empresa, e o estado de cada período.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/obligations", async (
-        Guid userId, Guid companyId, DateOnly from, DateOnly to, ObligationCalendarService obligations, CancellationToken cancellationToken) =>
+        Guid userId, Guid companyId, DateOnly from, DateOnly to, bool? all, ObligationCalendarService obligations, CancellationToken cancellationToken) =>
     {
         try
         {
-            var calendar = await obligations.CalendarAsync(userId, companyId, from, to, cancellationToken).ConfigureAwait(false);
+            var calendar = await obligations.CalendarAsync(userId, companyId, from, to, cancellationToken, all ?? false).ConfigureAwait(false);
             return calendar is null ? Results.NotFound() : Results.Ok(calendar);
         }
         catch (ArgumentException exception)

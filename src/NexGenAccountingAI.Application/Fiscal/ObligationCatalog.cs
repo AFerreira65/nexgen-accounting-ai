@@ -51,9 +51,12 @@ public static class ObligationCatalog
     public const string AdvancePayment1 = "PPC-1";
     public const string AdvancePayment2 = "PPC-2";
     public const string AdvancePayment3 = "PPC-3";
+    public const string StampDuty = "IS-PAG";
+    public const string FiscalDossier = "DOSSIER";
+    public const string InvoiceCommunication = "COM-FAT";
 
     public const string NotIncluded =
-        "Ficam de fora até se confirmar o prazo em vigor no texto legal: a comunicação dos elementos das faturas e a dos inventários (Decreto-Lei n.º 198/2012), o Imposto do Selo, o dossier fiscal e a declaração do RCBE.";
+        "Ficam de fora até se confirmar o prazo em vigor no texto legal: a comunicação dos inventários (Decreto-Lei n.º 198/2012, artigo 3.º-A) e a declaração do RCBE.";
 
     private const string CivaSource = "Texto publicado no Portal das Finanças, consultado em 2026-10-05";
 
@@ -87,6 +90,13 @@ public static class ObligationCatalog
             "Quando o IRC liquidado no ano anterior obriga a pagamentos por conta.", $"CIRC, artigo 104.º, n.º 1, alínea a) ({CivaSource}). Vence em setembro."),
         new(AdvancePayment3, "3.º pagamento por conta do IRC", ObligationFrequency.Anual, 12 - 12, 15,
             "Quando o IRC liquidado no ano anterior obriga a pagamentos por conta.", $"CIRC, artigo 104.º, n.º 1, alínea a) ({CivaSource}). 15 de dezembro."),
+        new(StampDuty, "Pagamento do Imposto do Selo", ObligationFrequency.Mensal, 1, 20,
+            "Quando há imposto do selo liquidado no mês (indique-o à mão: os lançamentos não o mostram com segurança).", $"Código do Imposto do Selo, artigo 44.º, n.º 1 ({CivaSource})."),
+        new(FiscalDossier, "Processo de documentação fiscal (dossier fiscal)", ObligationFrequency.Anual, 7, 15,
+            "Sujeitos passivos de IRC.", $"CIRC, artigo 130.º, n.º 1: constituído até ao termo do prazo da declaração anual (IES), 15 de julho ({CivaSource})."),
+        new(InvoiceCommunication, "Comunicação dos elementos das faturas", ObligationFrequency.Mensal, 1, 5,
+            "Quando há vendas ou prestações de serviços no mês (contas 71 e 72).",
+            "Decreto-Lei n.º 198/2012, artigo 3.º: «até ao dia 05 do mês seguinte» para os documentos emitidos desde 1 de janeiro de 2023, segundo a resposta oficial da AT (Portal das Finanças, questões frequentes, FAQ 00978, consultada em 2026-10-05); o texto do artigo em vigor não foi lido."),
     ];
 
     public static ObligationDefinition Find(string code) =>

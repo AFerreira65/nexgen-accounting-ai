@@ -50,7 +50,7 @@ public sealed class ObligationCalendarService(AccountingDbContext context)
     private const int MaxDays = 400;
 
     public async Task<ObligationCalendar?> CalendarAsync(
-        Guid userId, Guid companyId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+        Guid userId, Guid companyId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default, bool includeAll = false)
     {
         if (to < from || to.DayNumber - from.DayNumber > MaxDays)
         {
@@ -86,7 +86,8 @@ public sealed class ObligationCalendarService(AccountingDbContext context)
                      line.VatCode.Nature == VatOperationNature.PrestacoesServicosIntracomunitarias ||
                      line.VatCode.Nature == VatOperationNature.OperacoesTriangulares)) ||
                  (line.Account.Code.StartsWith("242") && line.Credit > 0) ||
-                 (line.Account.Code.StartsWith("63") && line.Debit > 0)))
+                 (line.Account.Code.StartsWith("63") && line.Debit > 0) ||
+                 ((line.Account.Code.StartsWith("71") || line.Account.Code.StartsWith("72")) && line.Credit > 0)))
             .Select(line => new
             {
                 line.JournalEntry.EntryDate,
@@ -96,12 +97,13 @@ public sealed class ObligationCalendarService(AccountingDbContext context)
                      line.VatCode.Nature == VatOperationNature.OperacoesTriangulares),
                 Withholding = line.Account.Code.StartsWith("242") && line.Credit > 0,
                 Payroll = line.Account.Code.StartsWith("63") && line.Debit > 0,
+                Sales = (line.Account.Code.StartsWith("71") || line.Account.Code.StartsWith("72")) && line.Credit > 0,
             })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        bool Any(Func<DateOnly, bool> inPeriod, Func<(bool Intra, bool Withholding, bool Payroll), bool> kind) =>
-            activity.Any(item => inPeriod(item.EntryDate) && kind((item.IntraCommunity, item.Withholding, item.Payroll)));
+        bool Any(Func<DateOnly, bool> inPeriod, Func<(bool Intra, bool Withholding, bool Payroll, bool Sales), bool> kind) =>
+            activity.Any(item => inPeriod(item.EntryDate) && kind((item.IntraCommunity, item.Withholding, item.Payroll, item.Sales)));
 
         var records = await context.TaxObligationRecords
             .AsNoTracking()
@@ -126,11 +128,13 @@ public sealed class ObligationCalendarService(AccountingDbContext context)
                 ObligationCatalog.Withholdings => Any(InPeriod, kind => kind.Withholding) ? "Retenções no mês (contas 242)" : null,
                 ObligationCatalog.MonthlyPayroll => Any(InPeriod, kind => kind.Payroll) ? "Remunerações no mês (contas 63)" : null,
                 ObligationCatalog.Modelo10 => Any(InPeriod, kind => kind.Withholding) ? "Retenções no ano" : null,
+                ObligationCatalog.InvoiceCommunication => Any(InPeriod, kind => kind.Sales) ? "Vendas no mês (contas 71 e 72)" : null,
+                ObligationCatalog.StampDuty => null,
                 _ => "Sujeito passivo de IRC",
             };
 
             byKey.TryGetValue((code, occurrence.PeriodKey), out var record);
-            if (reason is null && record is null)
+            if (reason is null && record is null && !includeAll)
             {
                 continue;
             }
@@ -152,7 +156,7 @@ public sealed class ObligationCalendarService(AccountingDbContext context)
                 (record?.State ?? TaxObligationState.Pendente).ToString(),
                 record?.DeliveredOn,
                 record?.Note,
-                reason ?? "Registada à mão",
+                reason ?? (record is null ? "Os lançamentos não a indicam" : "Registada à mão"),
                 occurrence.Definition.Source));
         }
 

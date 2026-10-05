@@ -77,10 +77,35 @@ prazos confirmados no texto legal.
 - `NexGenAccountingAI.Api.Tests`: o calendário de maio e «entregue» sem data.
 - PWA: rota e estado sem base de dados.
 
+### F3-27B — Imposto do Selo, dossier fiscal e comunicação de faturas (feito)
+
+Confirmados no Portal das Finanças em 2026-10-05:
+
+| Obrigação | Prazo | Fonte | Quando aparece |
+|---|---|---|---|
+| Pagamento do Imposto do Selo | Dia 20 do mês seguinte | CIS, art. 44.º, n.º 1 | Só à mão: os lançamentos não mostram com segurança o selo liquidado |
+| Dossier fiscal | 15 de julho do ano seguinte | CIRC, art. 130.º, n.º 1: «até ao termo do prazo» da declaração anual (IES, art. 121.º, n.º 2) | Sempre |
+| Comunicação dos elementos das faturas | Dia 5 do mês seguinte | DL n.º 198/2012, art. 3.º, segundo a **resposta oficial da AT** (FAQ 00978) para os documentos emitidos desde 2023. O texto do artigo em vigor não foi lido, e a fonte di-lo. | Meses com vendas (créditos em 71 ou 72) |
+
+- **«Mostrar também as que os lançamentos não indicam»**: a opção do
+  calendário (`GET .../obligations?all=true`) mostra as obrigações do catálogo
+  que os dados não pedem, para as registar à mão. O Imposto do Selo
+  regista-se assim. O painel do gabinete e as Tarefas continuam a mostrar só
+  as indicadas ou já registadas.
+- **Continuam de fora:** a comunicação dos inventários (DL n.º 198/2012, art.
+  3.º-A) e a declaração do RCBE.
+
+**Validação:**
+
+- `ObligationCatalogTests`: os três prazos novos.
+- `ObligationCalendarServiceTests`:
+  - a comunicação de faturas no mês com vendas;
+  - o selo fora da lista por omissão;
+  - o selo com «todas», com o motivo «Os lançamentos não a indicam».
+
 ### Por fazer
 
-- Confirmar e acrescentar a comunicação de faturas, a de inventários, o
-  Imposto do Selo, o dossier fiscal e o RCBE.
+- Os inventários e o RCBE.
 - Passar ao dia útil seguinte com um calendário de feriados, com a regra
   legal da contagem.
 - Ligar o comprovativo ao arquivo digital (F3-20) e marcar «entregue» a

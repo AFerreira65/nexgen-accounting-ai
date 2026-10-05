@@ -65,12 +65,17 @@ public sealed class ObligationCalendarServiceTests
             Assert.IsFalse(calendar.VatPeriodicityConfigured);
             string[] Codes(string periodKey) => calendar.Rows.Where(row => row.PeriodKey == periodKey).Select(row => row.Code).OrderBy(code => code, StringComparer.Ordinal).ToArray();
             CollectionAssert.AreEqual(
-                new[] { ObligationCatalog.MonthlyPayroll, ObligationCatalog.VatReturnMonthly, ObligationCatalog.VatPaymentMonthly, ObligationCatalog.RecapitulativeMonthly, ObligationCatalog.Withholdings },
+                new[] { ObligationCatalog.InvoiceCommunication, ObligationCatalog.MonthlyPayroll, ObligationCatalog.VatReturnMonthly, ObligationCatalog.VatPaymentMonthly, ObligationCatalog.RecapitulativeMonthly, ObligationCatalog.Withholdings },
                 Codes("2026-03"),
                 "Março: DMR, retenções e recapitulativa (há operações) e o IVA de março, que vence em maio.");
             CollectionAssert.AreEqual(new[] { ObligationCatalog.VatReturnMonthly, ObligationCatalog.VatPaymentMonthly }, Codes("2026-02"), "Fevereiro: só o IVA, sem salários nem vendas intracomunitárias.");
             Assert.AreEqual(new DateOnly(2026, 5, 31), calendar.Rows.Single(row => row.Code == ObligationCatalog.Modelo22).DueDate);
-            Assert.IsFalse(calendar.Rows.Any(row => row.Code is ObligationCatalog.VatReturnQuarterly or ObligationCatalog.RecapitulativeQuarterly));
+            Assert.IsFalse(calendar.Rows.Any(row => row.Code is ObligationCatalog.VatReturnQuarterly or ObligationCatalog.RecapitulativeQuarterly or ObligationCatalog.StampDuty));
+
+            // Com «todas», aparecem também as que os dados não indicam — o Imposto do Selo regista-se à mão.
+            var all = await service.CalendarAsync(userId, companyId, new DateOnly(2026, 4, 1), new DateOnly(2026, 5, 31), CancellationToken.None, includeAll: true).ConfigureAwait(false);
+            var stamp = all!.Rows.First(row => row.Code == ObligationCatalog.StampDuty);
+            Assert.AreEqual("Os lançamentos não a indicam", stamp.Reason);
             Assert.IsTrue(calendar.Rows.All(row => row.State == "Pendente"));
             Assert.IsTrue(calendar.Rows.Single(row => row.Code == ObligationCatalog.MonthlyPayroll).Overdue(new DateOnly(2026, 4, 11)));
 
