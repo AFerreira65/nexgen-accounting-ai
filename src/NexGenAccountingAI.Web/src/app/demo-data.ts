@@ -840,7 +840,7 @@ export type SalesEntryRuleRow = { taxPercentage: number; entryTemplateCode: stri
 export type BankAccountRow = { accountCode: string; accountName: string; lineCount: number; unreconciledCount: number; lastMovementDate: string | null; iban: string | null }
 export type BankStatementImportResult = { importId: string | null; format: string; iban: string | null; read: number; imported: number; alreadyExisted: number; invalid: number; invalidRows: { lineNumber: number; reason: string }[]; from: string | null; to: string | null; openingBalance: number | null; closingBalance: number | null; warnings: string[] }
 export type BankBookEntry = { reference: string; entryDate: string; documentReference: string; description: string; amount: number; status: string }
-export type BankStatementLineRow = { id: string; bookingDate: string; valueDate: string | null; description: string; reference: string | null; amount: number; balance: number | null; reconciledEntry: BankBookEntry | null; reconciledAutomatically: boolean }
+export type BankStatementLineRow = { id: string; bookingDate: string; valueDate: string | null; description: string; reference: string | null; amount: number; balance: number | null; reconciliationId: string | null; reconciledEntries: BankBookEntry[]; reconciledLineCount: number; reconciledAutomatically: boolean; reconciled: boolean }
 export type BankReconciliationReport = {
   accountCode: string
   accountName: string

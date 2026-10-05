@@ -84,6 +84,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<BankEntryRule> BankEntryRules => Set<BankEntryRule>();
 
+    public DbSet<BankReconciliation> BankReconciliations => Set<BankReconciliation>();
+
     public DbSet<DocumentAttachment> DocumentAttachments => Set<DocumentAttachment>();
 
     public DbSet<DocumentAttachmentContent> DocumentAttachmentContents => Set<DocumentAttachmentContent>();
@@ -137,6 +139,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new BankStatementImportConfiguration());
         modelBuilder.ApplyConfiguration(new BankStatementLineConfiguration());
         modelBuilder.ApplyConfiguration(new BankEntryRuleConfiguration());
+        modelBuilder.ApplyConfiguration(new BankReconciliationConfiguration());
         modelBuilder.ApplyConfiguration(new DocumentAttachmentConfiguration());
         modelBuilder.ApplyConfiguration(new DocumentAttachmentContentConfiguration());
         modelBuilder.ApplyConfiguration(new TaxObligationRecordConfiguration());

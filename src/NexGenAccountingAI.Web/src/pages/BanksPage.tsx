@@ -9,7 +9,7 @@ import { useWorkContext } from '../app/WorkContext'
 import { SuggestionLines, SuggestionOutcomes } from './suggestionParts'
 
 export function BanksPage() {
-  const { activeCompany, source, bankAccounts, importBankStatement, bankStatementLines, autoReconcileBank, reconcileBankLine, unreconcileBankLine, bankReconciliation, bankEntryRules, saveBankEntryRule, deleteBankEntryRule, bankEntrySuggestions, postBankLines, entryTemplates } = useWorkContext()
+  const { activeCompany, source, bankAccounts, importBankStatement, bankStatementLines, autoReconcileBank, reconcileBankLine, reconcileBankGroup, unreconcileBankLine, bankReconciliation, bankEntryRules, saveBankEntryRule, deleteBankEntryRule, bankEntrySuggestions, postBankLines, entryTemplates } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const fiscalYear = activeCompany.settings.defaultFiscalYear
@@ -28,6 +28,8 @@ export function BanksPage() {
   const [outcomes, setOutcomes] = useState<SuggestedEntryOutcome[]>([])
   const [newPattern, setNewPattern] = useState('')
   const [newTemplate, setNewTemplate] = useState('')
+  const [groupLines, setGroupLines] = useState<Set<string>>(new Set())
+  const [groupEntries, setGroupEntries] = useState<Set<string>>(new Set())
   const [notice, setNotice] = useState('')
   const [reload, setReload] = useState(0)
   const [busy, setBusy] = useState(false)
@@ -141,6 +143,14 @@ export function BanksPage() {
     setReload((value) => value + 1)
   }, 'Não foi possível apagar a regra.')
 
+  const flip = (set: Set<string>, value: string) => { const next = new Set(set); if (next.has(value)) next.delete(value); else next.add(value); return next }
+  const reconcileGroup = () => void run(async () => {
+    await reconcileBankGroup(companyId, [...groupLines], [...groupEntries])
+    setGroupLines(new Set())
+    setGroupEntries(new Set())
+    setReload((value) => value + 1)
+  }, 'Não foi possível conciliar.')
+
   const toggle = (lineId: string) => setSelected((current) => {
     const next = new Set(current)
     if (next.has(lineId)) next.delete(lineId)
@@ -154,7 +164,7 @@ export function BanksPage() {
     csvFilename(`extrato-${accountCode}-${fromDate}-${toDate}`, activeCompany.legalName),
     toCsv([
       ['Data', 'Data-valor', 'Descrição', 'Referência', 'Montante', 'Saldo', 'Lançamento', 'Conciliação'],
-      ...lines.map((line) => [line.bookingDate, line.valueDate ?? '', line.description, line.reference ?? '', line.amount, line.balance ?? '', line.reconciledEntry?.reference ?? '', line.reconciledEntry ? (line.reconciledAutomatically ? 'Automática' : 'Manual') : 'Por conciliar']),
+      ...lines.map((line) => [line.bookingDate, line.valueDate ?? '', line.description, line.reference ?? '', line.amount, line.balance ?? '', line.reconciledEntries.map((entry) => entry.reference).join(' '), line.reconciled ? (line.reconciledAutomatically ? 'Automática' : 'Manual') : 'Por conciliar']),
     ]),
   )
 
@@ -198,20 +208,21 @@ export function BanksPage() {
       </section>}
 
       <section className="panel">
-        <div className="panel-heading"><div><h2>Movimentos do extrato</h2><p>{lines.length === 0 ? 'Sem movimentos importados no período.' : `${lines.filter((line) => line.reconciledEntry).length} de ${lines.length} conciliados.`} A conciliação automática junta cada movimento a um lançamento da conta com o mesmo valor, até 7 dias de distância, o mais próximo primeiro.</p></div></div>
+        <div className="panel-heading"><div><h2>Movimentos do extrato</h2><p>{lines.length === 0 ? 'Sem movimentos importados no período.' : `${lines.filter((line) => line.reconciled).length} de ${lines.length} conciliados.`} A conciliação automática junta cada movimento a um lançamento da conta com o mesmo valor, até 7 dias de distância, o mais próximo primeiro.</p></div></div>
         <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
-          <button className="button button-primary" type="button" disabled={busy || lines.every((line) => line.reconciledEntry)} onClick={autoReconcile}><Wand2 size={16} /> Conciliar automaticamente</button>
+          <button className="button button-primary" type="button" disabled={busy || lines.every((line) => line.reconciled)} onClick={autoReconcile}><Wand2 size={16} /> Conciliar automaticamente</button>
           <button className="button button-secondary" type="button" disabled={lines.length === 0} onClick={exportCsv}><Download size={16} /> Exportar CSV</button>
         </div>
         {lines.length > 0 && <div className="table-wrap"><table>
-          <thead><tr><th>Data</th><th>Descrição</th><th className="numeric">Montante</th><th className="numeric">Saldo</th><th>Lançamento</th></tr></thead>
+          <thead><tr><th><span className="sr-only">Juntar</span></th><th>Data</th><th>Descrição</th><th className="numeric">Montante</th><th className="numeric">Saldo</th><th>Lançamento</th></tr></thead>
           <tbody>{lines.map((line) => <tr key={line.id}>
+            <td>{!line.reconciled && <input type="checkbox" aria-label={`Juntar ${line.description} a uma conciliação`} checked={groupLines.has(line.id)} onChange={() => setGroupLines((current) => flip(current, line.id))} />}</td>
             <td>{formatMovementDate(line.bookingDate)}{line.valueDate && line.valueDate !== line.bookingDate ? <small>valor {formatMovementDate(line.valueDate)}</small> : null}</td>
             <td>{line.description}{line.reference ? <small>{line.reference}</small> : null}</td>
             <td className={`numeric strong${line.amount < 0 ? ' negative' : ''}`}>{euro.format(line.amount)}</td>
             <td className="numeric">{line.balance === null ? '' : euro.format(line.balance)}</td>
-            <td>{line.reconciledEntry
-              ? <span className="inline-check"><Link to={`/movimentos/${line.reconciledEntry.reference}`}>{line.reconciledEntry.reference}</Link><small>{formatMovementDate(line.reconciledEntry.entryDate)} · {line.reconciledEntry.description}{line.reconciledAutomatically ? ' · automática' : ''}</small><button className="icon-button" type="button" aria-label={`Desfazer a conciliação de ${line.description}`} title="Desfazer a conciliação" disabled={busy} onClick={() => unreconcile(line)}><Link2Off size={15} /></button></span>
+            <td>{line.reconciled
+              ? <span className="inline-check">{line.reconciledEntries.map((entry) => <Link key={entry.reference} to={`/movimentos/${entry.reference}`}>{entry.reference}</Link>)}<small>{line.reconciledEntries.length === 1 ? `${formatMovementDate(line.reconciledEntries[0].entryDate)} · ${line.reconciledEntries[0].description}` : `${line.reconciledEntries.length} lançamentos`}{line.reconciledLineCount > 1 ? ` · com mais ${line.reconciledLineCount - 1} ${line.reconciledLineCount === 2 ? 'movimento' : 'movimentos'}` : ''}{line.reconciledAutomatically ? ' · automática' : ''}</small><button className="icon-button" type="button" aria-label={`Desfazer a conciliação de ${line.description}`} title="Desfazer a conciliação (de todo o grupo)" disabled={busy} onClick={() => unreconcile(line)}><Link2Off size={15} /></button></span>
               : <span className="inline-check">
                 <input aria-label={`Lançamento para ${line.description}`} list={`candidatos-${line.id}`} value={choice[line.id] ?? ''} onChange={(event) => setChoice((current) => ({ ...current, [line.id]: event.target.value.toUpperCase() }))} placeholder={candidates(line.amount).length > 0 ? `${candidates(line.amount).length} com o mesmo valor` : 'referência'} />
                 <datalist id={`candidatos-${line.id}`}>{candidates(line.amount).map((entry) => <option key={entry.reference} value={entry.reference}>{formatMovementDate(entry.entryDate)} · {entry.description}</option>)}</datalist>
@@ -220,6 +231,16 @@ export function BanksPage() {
           </tr>)}</tbody>
         </table></div>}
       </section>
+
+      {(groupLines.size > 0 || groupEntries.size > 0) && <section className="panel settings-panel">
+        <div className="panel-heading"><div><h2>Conciliar em grupo</h2><p>Junte os movimentos marcados na tabela aos lançamentos marcados abaixo — uma transferência que paga várias faturas, os pagamentos com cartão de um dia lançados juntos. Os totais têm de ser iguais.</p></div></div>
+        <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
+          <span className="inline-check">Movimentos: <strong>{euro.format(lines.filter((line) => groupLines.has(line.id)).reduce((sum, line) => sum + line.amount, 0))}</strong> ({groupLines.size})</span>
+          <span className="inline-check">Lançamentos: <strong>{euro.format((report?.bookOnly ?? []).filter((entry) => groupEntries.has(entry.reference)).reduce((sum, entry) => sum + entry.amount, 0))}</strong> ({groupEntries.size})</span>
+          <button className="button button-primary" type="button" disabled={busy || groupLines.size === 0 || groupEntries.size === 0} onClick={reconcileGroup}><Link2 size={15} /> Conciliar</button>
+          <button className="text-link" type="button" onClick={() => { setGroupLines(new Set()); setGroupEntries(new Set()) }}>Limpar</button>
+        </div>
+      </section>}
 
       <SuggestionOutcomes outcomes={outcomes} />
 
@@ -261,8 +282,9 @@ export function BanksPage() {
       {report && report.bookOnly.length > 0 && <section className="panel">
         <div className="panel-heading"><div><h2>Só na contabilidade</h2><p>Lançamentos da conta desde o primeiro extrato importado que ainda não passaram no banco — cheques por descontar, transferências em curso — ou que falta conciliar.</p></div></div>
         <div className="table-wrap"><table>
-          <thead><tr><th>Data</th><th>Lançamento</th><th>Descrição</th><th className="numeric">Montante</th></tr></thead>
+          <thead><tr><th><span className="sr-only">Juntar</span></th><th>Data</th><th>Lançamento</th><th>Descrição</th><th className="numeric">Montante</th></tr></thead>
           <tbody>{report.bookOnly.map((entry) => <tr key={entry.reference}>
+            <td><input type="checkbox" aria-label={`Juntar ${entry.reference} a uma conciliação`} checked={groupEntries.has(entry.reference)} onChange={() => setGroupEntries((current) => flip(current, entry.reference))} /></td>
             <td>{formatMovementDate(entry.entryDate)}</td>
             <td><Link to={`/movimentos/${entry.reference}`}>{entry.reference}</Link><small>{entry.documentReference}</small></td>
             <td>{entry.description}</td>
@@ -271,7 +293,7 @@ export function BanksPage() {
         </table></div>
       </section>}
 
-      <p className="statement-note">O montante é positivo quando entra dinheiro e negativo quando sai — o mesmo sinal que débito menos crédito na conta. Saldo do extrato = saldo contabilístico + movimentos só no banco − lançamentos só na contabilidade; a diferença por explicar deve ser zero. Um lançamento anulado deixa de contar como conciliado.</p>
+      <p className="statement-note">O montante é positivo quando entra dinheiro e negativo quando sai — o mesmo sinal que débito menos crédito na conta. Saldo do extrato = saldo contabilístico + movimentos só no banco − lançamentos só na contabilidade; a diferença por explicar deve ser zero. Uma conciliação pode juntar vários movimentos e vários lançamentos, com os mesmos totais; deixa de contar quando um dos lançamentos é anulado ou corrigido para outro valor.</p>
     </>}
   </div>
 }

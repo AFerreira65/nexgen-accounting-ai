@@ -112,7 +112,8 @@ public sealed class BankEntryServiceTests
             Assert.AreEqual(EntrySource.BankStatement, posted.Source);
             Assert.AreEqual(JournalEntryStatus.PendingReview, posted.Status);
             Assert.AreEqual(new DateOnly(2026, 3, 3), posted.EntryDate);
-            Assert.AreEqual(reference, (await context.BankStatementLines.AsNoTracking().SingleAsync(line => line.Id == lineIds[0]).ConfigureAwait(false)).ReconciledEntryReference,
+            var reconciliationId = (await context.BankStatementLines.AsNoTracking().SingleAsync(line => line.Id == lineIds[0]).ConfigureAwait(false)).ReconciliationId;
+            Assert.AreEqual(reference, (await context.BankReconciliations.AsNoTracking().SingleAsync(item => item.Id == reconciliationId).ConfigureAwait(false)).EntryReferences.Single(),
                 "O movimento fica conciliado com o lançamento criado.");
             Assert.AreEqual(0, (await service.SuggestAsync(userId, companyId, "12011", from, to, CancellationToken.None).ConfigureAwait(false))!.Count);
 

@@ -59,7 +59,7 @@ public sealed class FirmDashboardService(
             .ConfigureAwait(false);
         var unreconciled = await context.BankStatementLines
             .AsNoTracking()
-            .Where(line => ids.Contains(line.CompanyId) && line.ReconciledEntryReference == null)
+            .Where(line => ids.Contains(line.CompanyId) && line.ReconciliationId == null)
             .GroupBy(line => line.CompanyId)
             .Select(group => new { group.Key, Count = group.Count() })
             .ToDictionaryAsync(item => item.Key, item => item.Count, cancellationToken)

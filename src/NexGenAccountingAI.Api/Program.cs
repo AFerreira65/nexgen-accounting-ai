@@ -2848,6 +2848,23 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Conciliação de um ou mais movimentos com um ou mais lançamentos (F3-19C).
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-statements/reconciliations", async (
+        Guid userId, Guid companyId, BankGroupReconcileRequest request, BankStatementService banks, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var lines = await banks
+                .ReconcileGroupAsync(userId, companyId, request?.LineIds ?? [], request?.EntryReferences ?? [], cancellationToken)
+                .ConfigureAwait(false);
+            return lines is null ? Results.NotFound() : Results.Ok(lines);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["conciliacao"] = [exception.Message] });
+        }
+    });
+
     app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/bank-statements/lines/{lineId:guid}/reconciliation", async (
         Guid userId, Guid companyId, Guid lineId, BankStatementService banks, CancellationToken cancellationToken) =>
     {
@@ -4828,6 +4845,8 @@ public sealed record FinalizeSalesSuggestedEntriesRequest(IReadOnlyList<Guid>? D
 public sealed record SalesEntryRuleRequest(string? EntryTemplateCode, bool IsActive = true);
 
 public sealed record BankReconcileRequest(string? EntryReference);
+
+public sealed record BankGroupReconcileRequest(IReadOnlyList<Guid>? LineIds, IReadOnlyList<string>? EntryReferences);
 
 public sealed record BankEntryRuleRequest(string? Pattern, string? EntryTemplateCode, bool IsActive = true);
 

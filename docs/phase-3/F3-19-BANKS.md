@@ -136,8 +136,52 @@ comparar.
 - `NexGenAccountingAI.Api.Tests`: regras, texto curto e lançar sem
   movimentos.
 
+### F3-19C — Conciliar vários movimentos com vários lançamentos (feito)
+
+- **`Domain/Banking/BankReconciliation`**: a conciliação passa a ser um
+  grupo. Junta um ou mais movimentos do extrato (que apontam para ela por
+  `ReconciliationId`) a um ou mais lançamentos (as referências guardam-se num
+  `text[]`).
+  - **Casos:** uma transferência que paga várias faturas; os pagamentos com
+    cartão de um dia lançados num só lançamento.
+  - **Migração** `20261005001711_GroupedBankReconciliation`: cada movimento
+    conciliado pelo modelo anterior passa a ter a sua conciliação, com o
+    mesmo Id, antes de as colunas antigas saírem.
+- **`BankStatementService.ReconcileGroupAsync`**:
+  - **Movimentos:** da mesma conta e por conciliar.
+  - **Lançamentos:** existentes, não anulados, que movimentam a conta e ainda
+    não estão noutra conciliação.
+  - **Totais:** o total dos movimentos tem de ser igual ao efeito dos
+    lançamentos na conta; a mensagem mostra os dois.
+  - **Outros casos:** a conciliação manual de um só movimento é o caso
+    simples; a automática e o lançamento a partir do extrato criam grupos de
+    um para um.
+- **Validade:** uma conciliação deixa de contar quando um dos lançamentos é
+  anulado ou corrigido para outro valor. A conciliação automática e as
+  conciliações novas desfazem primeiro as que deixaram de valer. Desfazer um
+  movimento desfaz o grupo inteiro.
+- **API:** `POST .../bank-statements/reconciliations` (`{ lineIds, entryReferences }`).
+  Cada movimento devolve agora os lançamentos (`reconciledEntries`) e quantos
+  movimentos tem o grupo.
+- **PWA:** no ecrã «Bancos», marcam-se movimentos na tabela e lançamentos em
+  «Só na contabilidade». O painel «Conciliar em grupo» mostra os dois totais e
+  concilia.
+
+**Validação efetuada**
+
+- `BankStatementServiceTests`:
+  - **Vários para um:** dois cafés com um lançamento; um só café recusado
+    por total diferente.
+  - **Um para vários:** um pagamento com dois lançamentos.
+  - **Lançamentos:** um lançamento já usado é recusado.
+  - **Mapa e desfazer:** o mapa sem nada só no banco e com diferença zero;
+    desfazer o grupo inteiro.
+- `BankReconciliationMigrationTests`: um movimento conciliado pelo modelo
+  antigo passa a uma conciliação com a mesma referência e a mesma marca de
+  automática.
+- `BankEntryServiceTests`: lançar do extrato cria a conciliação.
+- `NexGenAccountingAI.Api.Tests`: conciliação em grupo vazia recusada.
+
 ### Por fazer
 
-- **F3-19C**: conciliar um movimento com vários lançamentos (um pagamento de
-  várias faturas) e vários movimentos com um lançamento.
 - Open Banking (PSD2), mais tarde.

@@ -1493,6 +1493,8 @@ public sealed class FoundationApiTests
         using var badQr = await client.PostAsync($"{basePath}/invoice-qr/lookup", badQrBody).ConfigureAwait(false);
         using var missingAttachment = await client.GetAsync($"{basePath}/attachments/{Guid.NewGuid()}/content").ConfigureAwait(false);
         using var bankRules = await client.GetAsync($"{basePath}/bank-entry-rules").ConfigureAwait(false);
+        using var emptyGroupBody = new StringContent("{\"lineIds\":[],\"entryReferences\":[]}", System.Text.Encoding.UTF8, "application/json");
+        using var emptyGroup = await client.PostAsync($"{basePath}/bank-statements/reconciliations", emptyGroupBody).ConfigureAwait(false);
         using var shortBankRuleBody = new StringContent("{\"pattern\":\"ab\",\"entryTemplateCode\":\"X\"}", System.Text.Encoding.UTF8, "application/json");
         using var shortBankRule = await client.PutAsync($"{basePath}/bank-entry-rules", shortBankRuleBody).ConfigureAwait(false);
         using var emptyBankPostBody = new StringContent("{\"lineIds\":[]}", System.Text.Encoding.UTF8, "application/json");
@@ -1566,6 +1568,7 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.BadRequest, badQr.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, missingAttachment.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, bankRules.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, emptyGroup.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, shortBankRule.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, emptyBankPost.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, notBank.StatusCode);

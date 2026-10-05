@@ -7,8 +7,8 @@ namespace NexGenAccountingAI.Domain.Banking;
 /// Um movimento de um extrato bancário importado para uma conta de depósitos
 /// (11, 12 ou 13) de uma empresa. <see cref="Amount"/> é positivo quando entra
 /// dinheiro e negativo quando sai — o mesmo sinal que débito menos crédito na
-/// conta. Concilia-se com um lançamento pela referência deste (corrigir um
-/// lançamento recria-o com a mesma referência).
+/// conta. Concilia-se por uma <see cref="BankReconciliation"/>, que junta um
+/// ou mais movimentos a um ou mais lançamentos.
 /// </summary>
 public sealed class BankStatementLine
 {
@@ -61,13 +61,8 @@ public sealed class BankStatementLine
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
-    /// <summary>A referência do lançamento com que o movimento está conciliado.</summary>
-    public string? ReconciledEntryReference { get; private set; }
-
-    public DateTimeOffset? ReconciledAtUtc { get; private set; }
-
-    /// <summary>Se a conciliação foi proposta pela aplicação (valor e data) em vez de escolhida à mão.</summary>
-    public bool ReconciledAutomatically { get; private set; }
+    /// <summary>A conciliação a que o movimento pertence (com um ou mais lançamentos), se houver.</summary>
+    public Guid? ReconciliationId { get; private set; }
 
     public static BankStatementLine Create(
         Guid companyId,
@@ -105,20 +100,17 @@ public sealed class BankStatementLine
         };
     }
 
-    public void Reconcile(string entryReference, bool automatically)
+    public void AttachTo(Guid reconciliationId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(entryReference);
-        ReconciledEntryReference = entryReference.Trim();
-        ReconciledAtUtc = DateTimeOffset.UtcNow;
-        ReconciledAutomatically = automatically;
+        if (reconciliationId == Guid.Empty)
+        {
+            throw new ArgumentException("A conciliação é obrigatória.", nameof(reconciliationId));
+        }
+
+        ReconciliationId = reconciliationId;
     }
 
-    public void Unreconcile()
-    {
-        ReconciledEntryReference = null;
-        ReconciledAtUtc = null;
-        ReconciledAutomatically = false;
-    }
+    public void Detach() => ReconciliationId = null;
 
     /// <summary>
     /// A chave de um movimento: data, montante, descrição normalizada e
@@ -200,4 +192,58 @@ public sealed class BankStatementImport
     public int LineCount { get; private set; }
 
     public DateTimeOffset ImportedAtUtc { get; private set; }
+}
+
+/// <summary>
+/// Uma conciliação bancária: um ou mais movimentos do extrato de uma conta
+/// explicados por um ou mais lançamentos que movimentam essa conta pelo mesmo
+/// total — uma transferência que paga várias faturas, os pagamentos com cartão
+/// de um dia lançados juntos. Os lançamentos guardam-se pela referência, porque
+/// corrigir um lançamento recria-o com a mesma referência.
+/// </summary>
+public sealed class BankReconciliation
+{
+    public const int EntryReferenceMaxLength = 48;
+
+    private BankReconciliation()
+    {
+    }
+
+    public BankReconciliation(Guid id, Guid companyId, Guid accountId, IEnumerable<string> entryReferences, bool automatic)
+    {
+        if (companyId == Guid.Empty || accountId == Guid.Empty)
+        {
+            throw new ArgumentException("A empresa e a conta são obrigatórias.");
+        }
+
+        var references = (entryReferences ?? [])
+            .Where(reference => !string.IsNullOrWhiteSpace(reference))
+            .Select(reference => reference.Trim().ToUpperInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        if (references.Count == 0)
+        {
+            throw new ArgumentException("Indique pelo menos um lançamento.", nameof(entryReferences));
+        }
+
+        Id = id;
+        CompanyId = companyId;
+        AccountId = accountId;
+        EntryReferences = references;
+        Automatic = automatic;
+        CreatedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public Guid Id { get; private set; }
+
+    public Guid CompanyId { get; private set; }
+
+    public Guid AccountId { get; private set; }
+
+    public List<string> EntryReferences { get; private set; } = [];
+
+    /// <summary>Se foi proposta pela aplicação (valor e data, ou criada ao lançar do extrato) e não escolhida à mão.</summary>
+    public bool Automatic { get; private set; }
+
+    public DateTimeOffset CreatedAtUtc { get; private set; }
 }

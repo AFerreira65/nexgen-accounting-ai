@@ -156,6 +156,7 @@ type WorkContextValue = WorkContextData & {
   bankStatementLines: (companyId: string, accountCode: string, range: { from: string; to: string }) => Promise<BankStatementLineRow[]>
   autoReconcileBank: (companyId: string, accountCode: string, range: { from: string; to: string }) => Promise<number>
   reconcileBankLine: (companyId: string, lineId: string, entryReference: string) => Promise<BankStatementLineRow>
+  reconcileBankGroup: (companyId: string, lineIds: string[], entryReferences: string[]) => Promise<BankStatementLineRow[]>
   unreconcileBankLine: (companyId: string, lineId: string) => Promise<void>
   bankReconciliation: (companyId: string, accountCode: string, date: string) => Promise<BankReconciliationReport>
   bankEntryRules: (companyId: string) => Promise<BankEntryRuleRow[]>
@@ -1279,6 +1280,15 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       })
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as BankStatementLineRow
+    },
+    reconcileBankGroup: async (companyId, lineIds, entryReferences) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/bank-statements/reconciliations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineIds, entryReferences }),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      return await response.json() as BankStatementLineRow[]
     },
     unreconcileBankLine: async (companyId, lineId) => {
       const response = await fetch(`/api/v1/development/users/${data.user.id}/companies/${companyId}/bank-statements/lines/${lineId}/reconciliation`, { method: 'DELETE' })

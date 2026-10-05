@@ -41,6 +41,11 @@ public sealed record BankBookEntry(
     decimal Amount,
     string Status);
 
+/// <summary>
+/// Um movimento do extrato, com a conciliação a que pertence: os lançamentos que
+/// o explicam (com os outros movimentos do mesmo grupo, se houver) e se foi
+/// proposta pela aplicação.
+/// </summary>
 public sealed record BankStatementLineRow(
     Guid Id,
     DateOnly BookingDate,
@@ -49,8 +54,13 @@ public sealed record BankStatementLineRow(
     string? Reference,
     decimal Amount,
     decimal? Balance,
-    BankBookEntry? ReconciledEntry,
-    bool ReconciledAutomatically);
+    Guid? ReconciliationId,
+    IReadOnlyList<BankBookEntry> ReconciledEntries,
+    int ReconciledLineCount,
+    bool ReconciledAutomatically)
+{
+    public bool Reconciled => ReconciledEntries.Count > 0;
+}
 
 /// <summary>
 /// O mapa de reconciliação bancária numa data: o saldo contabilístico, mais o
@@ -79,12 +89,14 @@ public sealed record BankReconciliationReport(
 }
 
 /// <summary>
-/// Extratos bancários e conciliação (F3-19A). Importa um extrato (camt.053 ou
-/// CSV) para uma conta de depósitos, sem duplicar; lista os movimentos com o
-/// lançamento com que cada um está conciliado; concilia automaticamente pelo
-/// valor e pela data (até <see cref="DateToleranceDays"/> dias, o mais próximo
-/// primeiro, um para um) ou à mão; e monta o mapa de reconciliação. Uma
-/// conciliação com um lançamento entretanto anulado deixa de contar.
+/// Extratos bancários e conciliação (F3-19A, F3-19C). Importa um extrato
+/// (camt.053 ou CSV) para uma conta de depósitos, sem duplicar; lista os
+/// movimentos com a conciliação de cada um; concilia automaticamente pelo valor
+/// e pela data (até <see cref="DateToleranceDays"/> dias, o mais próximo
+/// primeiro, um para um) ou à mão — um ou mais movimentos com um ou mais
+/// lançamentos, desde que os totais sejam iguais; e monta o mapa de
+/// reconciliação. Uma conciliação deixa de contar quando um dos lançamentos é
+/// anulado ou deixa de dar o mesmo total (foi corrigido).
 /// </summary>
 public sealed class BankStatementService(IBankStatementReader reader, AccountingDbContext context)
 {
@@ -116,7 +128,7 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
             {
                 group.Key,
                 Count = group.Count(),
-                Unreconciled = group.Count(line => line.ReconciledEntryReference == null),
+                Unreconciled = group.Count(line => line.ReconciliationId == null),
                 Last = group.Max(line => (DateOnly?)line.BookingDate)
             })
             .ToDictionaryAsync(item => item.Key, cancellationToken)
@@ -237,17 +249,16 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
             .ThenBy(line => line.CreatedAtUtc)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-        var entries = await BookEntriesByReferenceAsync(
-            companyId, account.Id, lines.Where(line => line.ReconciledEntryReference is not null).Select(line => line.ReconciledEntryReference!).ToList(), cancellationToken)
-            .ConfigureAwait(false);
-        return lines.Select(line => ToRow(line, entries)).ToList();
+        var groups = await GroupsAsync(companyId, account.Id, cancellationToken).ConfigureAwait(false);
+        return lines.Select(line => ToRow(line, groups)).ToList();
     }
 
     /// <summary>
     /// Concilia os movimentos por conciliar do período com os lançamentos da conta
     /// ainda não conciliados que tenham o mesmo valor, a até
-    /// <see cref="DateToleranceDays"/> dias — o mais próximo na data primeiro.
-    /// Devolve quantos movimentos ficaram conciliados.
+    /// <see cref="DateToleranceDays"/> dias — o mais próximo na data primeiro, um
+    /// para um. Antes, desfaz as conciliações que deixaram de valer. Devolve
+    /// quantos movimentos ficaram conciliados.
     /// </summary>
     public async Task<int?> AutoReconcileAsync(
         Guid userId, Guid companyId, string accountCode, DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
@@ -258,15 +269,16 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
         }
 
         var account = await ResolveAccountAsync(companyId, accountCode, cancellationToken).ConfigureAwait(false);
+        var groups = await ReleaseDeadGroupsAsync(companyId, account.Id, cancellationToken).ConfigureAwait(false);
         var lines = await context.BankStatementLines
-            .Where(line => line.CompanyId == companyId && line.AccountId == account.Id && line.BookingDate >= from && line.BookingDate <= to)
+            .Where(line => line.CompanyId == companyId && line.AccountId == account.Id &&
+                line.BookingDate >= from && line.BookingDate <= to && line.ReconciliationId == null)
             .OrderBy(line => line.BookingDate)
             .ThenBy(line => line.CreatedAtUtc)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-        await ReleaseVoidedAsync(companyId, account.Id, lines, cancellationToken).ConfigureAwait(false);
 
-        var used = await ReconciledReferencesAsync(companyId, account.Id, cancellationToken).ConfigureAwait(false);
+        var used = groups.Values.SelectMany(group => group.Reconciliation.EntryReferences).ToHashSet(StringComparer.Ordinal);
         var candidates = (await BookEntriesAsync(
                 companyId, account.Id, from.AddDays(-DateToleranceDays), to.AddDays(DateToleranceDays), cancellationToken)
             .ConfigureAwait(false))
@@ -274,7 +286,7 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
             .ToList();
 
         var matched = 0;
-        foreach (var line in lines.Where(line => line.ReconciledEntryReference is null))
+        foreach (var line in lines)
         {
             var best = candidates
                 .Where(entry => entry.Amount == line.Amount && Math.Abs(entry.EntryDate.DayNumber - line.BookingDate.DayNumber) <= DateToleranceDays)
@@ -287,7 +299,9 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
                 continue;
             }
 
-            line.Reconcile(best.Reference, automatically: true);
+            var reconciliation = new BankReconciliation(Guid.NewGuid(), companyId, account.Id, [best.Reference], automatic: true);
+            context.BankReconciliations.Add(reconciliation);
+            line.AttachTo(reconciliation.Id);
             candidates.Remove(best);
             matched++;
         }
@@ -296,53 +310,98 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
         return matched;
     }
 
-    /// <summary>
-    /// Concilia um movimento com um lançamento escolhido. O lançamento tem de
-    /// movimentar a conta pelo mesmo valor e não estar já conciliado com outro
-    /// movimento.
-    /// </summary>
+    /// <summary>Concilia um movimento com um lançamento (o caso simples de <see cref="ReconcileGroupAsync"/>).</summary>
     public async Task<BankStatementLineRow?> ReconcileAsync(
         Guid userId, Guid companyId, Guid lineId, string entryReference, CancellationToken cancellationToken = default)
     {
+        var rows = await ReconcileGroupAsync(userId, companyId, [lineId], [entryReference], cancellationToken).ConfigureAwait(false);
+        return rows?.Single();
+    }
+
+    /// <summary>
+    /// Concilia um ou mais movimentos com um ou mais lançamentos escolhidos. Os
+    /// movimentos têm de ser da mesma conta e estar por conciliar; os lançamentos
+    /// têm de movimentar essa conta, não estar anulados nem já conciliados; e o
+    /// total dos movimentos tem de ser igual ao efeito dos lançamentos na conta.
+    /// </summary>
+    public async Task<IReadOnlyList<BankStatementLineRow>?> ReconcileGroupAsync(
+        Guid userId, Guid companyId, IReadOnlyCollection<Guid> lineIds, IReadOnlyCollection<string> entryReferences,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(lineIds);
+        ArgumentNullException.ThrowIfNull(entryReferences);
         if (!await HasAccessAsync(userId, companyId, cancellationToken).ConfigureAwait(false))
         {
             return null;
         }
 
-        var line = await context.BankStatementLines
-            .SingleOrDefaultAsync(item => item.CompanyId == companyId && item.Id == lineId, cancellationToken)
+        var ids = lineIds.Distinct().ToList();
+        var references = entryReferences
+            .Where(reference => !string.IsNullOrWhiteSpace(reference))
+            .Select(reference => reference.Trim().ToUpperInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        if (ids.Count == 0 || references.Count == 0)
+        {
+            throw new ArgumentException("Indique pelo menos um movimento e um lançamento.");
+        }
+
+        var lines = await context.BankStatementLines
+            .Where(line => line.CompanyId == companyId && ids.Contains(line.Id))
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-        if (line is null)
+        if (lines.Count != ids.Count)
         {
             return null;
         }
 
-        var reference = (entryReference ?? string.Empty).Trim().ToUpperInvariant();
-        var entries = await BookEntriesByReferenceAsync(companyId, line.AccountId, [reference], cancellationToken).ConfigureAwait(false);
-        if (!entries.TryGetValue(reference, out var entry) || entry.Status == JournalEntryStatus.Voided.ToString())
+        var accountId = lines[0].AccountId;
+        if (lines.Any(line => line.AccountId != accountId))
         {
-            throw new ArgumentException($"O lançamento {entryReference} não existe, está anulado ou não movimenta esta conta.", nameof(entryReference));
+            throw new ArgumentException("Os movimentos têm de ser da mesma conta.", nameof(lineIds));
         }
 
-        if (entry.Amount != line.Amount)
+        var groups = await ReleaseDeadGroupsAsync(companyId, accountId, cancellationToken).ConfigureAwait(false);
+        if (lines.Any(line => line.ReconciliationId is not null))
+        {
+            throw new InvalidOperationException("Um dos movimentos já está conciliado: desfaça essa conciliação primeiro.");
+        }
+
+        var entries = await BookEntriesByReferenceAsync(companyId, accountId, references, cancellationToken).ConfigureAwait(false);
+        var missing = references.Where(reference => !entries.TryGetValue(reference, out var entry) || entry.Status == JournalEntryStatus.Voided.ToString() || entry.Amount == 0m).ToList();
+        if (missing.Count > 0)
         {
             throw new ArgumentException(
-                $"O lançamento {entry.Reference} movimenta a conta por {entry.Amount:0.00} e o movimento do extrato é de {line.Amount:0.00}.", nameof(entryReference));
+                $"{(missing.Count == 1 ? "O lançamento" : "Os lançamentos")} {string.Join(", ", missing)} não {(missing.Count == 1 ? "existe, está anulado ou não movimenta" : "existem, estão anulados ou não movimentam")} esta conta.", nameof(entryReferences));
         }
 
-        var taken = await context.BankStatementLines
-            .AnyAsync(item => item.CompanyId == companyId && item.AccountId == line.AccountId && item.Id != line.Id && item.ReconciledEntryReference == entry.Reference, cancellationToken)
-            .ConfigureAwait(false);
-        if (taken)
+        var taken = references.Where(reference => groups.Values.Any(group => group.Reconciliation.EntryReferences.Contains(reference))).ToList();
+        if (taken.Count > 0)
         {
-            throw new InvalidOperationException($"O lançamento {entry.Reference} já está conciliado com outro movimento do extrato.");
+            throw new InvalidOperationException($"O lançamento {string.Join(", ", taken)} já está conciliado com outro movimento do extrato.");
         }
 
-        line.Reconcile(entry.Reference, automatically: false);
+        var linesTotal = lines.Sum(line => line.Amount);
+        var entriesTotal = references.Sum(reference => entries[reference].Amount);
+        if (linesTotal != entriesTotal)
+        {
+            throw new ArgumentException(
+                $"Os movimentos somam {linesTotal:0.00} e os lançamentos movimentam a conta por {entriesTotal:0.00}: os totais têm de ser iguais.", nameof(entryReferences));
+        }
+
+        var reconciliation = new BankReconciliation(Guid.NewGuid(), companyId, accountId, references, automatic: false);
+        context.BankReconciliations.Add(reconciliation);
+        foreach (var line in lines)
+        {
+            line.AttachTo(reconciliation.Id);
+        }
+
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return ToRow(line, entries);
+        var refreshed = await GroupsAsync(companyId, accountId, cancellationToken).ConfigureAwait(false);
+        return lines.Select(line => ToRow(line, refreshed)).ToList();
     }
 
+    /// <summary>Desfaz a conciliação do movimento — e a de todos os movimentos do mesmo grupo.</summary>
     public async Task<bool?> UnreconcileAsync(Guid userId, Guid companyId, Guid lineId, CancellationToken cancellationToken = default)
     {
         if (!await HasAccessAsync(userId, companyId, cancellationToken).ConfigureAwait(false))
@@ -351,6 +410,7 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
         }
 
         var line = await context.BankStatementLines
+            .AsNoTracking()
             .SingleOrDefaultAsync(item => item.CompanyId == companyId && item.Id == lineId, cancellationToken)
             .ConfigureAwait(false);
         if (line is null)
@@ -358,7 +418,12 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
             return false;
         }
 
-        line.Unreconcile();
+        if (line.ReconciliationId is not { } reconciliationId)
+        {
+            return true;
+        }
+
+        await RemoveGroupsAsync([reconciliationId], cancellationToken).ConfigureAwait(false);
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return true;
     }
@@ -388,17 +453,15 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
             .ThenBy(line => line.CreatedAtUtc)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-        var referenced = await BookEntriesByReferenceAsync(
-            companyId, account.Id, lines.Where(line => line.ReconciledEntryReference is not null).Select(line => line.ReconciledEntryReference!).ToList(), cancellationToken)
-            .ConfigureAwait(false);
-        bool Live(BankStatementLine line) =>
-            line.ReconciledEntryReference is { } reference &&
-            referenced.TryGetValue(reference, out var entry) &&
-            entry.Status != JournalEntryStatus.Voided.ToString() &&
-            entry.EntryDate <= date;
+        var groups = await GroupsAsync(companyId, account.Id, cancellationToken).ConfigureAwait(false);
 
-        var statementOnly = lines.Where(line => !Live(line)).Select(line => ToRow(line, referenced)).ToList();
-        var reconciledReferences = lines.Where(Live).Select(line => line.ReconciledEntryReference!).ToHashSet(StringComparer.Ordinal);
+        // Na data do mapa só conta uma conciliação válida cujos lançamentos são todos até essa data.
+        bool LiveAt(Guid? reconciliationId) =>
+            reconciliationId is { } id && groups.TryGetValue(id, out var group) && group.Live && group.Entries.All(entry => entry.EntryDate <= date);
+
+        var statementOnly = lines.Where(line => !LiveAt(line.ReconciliationId)).Select(line => ToRow(line, groups)).ToList();
+        var liveGroups = lines.Where(line => LiveAt(line.ReconciliationId)).Select(line => line.ReconciliationId!.Value).Distinct().ToList();
+        var reconciledReferences = liveGroups.SelectMany(id => groups[id].Reconciliation.EntryReferences).ToHashSet(StringComparer.Ordinal);
 
         // Só na contabilidade: os lançamentos da conta desde o primeiro extrato importado, ainda não conciliados.
         var firstStatementDate = lines.Count == 0 ? (DateOnly?)null : lines.Min(line => line.BookingDate);
@@ -437,7 +500,7 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
 
         return new BankReconciliationReport(
             account.Code, account.Name, date, decimal.Round(bookBalance, 2), statementBalance, statementBalanceDate,
-            statementOnly, bookOnly, reconciledReferences.Count);
+            statementOnly, bookOnly, lines.Count(line => LiveAt(line.ReconciliationId)));
     }
 
     /// <summary>Os lançamentos (não anulados) que movimentam a conta no período, com o valor líquido nela.</summary>
@@ -501,42 +564,90 @@ public sealed class BankStatementService(IBankStatementReader reader, Accounting
             StringComparer.Ordinal);
     }
 
-    /// <summary>As referências já conciliadas nesta conta com lançamentos que não estão anulados.</summary>
-    private async Task<HashSet<string>> ReconciledReferencesAsync(Guid companyId, Guid accountId, CancellationToken cancellationToken)
+    /// <summary>
+    /// As conciliações da conta, com os lançamentos de cada uma e se ainda valem:
+    /// todos os lançamentos existem, não estão anulados e dão o total dos
+    /// movimentos do grupo.
+    /// </summary>
+    private async Task<Dictionary<Guid, GroupInfo>> GroupsAsync(Guid companyId, Guid accountId, CancellationToken cancellationToken)
     {
-        var references = await context.BankStatementLines
+        var reconciliations = await context.BankReconciliations
             .AsNoTracking()
-            .Where(line => line.CompanyId == companyId && line.AccountId == accountId && line.ReconciledEntryReference != null)
-            .Select(line => line.ReconciledEntryReference!)
+            .Where(item => item.CompanyId == companyId && item.AccountId == accountId)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-        return references.ToHashSet(StringComparer.Ordinal);
+        if (reconciliations.Count == 0)
+        {
+            return [];
+        }
+
+        var entries = await BookEntriesByReferenceAsync(
+            companyId, accountId, reconciliations.SelectMany(item => item.EntryReferences).Distinct().ToList(), cancellationToken).ConfigureAwait(false);
+        var totals = await context.BankStatementLines
+            .AsNoTracking()
+            .Where(line => line.CompanyId == companyId && line.AccountId == accountId && line.ReconciliationId != null)
+            .GroupBy(line => line.ReconciliationId!.Value)
+            .Select(group => new { group.Key, Total = group.Sum(line => line.Amount), Count = group.Count() })
+            .ToDictionaryAsync(item => item.Key, cancellationToken)
+            .ConfigureAwait(false);
+
+        return reconciliations.ToDictionary(item => item.Id, item =>
+        {
+            var found = item.EntryReferences.Where(entries.ContainsKey).Select(reference => entries[reference]).ToList();
+            var total = totals.GetValueOrDefault(item.Id);
+            var live = found.Count == item.EntryReferences.Count &&
+                found.All(entry => entry.Status != JournalEntryStatus.Voided.ToString()) &&
+                total is not null &&
+                found.Sum(entry => entry.Amount) == total.Total;
+            return new GroupInfo(item, found, total?.Count ?? 0, live);
+        });
     }
 
-    /// <summary>Desfaz as conciliações com lançamentos que entretanto foram anulados.</summary>
-    private async Task ReleaseVoidedAsync(Guid companyId, Guid accountId, List<BankStatementLine> lines, CancellationToken cancellationToken)
+    /// <summary>Desfaz as conciliações que deixaram de valer e devolve as que ficam.</summary>
+    private async Task<Dictionary<Guid, GroupInfo>> ReleaseDeadGroupsAsync(Guid companyId, Guid accountId, CancellationToken cancellationToken)
     {
-        var references = lines.Where(line => line.ReconciledEntryReference is not null).Select(line => line.ReconciledEntryReference!).ToList();
-        var entries = await BookEntriesByReferenceAsync(companyId, accountId, references, cancellationToken).ConfigureAwait(false);
-        foreach (var line in lines.Where(line => line.ReconciledEntryReference is not null))
+        var groups = await GroupsAsync(companyId, accountId, cancellationToken).ConfigureAwait(false);
+        var dead = groups.Values.Where(group => !group.Live).Select(group => group.Reconciliation.Id).ToList();
+        if (dead.Count > 0)
         {
-            if (!entries.TryGetValue(line.ReconciledEntryReference!, out var entry) || entry.Status == JournalEntryStatus.Voided.ToString())
+            await RemoveGroupsAsync(dead, cancellationToken).ConfigureAwait(false);
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var id in dead)
             {
-                line.Unreconcile();
+                groups.Remove(id);
             }
         }
+
+        return groups;
     }
 
-    private static BankStatementLineRow ToRow(BankStatementLine line, IReadOnlyDictionary<string, BankBookEntry> entries)
+    private async Task RemoveGroupsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken)
     {
-        var entry = line.ReconciledEntryReference is { } reference && entries.TryGetValue(reference, out var found) &&
-            found.Status != JournalEntryStatus.Voided.ToString()
-                ? found
-                : null;
+        var lines = await context.BankStatementLines
+            .Where(line => line.ReconciliationId != null && ids.Contains(line.ReconciliationId.Value))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        foreach (var line in lines)
+        {
+            line.Detach();
+        }
+
+        var reconciliations = await context.BankReconciliations
+            .Where(item => ids.Contains(item.Id))
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        context.BankReconciliations.RemoveRange(reconciliations);
+    }
+
+    private static BankStatementLineRow ToRow(BankStatementLine line, IReadOnlyDictionary<Guid, GroupInfo> groups)
+    {
+        var group = line.ReconciliationId is { } id && groups.TryGetValue(id, out var found) && found.Live ? found : null;
         return new BankStatementLineRow(
             line.Id, line.BookingDate, line.ValueDate, line.Description, line.Reference, line.Amount, line.Balance,
-            entry, entry is not null && line.ReconciledAutomatically);
+            group?.Reconciliation.Id, group?.Entries ?? [], group?.LineCount ?? 0, group?.Reconciliation.Automatic ?? false);
     }
+
+    private sealed record GroupInfo(BankReconciliation Reconciliation, IReadOnlyList<BankBookEntry> Entries, int LineCount, bool Live);
 
     private async Task<(Guid Id, string Code, string Name)> ResolveAccountAsync(Guid companyId, string accountCode, CancellationToken cancellationToken)
     {

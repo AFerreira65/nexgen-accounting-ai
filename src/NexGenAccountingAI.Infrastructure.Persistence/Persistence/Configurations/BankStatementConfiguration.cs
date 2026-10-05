@@ -17,11 +17,14 @@ internal sealed class BankStatementLineConfiguration : IEntityTypeConfiguration<
         builder.Property(item => item.Reference).HasMaxLength(BankStatementLine.ReferenceMaxLength);
         builder.Property(item => item.Amount).HasPrecision(18, 2);
         builder.Property(item => item.Balance).HasPrecision(18, 2);
-        builder.Property(item => item.ReconciledEntryReference).HasMaxLength(BankStatementLine.EntryReferenceMaxLength);
         builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("now()");
         builder.HasIndex(item => new { item.CompanyId, item.AccountId, item.LineKey }).IsUnique();
         builder.HasIndex(item => new { item.CompanyId, item.AccountId, item.BookingDate });
-        builder.HasIndex(item => new { item.CompanyId, item.ReconciledEntryReference });
+        builder.HasIndex(item => item.ReconciliationId);
+        builder.HasOne<BankReconciliation>()
+            .WithMany()
+            .HasForeignKey(item => item.ReconciliationId)
+            .OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<Company>()
             .WithMany()
             .HasForeignKey(item => item.CompanyId)
@@ -77,6 +80,26 @@ internal sealed class BankEntryRuleConfiguration : IEntityTypeConfiguration<Bank
         builder.HasOne<EntryTemplate>()
             .WithMany()
             .HasForeignKey(item => item.EntryTemplateId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+internal sealed class BankReconciliationConfiguration : IEntityTypeConfiguration<BankReconciliation>
+{
+    public void Configure(EntityTypeBuilder<BankReconciliation> builder)
+    {
+        builder.ToTable("BankReconciliations", "accounting");
+        builder.HasKey(item => item.Id);
+        builder.Property(item => item.EntryReferences).IsRequired();
+        builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("now()");
+        builder.HasIndex(item => new { item.CompanyId, item.AccountId });
+        builder.HasOne<Company>()
+            .WithMany()
+            .HasForeignKey(item => item.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<LedgerAccount>()
+            .WithMany()
+            .HasForeignKey(item => item.AccountId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

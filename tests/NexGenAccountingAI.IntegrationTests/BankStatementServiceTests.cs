@@ -63,6 +63,15 @@ public sealed class BankStatementServiceTests
                 context.Add(entry);
             }
 
+            JournalEntry Entry2(string reference, int day, string account, decimal bankAmount)
+            {
+                var entry = new JournalEntry(Guid.NewGuid(), companyId, journalId, reference, new DateOnly(2026, 3, day), reference, $"Lançamento {reference}");
+                entry.AddLine(Guid.NewGuid(), ids["12011"], "Banco", bankAmount > 0 ? bankAmount : 0m, bankAmount < 0 ? -bankAmount : 0m);
+                entry.AddLine(Guid.NewGuid(), ids[account], "Contrapartida", bankAmount < 0 ? -bankAmount : 0m, bankAmount > 0 ? bankAmount : 0m);
+                entry.Complete(JournalEntryStatus.Reviewed);
+                return entry;
+            }
+
             Entry("AB-1", 1, 1, "56", 10000m, EntrySource.Opening);
             Entry("B-1", 3, 2, "2111", 1230m);       // recebimento do cliente: no extrato no mesmo dia
             Entry("B-2", 3, 6, "2211", -123.45m);    // pagamento: o banco debitou um dia antes
@@ -106,10 +115,10 @@ public sealed class BankStatementServiceTests
 
             var lines = await service.ListLinesAsync(userId, companyId, "12011", from, to, CancellationToken.None).ConfigureAwait(false);
             Assert.IsNotNull(lines);
-            Assert.AreEqual("B-1", lines.Single(line => line.Description == "TRF CLIENTE UM").ReconciledEntry!.Reference, "O mais próximo na data, não o B-4.");
-            Assert.AreEqual("B-2", lines.Single(line => line.Description == "PAG SERV EDP").ReconciledEntry!.Reference);
+            Assert.AreEqual("B-1", lines.Single(line => line.Description == "TRF CLIENTE UM").ReconciledEntries.Single().Reference, "O mais próximo na data, não o B-4.");
+            Assert.AreEqual("B-2", lines.Single(line => line.Description == "PAG SERV EDP").ReconciledEntries.Single().Reference);
             Assert.IsTrue(lines.Single(line => line.Description == "PAG SERV EDP").ReconciledAutomatically);
-            Assert.AreEqual(2, lines.Count(line => line.ReconciledEntry is null));
+            Assert.AreEqual(2, lines.Count(line => !line.Reconciled));
 
             // O mapa: 11 829,05 contabilístico − 4,00 só no banco − 730,00 só na contabilidade = 11 095,05 no extrato.
             var report = await service.ReconciliationAsync(userId, companyId, "12011", to, CancellationToken.None).ConfigureAwait(false);
@@ -128,7 +137,7 @@ public sealed class BankStatementServiceTests
             await Assert.ThrowsExactlyAsync<ArgumentException>(() => service
                 .ReconcileAsync(userId, companyId, coffee.Id, "B-5", CancellationToken.None)).ConfigureAwait(false);
             var manual = await service.ReconcileAsync(userId, companyId, commission.Id, "b-5", CancellationToken.None).ConfigureAwait(false);
-            Assert.AreEqual("B-5", manual!.ReconciledEntry!.Reference);
+            Assert.AreEqual("B-5", manual!.ReconciledEntries.Single().Reference);
             Assert.IsFalse(manual.ReconciledAutomatically);
             context.ChangeTracker.Clear();
 
@@ -136,7 +145,41 @@ public sealed class BankStatementServiceTests
             await new JournalPostingService(context).VoidAsync(companyId, "B-2", CancellationToken.None).ConfigureAwait(false);
             context.ChangeTracker.Clear();
             var afterVoid = await service.ListLinesAsync(userId, companyId, "12011", from, to, CancellationToken.None).ConfigureAwait(false);
-            Assert.IsNull(afterVoid!.Single(line => line.Description == "PAG SERV EDP").ReconciledEntry);
+            Assert.IsFalse(afterVoid!.Single(line => line.Description == "PAG SERV EDP").Reconciled);
+
+            // Vários para um: os dois cafés (4,00) lançados num só lançamento.
+            context.Add(Entry2("B-6", 5, "6878", -4m));
+            await context.SaveChangesAsync().ConfigureAwait(false);
+            context.ChangeTracker.Clear();
+            var coffees = afterVoid!.Where(line => line.Description == "CAFE").Select(line => line.Id).ToList();
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => service
+                .ReconcileGroupAsync(userId, companyId, [coffees[0]], ["B-6"], CancellationToken.None)).ConfigureAwait(false);
+            var grouped = await service.ReconcileGroupAsync(userId, companyId, coffees, ["b-6"], CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual(2, grouped!.Count);
+            Assert.IsTrue(grouped.All(line => line.ReconciledLineCount == 2 && line.ReconciledEntries.Single().Reference == "B-6"));
+            await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => service
+                .ReconcileGroupAsync(userId, companyId, [coffees[0]], ["B-3"], CancellationToken.None)).ConfigureAwait(false);
+            context.ChangeTracker.Clear();
+
+            // Um para vários: o pagamento à EDP (123,45, o B-2 foi anulado) explicado por dois lançamentos.
+            context.Add(Entry2("B-7", 6, "2211", -100m));
+            context.Add(Entry2("B-8", 6, "2211", -23.45m));
+            await context.SaveChangesAsync().ConfigureAwait(false);
+            context.ChangeTracker.Clear();
+            var edp = afterVoid!.Single(line => line.Description == "PAG SERV EDP").Id;
+            var split = await service.ReconcileGroupAsync(userId, companyId, [edp], ["B-7", "B-8"], CancellationToken.None).ConfigureAwait(false);
+            CollectionAssert.AreEquivalent(new[] { "B-7", "B-8" }, split!.Single().ReconciledEntries.Select(entry => entry.Reference).ToArray());
+            context.ChangeTracker.Clear();
+            var mapAfter = await service.ReconciliationAsync(userId, companyId, "12011", to, CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual(0, mapAfter!.StatementOnly.Count, "Todos os movimentos do extrato estão conciliados.");
+            Assert.AreEqual(0m, mapAfter.Difference);
+
+            // Desfazer um movimento do grupo desfaz o grupo inteiro.
+            Assert.IsTrue(await service.UnreconcileAsync(userId, companyId, coffees[1], CancellationToken.None).ConfigureAwait(false));
+            context.ChangeTracker.Clear();
+            var ungrouped = await service.ListLinesAsync(userId, companyId, "12011", from, to, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsTrue(ungrouped!.Where(line => line.Description == "CAFE").All(line => !line.Reconciled));
+            Assert.AreEqual(0, await context.BankReconciliations.CountAsync(item => item.EntryReferences.Contains("B-6")).ConfigureAwait(false));
 
             var accounts = await service.ListAccountsAsync(userId, companyId, CancellationToken.None).ConfigureAwait(false);
             var bank = accounts!.Single();

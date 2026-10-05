@@ -115,7 +115,7 @@ public sealed class BankEntryService(AccountingDbContext context, JournalPosting
         var lines = await context.BankStatementLines
             .AsNoTracking()
             .Where(line => line.CompanyId == companyId && line.AccountId == account.Id &&
-                line.BookingDate >= from && line.BookingDate <= to && line.ReconciledEntryReference == null)
+                line.BookingDate >= from && line.BookingDate <= to && line.ReconciliationId == null)
             .OrderBy(line => line.BookingDate)
             .ThenBy(line => line.CreatedAtUtc)
             .ToListAsync(cancellationToken)
@@ -161,9 +161,9 @@ public sealed class BankEntryService(AccountingDbContext context, JournalPosting
                 .Select(item => new AccountInfo(item.Id, item.Code, item.Name))
                 .SingleAsync(cancellationToken)
                 .ConfigureAwait(false);
-            var pending = group.Where(line => line.ReconciledEntryReference is null).ToList();
+            var pending = group.Where(line => line.ReconciliationId is null).ToList();
             outcomes.AddRange(group
-                .Where(line => line.ReconciledEntryReference is not null)
+                .Where(line => line.ReconciliationId is not null)
                 .Select(line => new SuggestedEntryOutcome(line.Id, null, "O movimento já está conciliado.")));
             var suggestions = (await BuildAsync(companyId, account, pending, cancellationToken).ConfigureAwait(false))
                 .ToDictionary(item => item.LineId);
@@ -205,7 +205,9 @@ public sealed class BankEntryService(AccountingDbContext context, JournalPosting
                     var tracked = await context.BankStatementLines
                         .SingleAsync(item => item.Id == line.Id, cancellationToken)
                         .ConfigureAwait(false);
-                    tracked.Reconcile(posted.Reference, automatically: true);
+                    var reconciliation = new BankReconciliation(Guid.NewGuid(), companyId, tracked.AccountId, [posted.Reference], automatic: true);
+                    context.BankReconciliations.Add(reconciliation);
+                    tracked.AttachTo(reconciliation.Id);
                     await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                     outcomes.Add(new SuggestedEntryOutcome(line.Id, posted.Reference, null));
                 }
