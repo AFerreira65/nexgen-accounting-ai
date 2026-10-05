@@ -12,7 +12,7 @@ Sobre a fundação F1-01 foi criada a primeira experiência contabilística loca
 - health checks, correlação e logs estruturados;
 - cadastro base de gabinete e empresa em PostgreSQL local;
 - base `accounting` em PostgreSQL (mesmo servidor do NexGen ERP, base própria), criada e atualizada por migrações no arranque;
-- utilizadores associados a uma ou mais empresas, com função e preferências próprias em cada empresa; só o dono ou um administrador de uma empresa a altera e gere quem lhe tem acesso, e cada utilizador só vê as empresas a que tem acesso (ADR-0014);
+- utilizadores associados a uma ou mais empresas, com função e preferências próprias em cada empresa; só o dono ou um administrador de uma empresa a altera e gere quem lhe tem acesso, e cada utilizador só vê as empresas a que tem acesso (ADR-0014); a função «Consulta» só lê (ADR-0015);
 - seletor de empresa ligado à API e ecrã para editar preferências próprias do utilizador na empresa ativa (idioma, fuso, tema, densidade, linhas por página e tamanho do texto); uma empresa nova ainda sem preferências gravadas abre com as preferências por omissão em vez de deixar o ecrã em branco; seletor de exercício na barra de topo que grava a preferência e acerta logo os atalhos de período e os valores por omissão de todos os ecrãs; os menus da barra de topo fecham ao clicar fora ou com Escape; pesquisa rápida na barra de topo (Ctrl+K) que salta para uma conta, diário ou movimento a partir dos dados já carregados;
 - plano de contas, diários, movimentos e linhas contabilísticas persistidos no schema `accounting`;
 - norma contabilística escolhida por empresa, com plano de contas base versionado onde as contas de 1 e 2 dígitos são de integração e as de 3+ dígitos de movimento (exceto 56 e 81);

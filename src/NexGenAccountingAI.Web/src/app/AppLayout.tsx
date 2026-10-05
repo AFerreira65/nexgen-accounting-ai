@@ -51,6 +51,7 @@ import {
 } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { companyRoleLabel } from './companyRoles'
 import { GlobalSearch } from './GlobalSearch'
 import { OptionsMenu } from './OptionsMenu'
 import { useDismiss } from './useDismiss'
@@ -211,7 +212,7 @@ export function AppLayout() {
         <div className="sidebar-footer">
           <NavLink className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`} to="/definicoes" title="Definições" onClick={closeDrawer}><Settings size={18} strokeWidth={1.8} /><span>Definições</span></NavLink>
           <button type="button" className="nav-item logout-item" title="Sair" onClick={logOut}><LogOut size={18} strokeWidth={1.8} /><span>Sair</span></button>
-          <div className="user-card"><span className="avatar">{userInitials}</span><span><strong>{user.displayName.replace(' (Demonstração)', '')}</strong><small>{activeCompany.role}</small></span></div>
+          <div className="user-card"><span className="avatar">{userInitials}</span><span><strong>{user.displayName.replace(' (Demonstração)', '')}</strong><small>{companyRoleLabel(activeCompany.role)}{activeCompany.role === 'Viewer' ? ' · só consulta, sem alterações' : ''}</small></span></div>
         </div>
       </aside>
 

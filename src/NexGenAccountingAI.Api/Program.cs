@@ -106,6 +106,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<CurrentUserMiddleware>();
+// Depois de saber quem é: a função «Consulta» só lê (ADR-0015).
+app.UseMiddleware<CompanyRoleMiddleware>();
 
 var migrateOnly = args.Contains("--migrate-only", StringComparer.OrdinalIgnoreCase);
 var applyMigrations = migrateOnly || builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup");
@@ -425,7 +427,8 @@ if (applicationEndpointsAvailable)
                 ["settings"] = [exception.Message]
             });
         }
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("As preferências são do próprio utilizador, não da empresa."));
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements", async (
         Guid userId,
@@ -1552,7 +1555,8 @@ if (applicationEndpointsAvailable)
 
         return await RunAnalysisAsync(runner, userId, companyId, body.Definition, fromDate, toDate, cancellationToken)
             .ConfigureAwait(false);
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Corre uma análise sem a gravar."));
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/report-templates/{reportKey}", async (
         Guid userId, Guid companyId, string reportKey, ReportTemplateService templates, CancellationToken cancellationToken) =>
@@ -2419,7 +2423,8 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["alienacao"] = [exception.Message] });
         }
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Pré-visualiza a alienação sem a lançar."));
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/{code}/disposal", async (
         Guid userId, Guid companyId, string code, AssetDisposalRequest request, FixedAssetService assets, CancellationToken cancellationToken) =>
@@ -2721,7 +2726,8 @@ if (applicationEndpointsAvailable)
     {
         var proposals = await classification.ProposeAsync(userId, companyId, request?.SupplierTaxIds ?? [], cancellationToken).ConfigureAwait(false);
         return proposals is null ? Results.NotFound() : Results.Ok(proposals);
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Propõe a classificação pelo histórico, sem gravar."));
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/suggested-entries/classification/ai-status", (
         IPurchaseClassifier classifier) => Results.Ok(new { configured = classifier.IsConfigured }));
@@ -3162,7 +3168,8 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["qr"] = [exception.Message] });
         }
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Procura o documento do código QR."));
 
     // Estrutura do exercício: gastos e rendimentos por natureza, maiores clientes e fornecedores.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/structure", async (
@@ -3323,7 +3330,8 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["lancamentoTipo"] = [exception.Message] });
         }
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Calcula as linhas do lançamento-tipo sem lançar nada."));
 
     // Terceiros a partir do SAF-T: «preview» só analisa, «import» grava.
     foreach (var (route, apply) in new[] { ("parties-preview", false), ("parties-import", true) })
@@ -3412,7 +3420,8 @@ if (applicationEndpointsAvailable)
             .BuildAsync(userId, companyId, periodFrom, periodTo, request.TaxRate, adjustments, cancellationToken)
             .ConfigureAwait(false);
         return estimate is null ? Results.NotFound() : Results.Ok(estimate);
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Calcula a estimativa; gravar é o PUT .../irc-estimate/saved."));
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/irc-estimate/saved", async (
         Guid userId, Guid companyId, string? from, string? to,
@@ -4073,7 +4082,8 @@ if (applicationEndpointsAvailable)
                 ["saft"] = [exception.Message]
             });
         }
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Resume o ficheiro sem importar."));
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/accounts-preview", async (
         Guid userId,
@@ -4119,7 +4129,8 @@ if (applicationEndpointsAvailable)
                 ["saft"] = [exception.Message]
             });
         }
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Analisa o ficheiro sem importar."));
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/accounts-import", async (
         Guid userId,
@@ -4267,7 +4278,8 @@ if (applicationEndpointsAvailable)
                 ["saft"] = [exception.Message]
             });
         }
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Analisa o ficheiro sem importar."));
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/entries-analyze", async (
         Guid userId,
@@ -4315,7 +4327,8 @@ if (applicationEndpointsAvailable)
                 ["saft"] = [exception.Message]
             });
         }
-    });
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Analisa o ficheiro sem importar."));
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/entries-import", async (
         Guid userId,

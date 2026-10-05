@@ -59,9 +59,8 @@ porque até aqui não existia
 
 ## Fora desta decisão
 
-- **A função «Viewer» (só leitura) não é aplicada** dentro da empresa: um
-  utilizador com essa função consegue lançar e alterar como os outros. É uma
-  decisão à parte, porque toca em todos os endpoints de escrita.
+- **A função «Viewer» (só leitura)** passou a ser aplicada na
+  [ADR-0015](ADR-0015-VIEWER-READ-ONLY.md).
 - **A criação de empresa a partir de um SAF-T**
   (`POST /users/{userId}/saft/companies`) continua aberta a qualquer membro
   ativo do gabinete. Também aí quem cria fica dono.

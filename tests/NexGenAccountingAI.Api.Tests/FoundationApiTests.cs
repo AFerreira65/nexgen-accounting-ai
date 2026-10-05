@@ -1,3 +1,7 @@
+using NexGenAccountingAI.Infrastructure.Persistence.Persistence;
+using NexGenAccountingAI.Infrastructure.Persistence;
+using NexGenAccountingAI.Domain.Organizations;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
@@ -43,6 +47,57 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         StringAssert.Contains(payload, "F2-01");
         StringAssert.Contains(payload, "ready");
+    }
+
+    [TestMethod]
+    public async Task AViewerCanReadButNotChangeTheCompany()
+    {
+        // Base própria, apagada no fim: o teste muda a função do utilizador de demonstração.
+        await using var factory = new FoundationApiFactory(
+            connectionString: $"Host=localhost;Port=5432;Database=accounting_viewer_{Guid.NewGuid():N};Username=accounting;Password=accounting",
+            applyMigrations: true,
+            seedDemoData: true);
+        using var client = factory.CreateClient();
+        const string company = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        try
+        {
+            await using (var scope = factory.Services.CreateAsyncScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<AccountingDbContext>();
+                var membership = await context.CompanyUsers
+                    .SingleAsync(item => item.UserId == DevelopmentDataSeeder.DemoUserId && item.CompanyId == DevelopmentDataSeeder.DemoCompanyId)
+                    .ConfigureAwait(false);
+                membership.ChangeRole(CompanyUserRole.Viewer);
+                await context.SaveChangesAsync().ConfigureAwait(false);
+            }
+
+            static StringContent Json(string body) => new(body, Encoding.UTF8, "application/json");
+            using var read = await client.GetAsync($"{company}/parties?page=1&pageSize=5").ConfigureAwait(false);
+            using var create = await client.PostAsync($"{company}/parties", Json("""{"name":"Fornecedor","countryCode":"PT","taxRegistrationNumber":"500584095","isCustomer":false,"isSupplier":true}""")).ConfigureAwait(false);
+            var createPayload = await create.Content.ReadAsStringAsync().ConfigureAwait(false);
+            using var delete = await client.DeleteAsync($"{company}/attachments/{Guid.NewGuid()}").ConfigureAwait(false);
+            using var lookup = await client.PostAsync($"{company}/invoice-qr/lookup", Json("""{"qr":"A:123456789*B:999999990*C:PT*D:FT*E:N*F:20260101*G:FT 1/1*H:0*I1:PT*N:0.00*O:10.00*Q:abcd*R:9999"}""")).ConfigureAwait(false);
+            using var settings = await client.PutAsync(
+                "/api/v1/development/work-context/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222/settings",
+                Json("""{"culture":"pt-PT","timeZone":"Europe/Lisbon","defaultFiscalYear":2026,"theme":"Light","compactMode":false,"pageSize":50,"textSize":"Normal"}""")).ConfigureAwait(false);
+            using var otherCompany = await client.PostAsync(
+                "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/44444444-4444-4444-4444-444444444444/parties",
+                Json("""{"name":"Fornecedor","countryCode":"PT","taxRegistrationNumber":"500584095","isCustomer":false,"isSupplier":true}""")).ConfigureAwait(false);
+
+            Assert.AreEqual(HttpStatusCode.OK, read.StatusCode, "Consultar continua.");
+            Assert.AreEqual(HttpStatusCode.Forbidden, create.StatusCode);
+            StringAssert.Contains(createPayload, "só de consulta");
+            Assert.AreEqual(HttpStatusCode.Forbidden, delete.StatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, lookup.StatusCode, "Procurar um QR não altera nada.");
+            Assert.AreEqual(HttpStatusCode.OK, settings.StatusCode, "As preferências são do próprio utilizador.");
+            Assert.AreNotEqual(HttpStatusCode.Forbidden, otherCompany.StatusCode, "Na outra empresa a função é outra.");
+        }
+        finally
+        {
+            await using var cleanup = factory.Services.CreateAsyncScope();
+            await cleanup.ServiceProvider.GetRequiredService<AccountingDbContext>().Database.EnsureDeletedAsync().ConfigureAwait(false);
+        }
     }
 
     [TestMethod]
