@@ -2,7 +2,7 @@ import { CircleAlert, Database, Download, Printer, Table2 } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
-import { euro, type DossierMaps } from '../app/demo-data'
+import { euro, type DossierMaps, type Modelo30Line, type Modelo30Map } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -10,12 +10,14 @@ const rate = (value: number | null) => (value === null ? '' : `${value.toLocaleS
 const money = (value: number) => (value === 0 ? '' : euro.format(value))
 
 export function DossierMapsPage() {
-  const { activeCompany, source, dossierMaps, setMonetaryCoefficient } = useWorkContext()
+  const { activeCompany, source, dossierMaps, setMonetaryCoefficient, modelo30, updateModelo30 } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const defaultYear = activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()
   const [year, setYear] = useState(defaultYear)
   const [maps, setMaps] = useState<DossierMaps | null>(null)
+  const [provisions, setProvisions] = useState<Modelo30Map | null>(null)
+  const [edits, setEdits] = useState<Record<string, { group: number; taxedOpening: string; taxedUsed: string; taxedReversed: string }>>({})
   const [coefficients, setCoefficients] = useState<Record<string, string>>({})
   const [reload, setReload] = useState(0)
   const [error, setError] = useState('')
@@ -26,11 +28,11 @@ export function DossierMapsPage() {
     if (!onDatabase) { setMaps(null); return }
     const controller = new AbortController()
     setError('')
-    void dossierMaps(companyId, year)
-      .then((value) => { if (!controller.signal.aborted) setMaps(value) })
+    void Promise.all([dossierMaps(companyId, year), modelo30(companyId, year)])
+      .then(([value, provisionMap]) => { if (!controller.signal.aborted) { setMaps(value); setProvisions(provisionMap); setEdits({}) } })
       .catch((problem: unknown) => { if (!controller.signal.aborted) { setMaps(null); setError(problem instanceof Error ? problem.message : 'Não foi possível montar os mapas.') } })
     return () => controller.abort()
-  }, [companyId, dossierMaps, onDatabase, reload, year])
+  }, [companyId, dossierMaps, modelo30, onDatabase, reload, year])
 
   if (!onDatabase) {
     return <div className="page-stack">
@@ -49,6 +51,25 @@ export function DossierMapsPage() {
     }
   }
 
+  const draft = (line: Modelo30Line) => edits[line.accountCode] ?? {
+    group: line.group,
+    taxedOpening: line.taxedOpening ? String(line.taxedOpening).replace('.', ',') : '',
+    taxedUsed: line.taxedUsed ? String(line.taxedUsed).replace('.', ',') : '',
+    taxedReversed: line.taxedReversed ? String(line.taxedReversed).replace('.', ',') : '',
+  }
+  const amount = (text: string) => (text.trim() === '' ? 0 : Number(text.replace(/\s/g, '').replace(',', '.')))
+  const saveProvision = async (line: Modelo30Line) => {
+    const value = draft(line)
+    try {
+      await updateModelo30(companyId, year, line.accountCode, { group: value.group, taxedOpening: amount(value.taxedOpening), taxedUsed: amount(value.taxedUsed), taxedReversed: amount(value.taxedReversed) })
+      setReload((current) => current + 1)
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Não foi possível guardar a linha do Modelo 30.')
+    }
+  }
+  const setDraft = (line: Modelo30Line, change: Partial<{ group: number; taxedOpening: string; taxedUsed: string; taxedReversed: string }>) =>
+    setEdits((current) => ({ ...current, [line.accountCode]: { ...draft(line), ...change } }))
+
   const exportCsv = () => {
     if (!maps) return
     downloadCsv(csvFilename(`mapas-31-32-${year}`, activeCompany.legalName), toCsv([
@@ -61,7 +82,7 @@ export function DossierMapsPage() {
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Mapas do dossier fiscal</h1><p>O Modelo 32 (depreciações e amortizações) e o Modelo 31 (mais-valias e menos-valias) do exercício, com as colunas dos impressos oficiais, a partir dos <Link to="/ativos-fixos">ativos fixos</Link>. Fazem parte do <Link to="/dossier-fiscal">dossier fiscal</Link>.</p></div>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Mapas do dossier fiscal</h1><p>O Modelo 32 (depreciações e amortizações) e o Modelo 31 (mais-valias e menos-valias), a partir dos <Link to="/ativos-fixos">ativos fixos</Link>, e o Modelo 30 (provisões, imparidades em créditos e ajustamentos em inventários), a partir da contabilidade, com as colunas dos impressos oficiais. Fazem parte do <Link to="/dossier-fiscal">dossier fiscal</Link>.</p></div>
       <div className="heading-actions no-print">
         <button className="button button-secondary" type="button" onClick={exportCsv} disabled={!maps}><Download size={16} /> CSV</button>
         <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!maps}><Printer size={16} /> Imprimir / PDF</button>
@@ -129,6 +150,35 @@ export function DossierMapsPage() {
         <tfoot><tr><td colSpan={6}>Saldo</td><td className="numeric">{euro.format(map.bookGain)}</td><td colSpan={3} /><td className="numeric">{euro.format(map.taxGain)}</td></tr></tfoot>
       </table></div>
     </section>)}
+
+    {provisions && provisions.lines.length > 0 && <section className="panel">
+      <div className="panel-heading"><div><h2>Modelo 30 — provisões, imparidades em créditos e ajustamentos em inventários</h2><p>Da contabilidade: o saldo inicial (2), a constituição ou reforço (9) e os débitos do exercício — reversão quando o lançamento tem uma conta 76, utilização nos outros casos. Indique as partes já tributadas (3, 5, 7) e, nas provisões, o grupo; (4), (6) e (8) são as diferenças.</p></div></div>
+      {provisions.warnings.map((warning) => <p key={warning} className="save-status"><CircleAlert size={15} /> {warning}</p>)}
+      <div className="table-wrap"><table className="dense-table">
+        <thead><tr><th>Grupo</th><th>(1) Conta</th><th className="numeric">(2) Saldo inicial</th><th className="numeric">(3) Tributado</th><th className="numeric">(4) Aceite</th><th className="numeric">(5) Utilização tributada</th><th className="numeric">(6) Utilização aceite</th><th className="numeric">(7) Reversão tributada</th><th className="numeric">(8) Reversão aceite</th><th className="numeric">(9) Constituição</th><th className="numeric">(10) Saldo final</th><th className="no-print" /></tr></thead>
+        <tbody>{provisions.lines.map((line) => {
+          const value = draft(line)
+          const isProvision = line.accountCode.startsWith('29')
+          return <tr key={line.accountCode}>
+            <td>{isProvision
+              ? <select aria-label={`Grupo de ${line.accountCode}`} value={value.group} onChange={(event) => setDraft(line, { group: Number(event.target.value) })}><option value={2}>II</option><option value={3}>III</option></select>
+              : 'I'}</td>
+            <td>{line.accountCode} {line.accountName}</td>
+            <td className="numeric">{euro.format(line.opening)}</td>
+            <td className="numeric"><input aria-label={`Tributado do saldo inicial de ${line.accountCode}`} inputMode="decimal" style={{ width: '6em' }} value={value.taxedOpening} onChange={(event) => setDraft(line, { taxedOpening: event.target.value })} placeholder="0,00" /></td>
+            <td className="numeric">{euro.format(line.acceptedOpening)}</td>
+            <td className="numeric"><input aria-label={`Utilização tributada de ${line.accountCode}`} inputMode="decimal" style={{ width: '6em' }} value={value.taxedUsed} onChange={(event) => setDraft(line, { taxedUsed: event.target.value })} placeholder="0,00" /></td>
+            <td className="numeric">{euro.format(line.acceptedUsed)}</td>
+            <td className="numeric"><input aria-label={`Reversão tributada de ${line.accountCode}`} inputMode="decimal" style={{ width: '6em' }} value={value.taxedReversed} onChange={(event) => setDraft(line, { taxedReversed: event.target.value })} placeholder="0,00" /></td>
+            <td className="numeric">{euro.format(line.acceptedReversed)}</td>
+            <td className="numeric">{euro.format(line.constituted)}</td>
+            <td className="numeric strong">{euro.format(line.closing)}</td>
+            <td className="no-print"><button className="button button-secondary" type="button" disabled={!edits[line.accountCode]} onClick={() => void saveProvision(line)}>Guardar</button></td>
+          </tr>
+        })}</tbody>
+      </table></div>
+      <p className="statement-note">As informações adicionais do impresso — os créditos de cobrança duvidosa e o limite dos ajustamentos em inventários — não são calculadas. Fonte: {provisions.source}</p>
+    </section>}
 
     {maps && <p className="statement-note">
       Modelo 32: coluna (8) é a depreciação calculada do exercício (a que o mapa de depreciações lança); (12) o limite pela taxa máxima fiscal indicada na ficha do ativo sobre o valor de aquisição; (15) = (8) − [(12) + (13)]; (9) o aceite nos exercícios anteriores. As perdas por imparidade (13), as taxas perdidas (14), a recuperação (16), a vida útil esperada (7) e as quotas decrescentes não são calculadas. Modelo 31: (8) = (2) − [(5) − (6)]; (13) = (2) − [((3) − (9) − (10)) × (11)]. Pelas instruções, um saldo negativo da coluna (8) acresce-se e um positivo deduz-se no quadro 07 da declaração Modelo 22, onde entram também as mais e menos-valias fiscais (13). Fontes: {maps.sources.join(' ')}

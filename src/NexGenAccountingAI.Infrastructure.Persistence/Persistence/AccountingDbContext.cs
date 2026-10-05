@@ -92,6 +92,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<TaxObligationRecord> TaxObligationRecords => Set<TaxObligationRecord>();
 
+    public DbSet<ProvisionMapInput> ProvisionMapInputs => Set<ProvisionMapInput>();
+
     internal DbSet<FoundationState> FoundationStates => Set<FoundationState>();
 
     /// <summary>Collation ICU sem distinção de maiúsculas (equivalente ao CI_AS do SQL Server).</summary>
@@ -143,6 +145,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new DocumentAttachmentConfiguration());
         modelBuilder.ApplyConfiguration(new DocumentAttachmentContentConfiguration());
         modelBuilder.ApplyConfiguration(new TaxObligationRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new ProvisionMapInputConfiguration());
 
         AuditShadowProperties.Apply(modelBuilder);
 

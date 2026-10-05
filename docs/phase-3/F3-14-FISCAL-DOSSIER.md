@@ -141,9 +141,47 @@ mão:
 
 A API devolve os mapas.
 
+### F3-14C — Modelo 30 (feito)
+
+**Fonte:** Portaria n.º 92-A/2011, impresso e instruções das 10 colunas. A
+coluna (10) é igual a (2) − (5) − (6) − (7) − (8) + (9).
+
+- **Contas:** as de perdas por imparidade acumuladas em créditos (219, 229,
+  239, 269, 279) e em inventários (329 a 369), e as provisões (29). As contas
+  e as reversões (76) estão confirmadas na Taxonomia S.
+- **Da contabilidade:**
+  - **(2) saldo inicial:** o anterior ao exercício, mais a abertura do
+    próprio exercício;
+  - **(9) constituição ou reforço:** os créditos do exercício;
+  - **débitos do exercício:** contam como **reversão** quando o lançamento
+    tem uma conta 76, e como **utilização** nos outros casos.
+- **À mão** (**`ProvisionMapInput`**, auditável; migração
+  `20261005090336_ProvisionMapInputs`):
+  - **Partes tributadas:** a contabilidade não as separa. Indicam-se (3),
+    (5) e (7); (4), (6) e (8) são as diferenças.
+  - **Grupo:** as imparidades vão para o grupo I. As provisões ficam no II
+    (não dedutíveis) por omissão; classificá-las como III (dedutíveis, arts.
+    39.º e 40.º do CIRC) é decisão do utilizador.
+  - **Validações:** uma parte tributada maior do que o valor da
+    contabilidade gera aviso; uma conta fora destas é recusada.
+- **Não se calculam** as informações adicionais do impresso: os créditos de
+  cobrança duvidosa e o limite dos ajustamentos em inventários.
+- **API:** `GET .../fiscal-dossier/modelo30?year=` e
+  `PUT .../fiscal-dossier/modelo30/{conta}?year=` (`{ group, taxedOpening, taxedUsed, taxedReversed }`).
+- **PWA:** a secção «Modelo 30» no ecrã dos mapas (agora «Mapas 30 a 32»),
+  com as partes tributadas e o grupo editáveis por conta.
+
+**Validação:** `ProvisionMapServiceTests`, em PostgreSQL, cobre:
+
+- o saldo da abertura;
+- o reforço, a reversão e a utilização;
+- o saldo final de 1 000;
+- a provisão no grupo II com aviso, e depois no III;
+- as colunas (4) e (6) com as partes tributadas indicadas;
+- a recusa de uma conta fora do mapa, de uma provisão no grupo I e de um
+  valor negativo.
+
 ### A seguir
 
-- **Modelo 30** (provisões, perdas por imparidade em créditos e ajustamentos
-  em inventários), também da Portaria n.º 92-A/2011.
 - O ficheiro XML «Mapas do dossier fiscal», cujo esquema
   `Mapasdodossierfiscal.xsd` é publicado pela AT e não está no projeto.

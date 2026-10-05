@@ -64,7 +64,7 @@ export function FiscalDossierPage() {
   const elements = dossier?.elements ?? []
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Dossier fiscal</h1><p>Os doze elementos do processo de documentação fiscal (artigo 130.º do CIRC): o que a contabilidade do exercício mostra sobre cada um, onde a aplicação ajuda, e o estado que lhe der. Os mapas de modelo oficial 31 e 32 estão em <Link to="/mapas-dossier">Mapas do dossier fiscal</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Dossier fiscal</h1><p>Os doze elementos do processo de documentação fiscal (artigo 130.º do CIRC): o que a contabilidade do exercício mostra sobre cada um, onde a aplicação ajuda, e o estado que lhe der. Os mapas de modelo oficial 30, 31 e 32 estão em <Link to="/mapas-dossier">Mapas do dossier fiscal</Link>.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
 

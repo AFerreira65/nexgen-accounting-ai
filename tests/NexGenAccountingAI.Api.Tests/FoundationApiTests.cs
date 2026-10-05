@@ -1489,6 +1489,9 @@ public sealed class FoundationApiTests
         using var missingDisposalBody = new StringContent("{\"date\":\"2026-07-15\",\"salePrice\":0,\"journalCode\":\"GERAL\"}", System.Text.Encoding.UTF8, "application/json");
         using var missingDisposal = await client.PostAsync($"{basePath}/fixed-assets/NAO-HA/disposal/preview", missingDisposalBody).ConfigureAwait(false);
         using var dossierMaps = await client.GetAsync($"{basePath}/fiscal-dossier/maps?year=2026").ConfigureAwait(false);
+        using var modelo30 = await client.GetAsync($"{basePath}/fiscal-dossier/modelo30?year=2026").ConfigureAwait(false);
+        using var badModelo30Body = new StringContent("{\"group\":1,\"taxedOpening\":0,\"taxedUsed\":0,\"taxedReversed\":0}", System.Text.Encoding.UTF8, "application/json");
+        using var badModelo30 = await client.PutAsync($"{basePath}/fiscal-dossier/modelo30/6511?year=2026", badModelo30Body).ConfigureAwait(false);
         var dossierMapsPayload = await dossierMaps.Content.ReadAsStringAsync().ConfigureAwait(false);
         using var attachments = await client.GetAsync($"{basePath}/attachments?unlinked=true").ConfigureAwait(false);
         using var exeBody = new ByteArrayContent([1, 2, 3]);
@@ -1569,6 +1572,8 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.OK, bankAccounts.StatusCode);
         Assert.AreEqual(HttpStatusCode.NotFound, missingDisposal.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, dossierMaps.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, modelo30.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, badModelo30.StatusCode, "6511 não é conta de imparidades acumuladas nem de provisões.");
         StringAssert.Contains(dossierMapsPayload, "\"modelo32\":");
         Assert.AreEqual(HttpStatusCode.OK, attachments.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, exeUpload.StatusCode);

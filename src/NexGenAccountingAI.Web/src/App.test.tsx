@@ -927,6 +927,7 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Mapas do dossier fiscal', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Mapas 30 a 32/ })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 

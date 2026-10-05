@@ -2327,6 +2327,35 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Modelo 30 (F3-14C): provisões, imparidades em créditos e ajustamentos em inventários.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fiscal-dossier/modelo30", async (
+        Guid userId, Guid companyId, int year, ProvisionMapService provisions, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var map = await provisions.BuildAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+            return map is null ? Results.NotFound() : Results.Ok(map);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fiscal-dossier/modelo30/{accountCode}", async (
+        Guid userId, Guid companyId, string accountCode, int year, ProvisionMapUpdate request, ProvisionMapService provisions, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var done = await provisions.UpdateAsync(userId, companyId, year, accountCode, request, cancellationToken).ConfigureAwait(false);
+            return done ? Results.NoContent() : Results.NotFound();
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["modelo30"] = [exception.Message] });
+        }
+    });
+
     app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/{code}/monetary-coefficient", async (
         Guid userId, Guid companyId, string code, MonetaryCoefficientRequest request, FixedAssetService assets, CancellationToken cancellationToken) =>
     {

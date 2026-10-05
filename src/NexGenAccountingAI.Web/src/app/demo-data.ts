@@ -681,6 +681,8 @@ export type Modelo32Line = { assetCode: string; taxTableCode: string | null; des
 export type Modelo32Map = { nature: number; natureLabel: string; method: number; lines: Modelo32Line[]; bookValue: number; taxValue: number; bookedInPeriod: number; acceptedInPriorPeriods: number; taxLimit: number; acceptedImpairment: number; notAccepted: number; recovered: number }
 export type Modelo31Line = { assetCode: string; description: string; disposalDate: string; realisationValue: number; taxAcquisitionValue: number; acquisitionYear: number; bookAcquisitionValue: number; bookDepreciation: number; bookGain: number; untaxedGain: number; acceptedDepreciation: number; coefficient: number; coefficientIndicated: boolean; taxGain: number }
 export type Modelo31Map = { nature: number; natureLabel: string; lines: Modelo31Line[]; bookGain: number; taxGain: number }
+export type Modelo30Line = { accountCode: string; accountName: string; group: number; groupIndicated: boolean; opening: number; taxedOpening: number; acceptedOpening: number; taxedUsed: number; acceptedUsed: number; taxedReversed: number; acceptedReversed: number; constituted: number; closing: number; used: number; reversed: number }
+export type Modelo30Map = { year: number; lines: Modelo30Line[]; warnings: string[]; source: string }
 export type DossierMaps = { year: number; modelo32: Modelo32Map[]; ledgerDepreciation: number; fullyDepreciatedOmitted: number; modelo31: Modelo31Map[]; warnings: string[]; sources: string[]; modelo32Booked: number; modelo32NotAccepted: number; modelo31BookGain: number; modelo31TaxGain: number }
 export type DepreciationSchedule = {
   year: number

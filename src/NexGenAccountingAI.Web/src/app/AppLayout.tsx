@@ -94,7 +94,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/ies', label: 'IES — Anexo A', icon: FileText },
     { to: '/retencoes', label: 'Retenções na fonte', icon: HandCoins },
     { to: '/dossier-fiscal', label: 'Dossier fiscal', icon: FolderCheck },
-    { to: '/mapas-dossier', label: 'Mapas 31 e 32', icon: Table2 },
+    { to: '/mapas-dossier', label: 'Mapas 30 a 32', icon: Table2 },
     { to: '/tabelas-fiscais', label: 'Tabelas fiscais', icon: BookText },
     { to: '/comunicacao-at', label: 'Comunicação com a AT', icon: ShieldCheck },
   ] },
