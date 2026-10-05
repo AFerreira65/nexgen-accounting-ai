@@ -1,7 +1,8 @@
-import { Ban, CircleAlert, CircleCheck, Database, Download, FileQuestion, History, RotateCcw, Sparkles, Trash2, WandSparkles } from 'lucide-react'
+import { Ban, CircleAlert, CircleCheck, Database, FileQuestion, History, RotateCcw, Sparkles, Trash2, WandSparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type EntryTemplateRow, type SuggestedEntriesReport, type SuggestedEntry, type SuggestedEntryOutcome, type SupplierClassificationProposal, type SupplierEntryRuleRow } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -247,7 +248,7 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
       <div className="panel-heading"><div><h2>Faturas por lançar</h2><p>{ready.length === items.length ? 'Todas com sugestão pronta.' : `${ready.length} de ${items.length} com sugestão pronta.`} As notas de crédito invertem os lados do lançamento-tipo.</p></div></div>
       <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
         <button className="button button-primary" type="button" onClick={finalize} disabled={busy || selectedReady.length === 0}><WandSparkles size={16} /> {busy ? 'A lançar…' : `Finalizar ${selectedReady.length} ${selectedReady.length === 1 ? 'selecionado' : 'selecionados'}`}</button>
-        <button className="button button-secondary" type="button" onClick={exportCsv}><Download size={16} /> Exportar CSV</button>
+        <ExportButtons run={exportCsv} />
         <button className="button button-secondary" type="button" onClick={exportMissing} title="As faturas por lançar agrupadas por fornecedor, para pedir os documentos"><FileQuestion size={16} /> Documentos em falta</button>
       </div>
       <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>

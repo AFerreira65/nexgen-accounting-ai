@@ -1,8 +1,9 @@
-import { CircleAlert, Database, Download, Percent, Printer, TrendingUp } from 'lucide-react'
+import { CircleAlert, Database, Percent, Printer, TrendingUp } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Chart } from '../app/charts'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type FinancialRatio, type FinancialRatios, type OperatingMap } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -65,7 +66,7 @@ export function OperatingMapPage() {
 
     <div className="filterbar">
       <label className="inline-check">Exercício <input type="number" aria-label="Exercício" min={2000} max={9999} value={year} onChange={(event) => { const value = Number(event.target.value); if (value >= 2000 && value <= 9999) setYear(value) }} /></label>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={rows.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={rows.length === 0} />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={rows.length === 0}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 
@@ -178,7 +179,7 @@ export function RatiosPage() {
       <label className="inline-check">De <input type="date" aria-label="Data inicial" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label className="inline-check">Até <input type="date" aria-label="Data final" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <PeriodShortcuts fiscalYear={fiscalYear} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={list.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={list.length === 0} />
     </div>
 
     {ratios && (ratios.balanceDifference !== 0 || ratios.excludedAccounts > 0) && <p className="save-status error"><CircleAlert size={15} /> {ratios.balanceDifference !== 0 ? `O balanço que serve de base não fecha (diferença de ${euro.format(ratios.balanceDifference)}). ` : ''}{ratios.excludedAccounts > 0 ? `Há ${ratios.excludedAccounts} conta(s) com saldo fora das demonstrações. ` : ''}Os rácios podem não ser fiáveis — veja as <Link to="/demonstracoes">demonstrações financeiras</Link>.</p>}

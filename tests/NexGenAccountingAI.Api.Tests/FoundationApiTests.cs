@@ -85,6 +85,20 @@ public sealed class FoundationApiTests
                 "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/44444444-4444-4444-4444-444444444444/parties",
                 Json("""{"name":"Fornecedor","countryCode":"PT","taxRegistrationNumber":"500584095","isCustomer":false,"isSupplier":true}""")).ConfigureAwait(false);
 
+            // Exportar para Excel ou PDF só formata o que o ecrã mostra: quem consulta pode.
+            const string table = """{"title":"Balancete","rows":[["Conta","Saldo"],["111",1234.56],["Total",1234.56]]}""";
+            using var xlsx = await client.PostAsync($"{company}/exports/table?format=xlsx", Json(table)).ConfigureAwait(false);
+            using var pdf = await client.PostAsync($"{company}/exports/table?format=pdf", Json(table)).ConfigureAwait(false);
+            var pdfBytes = await pdf.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+            using var badFormat = await client.PostAsync($"{company}/exports/table?format=doc", Json(table)).ConfigureAwait(false);
+            using var noRows = await client.PostAsync($"{company}/exports/table?format=pdf", Json("""{"title":"Vazio","rows":[]}""")).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.OK, xlsx.StatusCode);
+            Assert.AreEqual("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", xlsx.Content.Headers.ContentType?.MediaType);
+            Assert.AreEqual(HttpStatusCode.OK, pdf.StatusCode);
+            Assert.AreEqual("%PDF", Encoding.ASCII.GetString(pdfBytes, 0, 4));
+            Assert.AreEqual(HttpStatusCode.BadRequest, badFormat.StatusCode);
+            Assert.AreEqual(HttpStatusCode.BadRequest, noRows.StatusCode);
+
             Assert.AreEqual(HttpStatusCode.OK, read.StatusCode, "Consultar continua.");
             Assert.AreEqual(HttpStatusCode.Forbidden, create.StatusCode);
             StringAssert.Contains(createPayload, "só de consulta");

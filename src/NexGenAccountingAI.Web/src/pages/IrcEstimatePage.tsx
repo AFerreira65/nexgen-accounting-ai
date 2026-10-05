@@ -1,7 +1,8 @@
-﻿import { Calculator, Database, Download, Info, Plus, Save, Trash2 } from 'lucide-react'
+﻿import { Calculator, Database, Info, Plus, Save, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type IrcAdjustment, type IrcEstimate, type IrcEstimateFilingSummary } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -148,7 +149,7 @@ export function IrcEstimatePage() {
       </label>
       <button type="button" className="button button-secondary" onClick={() => void calculate()} disabled={busy}><Calculator size={15} /> {busy ? 'A calcular…' : 'Calcular'}</button>
       <button type="button" className="button button-primary" onClick={() => void save()} disabled={busy}><Save size={15} /> Guardar estimativa</button>
-      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={!result}><Download size={15} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={!result} />
     </div>
 
     <p className="mr-hint no-print"><Info size={13} /> {suggestion

@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Database, Download, GitCompare, Layers, Scale, Search, Tags } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Database, GitCompare, Layers, Scale, Search, Tags } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro } from '../app/demo-data'
 import { Pager } from '../app/Pager'
 import { paginate } from '../app/pagination'
@@ -264,7 +265,7 @@ export function TrialBalancePage() {
       <label className="toggle-inline"><input type="checkbox" checked={byClass} onChange={(event) => { setByClass(event.target.checked); if (event.target.checked) setByTaxonomy(false) }} /><Layers size={15} /> Agrupar por classe</label>
       <label className="toggle-inline"><input type="checkbox" checked={byTaxonomy} onChange={(event) => { setByTaxonomy(event.target.checked); if (event.target.checked) setByClass(false) }} /><Tags size={15} /> Agrupar por taxonomia</label>
       <label className="toggle-inline"><input type="checkbox" checked={compare} onChange={(event) => setCompare(event.target.checked)} /><GitCompare size={15} /> Comparar com período homólogo</label>
-      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={rows.length === 0}><Download size={15} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={rows.length === 0} />
     </div>
     {grouped && !detailInGroups && <p className="save-status"><Layers size={15} /> Agrupamento: a mostrar os subtotais das {(byClass ? groups.length : taxonomyGroups.length)} {byClass ? 'classes' : 'rubricas'}. Expanda uma para ver as suas contas, ou desligue o agrupamento (a lista fica paginada).</p>}
     <section className="panel"><div className="table-wrap"><table>

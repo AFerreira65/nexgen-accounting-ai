@@ -1,7 +1,8 @@
-import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Database, Download, Landmark, StickyNote } from 'lucide-react'
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Database, Landmark, StickyNote } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { paginate } from '../app/pagination'
@@ -139,7 +140,7 @@ export function AccountPage() {
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       {(fromDate || toDate) && <button type="button" className="button button-secondary" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>}
       <label><span className="sr-only">Origem</span><select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="">Todas as origens</option>{ENTRY_SOURCES.map((code) => <option key={code} value={code}>{ENTRY_SOURCE_LABELS[code]}</option>)}</select></label>
-      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={data.entries.length === 0 && !inPeriod}><Download size={15} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={data.entries.length === 0 && !inPeriod} />
     </div>
 
     <section className="panel">

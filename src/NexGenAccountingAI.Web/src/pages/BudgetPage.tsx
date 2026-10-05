@@ -1,8 +1,9 @@
-import { CalendarRange, CircleAlert, Database, Download, Printer, Target, Trash2 } from 'lucide-react'
+import { CalendarRange, CircleAlert, Database, Printer, Target, Trash2 } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Chart } from '../app/charts'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type BudgetReport } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
@@ -130,7 +131,7 @@ export function BudgetPage() {
     <div className="filterbar">
       <label className="inline-check">Exercício <input type="number" aria-label="Exercício" min={2000} max={9999} value={year} onChange={(event) => { const next = Number(event.target.value); if (next >= 2000 && next <= 9999) setYear(next) }} /></label>
       <label className="inline-check">Realizado até <select aria-label="Mês" value={month} onChange={(event) => setMonth(Number(event.target.value))}>{monthLabels.map((label, index) => <option key={label} value={index + 1}>{label}</option>)}</select></label>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={lines.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={lines.length === 0} />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={lines.length === 0}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 

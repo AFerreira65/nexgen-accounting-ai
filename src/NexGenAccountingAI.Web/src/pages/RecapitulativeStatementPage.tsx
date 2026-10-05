@@ -1,7 +1,8 @@
-import { ArrowLeftRight, CircleAlert, Database, Download, Printer } from 'lucide-react'
+import { ArrowLeftRight, CircleAlert, Database, Printer } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type RecapitulativeStatement } from '../app/demo-data'
 import { monthRange, periodReference, quarterRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -68,7 +69,7 @@ export function RecapitulativeStatementPage() {
         <button type="button" className="period-chip" onClick={() => setRange(monthRange(reference))}>Mês</button>
         {quarters.map((quarter, index) => <button key={quarter.from} type="button" className={`period-chip${quarter.from === range.from && quarter.to === range.to ? ' active' : ''}`} onClick={() => setRange(quarter)}>{index + 1}.º T</button>)}
       </div>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={lines.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={lines.length === 0} />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!statement}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 

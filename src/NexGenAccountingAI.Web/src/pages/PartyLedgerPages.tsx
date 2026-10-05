@@ -1,7 +1,8 @@
-import { ArrowLeft, Contact, Database, Download, Search } from 'lucide-react'
+import { ArrowLeft, Contact, Database, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type PartyBalances, type PartyStatement } from '../app/demo-data'
 import { Pager } from '../app/Pager'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
@@ -62,7 +63,7 @@ export function PartyBalancesByPartyPage() {
       <label><Search size={17} /><span className="sr-only">Pesquisar terceiros</span><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Pesquisar nome ou contribuinte…" /></label>
       <label className="inline-check">Até <input type="date" aria-label="Saldos até" value={cutoff} onChange={(event) => { setCutoff(event.target.value); setPage(1) }} /></label>
       <span className="catalog-count">{result ? `${result.total} ${result.total === 1 ? 'terceiro' : 'terceiros'} · saldo ${euro.format(result.totalBalance)}` : 'A carregar…'}</span>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={rows.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={rows.length === 0} />
     </div>
 
     <section className="panel">
@@ -131,7 +132,7 @@ export function PartyStatementPage() {
       <label className="inline-check">Até <input type="date" aria-label="Data final" value={to} onChange={(event) => { setTo(event.target.value); setPage(1) }} /></label>
       <PeriodShortcuts fiscalYear={fiscalYear} onPick={pick} />
       <button className="button button-secondary" type="button" onClick={() => pick('', '')}>Limpar datas</button>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={!statement || statement.lines.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={!statement || statement.lines.length === 0} />
     </div>
 
     {statement && <section className="metadata-strip">

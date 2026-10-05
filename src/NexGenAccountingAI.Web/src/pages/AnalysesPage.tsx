@@ -1,6 +1,7 @@
-import { CircleAlert, Database, Download, Play, Plus, Printer, Save, Trash2 } from 'lucide-react'
+import { CircleAlert, Database, Play, Plus, Printer, Save, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type AnalysisCatalog, type AnalysisCatalogField, type AnalysisDefinition, type AnalysisResult, type SavedAnalysisView } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -276,7 +277,7 @@ export function AnalysesPage() {
       <div className="panel-heading no-print"><div><h2>Resultado</h2><p>{result.rowCount} {result.rowCount === 1 ? 'linha' : 'linhas'}{result.truncated ? ` — mostram-se as primeiras ${result.rows.length}` : ''}</p></div>
         <div className="settings-actions" style={{ margin: 0 }}>
           <button className="button button-secondary" type="button" onClick={() => window.print()}><Printer size={15} /> Imprimir / PDF</button>
-          <button className="button button-secondary" type="button" onClick={exportCsv}><Download size={15} /> Exportar CSV</button>
+          <ExportButtons run={exportCsv} />
         </div>
       </div>
       {result.truncated && <p className="save-status no-print"><CircleAlert size={15} /> O detalhe mostra as primeiras {result.rows.length} de {result.rowCount} linhas. Os subtotais e o total geral são de todas as linhas. Para ver o resto do detalhe, estreite o período ou os filtros.</p>}

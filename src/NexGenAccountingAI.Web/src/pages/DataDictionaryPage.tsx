@@ -1,7 +1,8 @@
-import { CircleAlert, Database, Download, Printer } from 'lucide-react'
+import { CircleAlert, Database, Printer } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import type { DataDictionaryTable, DataDictionaryTableSummary } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -90,7 +91,7 @@ export function DataDictionaryPage() {
           </select>
         </label>
         {detail && <button className="button button-secondary" type="button" onClick={() => window.print()}><Printer size={15} /> Imprimir / PDF</button>}
-        {detail && <button className="button button-secondary" type="button" onClick={exportCsv}><Download size={15} /> Exportar CSV</button>}
+        {detail && <ExportButtons run={exportCsv} />}
       </div>
       {error && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
     </section>

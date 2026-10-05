@@ -1,7 +1,8 @@
-import { CircleAlert, CircleCheck, Download, FileUp, Trash2, WandSparkles } from 'lucide-react'
+import { CircleAlert, CircleCheck, FileUp, Trash2, WandSparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type EntryTemplateRow, type SalesDocumentsImportResult, type SalesEntryRuleRow, type SalesSuggestedEntriesReport, type SuggestedEntryOutcome } from '../app/demo-data'
 import { useWorkContext } from '../app/WorkContext'
 import { percentLabel, SuggestionLines, SuggestionOutcomes } from './suggestionParts'
@@ -153,7 +154,7 @@ export function SalesSuggestions({ fromDate, toDate }: { fromDate: string; toDat
       <div className="panel-heading"><div><h2>Documentos por lançar</h2><p>{report?.readyCount === items.length ? 'Todos com sugestão pronta.' : `${report?.readyCount ?? 0} de ${items.length} com sugestão pronta.`} As notas de crédito invertem os lados.</p></div></div>
       <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
         <button className="button button-primary" type="button" onClick={finalize} disabled={busy || selected.size === 0}><WandSparkles size={16} /> {busy ? 'A lançar…' : `Finalizar ${selected.size} ${selected.size === 1 ? 'selecionado' : 'selecionados'}`}</button>
-        <button className="button button-secondary" type="button" onClick={exportCsv}><Download size={16} /> Exportar CSV</button>
+        <ExportButtons run={exportCsv} />
       </div>
       <div className="table-wrap"><table>
         <thead><tr><th><span className="sr-only">Selecionar</span></th><th>Data</th><th>Documento</th><th>Cliente</th><th className="numeric">Total</th><th>Lançamento proposto</th></tr></thead>

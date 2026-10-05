@@ -1,7 +1,8 @@
-import { Database, Download } from 'lucide-react'
+import { Database } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { BarList, Chart } from '../app/charts'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type ExerciseStructure, type MonthlyEvolution } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
@@ -130,7 +131,7 @@ export function MonthlyEvolutionPage() {
 
     <div className="filterbar">
       <label className="inline-check">Exercício <input type="number" aria-label="Exercício" min={2000} max={9999} value={year} onChange={(event) => { const value = Number(event.target.value); if (value >= 2000 && value <= 9999) setYear(value) }} /></label>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={months.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={months.length === 0} />
     </div>
 
     {evolution && last === 0 && <section className="panel empty-state"><h2>Sem movimentos em {year}</h2><p>Escolha outro exercício ou importe os movimentos.</p></section>}

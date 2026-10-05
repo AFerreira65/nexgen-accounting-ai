@@ -1,7 +1,8 @@
-import { CircleAlert, Database, Download, FileCode2, Printer, Table2 } from 'lucide-react'
+import { CircleAlert, Database, FileCode2, Printer, Table2 } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type DossierMaps, type Modelo30Line, type Modelo30Map } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
@@ -84,7 +85,7 @@ export function DossierMapsPage() {
   return <div className="page-stack">
     <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Mapas do dossier fiscal</h1><p>O Modelo 32 (depreciações e amortizações) e o Modelo 31 (mais-valias e menos-valias), a partir dos <Link to="/ativos-fixos">ativos fixos</Link>, e o Modelo 30 (provisões, imparidades em créditos e ajustamentos em inventários), a partir da contabilidade, com as colunas dos impressos oficiais. Fazem parte do <Link to="/dossier-fiscal">dossier fiscal</Link>.</p></div>
       <div className="heading-actions no-print">
-        <button className="button button-secondary" type="button" onClick={exportCsv} disabled={!maps}><Download size={16} /> CSV</button>
+        <ExportButtons run={exportCsv} disabled={!maps} />
         <a className="button button-secondary" href={`/api/v1/development/users/${user.id}/companies/${companyId}/fiscal-dossier/maps/xml?year=${year}`} download title="O ficheiro «Mapas do dossier fiscal» no esquema oficial da AT (DossierFiscal.xsd)"><FileCode2 size={16} /> Ficheiro XML</a>
         <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!maps}><Printer size={16} /> Imprimir / PDF</button>
       </div>

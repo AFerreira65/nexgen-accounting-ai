@@ -1,7 +1,8 @@
-import { ChevronDown, ChevronRight, Database, Download, FolderTree, Plus, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Database, FolderTree, Plus, X } from 'lucide-react'
 import { Fragment, useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type AnalyticReport, type CostCenterRow } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -160,7 +161,7 @@ export function AnalyticReportPage() {
       <label className="inline-check">Até <input type="date" aria-label="Data final" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <PeriodShortcuts fiscalYear={fiscalYear} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       <button className="button button-secondary" type="button" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={centers.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={centers.length === 0} />
     </div>
 
     {report && <section className="metadata-strip">

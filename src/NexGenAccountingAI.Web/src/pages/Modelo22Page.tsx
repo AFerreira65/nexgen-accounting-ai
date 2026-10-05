@@ -1,7 +1,8 @@
-import { Calculator, CircleAlert, CircleCheck, Database, Download, Printer } from 'lucide-react'
+import { Calculator, CircleAlert, CircleCheck, Database, Printer } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type Modelo22Field, type Modelo22Return } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
@@ -115,7 +116,7 @@ export function Modelo22Page() {
       <label className="inline-check">Derrama municipal (%) <input inputMode="decimal" aria-label="Taxa da derrama municipal" value={rate} onChange={(event) => { setRate(event.target.value); setStatus('idle') }} placeholder="ex.: 1,5" /></label>
       <button className="button button-primary" type="button" onClick={() => void save()} disabled={!result || status === 'saving'}>{status === 'saving' ? 'A guardar…' : 'Guardar e recalcular'}</button>
       {status === 'saved' && <span className="save-status success"><CircleCheck size={15} /> Guardado.</span>}
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={!result}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={!result} />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!result}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 

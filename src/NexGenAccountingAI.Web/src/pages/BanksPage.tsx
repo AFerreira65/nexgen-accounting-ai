@@ -1,7 +1,8 @@
-import { Banknote, CircleAlert, CircleCheck, Database, Download, FileUp, Link2, Link2Off, Trash2, Wand2, WandSparkles } from 'lucide-react'
+import { Banknote, CircleAlert, CircleCheck, Database, FileUp, Link2, Link2Off, Trash2, Wand2, WandSparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type BankAccountRow, type BankEntryRuleRow, type BankEntrySuggestion, type BankReconciliationReport, type BankStatementImportResult, type BankStatementLineRow, type EntryTemplateRow, type SuggestedEntryOutcome } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -211,7 +212,7 @@ export function BanksPage() {
         <div className="panel-heading"><div><h2>Movimentos do extrato</h2><p>{lines.length === 0 ? 'Sem movimentos importados no período.' : `${lines.filter((line) => line.reconciled).length} de ${lines.length} conciliados.`} A conciliação automática junta cada movimento a um lançamento da conta com o mesmo valor, até 7 dias de distância, o mais próximo primeiro.</p></div></div>
         <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
           <button className="button button-primary" type="button" disabled={busy || lines.every((line) => line.reconciled)} onClick={autoReconcile}><Wand2 size={16} /> Conciliar automaticamente</button>
-          <button className="button button-secondary" type="button" disabled={lines.length === 0} onClick={exportCsv}><Download size={16} /> Exportar CSV</button>
+          <ExportButtons run={exportCsv} disabled={lines.length === 0} />
         </div>
         {lines.length > 0 && <div className="table-wrap"><table>
           <thead><tr><th><span className="sr-only">Juntar</span></th><th>Data</th><th>Descrição</th><th className="numeric">Montante</th><th className="numeric">Saldo</th><th>Lançamento</th></tr></thead>

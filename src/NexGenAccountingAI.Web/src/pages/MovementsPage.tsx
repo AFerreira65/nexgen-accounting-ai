@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Database, Download, Plus, Search, StickyNote } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Database, Plus, Search, StickyNote } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { useMovementGuards } from '../app/movementGuards'
@@ -152,7 +153,7 @@ export function MovementsPage() {
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       {(fromDate || toDate) && <button className="button button-secondary" type="button" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>}
       <span className="catalog-count">{useClient ? `${filteredCount} de ${movements.length}` : `${filteredCount} ${filteredCount === 1 ? 'movimento' : 'movimentos'}`}</span>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={exporting || filteredCount === 0}><Download size={15} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={exporting || filteredCount === 0} />
       <button className="button button-primary" type="button" onClick={() => setEditing({ movement: null, duplicate: false })}><Plus size={16} /> Novo lançamento</button>
     </div>
     {editing !== undefined && <MovementEditor movement={editing.movement} duplicate={editing.duplicate} onClose={() => { setEditing(undefined); setReload((value) => value + 1) }} />}

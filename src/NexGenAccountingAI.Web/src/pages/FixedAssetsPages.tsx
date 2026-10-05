@@ -1,7 +1,8 @@
-import { CircleAlert, CircleCheck, Database, Download, Factory, Plus, Printer, X } from 'lucide-react'
+import { CircleAlert, CircleCheck, Database, Factory, Plus, Printer, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type AssetDisposalPreview, type DepreciationSchedule, type FixedAssetRow } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
@@ -219,7 +220,7 @@ export function DepreciationSchedulePage() {
 
     <div className="filterbar">
       <label className="inline-check">Exercício <input type="number" aria-label="Exercício" min={2000} max={9999} value={year} onChange={(event) => { const value = Number(event.target.value); if (value >= 2000 && value <= 9999) setYear(value) }} /></label>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={rows.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={rows.length === 0} />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={rows.length === 0}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 

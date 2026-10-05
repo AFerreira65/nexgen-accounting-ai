@@ -1,8 +1,9 @@
-import { Database, Download, GitCompare, Scale, Search } from 'lucide-react'
+import { Database, GitCompare, Scale, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { groupBySubclass, type SubclassGroup, type SubclassLine } from '../app/accountClasses'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro } from '../app/demo-data'
 import { PeriodShortcuts } from '../app/periods'
 import { ReportChrome } from '../app/ReportChrome'
@@ -175,7 +176,7 @@ export function BalanceSheetPage() {
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       <label className="toggle-inline"><input type="checkbox" checked={compare} onChange={(event) => setCompare(event.target.checked)} /><GitCompare size={15} /> Comparar com período homólogo</label>
-      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={rows.length === 0}><Download size={15} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={rows.length === 0} />
     </div>
 
     {!detailInGroups && <p className="save-status"><Scale size={15} /> A mostrar só os subtotais por subclasse — {totalLines} contas ao todo. Para ver as contas, abra o <Link className="inline-link" to="/balancete">balancete</Link> (paginado e pesquisável). A exportação CSV inclui as contas.</p>}

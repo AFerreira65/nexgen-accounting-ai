@@ -3,6 +3,7 @@ import { CircleAlert, CircleCheck, Database, Download, FileUp, Info, ShieldCheck
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { ACCOUNTING_STANDARD_NAMES, accountingStandardName } from '../app/accountingStandards'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type SaftAccountsImport, type SaftAccountsPreview, type SaftCompanyCreation, type SaftEntriesAnalysis, type SaftEntriesImport, type SaftEntriesPreview, type SaftInspection, type SaftOpeningBalancesImport, type SaftValidation, type SaftValidationRunSummary } from '../app/demo-data'
 import { issuesBySeverity, SAFT_SEVERITY_LABELS, saftScopeLabel, saftValidationBlocksImport } from '../app/saftValidation'
 import { useWorkContext } from '../app/WorkContext'
@@ -134,7 +135,7 @@ function SaftValidationPanel({ file, companyId, companyName, validation, onResul
     <div className="panel-heading"><div><h2>Validação do ficheiro</h2><p>Conformidade com o esquema oficial da AT e verificações analíticas (contagens, totais, equilíbrio, contas, datas). É um apoio; não substitui a validação oficial.</p></div><span className={validation ? (blocks ? 'warning' : 'success') : ''}><ShieldCheck /></span></div>
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
       <button className="button button-secondary" type="button" disabled={!file || state === 'loading'} onClick={() => void run()}>{state === 'loading' ? 'A validar…' : 'Validar ficheiro'}</button>
-      {validation && validation.issues.length > 0 && <button className="button button-secondary" type="button" onClick={exportCsv}><Download size={15} /> Exportar relatório</button>}
+      {validation && validation.issues.length > 0 && <ExportButtons run={exportCsv} label="Exportar relatório" />}
     </div>
     {state === 'error' && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
     {validation && <>

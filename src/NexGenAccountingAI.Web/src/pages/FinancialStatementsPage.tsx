@@ -1,7 +1,8 @@
-import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, Database, Download, Landmark, Printer } from 'lucide-react'
+import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, Database, Landmark, Printer } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type BalanceSheetStatement, type CashFlowLine, type CashFlowStatement, type EquityChangesStatement, type IncomeStatementByNature, type StatementLine } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -144,7 +145,7 @@ export function FinancialStatementsPage() {
       <label className="inline-check">De <input type="date" aria-label="Data inicial" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
       <label className="inline-check">Até <input type="date" aria-label="Data final" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <PeriodShortcuts fiscalYear={fiscalYear} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={!loaded}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={!loaded} />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!loaded}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 

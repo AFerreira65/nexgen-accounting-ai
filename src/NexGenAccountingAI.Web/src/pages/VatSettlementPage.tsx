@@ -1,7 +1,8 @@
-import { Database, Download, Info, Receipt, Save } from 'lucide-react'
+import { Database, Info, Receipt, Save } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type VatReturn, type VatReturnFilingSummary, type VatReturnFilingView, type VatSummary, type VatSummaryRow } from '../app/demo-data'
 import { PeriodShortcuts, periodReference, quarterRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -164,7 +165,7 @@ export function VatSettlementPage() {
         <input type="number" step="0.01" value={prior} onChange={(event) => setPrior(event.target.value)} style={{ width: '9rem' }} />
       </label>
       <button type="button" className="button button-primary" onClick={() => void save()} disabled={!result || busy}><Save size={15} /> {busy ? 'A guardar…' : 'Guardar apuramento'}</button>
-      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={!result}><Download size={15} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={!result} />
     </div>
 
     {error && <p className="save-status error">{error}</p>}

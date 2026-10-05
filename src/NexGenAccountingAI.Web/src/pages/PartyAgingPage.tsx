@@ -1,8 +1,9 @@
-import { Database, Download, Hourglass, Printer } from 'lucide-react'
+import { Database, Hourglass, Printer } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Chart } from '../app/charts'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type PartyAging } from '../app/demo-data'
 import { periodReference } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -67,7 +68,7 @@ export function PartyAgingPage() {
         {(Object.keys(kindLabels) as Kind[]).map((item) => <button key={item} type="button" role="tab" aria-selected={kind === item} className={`period-chip${kind === item ? ' active' : ''}`} onClick={() => setKind(item)}>{kindLabels[item].tab}</button>)}
       </div>
       <label className="inline-check">À data de <input type="date" aria-label="Data" value={date} onChange={(event) => setDate(event.target.value)} /></label>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={rows.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={rows.length === 0} />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!aging}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 

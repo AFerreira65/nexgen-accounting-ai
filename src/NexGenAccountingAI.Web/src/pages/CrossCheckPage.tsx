@@ -1,7 +1,8 @@
-import { ArrowLeftRight, CircleAlert, CircleCheck, Database, Download, FileUp } from 'lucide-react'
+import { ArrowLeftRight, CircleAlert, CircleCheck, Database, FileUp } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type CrossCheckReport, type SaftSalesInvoicesSummary } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
@@ -106,7 +107,7 @@ export function CrossCheckPage() {
     <header className="page-heading"><div><p className="eyebrow">Conferência</p><h1>Cruzamento</h1><p>As compras conhecidas pelo e-Fatura face aos lançamentos da contabilidade, e as vendas lançadas por mês. É um apoio de conferência — não altera lançamentos.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     <section className="panel">
-      <div className="panel-heading"><div><h2>Período</h2><p>Um conjunto de meses do exercício.</p></div>{report && <button className="button button-secondary" type="button" onClick={exportCsv}><Download size={15} /> Exportar CSV</button>}</div>
+      <div className="panel-heading"><div><h2>Período</h2><p>Um conjunto de meses do exercício.</p></div>{report && <ExportButtons run={exportCsv} />}</div>
       <div className="filterbar">
         <label><span className="sr-only">Data inicial</span><input type="date" aria-label="Data inicial" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
         <label><span className="sr-only">Data final</span><input type="date" aria-label="Data final" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>

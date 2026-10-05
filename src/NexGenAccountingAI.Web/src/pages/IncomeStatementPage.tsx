@@ -1,8 +1,9 @@
-import { Database, Download, Layers, Search, TrendingUp } from 'lucide-react'
+import { Database, Layers, Search, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { groupBySubclass, type SubclassGroup } from '../app/accountClasses'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { ReportChrome } from '../app/ReportChrome'
@@ -153,7 +154,7 @@ export function IncomeStatementPage() {
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       {(fromDate || toDate) && <button type="button" className="button button-secondary" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>}
       <label className="toggle-inline"><input type="checkbox" checked={compare} onChange={(event) => setCompare(event.target.checked)} /><Layers size={15} /> Comparar com período homólogo</label>
-      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={income.groups.length === 0 && expenses.groups.length === 0}><Download size={15} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={income.groups.length === 0 && expenses.groups.length === 0} />
     </div>
 
     <section className="panel">

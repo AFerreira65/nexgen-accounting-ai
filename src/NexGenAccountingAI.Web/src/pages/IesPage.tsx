@@ -1,7 +1,8 @@
-import { CircleAlert, CircleCheck, Database, Download, FileText, Printer } from 'lucide-react'
+import { CircleAlert, CircleCheck, Database, FileText, Printer } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type IesAnnexA } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
@@ -55,7 +56,7 @@ export function IesPage() {
 
     <div className="filterbar">
       <label className="inline-check">Exercício <input type="number" aria-label="Exercício" min={2000} max={9999} value={year} onChange={(event) => { const next = Number(event.target.value); if (next >= 2000 && next <= 9999) setYear(next) }} /></label>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={fields.length === 0}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={fields.length === 0} />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!annex}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 

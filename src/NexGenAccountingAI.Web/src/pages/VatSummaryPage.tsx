@@ -1,7 +1,8 @@
-import { Database, Download, Info, Receipt, Search } from 'lucide-react'
+import { Database, Info, Receipt, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { ReportChrome } from '../app/ReportChrome'
@@ -94,7 +95,7 @@ export function VatSummaryPage() {
       <label><span className="sr-only">Data final</span><input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
       <PeriodShortcuts fiscalYear={activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       {(fromDate || toDate) && <button type="button" className="button button-secondary" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>}
-      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={ivaRows.length === 0}><Download size={15} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={ivaRows.length === 0} />
     </div>
 
     <section className="panel">

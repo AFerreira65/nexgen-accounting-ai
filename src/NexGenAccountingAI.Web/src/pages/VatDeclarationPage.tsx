@@ -1,7 +1,8 @@
-import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, Database, Download, Printer, Receipt } from 'lucide-react'
+import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, Database, Printer, Receipt } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type VatDeclaration, type VatFormField } from '../app/demo-data'
 import { monthRange, periodReference, quarterRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
@@ -84,7 +85,7 @@ export function VatDeclarationPage() {
         {quarters.map((quarter, index) => <button key={quarter.from} type="button" className={`period-chip${quarter.from === range.from && quarter.to === range.to ? ' active' : ''}`} onClick={() => setRange(quarter)}>{index + 1}.º T</button>)}
       </div>
       <label className="inline-check">Excesso a reportar do período anterior <input type="text" inputMode="decimal" aria-label="Excesso a reportar do período anterior" placeholder="do razão (2437)" value={priorCredit} onChange={(event) => setPriorCredit(event.target.value)} /></label>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={!declaration}><Download size={16} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={!declaration} />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!declaration}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 

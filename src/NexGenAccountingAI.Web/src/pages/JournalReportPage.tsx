@@ -1,7 +1,8 @@
-import { BookText, ChevronLeft, ChevronRight, Database, Download, Filter } from 'lucide-react'
+import { BookText, ChevronLeft, ChevronRight, Database, Filter } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, formatMovementDate, type Movement } from '../app/demo-data'
 import { ENTRY_SOURCE_LABELS, ENTRY_SOURCES, entrySourceLabel } from '../app/entrySources'
 import { paginate } from '../app/pagination'
@@ -121,7 +122,7 @@ export function JournalReportPage() {
       <datalist id="journal-report-accounts">{accountSuggestions.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</datalist>
       <label><span className="sr-only">Origem</span><select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="">Todas as origens</option>{ENTRY_SOURCES.map((code) => <option key={code} value={code}>{ENTRY_SOURCE_LABELS[code]}</option>)}</select></label>
       <span className="catalog-count">{data.entries.length} lançamentos</span>
-      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={data.entries.length === 0}><Download size={15} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={data.entries.length === 0} />
     </div>
 
     <section className="metric-grid compact-grid">

@@ -1,7 +1,8 @@
-import { Database, Download, HandCoins, Info, Search, Users } from 'lucide-react'
+import { Database, HandCoins, Info, Search, Users } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro } from '../app/demo-data'
 import { Pager, usePagedList } from '../app/Pager'
 import { ReportChrome } from '../app/ReportChrome'
@@ -99,7 +100,7 @@ export function PartyBalancesPage() {
       <label><Search size={17} /><span className="sr-only">Pesquisar contas correntes</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar conta ou nome…" /></label>
       <label><span className="sr-only">Saldos até</span><input type="date" aria-label="Saldos até" value={cutoff} onChange={(event) => setCutoff(event.target.value)} /></label>
       {cutoff && <button className="button button-secondary" type="button" onClick={() => setCutoff('')}>Limpar data</button>}
-      <button type="button" className="button button-secondary" onClick={exportCsv} disabled={clientes.length === 0 && fornecedores.length === 0}><Download size={15} /> Exportar CSV</button>
+      <ExportButtons run={exportCsv} disabled={clientes.length === 0 && fornecedores.length === 0} />
     </div>
 
     <section className="panel">

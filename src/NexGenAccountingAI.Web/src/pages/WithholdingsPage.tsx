@@ -1,7 +1,8 @@
-import { CircleAlert, Database, Download, HandCoins, Printer } from 'lucide-react'
+import { CircleAlert, Database, HandCoins, Printer } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { euro, type WithholdingReport } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
@@ -57,7 +58,7 @@ export function WithholdingsPage() {
 
     <div className="filterbar">
       <label className="inline-check">Exercício <input type="number" aria-label="Exercício" min={2000} max={9999} value={year} onChange={(event) => { const next = Number(event.target.value); if (next >= 2000 && next <= 9999) setYear(next) }} /></label>
-      <button className="button button-secondary" type="button" onClick={exportCsv} disabled={beneficiaries.length === 0}><Download size={16} /> Exportar beneficiários (CSV)</button>
+      <ExportButtons run={exportCsv} disabled={beneficiaries.length === 0} label="Exportar beneficiários" />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!report}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 

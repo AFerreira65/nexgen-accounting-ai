@@ -647,3 +647,9 @@ html[data-theme='dark'] tr.detail-row td { background: #14262e; }
 .import-steps { display: grid; gap: 4px; margin: 0 22px 14px; padding: 0; list-style: none; }
 .import-steps li { display: flex; align-items: center; gap: 6px; margin: 0; }
 .load-failure { display: flex; align-items: center; gap: 6px; margin: 0 0 14px; }
+
+/* F4-04 — exportar para CSV, Excel ou PDF */
+.export-buttons { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.export-buttons-label { display: inline-flex; align-items: center; gap: 4px; margin-right: 2px; color: #4d5f66; font-size: 11px; }
+.export-buttons .button { min-height: 30px; padding: 0 9px; }
+@media print { .export-buttons { display: none; } }

@@ -786,6 +786,63 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Exportação de uma listagem para Excel ou PDF (F4-04). O ecrã envia o que está a
+    // mostrar (título e linhas); a empresa e o NIF do cabeçalho vêm da base de dados.
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/exports/table", async (
+        Guid userId, Guid companyId, string? format, TableExportRequest request, AccountingDbContext context, CancellationToken cancellationToken) =>
+    {
+        var company = await context.Companies
+            .AsNoTracking()
+            .Where(item => item.Id == companyId && item.IsActive && item.UserMemberships.Any(membership => membership.UserId == userId && membership.IsActive))
+            .Select(item => new { item.LegalName, item.TaxRegistrationNumber })
+            .SingleOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (company is null)
+        {
+            return Results.NotFound();
+        }
+
+        var rows = request?.Rows ?? [];
+        if (rows.Count == 0)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["rows"] = ["Não há linhas para exportar."] });
+        }
+
+        static object? Cell(JsonElement value) => value.ValueKind switch
+        {
+            JsonValueKind.Number => value.GetDecimal(),
+            JsonValueKind.String => value.GetString(),
+            JsonValueKind.True => "Sim",
+            JsonValueKind.False => "Não",
+            _ => null,
+        };
+
+        var title = string.IsNullOrWhiteSpace(request!.Title) ? "Listagem" : request.Title.Trim();
+        var export = new TableExport(
+            title.Length > 150 ? title[..150] : title,
+            company.LegalName,
+            company.TaxRegistrationNumber,
+            DateTimeOffset.Now,
+            rows[0].Select(cell => Cell(cell)?.ToString() ?? string.Empty).ToList(),
+            rows.Skip(1).Select(row => (IReadOnlyList<object?>)row.Select(Cell).ToList()).ToList(),
+            request.Subtitle);
+
+        try
+        {
+            return (format ?? string.Empty).ToLowerInvariant() switch
+            {
+                "xlsx" => Results.File(TableExportWriter.ToXlsx(export), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "listagem.xlsx"),
+                "pdf" => Results.File(TableExportWriter.ToPdf(export), "application/pdf", "listagem.pdf"),
+                _ => Results.ValidationProblem(new Dictionary<string, string[]> { ["format"] = ["O formato tem de ser xlsx ou pdf."] }),
+            };
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["rows"] = [exception.Message] });
+        }
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Só formata o que o ecrã já mostra; não altera dados."));
+
     // Histórico de alterações de um lançamento (F4-03): o estado anterior a cada alteração.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/{reference}/history", async (
         Guid userId, Guid companyId, string reference, JournalEntryHistoryService history, CancellationToken cancellationToken) =>
@@ -5124,6 +5181,9 @@ public sealed record UpdateOrganizationCompanyRequest(
 public sealed record CreateOrganizationUserRequest(string DisplayName, string Email);
 
 public sealed record UpdateOrganizationUserRequest(string DisplayName, string Email, bool IsActive);
+
+/// <summary>Uma listagem a exportar: a primeira linha é o cabeçalho; cada célula é texto, número ou nula.</summary>
+public sealed record TableExportRequest(string? Title, string? Subtitle, List<List<JsonElement>>? Rows);
 
 public sealed record SetMembershipRequest(string Role, bool IsActive, bool? IsResponsible = null);
 
