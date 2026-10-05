@@ -1,5 +1,11 @@
 # Adesão aos webservices da AT — guia passo a passo
 
+> **Atualização de 2026-10-05.** O certificado de testes (`TesteWebservices.pfx`,
+> válido até 06/01/2027) e a chave pública da AT (válida até 15/04/2027) estão
+> em descarregamento público na página «Certificados de segurança» do Suporte
+> tecnológico do Portal das Finanças. Os testes já não dependem da resposta ao
+> email. Ver [`COMPARACAO-MERCADO.md`](COMPARACAO-MERCADO.md), secção 4.
+
 O Bloco C da [Fase 3](phase-3/README.md) (consulta de faturas, validação e
 submissão de declarações) depende de a AT reconhecer o NexGen Accounting AI como
 software de um produtor e emitir os certificados. Este guia junta o que os
