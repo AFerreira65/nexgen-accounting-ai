@@ -1,7 +1,8 @@
-import { Plus, Trash2, X } from 'lucide-react'
+import { FileText, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { euro, type CostCenterRow, type EntryTemplateRow, type Movement, type PartyRow, type VatClassificationRow, type VatCodeRow } from '../app/demo-data'
+import { euro, type CostCenterRow, type DocumentAttachmentRow, type EntryTemplateRow, type Movement, type PartyRow, type VatClassificationRow, type VatCodeRow } from '../app/demo-data'
 import { useWorkContext, type MovementLineInput } from '../app/WorkContext'
+import { EntryDocumentViewer } from './EntryDocumentViewer'
 
 const today = () => new Date().toISOString().slice(0, 10)
 // A linha no editor: além do que segue para a API, o texto do terceiro tal
@@ -151,7 +152,7 @@ function PartyField({ value, name, ariaLabel, search, onChange }: {
 }
 
 export function MovementEditor({ movement, duplicate = false, onClose }: { movement: Movement | null; duplicate?: boolean; onClose: () => void }) {
-  const { accountingSetup, activeCompany, applyEntryTemplate, costCenters, createMovement, entryTemplates, parties, reviseMovement, source, user, vatClassification, vatCodes } = useWorkContext()
+  const { accountingSetup, activeCompany, applyEntryTemplate, costCenters, createMovement, entryTemplates, parties, reviseMovement, source, updateAttachment, user, vatClassification, vatCodes } = useWorkContext()
   const companyId = activeCompany.companyId
   // Códigos de IVA ativos e a classificação por conta, que propõe o código.
   const [vatCodeList, setVatCodeList] = useState<VatCodeRow[]>([])
@@ -221,8 +222,18 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
   const [lines, setLines] = useState<EditorLine[]>(
     movement ? movement.lines.map((line) => ({ accountCode: line.account, description: line.description, debit: line.debit, credit: line.credit, vatCode: line.vatCode ?? '', costCenter: line.costCenter ?? '', partyText: partyText(line.partyCountryCode, line.partyTaxNumber), partyName: line.partyName ?? '' })) : [emptyLine(), emptyLine()],
   )
-  const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
+  // 'unlinked': o lançamento ficou guardado mas o documento não se ligou; já não se pode voltar a guardar.
+  const [status, setStatus] = useState<'idle' | 'saving' | 'error' | 'unlinked'>('idle')
   const [error, setError] = useState('')
+  // O documento ao lado das linhas (F3-20C): liga-se ao lançamento ao guardar.
+  const [showDocument, setShowDocument] = useState(false)
+  const [sourceDocument, setSourceDocument] = useState<DocumentAttachmentRow | null>(null)
+  const chooseDocument = (row: DocumentAttachmentRow | null) => {
+    setSourceDocument(row)
+    // O que o código QR diz do documento preenche os campos ainda vazios.
+    if (row?.qrDocumentNo && !documentReference.trim()) setDocumentReference(row.qrDocumentNo)
+    if (row?.qrDocumentDate && !documentDate) setDocumentDate(row.qrDocumentDate)
+  }
 
   // Navegação por Enter: cada campo regista-se aqui pela sua chave e o
   // formulário passa o foco ao campo seguinte quando se tecla Enter.
@@ -346,8 +357,22 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
           .filter((line) => line.accountCode.trim())
           .map((line): MovementLineInput => ({ accountCode: line.accountCode.trim().toUpperCase(), description: line.description, debit: Number(line.debit) || 0, credit: Number(line.credit) || 0, vatCode: line.vatCode || null, costCenter: line.costCenter || null, ...parsePartyText(line.partyText) })),
       }
-      if (isEdit) await reviseMovement(movement.id, payload)
-      else await createMovement(payload)
+      let reference: string
+      if (isEdit) {
+        await reviseMovement(movement.id, payload)
+        reference = movement.id
+      } else {
+        reference = await createMovement(payload)
+      }
+      if (sourceDocument && sourceDocument.entryReference !== reference) {
+        try {
+          await updateAttachment(companyId, sourceDocument.id, { entryReference: reference, notes: sourceDocument.notes, qrText: null })
+        } catch (linkError) {
+          setStatus('unlinked')
+          setError(`O lançamento ${reference} ficou registado, mas o documento não se ligou: ${linkError instanceof Error ? linkError.message : 'erro desconhecido'}. Ligue-o no arquivo digital.`)
+          return
+        }
+      }
       onClose()
     } catch (submitError) {
       setStatus('error')
@@ -356,7 +381,14 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
   }
 
   return <section className="panel settings-panel">
-    <div className="panel-heading"><div><h2>{isEdit ? `Corrigir ${movement.id.replaceAll('-', ' ')}` : (duplicate ? `Novo lançamento a partir de ${movement!.id.replaceAll('-', ' ')}` : 'Novo lançamento')}</h2><p>Débito igual a crédito, pelo menos duas linhas. Enter avança para o campo seguinte; no último campo da última linha, cria uma linha nova. {isEdit ? 'Só um lançamento por conferir pode ser corrigido.' : 'A referência é gerada pelo diário e exercício.'}</p></div><button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button></div>
+    <div className="panel-heading"><div><h2>{isEdit ? `Corrigir ${movement.id.replaceAll('-', ' ')}` : (duplicate ? `Novo lançamento a partir de ${movement!.id.replaceAll('-', ' ')}` : 'Novo lançamento')}</h2><p>Débito igual a crédito, pelo menos duas linhas. Enter avança para o campo seguinte; no último campo da última linha, cria uma linha nova. {isEdit ? 'Só um lançamento por conferir pode ser corrigido.' : 'A referência é gerada pelo diário e exercício.'}</p></div>
+      <div className="row-actions">
+        {source === 'database' && <button className="button button-secondary" type="button" aria-pressed={showDocument} onClick={() => setShowDocument((value) => !value)}><FileText size={16} /> {showDocument ? 'Esconder documento' : 'Ver documento'}</button>}
+        <button className="icon-button" type="button" aria-label="Fechar" onClick={onClose}><X size={18} /></button>
+      </div></div>
+    <div className={showDocument ? 'entry-with-document' : undefined}>
+    {showDocument && <EntryDocumentViewer reference={isEdit ? movement.id : null} chosen={sourceDocument} onChoose={chooseDocument} onClose={() => setShowDocument(false)} />}
+    <div className="entry-editor-body">
     {!isEdit && templateList.length > 0 && <div className="builder-row template-bar">
       <label>Lançamento-tipo <select aria-label="Lançamento-tipo" value={templateCode} onChange={(event) => setTemplateCode(event.target.value)}><option value="">Escolher…</option>{templateList.map((item) => <option key={item.code} value={item.code}>{item.code} · {item.name}</option>)}</select></label>
       <label>Valor <input aria-label="Valor do lançamento-tipo" inputMode="decimal" value={templateAmount} onChange={(event) => setTemplateAmount(event.target.value)} placeholder="0,00" /></label>
@@ -418,10 +450,13 @@ export function MovementEditor({ movement, duplicate = false, onClose }: { movem
         {yearClosed && <span className="save-status error">O exercício de {entryYear} está apurado. Reabra-o para lançar com esta data.</span>}
         {periodLocked && !yearClosed && <span className="save-status error">O período até {postingLockDate} está bloqueado para lançamentos.</span>}
         {hasInvalidAccount && <span className="save-status error">Há linhas com uma conta de integração; só contas de movimento podem ser lançadas.</span>}
-        {status === 'error' && <span className="save-status error">{error}</span>}
+        {(status === 'error' || status === 'unlinked') && <span className="save-status error">{error}</span>}
+        {sourceDocument && sourceDocument.entryReference !== (isEdit ? movement.id : null) && status !== 'unlinked' && <span className="save-status">Ao guardar, liga {sourceDocument.fileName}</span>}
         <button className="button button-secondary" type="button" onClick={onClose}>Cancelar</button>
-        <button className="button button-primary" type="submit" disabled={status === 'saving' || difference !== 0 || yearClosed || periodLocked || hasInvalidAccount}>{status === 'saving' ? 'A guardar…' : (isEdit ? 'Guardar correção' : 'Registar lançamento')}</button>
+        <button className="button button-primary" type="submit" disabled={status === 'saving' || status === 'unlinked' || difference !== 0 || yearClosed || periodLocked || hasInvalidAccount}>{status === 'saving' ? 'A guardar…' : (isEdit ? 'Guardar correção' : 'Registar lançamento')}</button>
       </footer>
     </form>
+    </div>
+    </div>
   </section>
 }

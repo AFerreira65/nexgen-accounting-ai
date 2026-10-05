@@ -113,7 +113,29 @@ WebView2 do posto, o código nunca era lido; e nos PDF nunca o foi.
 - O `Microsoft.AspNetCore.StaticFiles` do .NET 10 serve `.mjs` (o worker),
   como precisa a publicação no serviço do Windows.
 
+### F3-20C — O documento ao lado das linhas do editor (feito)
+
+- **Botão «Ver documento»** no editor de lançamentos (só com a base de
+  dados). Abre, à esquerda das linhas, o PDF, a imagem ou o XML, que fica
+  fixo enquanto se desce no formulário; em ecrãs estreitos fica por cima.
+- **Que documentos:** ao corrigir, os já ligados ao lançamento (o primeiro
+  abre logo); sempre, os do arquivo **ainda sem lançamento**, com pesquisa.
+  Também se arquiva ali um documento novo, com o código QR lido como no
+  arquivo.
+- **Código QR:** o número, a data, o emitente, o total e o IVA do documento
+  aparecem por cima dele, para conferir com as linhas; o número e a data
+  preenchem o «Documento» e a «Data do documento» quando estão vazios.
+- **Ligação:** faz-se **ao guardar** o lançamento, com a referência que lhe
+  foi dada (`createMovement` passou a devolvê-la). Se o lançamento ficar
+  guardado e a ligação falhar, o editor diz qual é o lançamento, não deixa
+  guardar outra vez (seria um duplicado) e manda ligar no arquivo.
+- Um TIFF, que os browsers não mostram, abre noutra janela.
+
+**Validação efetuada:** `EntryDocumentViewer.test.tsx` — ao corrigir, abre o
+documento ligado; num lançamento novo, oferece os documentos sem lançamento
+e mostra o escolhido com os dados do QR; o TIFF. O editor completo com a
+base real ainda não foi visto (precisa da sessão).
+
 ### Por fazer
 
 - Prazos de conservação por tipo de documento, com a fonte legal.
-- Ver o documento ao lado das linhas no editor de lançamentos.

@@ -624,3 +624,21 @@ html[data-theme='dark'] tr.detail-row td { background: #14262e; }
 .issue-list li { display: flex; align-items: flex-start; gap: 8px; line-height: 1.45; }
 .issue-list li svg { flex: 0 0 auto; margin-top: 2px; }
 .issue-list li.error { color: #b24452; font-weight: 600; }
+
+/* F3-20C — o documento ao lado das linhas do editor de lançamentos */
+.entry-with-document { display: grid; grid-template-columns: minmax(320px, 42%) minmax(0, 1fr); gap: 16px; align-items: start; }
+.entry-with-document .entry-editor-body { min-width: 0; }
+.entry-document { position: sticky; top: 12px; display: grid; gap: 8px; margin: 0 0 12px 22px; }
+.entry-document-toolbar { display: flex; align-items: center; gap: 6px; }
+.entry-document-toolbar select { flex: 1 1 auto; min-width: 0; min-height: 32px; border: 1px solid #d4dfe2; border-radius: 7px; background: #fbfcfc; font-size: 12px; }
+.entry-document-toolbar input:not(.sr-only) { width: 110px; min-height: 32px; padding: 4px 8px; border: 1px solid #d4dfe2; border-radius: 7px; font-size: 12px; }
+.entry-document-qr { margin: 0; color: #4d5f66; font-size: 11px; }
+.entry-document-frame { height: min(78vh, 900px); overflow: auto; border: 1px solid #d4dfe2; border-radius: 9px; background: #f3f6f7; }
+.entry-document-frame iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+.entry-document-frame img { display: block; max-width: 100%; margin: 0 auto; }
+.entry-document-frame .statement-note { margin: 16px; }
+@media (max-width: 1100px) {
+  .entry-with-document { grid-template-columns: minmax(0, 1fr); }
+  .entry-document { position: static; margin: 0 16px 12px; }
+  .entry-document-frame { height: 60vh; }
+}

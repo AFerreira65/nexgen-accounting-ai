@@ -75,7 +75,8 @@ type WorkContextValue = WorkContextData & {
   updateJournal: (code: string, input: JournalEditInput) => Promise<void>
   createDocumentType: (input: NewDocumentTypeInput) => Promise<void>
   updateDocumentType: (code: string, input: DocumentTypeEditInput) => Promise<void>
-  createMovement: (input: MovementInput) => Promise<void>
+  /** Regista o lançamento e devolve a referência que lhe foi dada. */
+  createMovement: (input: MovementInput) => Promise<string>
   reviseMovement: (reference: string, input: MovementInput) => Promise<void>
   reviewMovement: (reference: string) => Promise<void>
   voidMovement: (reference: string) => Promise<void>
@@ -624,8 +625,9 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
           body: JSON.stringify(input),
         })
         if (!response.ok) throw new Error(await problemMessage(response))
+        const created = await response.json() as { id: string }
         setAccountingRevision((revision) => revision + 1)
-        return
+        return created.id
       }
 
       const documentType = input.documentTypeCode ? accountingSetup.documentTypes.find((item) => item.code === input.documentTypeCode) : undefined
@@ -635,8 +637,9 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       const prefix = input.documentTypeCode || journalCode
       const sequence = String(accountingMovements.filter((item) => item.id.startsWith(`${prefix}-${year}-`)).length + 1).padStart(5, '0')
       const accountName = (code: string) => accountingSetup.accounts.find((item) => item.code === code)?.name ?? code
+      const id = `${prefix}-${year}-${sequence}`
       setAccountingMovements((current) => [{
-        id: `${prefix}-${year}-${sequence}`,
+        id,
         date: input.entryDate,
         journalId: journalCode,
         journalName: journal?.name ?? journalCode,
@@ -650,6 +653,7 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
         amount: totalDebit,
         lines: input.lines.map((line) => ({ account: line.accountCode, accountName: accountName(line.accountCode), description: line.description, debit: line.debit, credit: line.credit })),
       }, ...current])
+      return id
     },
     reviseMovement: async (reference, input) => {
       const totalDebit = input.lines.reduce((sum, line) => sum + line.debit, 0)
