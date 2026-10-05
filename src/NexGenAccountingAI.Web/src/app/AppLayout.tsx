@@ -48,9 +48,11 @@ import {
   WalletCards,
   WandSparkles,
   type LucideIcon,
+  CircleAlert,
 } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { clearLoadFailure, useLoadFailure } from './loadFailure'
 import { companyRoleLabel } from './companyRoles'
 import { GlobalSearch } from './GlobalSearch'
 import { OptionsMenu } from './OptionsMenu'
@@ -145,6 +147,10 @@ function storedSidebarCollapsed() {
 export function AppLayout() {
   const { activeCompany, companies, saveSettings, selectCompany, source, taxonomyReview, user } = useWorkContext()
   const movementsSummary = useMovementsSummary()
+  const loadFailed = useLoadFailure()
+  const location = useLocation()
+  // O aviso de falha de leitura é do ecrã onde aconteceu: muda-se de ecrã ou de empresa, limpa-se.
+  useEffect(() => { clearLoadFailure() }, [location.pathname, activeCompany.companyId])
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [periodOpen, setPeriodOpen] = useState(false)
   // Recolhido, o menu fica só com os ícones (guardado no navegador); em ecrãs
@@ -244,7 +250,10 @@ export function AppLayout() {
             <NavLink className="icon-button" to="/tarefas" title="Tarefas" aria-label={pendingTasks > 0 ? `Tarefas — ${pendingTasks} pendentes` : 'Tarefas'}><Bell size={19} />{pendingTasks > 0 && <span className="notification-dot" />}</NavLink>
           </div>
         </header>
-        <main className="content-area"><Outlet /></main>
+        <main className="content-area">
+          {loadFailed && <p className="save-status error load-failure" role="alert"><CircleAlert size={15} /> Não foi possível ler os dados deste ecrã no servidor, por isso não são mostrados valores. <button className="text-link" type="button" onClick={() => window.location.reload()}>Tentar de novo</button></p>}
+          <Outlet />
+        </main>
       </div>
     </div>
   )

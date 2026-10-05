@@ -58,7 +58,7 @@ public sealed class SaftAccountsImportService(ISaftAccountsReader accountsReader
             return new SaftAccountsImportResult(0, alreadyExisted, []);
         }
 
-        var known = new SortedSet<string>(existingCodes, StringComparer.Ordinal);
+        var known = new HashSet<string>(existingCodes, StringComparer.Ordinal);
         var created = new List<SaftAccountCreated>(toCreate.Count);
 
         var strategy = context.Database.CreateExecutionStrategy();
@@ -69,12 +69,26 @@ public sealed class SaftAccountsImportService(ISaftAccountsReader accountsReader
 
             foreach (var account in toCreate)
             {
-                var parentCode = known
-                    .Where(code => account.Code.Length > code.Length &&
-                        account.Code.StartsWith(code, StringComparison.Ordinal))
-                    .OrderByDescending(code => code.Length)
-                    .FirstOrDefault();
-                var allowsPosting = account.Code.Trim().Length > 2;
+                // A conta-mãe é o prefixo mais comprido que já existe. Procura-se por prefixos
+                // (percorrer todas as contas conhecidas para cada uma levava perto de um minuto
+                // num plano de 44 mil contas).
+                string? parentCode = null;
+                for (var length = account.Code.Length - 1; length >= 1 && parentCode is null; length--)
+                {
+                    var prefix = account.Code[..length];
+                    if (known.Contains(prefix))
+                    {
+                        parentCode = prefix;
+                    }
+                }
+
+                // De movimento é a que o ficheiro diz que é (GroupingCategory «GM»); as «GR» e
+                // «GA» são agregadoras. Sem categoria no ficheiro, vale a regra do plano base:
+                // 3 ou mais dígitos.
+                var category = account.GroupingCategory?.Trim();
+                var allowsPosting = string.IsNullOrEmpty(category)
+                    ? account.Code.Trim().Length > 2
+                    : string.Equals(category, "GM", StringComparison.OrdinalIgnoreCase);
                 var name = string.IsNullOrWhiteSpace(account.Description) ? account.Code : account.Description;
 
                 context.Accounts.Add(new LedgerAccount(

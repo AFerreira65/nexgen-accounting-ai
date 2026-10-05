@@ -6,6 +6,7 @@ import { euro } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
+import { signalLoadFailure } from '../app/loadFailure'
 
 type Row = { accountCode: string; accountName: string; debit: number; credit: number }
 type TrialBalance = { rows: (Row & { openingBalance: number; balance: number })[] }
@@ -51,7 +52,7 @@ export function VatSummaryPage() {
     void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/trial-balance?${params}`, { signal: controller.signal })
       .then(async (response) => response.ok ? await response.json() as TrialBalance : Promise.reject(new Error()))
       .then((result) => setRows(result.rows.map((row) => ({ accountCode: row.accountCode, accountName: row.accountName, debit: row.debit, credit: row.credit }))))
-      .catch(() => { if (!controller.signal.aborted) setRows(fromMovements(movements, nameOf, fromDate, toDate)) })
+      .catch(() => { if (!controller.signal.aborted) { signalLoadFailure(); setRows(fromMovements([], nameOf, fromDate, toDate)) } })
     return () => controller.abort()
   }, [activeCompany.companyId, fromDate, movements, nameOf, source, toDate, user.id])
 

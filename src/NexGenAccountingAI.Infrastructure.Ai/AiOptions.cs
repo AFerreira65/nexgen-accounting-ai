@@ -10,7 +10,7 @@ public sealed class AiOptions
     public const string SectionName = "Ai";
 
     /// <summary>O modelo a usar. Por omissão, o mais capaz.</summary>
-    public string Model { get; set; } = "claude-opus-5";
+    public string Model { get; set; } = "claude-opus-5-5";
 
     /// <summary>A chave da API da Anthropic. Vazia → a funcionalidade fica desligada.</summary>
     public string? ApiKey { get; set; }

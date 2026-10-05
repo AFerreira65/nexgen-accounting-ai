@@ -34,7 +34,7 @@ export function SettingsPage() {
         <section className="panel settings-panel">
           <div className="panel-heading"><div><h2>Experiência e período</h2><p>Estas opções não afetam as restantes empresas.</p></div><SlidersHorizontal size={19} /></div>
           <div className="settings-grid">
-            <label><span>Idioma e região</span><select value={form.culture} onChange={(event) => setForm({ ...form, culture: event.target.value })}><option value="pt-PT">Português (Portugal)</option><option value="en-GB">English (United Kingdom)</option></select></label>
+            <label><span>Idioma e região</span><select value={form.culture} onChange={(event) => setForm({ ...form, culture: event.target.value })}><option value="pt-PT">Português (Portugal)</option>{form.culture !== 'pt-PT' && <option value={form.culture}>{form.culture} (sem tradução: a aplicação está em português)</option>}</select></label>
             <label><span>Fuso horário</span><select value={form.timeZone} onChange={(event) => setForm({ ...form, timeZone: event.target.value })}><option value="Europe/Lisbon">Lisboa / Madeira</option><option value="Atlantic/Azores">Açores</option></select></label>
             <label><span>Exercício predefinido</span><input type="number" min="2000" max="2200" value={form.defaultFiscalYear ?? ''} onChange={(event) => setForm({ ...form, defaultFiscalYear: event.target.value ? Number(event.target.value) : null })} /></label>
             <label><span>Tema</span><select value={form.theme} onChange={(event) => setForm({ ...form, theme: event.target.value as CompanySettings['theme'] })}><option value="System">Usar sistema</option><option value="Light">Claro</option><option value="Dark">Escuro</option></select></label>

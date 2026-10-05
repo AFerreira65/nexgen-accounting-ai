@@ -272,14 +272,14 @@ export function AnalysesPage() {
     </div>
 
     {result && <section className="panel analyses-result">
-      <div className="print-only"><h1>{name || 'Análise de movimentos'}</h1><p>{fromDate || '…'} a {toDate || '…'} · {result.rowCount} linhas{result.truncated ? ' (truncado)' : ''}</p></div>
-      <div className="panel-heading no-print"><div><h2>Resultado</h2><p>{result.rowCount} {result.rowCount === 1 ? 'linha' : 'linhas'}{result.truncated ? ' — truncado no limite de 5000' : ''}</p></div>
+      <div className="print-only"><h1>{name || 'Análise de movimentos'}</h1><p>{fromDate || '…'} a {toDate || '…'} · {result.rowCount} linhas{result.truncated ? ` (detalhe das primeiras ${result.rows.length})` : ''}</p></div>
+      <div className="panel-heading no-print"><div><h2>Resultado</h2><p>{result.rowCount} {result.rowCount === 1 ? 'linha' : 'linhas'}{result.truncated ? ` — mostram-se as primeiras ${result.rows.length}` : ''}</p></div>
         <div className="settings-actions" style={{ margin: 0 }}>
           <button className="button button-secondary" type="button" onClick={() => window.print()}><Printer size={15} /> Imprimir / PDF</button>
           <button className="button button-secondary" type="button" onClick={exportCsv}><Download size={15} /> Exportar CSV</button>
         </div>
       </div>
-      {result.truncated && <p className="save-status error no-print"><CircleAlert size={15} /> A análise foi truncada às 5000 linhas. Estreite o período ou os filtros.</p>}
+      {result.truncated && <p className="save-status no-print"><CircleAlert size={15} /> O detalhe mostra as primeiras {result.rows.length} de {result.rowCount} linhas. Os subtotais e o total geral são de todas as linhas. Para ver o resto do detalhe, estreite o período ou os filtros.</p>}
       <AnalysisTable result={result} def={def} formatCell={formatCell} aggLabel={aggLabel} formatAgg={formatAgg} />
     </section>}
   </div>

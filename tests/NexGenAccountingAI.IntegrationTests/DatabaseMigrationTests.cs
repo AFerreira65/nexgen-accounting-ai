@@ -477,6 +477,21 @@ public sealed class DatabaseMigrationTests
                     .ConfigureAwait(false);
                 Assert.AreEqual(0, reimport!.CreatedCount);
 
+                // Com a categoria no ficheiro, manda ela: uma conta de 3 dígitos «GA» é agregadora.
+                var categorized = await new SaftAccountsImportService(
+                        new FixedAccountsReader(
+                        [
+                            new SaftAccount("139", "Agregadora no ficheiro", 0m, 0m, "GA"),
+                            new SaftAccount("1391", "De movimento no ficheiro", 0m, 0m, "GM"),
+                        ]),
+                        importContext)
+                    .ImportAsync(DevelopmentDataSeeder.DemoUserId, created.CompanyId, Stream.Null)
+                    .ConfigureAwait(false);
+                Assert.IsFalse(categorized!.Created.Single(item => item.Code == "139").AllowsPosting);
+                var categorizedPosting = categorized.Created.Single(item => item.Code == "1391");
+                Assert.IsTrue(categorizedPosting.AllowsPosting);
+                Assert.AreEqual("139", categorizedPosting.ParentCode);
+
                 var noAccess = await importService
                     .ImportAsync(Guid.NewGuid(), created.CompanyId, Stream.Null)
                     .ConfigureAwait(false);

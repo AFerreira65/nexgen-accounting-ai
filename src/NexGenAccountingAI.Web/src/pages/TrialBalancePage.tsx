@@ -8,6 +8,7 @@ import { paginate } from '../app/pagination'
 import { PeriodShortcuts } from '../app/periods'
 import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
+import { signalLoadFailure } from '../app/loadFailure'
 
 type Row = { accountCode: string; accountName: string; openingBalance: number; debit: number; credit: number; balance: number }
 type TrialBalance = { totalOpeningBalance: number; totalDebit: number; totalCredit: number; rows: Row[] }
@@ -146,7 +147,7 @@ export function TrialBalancePage() {
       void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/trial-balance?${params}`, { signal: controller.signal })
         .then(async (response) => response.ok ? await response.json() as TrialBalance : Promise.reject(new Error()))
         .then(apply)
-        .catch(() => { if (!controller.signal.aborted) apply(fromMovements(movements, nameOf, from, to)) })
+        .catch(() => { if (!controller.signal.aborted) { signalLoadFailure(); apply(fromMovements([], nameOf, from, to)) } })
     }
     load(fromDate, toDate, setData)
     if (compare && fromDate && toDate) {

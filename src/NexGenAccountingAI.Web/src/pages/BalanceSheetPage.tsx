@@ -7,6 +7,7 @@ import { euro } from '../app/demo-data'
 import { PeriodShortcuts } from '../app/periods'
 import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
+import { signalLoadFailure } from '../app/loadFailure'
 
 type Row = { accountCode: string; accountName: string; balance: number }
 type TrialBalance = { rows: (Row & { openingBalance: number; debit: number; credit: number })[] }
@@ -72,10 +73,12 @@ export function BalanceSheetPage() {
       const params = new URLSearchParams()
       if (from) params.set('from', from)
       if (to) params.set('to', to)
+      // Sem o apuramento: com ele as classes 6 e 7 ficam a zero e o resultado vai para a 81.
+      params.set('excludeClosing', 'true')
       void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/trial-balance?${params}`, { signal: controller.signal })
         .then(async (response) => response.ok ? await response.json() as TrialBalance : Promise.reject(new Error()))
         .then((result) => apply(result.rows.map((row) => ({ accountCode: row.accountCode, accountName: row.accountName, balance: row.balance }))))
-        .catch(() => { if (!controller.signal.aborted) apply(fromMovements(movements, nameOf, from, to)) })
+        .catch(() => { if (!controller.signal.aborted) { signalLoadFailure(); apply(fromMovements([], nameOf, from, to)) } })
     }
     load(fromDate, toDate, setRows)
     if (compare && fromDate && toDate) {

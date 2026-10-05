@@ -10,9 +10,11 @@ namespace NexGenAccountingAI.Infrastructure.Persistence;
 /// Corre análises. Para os <c>Movimentos</c>, o SQL faz o filtro de período e a
 /// projeção das linhas; para os <c>SaldosDeConta</c> reaproveita o balancete
 /// (<see cref="AccountLedgerService.TrialBalanceAsync"/>). Em ambos, a memória
-/// aplica os filtros da definição (com paragem no limite de
-/// <see cref="AnalysisResult.RowLimit"/>), a ordenação, os agrupamentos com
-/// subtotais em todos os níveis e o total geral. Só lê; exclui os anulados.
+/// aplica os filtros da definição, a ordenação, os agrupamentos com subtotais em
+/// todos os níveis e o total geral sobre <b>todas</b> as linhas; só o detalhe
+/// devolvido é cortado em <see cref="AnalysisResult.RowLimit"/>. (Antes cortava-se
+/// antes de ordenar e de somar, e os totais saíam de um conjunto incompleto.)
+/// Só lê; exclui os anulados.
 /// </summary>
 public sealed class AnalysisRunner(AccountingDbContext context, AccountLedgerService ledger) : IAnalysisRunner
 {
@@ -45,7 +47,7 @@ public sealed class AnalysisRunner(AccountingDbContext context, AccountLedgerSer
             return null;
         }
 
-        var (rows, truncated) = definition.Source switch
+        var rows = definition.Source switch
         {
             AnalysisSource.Movimentos => await CollectMovementsAsync(companyId, definition, from, to, cancellationToken).ConfigureAwait(false),
             AnalysisSource.SaldosDeConta => CollectAccountBalances(await ledger.TrialBalanceAsync(companyId, from, to, cancellationToken).ConfigureAwait(false), definition),
@@ -60,11 +62,31 @@ public sealed class AnalysisRunner(AccountingDbContext context, AccountLedgerSer
 
         var groups = BuildGroups(sorted, definition);
         var grandTotal = Aggregate(sorted, definition.Aggregates);
+        if (sorted.Count <= AnalysisResult.RowLimit)
+        {
+            return new AnalysisResult(columns, sorted, groups, grandTotal, sorted.Count, false);
+        }
 
-        return new AnalysisResult(columns, sorted, groups, grandTotal, sorted.Count, truncated);
+        // Só o detalhe é cortado. Os grupos devolvidos são os das linhas mostradas, com
+        // os subtotais do grupo inteiro; o total geral e a contagem são de todas as linhas.
+        var shown = sorted.Take(AnalysisResult.RowLimit).ToList();
+        var shownKeys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var row in shown)
+        {
+            for (var level = 1; level <= definition.GroupBy.Count; level++)
+            {
+                shownKeys.Add(GroupKey(definition.GroupBy.Take(level).Select(field => row.GetValueOrDefault(field))));
+            }
+        }
+
+        var shownGroups = groups.Where(group => shownKeys.Contains(GroupKey(group.Keys.Select(key => key.Value)))).ToList();
+        return new AnalysisResult(columns, shown, shownGroups, grandTotal, sorted.Count, true);
     }
 
-    private async Task<(List<IReadOnlyDictionary<string, object?>> Rows, bool Truncated)> CollectMovementsAsync(
+    private static string GroupKey(IEnumerable<object?> values) =>
+        string.Join('\u001f', values.Select(value => value is IFormattable formattable ? formattable.ToString(null, CultureInfo.InvariantCulture) : value?.ToString() ?? string.Empty));
+
+    private async Task<List<IReadOnlyDictionary<string, object?>>> CollectMovementsAsync(
         Guid companyId, AnalysisDefinition definition, DateOnly? from, DateOnly? to, CancellationToken cancellationToken)
     {
         var query = context.JournalEntryLines
@@ -104,7 +126,6 @@ public sealed class AnalysisRunner(AccountingDbContext context, AccountLedgerSer
             });
 
         var rows = new List<IReadOnlyDictionary<string, object?>>();
-        var truncated = false;
         await foreach (var flat in projected.AsAsyncEnumerable().WithCancellation(cancellationToken).ConfigureAwait(false))
         {
             var values = ToValues(flat);
@@ -113,23 +134,22 @@ public sealed class AnalysisRunner(AccountingDbContext context, AccountLedgerSer
                 continue;
             }
 
-            if (rows.Count >= AnalysisResult.RowLimit)
+            if (rows.Count >= AnalysisResult.ProcessingLimit)
             {
-                truncated = true;
-                break;
+                throw new ArgumentException(
+                    $"A análise abrange mais de {AnalysisResult.ProcessingLimit} linhas. Estreite o período ou os filtros.", nameof(definition));
             }
 
             rows.Add(values);
         }
 
-        return (rows, truncated);
+        return rows;
     }
 
-    private static (List<IReadOnlyDictionary<string, object?>> Rows, bool Truncated) CollectAccountBalances(
+    private static List<IReadOnlyDictionary<string, object?>> CollectAccountBalances(
         TrialBalance balance, AnalysisDefinition definition)
     {
         var rows = new List<IReadOnlyDictionary<string, object?>>();
-        var truncated = false;
         foreach (var row in balance.Rows)
         {
             var values = new Dictionary<string, object?>
@@ -148,16 +168,10 @@ public sealed class AnalysisRunner(AccountingDbContext context, AccountLedgerSer
                 continue;
             }
 
-            if (rows.Count >= AnalysisResult.RowLimit)
-            {
-                truncated = true;
-                break;
-            }
-
             rows.Add(values);
         }
 
-        return (rows, truncated);
+        return rows;
     }
 
     private static IReadOnlyDictionary<string, object?> ToValues(Flat flat) => new Dictionary<string, object?>

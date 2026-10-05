@@ -8,6 +8,7 @@ import { paginate } from '../app/pagination'
 import { PeriodShortcuts } from '../app/periods'
 import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
+import { signalLoadFailure } from '../app/loadFailure'
 
 type ReportEntry = {
   id: string; date: string; journalId: string; documentType: string | null; document: string
@@ -74,7 +75,7 @@ export function JournalReportPage() {
     void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/journal-report?${params}`, { signal: controller.signal })
       .then(async (response) => response.ok ? await response.json() as Report : Promise.reject(new Error()))
       .then((result) => setData(result))
-      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, journal, documentType, year, fromDate, toDate, account, sourceFilter)) })
+      .catch(() => { if (!controller.signal.aborted) { signalLoadFailure(); setData(fromMovements([], journal, documentType, year, fromDate, toDate, account, sourceFilter)) } })
     return () => controller.abort()
   }, [account, activeCompany.companyId, documentType, fromDate, journal, movements, source, sourceFilter, toDate, user.id, year])
 

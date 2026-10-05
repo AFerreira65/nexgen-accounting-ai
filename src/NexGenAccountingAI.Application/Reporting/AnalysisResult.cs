@@ -18,7 +18,8 @@ public sealed record AnalysisGroup(
 /// <summary>
 /// O resultado de uma análise: as colunas, as linhas (cada uma um dicionário
 /// campo→valor), os grupos com subtotais em todos os níveis, o total geral dos
-/// agregados, a contagem de linhas e se foi truncada no limite.
+/// agregados, a contagem de <b>todas</b> as linhas e se o detalhe foi cortado no
+/// limite (os subtotais e o total geral são sempre do conjunto completo).
 /// </summary>
 public sealed record AnalysisResult(
     IReadOnlyList<AnalysisColumn> Columns,
@@ -28,6 +29,9 @@ public sealed record AnalysisResult(
     int RowCount,
     bool Truncated)
 {
-    /// <summary>Limite rígido de linhas (ADR-0005): uma análise é um mapa, não uma extração.</summary>
+    /// <summary>Limite de linhas de detalhe devolvidas (ADR-0005): uma análise é um mapa, não uma extração.</summary>
     public const int RowLimit = 5000;
+
+    /// <summary>Teto de linhas processadas em memória; acima disto a análise é recusada com explicação.</summary>
+    public const int ProcessingLimit = 300_000;
 }

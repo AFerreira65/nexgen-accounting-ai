@@ -9,6 +9,7 @@ import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
 import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
+import { signalLoadFailure } from '../app/loadFailure'
 
 type LedgerEntry = {
   reference: string; entryDate: string; journalCode: string; accountCode: string; description: string; notes?: string | null
@@ -88,7 +89,7 @@ export function AccountPage() {
     )
       .then(async (response) => (response.ok ? (await response.json()) as Ledger : Promise.reject(new Error())))
       .then((result) => setData(result))
-      .catch(() => { if (!controller.signal.aborted) setData(fromMovements(movements, accountCode, nameOf, fromDate, toDate, aggregate, sourceFilter)) })
+      .catch(() => { if (!controller.signal.aborted) { signalLoadFailure(); setData(fromMovements([], accountCode, nameOf, fromDate, toDate, aggregate, sourceFilter)) } })
     return () => controller.abort()
   }, [accountCode, activeCompany.companyId, aggregate, fromDate, movements, nameOf, source, sourceFilter, toDate, user.id])
 

@@ -110,6 +110,30 @@ public sealed class AnalysisRunnerTests
             Assert.AreEqual(-390m, class2.Subtotals["balance:sum"]);
             Assert.AreEqual(0m, byClass.GrandTotal["balance:sum"]);
 
+            // Acima do limite de detalhe: só as linhas mostradas são cortadas; os subtotais e o
+            // total geral são de todas. (Antes cortava-se antes de ordenar e de somar: com a
+            // ordem «maior primeiro», o lançamento grande ficava de fora e o total saía errado.)
+            for (var index = 0; index < AnalysisResult.RowLimit; index++)
+            {
+                context.Add(Entry(companyId, journalId, $"M-{index:D5}", new DateOnly(2027, 1, 1 + (index % 28)), $"FT M{index}",
+                    (expense, 1m, 0m), (supplier, 0m, 1m)));
+            }
+
+            context.Add(Entry(companyId, journalId, "Z-GRANDE", new DateOnly(2027, 12, 31), "FT Z", (expense, 100000m, 0m), (supplier, 0m, 100000m)));
+            await context.SaveChangesAsync().ConfigureAwait(false);
+            context.ChangeTracker.Clear();
+
+            var large = await runner.RunAsync(
+                userId, companyId,
+                definition with { Sort = [new AnalysisSort("debit", Descending: true)] },
+                new DateOnly(2027, 1, 1), new DateOnly(2027, 12, 31), CancellationToken.None).ConfigureAwait(false);
+            Assert.IsTrue(large!.Truncated);
+            Assert.AreEqual(AnalysisResult.RowLimit + 1, large.RowCount, "A contagem é de todas as linhas.");
+            Assert.HasCount(AnalysisResult.RowLimit, large.Rows);
+            Assert.AreEqual(100000m, large.Rows[0]["debit"], "A ordenação faz-se antes do corte.");
+            Assert.AreEqual(100000m + AnalysisResult.RowLimit, large.GrandTotal["debit:sum"]);
+            Assert.AreEqual(100000m + AnalysisResult.RowLimit, large.Groups.Single().Subtotals["debit:sum"], "O subtotal é do grupo inteiro.");
+
             // Definição inválida → ArgumentException.
             await Assert.ThrowsExactlyAsync<ArgumentException>(() => runner.RunAsync(
                 userId, companyId, definition with { Columns = ["naoExiste"] }, null, null, CancellationToken.None));

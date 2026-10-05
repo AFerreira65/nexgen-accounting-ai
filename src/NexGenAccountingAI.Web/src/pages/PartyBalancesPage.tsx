@@ -6,6 +6,7 @@ import { euro } from '../app/demo-data'
 import { Pager, usePagedList } from '../app/Pager'
 import { ReportChrome } from '../app/ReportChrome'
 import { useWorkContext } from '../app/WorkContext'
+import { signalLoadFailure } from '../app/loadFailure'
 
 type Row = { accountCode: string; accountName: string; balance: number }
 type TrialBalance = { rows: { accountCode: string; accountName: string; debit: number; credit: number; balance: number }[] }
@@ -42,7 +43,7 @@ export function PartyBalancesPage() {
     void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/trial-balance?${params}`, { signal: controller.signal })
       .then(async (response) => response.ok ? await response.json() as TrialBalance : Promise.reject(new Error()))
       .then((result) => setRows(result.rows.map((row) => ({ accountCode: row.accountCode, accountName: row.accountName, balance: row.balance }))))
-      .catch(() => { if (!controller.signal.aborted) setRows(fromMovements(movements, nameOf, cutoff)) })
+      .catch(() => { if (!controller.signal.aborted) { signalLoadFailure(); setRows(fromMovements([], nameOf, cutoff)) } })
     return () => controller.abort()
   }, [activeCompany.companyId, cutoff, movements, nameOf, source, user.id])
 

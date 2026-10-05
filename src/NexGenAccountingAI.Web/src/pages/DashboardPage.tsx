@@ -5,6 +5,7 @@ import { Chart } from '../app/charts'
 import { euro, formatMovementDate, type MonthlyEvolution, type Movement } from '../app/demo-data'
 import { PeriodShortcuts } from '../app/periods'
 import { useMovementsSummary, useWorkContext } from '../app/WorkContext'
+import { signalLoadFailure } from '../app/loadFailure'
 
 type Balance = { accountCode: string; balance: number }
 
@@ -102,7 +103,7 @@ export function DashboardPage() {
     void fetch(`/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/accounting/trial-balance?${params}`, { signal: controller.signal })
       .then(async (response) => response.ok ? await response.json() as { rows: Balance[] } : Promise.reject(new Error()))
       .then((result) => setBalances(result.rows.map((row) => ({ accountCode: row.accountCode, balance: row.balance }))))
-      .catch(() => { if (!controller.signal.aborted) setBalances(balancesFromMovements(movements, toDate)) })
+      .catch(() => { if (!controller.signal.aborted) { signalLoadFailure(); setBalances(balancesFromMovements([], toDate)) } })
     return () => controller.abort()
   }, [activeCompany.companyId, movements, source, toDate, user.id])
 

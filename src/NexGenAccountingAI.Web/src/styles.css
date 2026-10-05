@@ -646,3 +646,4 @@ html[data-theme='dark'] tr.detail-row td { background: #14262e; }
 /* Importar tudo: os passos da importação de um SAF-T */
 .import-steps { display: grid; gap: 4px; margin: 0 22px 14px; padding: 0; list-style: none; }
 .import-steps li { display: flex; align-items: center; gap: 6px; margin: 0; }
+.load-failure { display: flex; align-items: center; gap: 6px; margin: 0 0 14px; }

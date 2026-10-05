@@ -1025,7 +1025,8 @@ if (applicationEndpointsAvailable)
         AccountLedgerService ledger,
         CancellationToken cancellationToken,
         string? from,
-        string? to) =>
+        string? to,
+        bool? excludeClosing) =>
     {
         if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
         {
@@ -1037,7 +1038,8 @@ if (applicationEndpointsAvailable)
             return dateError!;
         }
 
-        var balance = await ledger.TrialBalanceAsync(companyId, fromDate, toDate, cancellationToken).ConfigureAwait(false);
+        // `excludeClosing=true`: sem o lançamento de apuramento de resultados.
+        var balance = await ledger.TrialBalanceAsync(companyId, fromDate, toDate, cancellationToken, includeClosing: excludeClosing != true).ConfigureAwait(false);
         return Results.Ok(new
         {
             balance.TotalOpeningBalance,

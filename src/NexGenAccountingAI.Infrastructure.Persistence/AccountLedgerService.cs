@@ -53,12 +53,23 @@ public sealed class AccountLedgerService(AccountingDbContext context)
         Guid companyId,
         DateOnly? fromDate = null,
         DateOnly? toDate = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool includeClosing = true)
     {
         var baseLines = context.JournalEntryLines
             .AsNoTracking()
             .Where(line => line.CompanyId == companyId &&
                 line.JournalEntry.Status != JournalEntryStatus.Voided);
+        if (!includeClosing)
+        {
+            // Sem o apuramento de resultados, para o balanço e a demonstração de resultados
+            // sintéticos: com ele, as classes 6 e 7 ficam a zero e o resultado passa para a 81.
+            // O da aplicação está marcado; o que veio de um SAF-T reconhece-se por movimentar
+            // a 811 ou a 818 (o mesmo critério das demonstrações oficiais).
+            baseLines = baseLines.Where(line =>
+                line.JournalEntry.Source != EntrySource.Closing &&
+                !line.JournalEntry.Lines.Any(other => other.Account.Code.StartsWith("811") || other.Account.Code.StartsWith("818")));
+        }
 
         var periodLines = baseLines;
         if (fromDate is not null)
@@ -86,8 +97,8 @@ public sealed class AccountLedgerService(AccountingDbContext context)
         var opening = new Dictionary<string, (string Name, decimal Balance)>(StringComparer.Ordinal);
         if (fromDate is not null)
         {
-            var openingGroups = await baseLines
-                .Where(line => line.JournalEntry.EntryDate < fromDate.Value)
+            var openingLines = await OpeningLinesAsync(baseLines, companyId, fromDate.Value, cancellationToken).ConfigureAwait(false);
+            var openingGroups = await openingLines
                 .GroupBy(line => new { line.Account.Code, line.Account.Name })
                 .Select(group => new
                 {
@@ -167,8 +178,7 @@ public sealed class AccountLedgerService(AccountingDbContext context)
         decimal openingBalance = 0;
         if (fromDate is not null)
         {
-            openingBalance = await accountLines
-                .Where(line => line.JournalEntry.EntryDate < fromDate.Value)
+            openingBalance = await (await OpeningLinesAsync(accountLines, companyId, fromDate.Value, cancellationToken).ConfigureAwait(false))
                 .SumAsync(line => line.Debit - line.Credit, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -221,5 +231,35 @@ public sealed class AccountLedgerService(AccountingDbContext context)
         }
 
         return new AccountLedger(account.Code, account.Name, isAggregate, openingBalance, running, entries);
+    }
+
+    /// <summary>
+    /// As linhas que formam o saldo inicial numa data. Cada exercício começa no seu
+    /// lançamento de abertura, por isso só contam as linhas desde 1 de janeiro desse ano:
+    /// somar também os anos anteriores contava os saldos de balanço duas vezes (o fim do
+    /// ano anterior mais a abertura que os transporta) e trazia gastos e rendimentos de
+    /// outros exercícios. Enquanto o exercício não tiver abertura lançada, as contas de
+    /// balanço (classes 1 a 5) trazem o saldo acumulado de trás, para o balancete não
+    /// aparecer vazio; as de resultados (6 a 8) começam sempre a zero.
+    /// </summary>
+    private async Task<IQueryable<JournalEntryLine>> OpeningLinesAsync(
+        IQueryable<JournalEntryLine> lines, Guid companyId, DateOnly fromDate, CancellationToken cancellationToken)
+    {
+        var yearStart = new DateOnly(fromDate.Year, 1, 1);
+        var yearEnd = new DateOnly(fromDate.Year, 12, 31);
+        var hasOpening = await context.JournalEntries
+            .AsNoTracking()
+            .AnyAsync(entry => entry.CompanyId == companyId &&
+                entry.Status != JournalEntryStatus.Voided &&
+                entry.Source == EntrySource.Opening &&
+                entry.EntryDate >= yearStart &&
+                entry.EntryDate <= yearEnd, cancellationToken)
+            .ConfigureAwait(false);
+
+        var before = lines.Where(line => line.JournalEntry.EntryDate < fromDate);
+        return hasOpening
+            ? before.Where(line => line.JournalEntry.EntryDate >= yearStart)
+            : before.Where(line => line.JournalEntry.EntryDate >= yearStart ||
+                !(line.Account.Code.StartsWith("6") || line.Account.Code.StartsWith("7") || line.Account.Code.StartsWith("8")));
     }
 }

@@ -37,7 +37,7 @@ efeito:
 
 O ChatGPT seria equivalente em qualidade; a escolha do Claude é também de
 coerência (um só fornecedor, um só SDK). O `model` fica **configurável**
-(`Ai:Model`, por omissão `claude-opus-5`); trocar de fornecedor no futuro é
+(`Ai:Model`, por omissão `claude-opus-5-5`, desde 2026-10-05); trocar de fornecedor no futuro é
 trocar a implementação de uma interface (abaixo), não reescrever o épico.
 
 ### Isolamento do SDK — projeto `NexGenAccountingAI.Infrastructure.Ai`
