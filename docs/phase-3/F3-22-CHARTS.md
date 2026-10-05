@@ -92,3 +92,19 @@ os mapas e os relatórios de gestão eram só tabelas e texto.
 ### A seguir
 
 - **F3-22C** — gráficos nos relatórios de gestão gerados com IA (F2-05).
+
+### F3-22C — Gráficos nos relatórios de gestão (feito)
+
+- No ecrã «Relatórios de gestão», cada relatório gerado mostra, logo a seguir
+  ao resumo, os gráficos **Resultados** e **Posição financeira**: as rubricas
+  do período e do homólogo.
+- Os números vêm do **dossiê guardado com o relatório**, os mesmos que o
+  modelo leu, e não do texto que escreveu. Assim, o que a IA diz pode
+  conferir-se com os números ao lado. Um relatório antigo, cujo dossiê não
+  tenha essa forma, simplesmente não mostra os gráficos.
+- O dossiê lê-se em `app/dossier.ts` e, como chega da API sem tipo,
+  valida-se campo a campo.
+
+**Validação:** `app/dossier.test.ts` lê um dossiê guardado e ignora uma
+rubrica mal formada e um dossiê de outra forma. A PWA passa os 112 testes.
+

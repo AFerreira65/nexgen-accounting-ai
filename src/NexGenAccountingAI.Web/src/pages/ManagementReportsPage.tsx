@@ -1,11 +1,32 @@
 import { Database, Download, Printer, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Chart } from '../app/charts'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
-import { formatMovementDate, type AiSettings, type ManagementReportCatalogEntry, type ManagementReportView } from '../app/demo-data'
+import { dossierAmounts } from '../app/dossier'
+import { euro, formatMovementDate, type AiSettings, type ManagementReportCatalogEntry, type ManagementReportView } from '../app/demo-data'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
+
+/** Os números do dossiê em gráfico: o que o modelo leu, ao lado do que escreveu. */
+function DossierCharts({ dossier }: { dossier: unknown }) {
+  const hasComparative = Boolean(dossier && typeof dossier === 'object' && (dossier as Record<string, unknown>).hasComparative)
+  const groups = [
+    { key: 'incomeSummary' as const, title: 'Resultados', items: dossierAmounts(dossier, 'incomeSummary') },
+    { key: 'positionSummary' as const, title: 'Posição financeira', items: dossierAmounts(dossier, 'positionSummary') },
+  ].filter((group) => group.items.length > 0)
+  if (groups.length === 0) return null
+  return <div className="chart-grid-layout management-report-charts">
+    {groups.map((group) => <section key={group.key} className="chart-panel">
+      <h3>{group.title}</h3>
+      <Chart title={`${group.title}: período${hasComparative ? ' e homólogo' : ''}`} labels={group.items.map((item) => item.label)} format={euro.format} height={220} series={[
+        { name: 'Período', kind: 'bar', tone: 'primary', values: group.items.map((item) => item.current) },
+        ...(hasComparative ? [{ name: 'Homólogo', kind: 'bar' as const, tone: 'muted' as const, values: group.items.map((item) => item.comparative) }] : []),
+      ]} />
+    </section>)}
+  </div>
+}
 
 function kindLabel(catalog: ManagementReportCatalogEntry[], key: string) {
   if (key === 'pergunta') return 'Pergunta livre'
@@ -165,6 +186,8 @@ export function ManagementReportsPage() {
       </div>
 
       <p className="management-report-summary">{result.summary}</p>
+
+      {report && <DossierCharts dossier={report.dossier} />}
 
       {result.sections.map((section, index) => <article key={index} className="management-report-section">
         <h3>{section.title}</h3>
