@@ -2337,6 +2337,7 @@ public sealed class FoundationApiTests
             // serviços, antes de as fontes acrescentadas pelo WebApplicationFactory entrarem.
             builder.UseSetting("Database:ApplyMigrationsOnStartup", applyMigrations.ToString());
             builder.UseSetting("Database:SeedDemoData", seedDemoData.ToString());
+            builder.UseSetting("BackgroundJobs:Enabled", "false");
             if (!useConfiguredDatabase)
             {
                 builder.UseSetting(

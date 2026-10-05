@@ -35,7 +35,7 @@ public sealed class DatabaseMigrationTests
                 .ConfigureAwait(false);
 
             CollectionAssert.AreEqual(
-                new[] { "20261004195730_PostgreSqlBaseline", "20261004221135_SupplierEntryRules", "20261004222709_SalesDocuments", "20261004223551_EFaturaDismissal", "20261004224533_BankStatements", "20261004225329_BankEntryRules", "20261004230200_DocumentArchive", "20261004232941_TaxObligationRecords", "20261005001711_GroupedBankReconciliation", "20261005002333_AssetDisposalEntry", "20261005085547_AssetTaxData", "20261005090336_ProvisionMapInputs", "20261005105840_CompanyResponsible", "20261005204720_JournalEntryChanges" },
+                new[] { "20261004195730_PostgreSqlBaseline", "20261004221135_SupplierEntryRules", "20261004222709_SalesDocuments", "20261004223551_EFaturaDismissal", "20261004224533_BankStatements", "20261004225329_BankEntryRules", "20261004230200_DocumentArchive", "20261004232941_TaxObligationRecords", "20261005001711_GroupedBankReconciliation", "20261005002333_AssetDisposalEntry", "20261005085547_AssetTaxData", "20261005090336_ProvisionMapInputs", "20261005105840_CompanyResponsible", "20261005204720_JournalEntryChanges", "20261005210646_BackgroundJobRuns" },
                 appliedMigrations.ToArray());
 
             var firmId = Guid.NewGuid();

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { ACCOUNTING_STANDARDS, accountingStandardName } from '../app/accountingStandards'
 import { useWorkContext } from '../app/WorkContext'
 import { CompanyMembers, saveMembership } from './CompanyMembers'
+import { AutomaticJobs } from './AutomaticJobs'
 import { COMPANY_ROLES, companyRoleLabel } from '../app/companyRoles'
 
 type OrgUser = { userId: string; displayName: string; email: string; role: string; isActive: boolean; isResponsible?: boolean }
@@ -111,6 +112,8 @@ export function OrganizationPage() {
         {!loading && users.length === 0 && <tr><td colSpan={5} className="empty-state">Ainda não há utilizadores.</td></tr>}
       </tbody></table></div>
     </section>}
+
+    {database && <AutomaticJobs />}
   </div>
 }
 

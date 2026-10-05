@@ -34,6 +34,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<JournalEntryChange> JournalEntryChanges => Set<JournalEntryChange>();
 
+    public DbSet<NexGenAccountingAI.Domain.Operations.BackgroundJobRun> BackgroundJobRuns => Set<NexGenAccountingAI.Domain.Operations.BackgroundJobRun>();
+
     public DbSet<AccountingDocumentType> AccountingDocumentTypes => Set<AccountingDocumentType>();
 
     public DbSet<DocumentNumberSeries> DocumentNumberSeries => Set<DocumentNumberSeries>();
@@ -117,6 +119,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new JournalEntryConfiguration());
         modelBuilder.ApplyConfiguration(new JournalEntryLineConfiguration());
         modelBuilder.ApplyConfiguration(new JournalEntryChangeConfiguration());
+        modelBuilder.ApplyConfiguration(new BackgroundJobRunConfiguration());
         modelBuilder.ApplyConfiguration(new AccountingDocumentTypeConfiguration());
         modelBuilder.ApplyConfiguration(new DocumentNumberSeriesConfiguration());
         modelBuilder.ApplyConfiguration(new SaftValidationRunConfiguration());

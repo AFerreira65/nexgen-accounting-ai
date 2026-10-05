@@ -138,7 +138,7 @@ export function ManagementReportsPage() {
         </label>
         <label className="toggle-inline">
           <input type="checkbox" checked={settings?.autoMonthly ?? false} disabled={!settings || !settings.enabled} onChange={(event) => void toggle({ autoMonthly: event.target.checked })} />
-          Gerar a síntese mensal automaticamente
+          Gerar a síntese mensal automaticamente <small>(a partir do dia 10 de cada mês, para o mês anterior)</small>
         </label>
       </div>
       {settings && !settings.narratorConfigured && <p className="mr-hint">Não há chave de API de IA configurada no servidor — a geração fica indisponível até um administrador a definir.</p>}

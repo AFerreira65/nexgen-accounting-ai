@@ -58,6 +58,8 @@ builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddAccountingPersistence(builder.Configuration);
+// Tarefas automáticas (F4-05), no próprio processo da API.
+builder.Services.AddHostedService<BackgroundJobHost>();
 builder.Services.AddSaftFileReading();
 builder.Services.AddAccountingAi(builder.Configuration);
 builder.Services.AddAccountingAt(builder.Configuration);
@@ -2655,6 +2657,16 @@ if (applicationEndpointsAvailable)
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["obrigacao"] = [exception.Message] });
         }
     });
+
+    // Tarefas automáticas (F4-05): as que existem e as últimas execuções que o utilizador pode ver.
+    app.MapGet("/api/v1/development/users/{userId:guid}/background-jobs", async (
+        Guid userId, IEnumerable<IBackgroundJob> jobs, BackgroundJobLog log, IConfiguration configuration, CancellationToken cancellationToken) =>
+        Results.Ok(new
+        {
+            Enabled = configuration.GetValue("BackgroundJobs:Enabled", true),
+            Jobs = jobs.Select(job => new { job.Key, job.Name, job.Schedule }),
+            Runs = await log.RecentAsync(userId, 50, cancellationToken).ConfigureAwait(false),
+        }));
 
     // Painel do gabinete (F3-28A): todas as empresas do utilizador, pelo que precisa de atenção.
     // `responsible`: só as empresas de que esse utilizador é responsável (F3-28C).
