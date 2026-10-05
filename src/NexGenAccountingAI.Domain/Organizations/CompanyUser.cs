@@ -37,6 +37,12 @@ public sealed class CompanyUser
 
     public bool IsActive { get; private set; }
 
+    /// <summary>
+    /// Responsável pela empresa dentro do gabinete — a carteira de quem ela é
+    /// (F3-28C). Pode haver mais de um; é só informação, não dá acesso.
+    /// </summary>
+    public bool IsResponsible { get; private set; }
+
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
     public uint RowVersion { get; private set; }
@@ -57,7 +63,21 @@ public sealed class CompanyUser
         Role = role;
     }
 
-    public void Deactivate() => IsActive = false;
+    public void Deactivate()
+    {
+        IsActive = false;
+        IsResponsible = false;
+    }
+
+    public void SetResponsible(bool isResponsible)
+    {
+        if (isResponsible && !IsActive)
+        {
+            throw new InvalidOperationException("Só um utilizador com acesso ativo pode ser responsável pela empresa.");
+        }
+
+        IsResponsible = isResponsible;
+    }
 
     public void Reactivate() => IsActive = true;
 }

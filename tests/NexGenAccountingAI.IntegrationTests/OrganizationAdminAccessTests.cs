@@ -69,6 +69,13 @@ public sealed class OrganizationAdminAccessTests
             // O administrador gere os outros, mas não os donos nem a função de dono.
             var promoted = await service.SetMembershipAsync(admin, companyId, outsider, CompanyUserRole.Accountant, true, none).ConfigureAwait(false);
             Assert.AreEqual("Accountant", promoted.Role, "Antes, o administrador recebia 403 ao gerir outra pessoa.");
+            var responsible = await service.SetMembershipAsync(admin, companyId, outsider, CompanyUserRole.Accountant, true, none, isResponsible: true).ConfigureAwait(false);
+            Assert.IsTrue(responsible.IsResponsible, "F3-28C: o responsável indica-se no acesso à empresa.");
+            var kept = await service.SetMembershipAsync(admin, companyId, outsider, CompanyUserRole.Viewer, true, none).ConfigureAwait(false);
+            Assert.IsTrue(kept.IsResponsible, "Omitido, mantém-se.");
+            var removed = await service.SetMembershipAsync(admin, companyId, outsider, CompanyUserRole.Viewer, false, none).ConfigureAwait(false);
+            Assert.IsFalse(removed.IsResponsible, "Sem acesso ativo, deixa de ser responsável.");
+            await service.SetMembershipAsync(admin, companyId, outsider, CompanyUserRole.Accountant, true, none).ConfigureAwait(false);
             await Assert.ThrowsExactlyAsync<OrganizationAccessDeniedException>(() =>
                 service.SetMembershipAsync(admin, companyId, accountant, CompanyUserRole.Owner, true, none)).ConfigureAwait(false);
             await Assert.ThrowsExactlyAsync<OrganizationAccessDeniedException>(() =>

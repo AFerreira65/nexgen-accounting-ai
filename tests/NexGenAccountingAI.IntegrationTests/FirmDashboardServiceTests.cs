@@ -41,8 +41,16 @@ public sealed class FirmDashboardServiceTests
             context.Add(new Company(busy, firmId, "Empresa Ocupada, Lda.", "PN-PT-0001", TaxRegion.Mainland));
             context.Add(new Company(quiet, firmId, "Empresa Calma, Lda.", "PN-PT-0002", TaxRegion.Mainland));
             context.Add(new Company(other, firmId, "Empresa de Outro, Lda.", "PN-PT-0003", TaxRegion.Mainland));
-            context.Add(new CompanyUser(busy, userId, CompanyUserRole.Accountant));
+            var mine = new CompanyUser(busy, userId, CompanyUserRole.Accountant);
+            mine.SetResponsible(true);
+            context.Add(mine);
             context.Add(new CompanyUser(quiet, userId, CompanyUserRole.Accountant));
+            // Uma colega responsável pela empresa calma (F3-28C).
+            var colleague = Guid.NewGuid();
+            context.Add(new UserAccount(colleague, "Colega", "colega@painel.invalid"));
+            var hers = new CompanyUser(quiet, colleague, CompanyUserRole.Accountant);
+            hers.SetResponsible(true);
+            context.Add(hers);
 
             var journalId = Guid.NewGuid();
             context.Add(new AccountingJournal(journalId, busy, "GERAL", "Geral"));
@@ -104,6 +112,20 @@ public sealed class FirmDashboardServiceTests
             Assert.AreEqual(0, second.PendingReview);
             Assert.IsNotNull(first.NextObligation);
             Assert.IsTrue(first.NextDueDate >= new DateOnly(2026, 5, 10));
+
+            // Carteiras: quem é responsável pelo quê, e o painel só com as de uma pessoa.
+            CollectionAssert.AreEquivalent(new[] { "Colega", "Utilizador Painel" }, dashboard.Responsibles!.Select(item => item.DisplayName).ToArray());
+            Assert.AreEqual("Colega", dashboard.Companies.Single(item => item.LegalName == "Empresa Calma, Lda.").Responsible!.Single().DisplayName);
+            var hersOnly = await service.BuildAsync(userId, new DateOnly(2026, 5, 10), CancellationToken.None, colleague).ConfigureAwait(false);
+            Assert.AreEqual("Empresa Calma, Lda.", hersOnly.Companies.Single().LegalName);
+            Assert.AreEqual(2, hersOnly.Responsibles!.Count, "O filtro não esconde os outros responsáveis da escolha.");
+            Assert.AreEqual(0, hersOnly.Automation!.Sum(month => month.Entries), "A evolução segue o filtro: a empresa calma não tem lançamentos.");
+            Assert.ThrowsExactly<InvalidOperationException>(() =>
+            {
+                var inactive = new CompanyUser(quiet, Guid.NewGuid(), CompanyUserRole.Viewer);
+                inactive.Deactivate();
+                inactive.SetResponsible(true);
+            });
         }
         finally
         {

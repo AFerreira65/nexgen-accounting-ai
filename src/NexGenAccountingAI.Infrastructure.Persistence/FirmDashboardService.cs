@@ -19,7 +19,8 @@ public sealed record FirmDashboardCompany(
     int EntriesLast12Months,
     int AutomaticEntriesLast12Months,
     decimal? AutomaticShareLast3Months = null,
-    decimal? AutomaticSharePrevious3Months = null)
+    decimal? AutomaticSharePrevious3Months = null,
+    IReadOnlyList<FirmResponsible>? Responsible = null)
 {
     public decimal AutomaticShare => EntriesLast12Months == 0 ? 0m : decimal.Round((decimal)AutomaticEntriesLast12Months / EntriesLast12Months, 2);
 
@@ -36,7 +37,16 @@ public sealed record FirmAutomationMonth(DateOnly Month, int Manual, int SaftImp
     public decimal? AutomaticShare => Entries == 0 ? null : decimal.Round((decimal)Automatic / Entries, 2);
 }
 
-public sealed record FirmDashboard(DateOnly Date, int DueSoonDays, IReadOnlyList<FirmDashboardCompany> Companies, IReadOnlyList<FirmAutomationMonth>? Automation = null);
+/// <summary>Um responsável por empresas do gabinete (F3-28C), com quantas das do painel tem.</summary>
+public sealed record FirmResponsible(Guid UserId, string DisplayName, int Companies = 0);
+
+public sealed record FirmDashboard(
+    DateOnly Date,
+    int DueSoonDays,
+    IReadOnlyList<FirmDashboardCompany> Companies,
+    IReadOnlyList<FirmAutomationMonth>? Automation = null,
+    IReadOnlyList<FirmResponsible>? Responsibles = null,
+    Guid? ResponsibleFilter = null);
 
 /// <summary>
 /// O painel do gabinete (F3-28A): todas as empresas a que o utilizador tem
@@ -54,15 +64,36 @@ public sealed class FirmDashboardService(
     /// <summary>Meses da evolução da automação, a acabar no mês da data do painel.</summary>
     public const int AutomationMonths = 12;
 
-    public async Task<FirmDashboard> BuildAsync(Guid userId, DateOnly date, CancellationToken cancellationToken = default)
+    public async Task<FirmDashboard> BuildAsync(Guid userId, DateOnly date, CancellationToken cancellationToken = default, Guid? responsibleUserId = null)
     {
-        var companies = await context.Companies
+        var visible = await context.Companies
             .AsNoTracking()
             .Where(company => company.IsActive && company.UserMemberships.Any(membership => membership.UserId == userId && membership.IsActive))
             .OrderBy(company => company.LegalName)
-            .Select(company => new { company.Id, company.LegalName, company.TaxRegistrationNumber })
+            .Select(company => new
+            {
+                company.Id,
+                company.LegalName,
+                company.TaxRegistrationNumber,
+                Responsible = company.UserMemberships
+                    .Where(membership => membership.IsResponsible && membership.IsActive)
+                    .Select(membership => new { membership.UserId, membership.User.DisplayName })
+                    .ToList(),
+            })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        // As carteiras (F3-28C): quem é responsável pelas empresas que o utilizador vê,
+        // para escolher no filtro, e o filtro aplicado a tudo o resto do painel.
+        var responsibles = visible
+            .SelectMany(company => company.Responsible)
+            .GroupBy(item => item.UserId)
+            .Select(group => new FirmResponsible(group.Key, group.First().DisplayName, group.Count()))
+            .OrderBy(item => item.DisplayName, StringComparer.CurrentCulture)
+            .ToList();
+        var companies = responsibleUserId is { } responsible
+            ? visible.Where(company => company.Responsible.Any(item => item.UserId == responsible)).ToList()
+            : visible;
         var ids = companies.Select(company => company.Id).ToList();
 
         var pending = await context.JournalEntries
@@ -149,13 +180,16 @@ public sealed class FirmDashboardService(
                 companySources.Sum(item => item.Count),
                 companySources.Where(item => item.Source != EntrySource.Manual).Sum(item => item.Count),
                 Share(company.Id, lastQuarter, lastQuarter.AddMonths(3)),
-                Share(company.Id, previousQuarter, lastQuarter)));
+                Share(company.Id, previousQuarter, lastQuarter),
+                company.Responsible.Select(item => new FirmResponsible(item.UserId, item.DisplayName)).ToList()));
         }
 
         return new FirmDashboard(
             date,
             DueSoonDays,
             result.OrderByDescending(item => item.OverdueObligations).ThenByDescending(item => item.Attention).ThenBy(item => item.LegalName, StringComparer.CurrentCulture).ToList(),
-            automation);
+            automation,
+            responsibles,
+            responsibleUserId);
     }
 }

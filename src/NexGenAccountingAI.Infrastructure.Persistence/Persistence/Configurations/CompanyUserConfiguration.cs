@@ -11,6 +11,7 @@ internal sealed class CompanyUserConfiguration : IEntityTypeConfiguration<Compan
         builder.ToTable("CompanyUsers", "identity");
         builder.HasKey(item => new { item.CompanyId, item.UserId });
         builder.Property(item => item.Role).HasConversion<int>();
+        builder.Property(item => item.IsResponsible).HasDefaultValue(false);
         builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("now()");
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.HasIndex(item => item.UserId);

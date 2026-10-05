@@ -2,8 +2,10 @@ import { Building2, Database, Plus, Users, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { ACCOUNTING_STANDARDS, accountingStandardName } from '../app/accountingStandards'
 import { useWorkContext } from '../app/WorkContext'
+import { CompanyMembers, saveMembership } from './CompanyMembers'
+import { COMPANY_ROLES, companyRoleLabel } from '../app/companyRoles'
 
-type OrgUser = { userId: string; displayName: string; email: string; role: string; isActive: boolean }
+type OrgUser = { userId: string; displayName: string; email: string; role: string; isActive: boolean; isResponsible?: boolean }
 type OrgCompany = { id: string; canManage: boolean; legalName: string; taxRegistrationNumber: string; region: string; baseCurrency: string; isActive: boolean; postingLockDate: string | null; addressDetail?: string | null; city?: string | null; postalCode?: string | null; users: OrgUser[] }
 type OrgFirm = { id: string; name: string; slug: string; canCreateCompanies: boolean; companies: OrgCompany[] }
 
@@ -17,7 +19,7 @@ async function problem(response: Response) {
 }
 
 export function OrganizationPage() {
-  const { source, refreshWorkContext } = useWorkContext()
+  const { source, refreshWorkContext, user: sessionUser } = useWorkContext()
   const database = source === 'database'
   const [firms, setFirms] = useState<OrgFirm[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,6 +67,8 @@ export function OrganizationPage() {
     }
     return [...map.values()].sort((a, b) => a.displayName.localeCompare(b.displayName, 'pt-PT'))
   }, [companies])
+  // A empresa em edição, sempre a partir da lista mais recente (os acessos mudam ao gravar).
+  const editingCompany = editor?.kind === 'company' && editor.company ? companies.find((company) => company.id === editor.company?.id) : undefined
 
   return <div className="page-stack">
     <header className="page-heading">
@@ -80,7 +84,15 @@ export function OrganizationPage() {
     </section>}
 
     {editor?.kind === 'company' && <CompanyEditor company={editor.company} firmId={editor.firmId} onDone={() => { setEditor(null); reload() }} onCancel={() => setEditor(null)} />}
-    {editor?.kind === 'user' && <UserEditor user={editor.user} onDone={() => { setEditor(null); reload() }} onCancel={() => setEditor(null)} />}
+    {editingCompany?.canManage && <CompanyMembers
+      companyId={editingCompany.id}
+      companyName={editingCompany.legalName}
+      members={editingCompany.users}
+      knownUsers={users}
+      canGrantOwner={editingCompany.users.some((member) => member.userId === sessionUser.id && member.role === 'Owner' && member.isActive)}
+      onChanged={reload}
+    />}
+    {editor?.kind === 'user' && <UserEditor user={editor.user} managedCompanies={companies.filter((company) => company.canManage)} onDone={() => { setEditor(null); reload() }} onCancel={() => setEditor(null)} />}
 
     {!loadError && <section className="panel">
       <div className="panel-heading"><div><h2><Building2 size={17} /> Empresas</h2><p>{loading ? 'A carregar…' : `${companies.length} ${companies.length === 1 ? 'empresa' : 'empresas'}`}</p></div>
@@ -172,11 +184,14 @@ function CompanyEditor({ company, firmId, onDone, onCancel }: { company: OrgComp
   </EditorShell>
 }
 
-function UserEditor({ user, onDone, onCancel }: { user: { userId: string; displayName: string; email: string; isActive: boolean } | null; onDone: () => void; onCancel: () => void }) {
+function UserEditor({ user, managedCompanies, onDone, onCancel }: { user: { userId: string; displayName: string; email: string; isActive: boolean } | null; managedCompanies: { id: string; legalName: string }[]; onDone: () => void; onCancel: () => void }) {
   const isCreate = user === null
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
   const [isActive, setIsActive] = useState(user?.isActive ?? true)
+  // Um utilizador novo sem acesso a nenhuma empresa não aparece na lista: dá-se logo o primeiro.
+  const [grantCompanyId, setGrantCompanyId] = useState(managedCompanies[0]?.id ?? '')
+  const [grantRole, setGrantRole] = useState('Accountant')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const firstField = useRef<HTMLInputElement>(null)
@@ -190,6 +205,10 @@ function UserEditor({ user, onDone, onCancel }: { user: { userId: string; displa
         ? await fetch('/api/v1/development/organization/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ displayName, email }) })
         : await fetch(`/api/v1/development/organization/users/${user.userId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ displayName, email, isActive }) })
       if (!response.ok) throw new Error(await problem(response))
+      if (isCreate && grantCompanyId) {
+        const created = await response.json() as { id: string }
+        await saveMembership(grantCompanyId, created.id, { role: grantRole, isActive: true, isResponsible: false })
+      }
       onDone()
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Não foi possível guardar o utilizador.')
@@ -201,5 +220,7 @@ function UserEditor({ user, onDone, onCancel }: { user: { userId: string; displa
     <label><span>Nome</span><input ref={firstField} value={displayName} onChange={(event) => setDisplayName(event.target.value)} /></label>
     <label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
     {!isCreate && <label className="toggle-field"><input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} /><span><strong>Utilizador ativo</strong></span></label>}
+    {isCreate && managedCompanies.length > 0 && <label><span>Dar acesso a</span><select value={grantCompanyId} onChange={(event) => setGrantCompanyId(event.target.value)}><option value="">Nenhuma empresa por agora</option>{managedCompanies.map((company) => <option key={company.id} value={company.id}>{company.legalName}</option>)}</select></label>}
+    {isCreate && grantCompanyId && <label><span>Função</span><select value={grantRole} onChange={(event) => setGrantRole(event.target.value)}>{COMPANY_ROLES.filter((role) => role !== 'Owner').map((role) => <option key={role} value={role}>{companyRoleLabel(role)}</option>)}</select></label>}
   </EditorShell>
 }

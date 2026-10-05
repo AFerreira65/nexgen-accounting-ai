@@ -301,6 +301,7 @@ if (applicationEndpointsAvailable)
                                 membership.User.Email,
                                 Role = membership.Role.ToString(),
                                 membership.IsActive,
+                                membership.IsResponsible,
                                 Settings = membership.Settings is null
                                     ? null
                                     : new
@@ -2582,9 +2583,10 @@ if (applicationEndpointsAvailable)
     });
 
     // Painel do gabinete (F3-28A): todas as empresas do utilizador, pelo que precisa de atenção.
+    // `responsible`: só as empresas de que esse utilizador é responsável (F3-28C).
     app.MapGet("/api/v1/development/users/{userId:guid}/firm-dashboard", async (
-        Guid userId, DateOnly? date, FirmDashboardService dashboard, CancellationToken cancellationToken) =>
-        Results.Ok(await dashboard.BuildAsync(userId, date ?? DateOnly.FromDateTime(DateTime.Today), cancellationToken).ConfigureAwait(false)));
+        Guid userId, DateOnly? date, Guid? responsible, FirmDashboardService dashboard, CancellationToken cancellationToken) =>
+        Results.Ok(await dashboard.BuildAsync(userId, date ?? DateOnly.FromDateTime(DateTime.Today), cancellationToken, responsible).ConfigureAwait(false)));
 
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
@@ -4597,7 +4599,7 @@ if (applicationEndpointsAvailable)
         try
         {
             var membership = await admin
-                .SetMembershipAsync(SessionUserId(principal), companyId, memberId, role, request.IsActive, cancellationToken)
+                .SetMembershipAsync(SessionUserId(principal), companyId, memberId, role, request.IsActive, cancellationToken, request.IsResponsible)
                 .ConfigureAwait(false);
             return Results.Ok(membership);
         }
@@ -5097,7 +5099,7 @@ public sealed record CreateOrganizationUserRequest(string DisplayName, string Em
 
 public sealed record UpdateOrganizationUserRequest(string DisplayName, string Email, bool IsActive);
 
-public sealed record SetMembershipRequest(string Role, bool IsActive);
+public sealed record SetMembershipRequest(string Role, bool IsActive, bool? IsResponsible = null);
 
 public sealed record LoginRequest(string? Email, string? Password);
 

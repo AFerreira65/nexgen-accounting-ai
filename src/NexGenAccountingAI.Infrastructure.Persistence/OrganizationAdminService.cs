@@ -29,7 +29,8 @@ public sealed record MembershipData(
     Guid CompanyId,
     Guid UserId,
     string Role,
-    bool IsActive);
+    bool IsActive,
+    bool IsResponsible = false);
 
 /// <summary>Quem pede não pode fazer esta alteração no cadastro (HTTP 403).</summary>
 public sealed class OrganizationAccessDeniedException(string message) : Exception(message);
@@ -275,7 +276,8 @@ public sealed class OrganizationAdminService(
         Guid userId,
         CompanyUserRole role,
         bool isActive,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool? isResponsible = null)
     {
         var actingRole = await RequireManagerAsync(actingUserId, companyId, cancellationToken).ConfigureAwait(false);
         var userExists = await context.UserAccounts
@@ -328,8 +330,14 @@ public sealed class OrganizationAdminService(
             membership.Deactivate();
         }
 
+        // Responsável pela empresa (F3-28C): omitido mantém; desativar o acesso tira-o.
+        if (isResponsible is { } responsible && membership.IsActive)
+        {
+            membership.SetResponsible(responsible);
+        }
+
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return new MembershipData(companyId, userId, membership.Role.ToString(), membership.IsActive);
+        return new MembershipData(companyId, userId, membership.Role.ToString(), membership.IsActive, membership.IsResponsible);
     }
 
     private static CompanyAdminData Project(Company company) => new(

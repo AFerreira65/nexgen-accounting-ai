@@ -53,6 +53,10 @@ aplica estas regras:
   (por gabinete). A PWA usa-os para esconder o que o utilizador não pode
   fazer; quem garante é o servidor.
 
+A PWA passou a ter a gestão dos acessos no ecrã «Empresas e utilizadores»,
+porque até aqui não existia
+([F3-28C](../phase-3/F3-28-FIRM-DASHBOARD.md)).
+
 ## Fora desta decisão
 
 - **A função «Viewer» (só leitura) não é aplicada** dentro da empresa: um

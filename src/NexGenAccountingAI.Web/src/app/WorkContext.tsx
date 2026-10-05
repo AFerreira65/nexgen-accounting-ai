@@ -130,7 +130,7 @@ type WorkContextValue = WorkContextData & {
   exerciseStructure: (companyId: string, year: number) => Promise<ExerciseStructure>
   budgetReport: (companyId: string, year: number, month: number) => Promise<BudgetReport>
   ownerReport: (companyId: string, year: number, month: number) => Promise<OwnerReport>
-  firmDashboard: () => Promise<FirmDashboard>
+  firmDashboard: (responsible?: string) => Promise<FirmDashboard>
   obligations: (companyId: string, range: { from: string; to: string }, includeAll?: boolean) => Promise<ObligationCalendar>
   updateObligation: (companyId: string, code: string, periodKey: string, input: { state: string; deliveredOn: string | null; note: string | null; dueDateOverride: string | null }) => Promise<void>
   treasuryForecast: (companyId: string, input: { date: string; months: number; collectionDays: number; paymentDays: number; fixedMonthly: number | null }) => Promise<TreasuryForecast>
@@ -1143,8 +1143,8 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
       })
       if (!response.ok) throw new Error(await problemMessage(response))
     },
-    firmDashboard: async () => {
-      const response = await fetch(`/api/v1/development/users/${data.user.id}/firm-dashboard`)
+    firmDashboard: async (responsible) => {
+      const response = await fetch(`/api/v1/development/users/${data.user.id}/firm-dashboard${responsible ? `?responsible=${encodeURIComponent(responsible)}` : ''}`)
       if (!response.ok) throw new Error(await problemMessage(response))
       return await response.json() as FirmDashboard
     },
