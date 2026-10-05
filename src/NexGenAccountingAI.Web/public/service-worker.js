@@ -1,7 +1,8 @@
-const cacheName = 'accounting-ai-f1-01-v1'
+// Cache da PWA publicada. Mudar o nome deita fora a cache das versões antigas.
+const cacheName = 'accounting-ai-2026-10-05'
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(cacheName).then((cache) => cache.addAll(['/'])))
+  event.waitUntil(caches.open(cacheName).then((cache) => cache.addAll(['/'])).then(() => self.skipWaiting()))
 })
 
 self.addEventListener('activate', (event) => {
@@ -13,6 +14,14 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+const remember = (request, response) => {
+  if (response.ok) {
+    const copy = response.clone()
+    void caches.open(cacheName).then((cache) => cache.put(request, copy))
+  }
+  return response
+}
+
 self.addEventListener('fetch', (event) => {
   const request = event.request
   const url = new URL(request.url)
@@ -21,20 +30,13 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) {
-        return cached
-      }
+  // A página (index.html) vem primeiro da rede, para uma versão nova aparecer logo;
+  // a cache só serve sem ligação. Os ficheiros de /assets têm o hash no nome e
+  // nunca mudam, por isso servem-se da cache.
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).then((response) => remember(request, response)).catch(() => caches.match(request).then((cached) => cached ?? caches.match('/'))))
+    return
+  }
 
-      return fetch(request).then((response) => {
-        if (response.ok) {
-          const copy = response.clone()
-          void caches.open(cacheName).then((cache) => cache.put(request, copy))
-        }
-
-        return response
-      })
-    }),
-  )
+  event.respondWith(caches.match(request).then((cached) => cached ?? fetch(request).then((response) => remember(request, response))))
 })
