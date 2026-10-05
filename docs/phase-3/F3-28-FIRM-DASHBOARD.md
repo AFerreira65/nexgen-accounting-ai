@@ -43,8 +43,31 @@ onde começar.
 - `NexGenAccountingAI.Api.Tests`: o painel do utilizador de teste.
 - PWA: rota e estado sem base de dados.
 
+### F3-28B — Evolução da automação (feito)
+
+- **Sem histórico guardado.** A automação sai da origem de cada lançamento
+  (`EntrySource`), que já fica registada; por isso a evolução tem história
+  desde o primeiro lançamento e não depende de alguém abrir o painel. O
+  trabalho por fazer (por conferir, por lançar, por conciliar) não se
+  reconstitui assim e não entra.
+- **`FirmDashboard.Automation`:** os doze meses que acabam no mês da data,
+  com os lançamentos de todas as empresas do painel por origem — à mão,
+  SAF-T de contabilidade, e-Fatura, SAF-T de faturação e extrato — e a parte
+  automática de cada mês (vazia num mês sem lançamentos). Ficam de fora,
+  como no F3-28A, os anulados, a abertura e o apuramento.
+- **Por empresa:** a parte automática dos últimos três meses e a dos três
+  anteriores.
+- **PWA:** secção «Evolução da automação» com os lançamentos por mês (à mão e
+  automáticos), a parte automática por mês e os automáticos por origem; na
+  tabela, a tendência de cada empresa (▲, ▼ ou =).
+
+**Validação efetuada:** `FirmDashboardServiceTests` — os doze meses de junho
+a maio, o 1 de junho no primeiro mês, abril com o lançamento do e-Fatura
+(100 %), um mês vazio sem percentagem e as partes de cada trimestre (50 % e
+0 %) e da empresa sem lançamentos. Os gráficos não foram vistos com a base
+real (o ecrã precisa da sessão).
+
 ### Por fazer
 
 - Filtrar por responsável dentro do gabinete, quando houver distribuição de
   carteiras.
-- Guardar o histórico dos indicadores para ver a evolução da automação.

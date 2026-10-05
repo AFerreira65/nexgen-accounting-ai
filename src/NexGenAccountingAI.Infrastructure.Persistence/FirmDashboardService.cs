@@ -17,14 +17,26 @@ public sealed record FirmDashboardCompany(
     int PurchasesToPost,
     int UnreconciledBankLines,
     int EntriesLast12Months,
-    int AutomaticEntriesLast12Months)
+    int AutomaticEntriesLast12Months,
+    decimal? AutomaticShareLast3Months = null,
+    decimal? AutomaticSharePrevious3Months = null)
 {
     public decimal AutomaticShare => EntriesLast12Months == 0 ? 0m : decimal.Round((decimal)AutomaticEntriesLast12Months / EntriesLast12Months, 2);
 
     public int Attention => (OverdueObligations * 10) + DueSoonObligations + PendingReview + PurchasesToPost + UnreconciledBankLines;
 }
 
-public sealed record FirmDashboard(DateOnly Date, int DueSoonDays, IReadOnlyList<FirmDashboardCompany> Companies);
+/// <summary>Os lançamentos de um mês, em todas as empresas do painel, pela origem (F3-28B).</summary>
+public sealed record FirmAutomationMonth(DateOnly Month, int Manual, int SaftImport, int EFatura, int SaftBilling, int BankStatement)
+{
+    public int Entries => Manual + Automatic;
+
+    public int Automatic => SaftImport + EFatura + SaftBilling + BankStatement;
+
+    public decimal? AutomaticShare => Entries == 0 ? null : decimal.Round((decimal)Automatic / Entries, 2);
+}
+
+public sealed record FirmDashboard(DateOnly Date, int DueSoonDays, IReadOnlyList<FirmDashboardCompany> Companies, IReadOnlyList<FirmAutomationMonth>? Automation = null);
 
 /// <summary>
 /// O painel do gabinete (F3-28A): todas as empresas a que o utilizador tem
@@ -38,6 +50,9 @@ public sealed class FirmDashboardService(
     AccountingDbContext context, ObligationCalendarService obligations, SuggestedEntryService suggestions)
 {
     public const int DueSoonDays = 15;
+
+    /// <summary>Meses da evolução da automação, a acabar no mês da data do painel.</summary>
+    public const int AutomationMonths = 12;
 
     public async Task<FirmDashboard> BuildAsync(Guid userId, DateOnly date, CancellationToken cancellationToken = default)
     {
@@ -78,6 +93,38 @@ public sealed class FirmDashboardService(
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
+        // A evolução da automação (F3-28B) sai dos próprios lançamentos, pela
+        // origem e pelo mês: não precisa de nada guardado e tem história desde o início.
+        var firstMonth = new DateOnly(date.Year, date.Month, 1).AddMonths(-(AutomationMonths - 1));
+        var monthly = await context.JournalEntries
+            .AsNoTracking()
+            .Where(entry => ids.Contains(entry.CompanyId) &&
+                entry.Status != JournalEntryStatus.Voided &&
+                entry.Source != EntrySource.Opening &&
+                entry.Source != EntrySource.Closing &&
+                entry.EntryDate >= firstMonth &&
+                entry.EntryDate <= date)
+            .GroupBy(entry => new { entry.CompanyId, entry.EntryDate.Year, entry.EntryDate.Month, entry.Source })
+            .Select(group => new { group.Key.CompanyId, group.Key.Year, group.Key.Month, group.Key.Source, Count = group.Count() })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var automation = Enumerable.Range(0, AutomationMonths)
+            .Select(offset => firstMonth.AddMonths(offset))
+            .Select(month =>
+            {
+                int Count(EntrySource source) => monthly.Where(item => item.Year == month.Year && item.Month == month.Month && item.Source == source).Sum(item => item.Count);
+                return new FirmAutomationMonth(month, Count(EntrySource.Manual), Count(EntrySource.SaftImport), Count(EntrySource.EFatura), Count(EntrySource.SaftBilling), Count(EntrySource.BankStatement));
+            })
+            .ToList();
+        var lastQuarter = firstMonth.AddMonths(AutomationMonths - 3);
+        var previousQuarter = lastQuarter.AddMonths(-3);
+        decimal? Share(Guid companyId, DateOnly from, DateOnly to)
+        {
+            var rows = monthly.Where(item => item.CompanyId == companyId && new DateOnly(item.Year, item.Month, 1) >= from && new DateOnly(item.Year, item.Month, 1) < to).ToList();
+            var total = rows.Sum(item => item.Count);
+            return total == 0 ? null : decimal.Round((decimal)rows.Where(item => item.Source != EntrySource.Manual).Sum(item => item.Count) / total, 2);
+        }
+
         var result = new List<FirmDashboardCompany>();
         foreach (var company in companies)
         {
@@ -100,12 +147,15 @@ public sealed class FirmDashboardService(
                 purchases?.Items.Count ?? 0,
                 unreconciled.GetValueOrDefault(company.Id),
                 companySources.Sum(item => item.Count),
-                companySources.Where(item => item.Source != EntrySource.Manual).Sum(item => item.Count)));
+                companySources.Where(item => item.Source != EntrySource.Manual).Sum(item => item.Count),
+                Share(company.Id, lastQuarter, lastQuarter.AddMonths(3)),
+                Share(company.Id, previousQuarter, lastQuarter)));
         }
 
         return new FirmDashboard(
             date,
             DueSoonDays,
-            result.OrderByDescending(item => item.OverdueObligations).ThenByDescending(item => item.Attention).ThenBy(item => item.LegalName, StringComparer.CurrentCulture).ToList());
+            result.OrderByDescending(item => item.OverdueObligations).ThenByDescending(item => item.Attention).ThenBy(item => item.LegalName, StringComparer.CurrentCulture).ToList(),
+            automation);
     }
 }

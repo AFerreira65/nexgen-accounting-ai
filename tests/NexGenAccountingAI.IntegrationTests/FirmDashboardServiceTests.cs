@@ -63,6 +63,8 @@ public sealed class FirmDashboardServiceTests
                 return entry;
             }
 
+            context.Add(Entry("S-0", new DateOnly(2025, 6, 1), "6311", "12011", 900m, JournalEntryStatus.Reviewed, EntrySource.Manual));
+            context.Add(Entry("S-Z", new DateOnly(2025, 12, 15), "6311", "12011", 900m, JournalEntryStatus.Reviewed, EntrySource.Manual));
             context.Add(Entry("S-1", new DateOnly(2026, 3, 31), "6311", "12011", 900m, JournalEntryStatus.Reviewed, EntrySource.Manual));
             context.Add(Entry("V-1", new DateOnly(2026, 4, 15), "12011", "7211", 100m, JournalEntryStatus.PendingReview, EntrySource.EFatura));
             context.Add(EFaturaPurchase.Create(busy, Guid.NewGuid(), "500584095", "Fornecedor", "FT 9", null, new DateOnly(2026, 4, 20), "Fatura", null, null, 10m, 2.30m, 12.30m, "x.csv"));
@@ -82,8 +84,21 @@ public sealed class FirmDashboardServiceTests
             Assert.AreEqual(1, first.PendingReview);
             Assert.AreEqual(1, first.PurchasesToPost);
             Assert.AreEqual(1, first.UnreconciledBankLines);
-            Assert.AreEqual(2, first.EntriesLast12Months);
-            Assert.AreEqual(0.5m, first.AutomaticShare);
+            Assert.AreEqual(4, first.EntriesLast12Months);
+            Assert.AreEqual(0.25m, first.AutomaticShare);
+            Assert.AreEqual(0.5m, first.AutomaticShareLast3Months, "Março a maio: um manual e um do e-Fatura.");
+            Assert.AreEqual(0m, first.AutomaticSharePrevious3Months, "Dezembro a fevereiro: só o manual de dezembro.");
+            Assert.IsNull(dashboard.Companies.Single(item => item.LegalName == "Empresa Calma, Lda.").AutomaticShareLast3Months);
+
+            // A evolução: doze meses, de junho de 2025 a maio de 2026, pela origem.
+            var automation = dashboard.Automation!;
+            Assert.AreEqual(12, automation.Count);
+            Assert.AreEqual(new DateOnly(2025, 6, 1), automation[0].Month);
+            Assert.AreEqual(1, automation[0].Manual, "O 1 de junho entra no primeiro mês.");
+            var april = automation.Single(month => month.Month == new DateOnly(2026, 4, 1));
+            Assert.AreEqual(1, april.EFatura);
+            Assert.AreEqual(1m, april.AutomaticShare);
+            Assert.IsNull(automation.Single(month => month.Month == new DateOnly(2026, 1, 1)).AutomaticShare, "Mês sem lançamentos.");
             var second = dashboard.Companies[1];
             Assert.IsTrue(first.OverdueObligations > second.OverdueObligations, "A declaração mensal de remunerações de março está em atraso só na primeira.");
             Assert.AreEqual(0, second.PendingReview);

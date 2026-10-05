@@ -1,9 +1,24 @@
 import { CircleAlert, Database, LayoutDashboard } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { BarList, Chart } from '../app/charts'
 import { formatMovementDate, type FirmDashboard, type FirmDashboardCompany } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
+
+const monthNames = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+const percent = (share: number) => `${Math.round(share * 100)} %`
+const monthLabel = (month: string) => `${monthNames[Number(month.slice(5, 7)) - 1]} ${month.slice(2, 4)}`
+
+// A tendência da automação de uma empresa: os últimos três meses contra os três anteriores.
+function trend(company: FirmDashboardCompany) {
+  const last = company.automaticShareLast3Months
+  const previous = company.automaticSharePrevious3Months
+  if (last === null) return null
+  if (previous === null) return `${percent(last)} nos últimos 3 meses`
+  const arrow = last > previous ? '▲' : last < previous ? '▼' : '='
+  return `${arrow} ${percent(last)} nos últimos 3 meses (antes ${percent(previous)})`
+}
 
 export function FirmDashboardPage() {
   const { source, firmDashboard, selectCompany } = useWorkContext()
@@ -43,6 +58,14 @@ export function FirmDashboardPage() {
     purchases: sum.purchases + company.purchasesToPost,
     bank: sum.bank + company.unreconciledBankLines,
   }), { overdue: 0, dueSoon: 0, pending: 0, purchases: 0, bank: 0 })
+  const automation = dashboard?.automation ?? []
+  const automaticTotal = automation.reduce((sum, month) => sum + month.automatic, 0)
+  const sourceTotals = automaticTotal === 0 ? [] : [
+    { label: 'SAF-T de contabilidade importado', amount: automation.reduce((sum, month) => sum + month.saftImport, 0) },
+    { label: 'Compras do e-Fatura', amount: automation.reduce((sum, month) => sum + month.eFatura, 0) },
+    { label: 'Vendas do SAF-T de faturação', amount: automation.reduce((sum, month) => sum + month.saftBilling, 0) },
+    { label: 'Extrato bancário', amount: automation.reduce((sum, month) => sum + month.bankStatement, 0) },
+  ].filter((item) => item.amount > 0).map((item) => ({ ...item, share: (item.amount / automaticTotal) * 100 }))
   const count = (value: number, path: string, company: FirmDashboardCompany, warning = false) =>
     value === 0 ? <span className="muted-zero">0</span> : <button className="text-link" type="button" onClick={() => open(company, path)}>{warning ? <span className="badge warning">{value}</span> : value}</button>
 
@@ -70,9 +93,23 @@ export function FirmDashboardPage() {
           <td className="numeric">{count(company.pendingReview, '/movimentos', company)}</td>
           <td className="numeric">{count(company.purchasesToPost, '/lancamentos-sugeridos', company)}</td>
           <td className="numeric">{count(company.unreconciledBankLines, '/bancos', company)}</td>
-          <td className="numeric">{company.entriesLast12Months === 0 ? '—' : `${Math.round(company.automaticShare * 100)} %`}<small>{company.automaticEntriesLast12Months} de {company.entriesLast12Months}</small></td>
+          <td className="numeric">{company.entriesLast12Months === 0 ? '—' : percent(company.automaticShare)}<small>{company.automaticEntriesLast12Months} de {company.entriesLast12Months}</small>{trend(company) && <small>{trend(company)}</small>}</td>
         </tr>)}</tbody>
       </table></div>
+    </section>}
+
+    {automation.some((month) => month.entries > 0) && <section className="panel">
+      <div className="panel-heading"><div><h2>Evolução da automação</h2><p>Os lançamentos de todas as empresas do painel, mês a mês, feitos à mão e criados por importação ou sugestão. Calculado a partir dos próprios lançamentos, pela origem de cada um.</p></div></div>
+      <div className="chart-grid-layout">
+        <Chart title="Lançamentos por mês: à mão e automáticos" labels={automation.map((month) => monthLabel(month.month))} format={(value) => String(Math.round(value))} height={230} series={[
+          { name: 'À mão', kind: 'bar', tone: 'muted', values: automation.map((month) => month.manual) },
+          { name: 'Automáticos', kind: 'bar', tone: 'primary', values: automation.map((month) => month.automatic) },
+        ]} />
+        <Chart title="Parte automática por mês" labels={automation.map((month) => monthLabel(month.month))} format={(value) => percent(value)} height={230} series={[
+          { name: 'Automáticos', kind: 'line', tone: 'accent', values: automation.map((month) => month.automaticShare) },
+        ]} />
+        {sourceTotals.length > 0 && <BarList title="Automáticos nos doze meses, pela origem" items={sourceTotals} format={(value) => String(value)} />}
+      </div>
     </section>}
 
     {dashboard && companies.length === 0 && <section className="panel empty-state"><h2>Sem empresas</h2><p>Não tem acesso a nenhuma empresa ativa.</p></section>}

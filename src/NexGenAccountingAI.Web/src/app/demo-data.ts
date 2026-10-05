@@ -908,8 +908,9 @@ export type TreasuryForecast = {
 }
 export type ObligationRow = { code: string; name: string; periodKey: string; periodLabel: string; legalDueDate: string; dueDate: string; dueDateChanged: boolean; state: 'Pendente' | 'Entregue' | 'Dispensada'; deliveredOn: string | null; note: string | null; reason: string; source: string }
 export type ObligationCalendar = { from: string; to: string; vatPeriodicity: string; vatPeriodicityConfigured: boolean; rows: ObligationRow[]; notIncluded: string }
-export type FirmDashboardCompany = { companyId: string; legalName: string; taxRegistrationNumber: string; overdueObligations: number; dueSoonObligations: number; nextDueDate: string | null; nextObligation: string | null; pendingReview: number; purchasesToPost: number; unreconciledBankLines: number; entriesLast12Months: number; automaticEntriesLast12Months: number; automaticShare: number; attention: number }
-export type FirmDashboard = { date: string; dueSoonDays: number; companies: FirmDashboardCompany[] }
+export type FirmDashboardCompany = { companyId: string; legalName: string; taxRegistrationNumber: string; overdueObligations: number; dueSoonObligations: number; nextDueDate: string | null; nextObligation: string | null; pendingReview: number; purchasesToPost: number; unreconciledBankLines: number; entriesLast12Months: number; automaticEntriesLast12Months: number; automaticShare: number; automaticShareLast3Months: number | null; automaticSharePrevious3Months: number | null; attention: number }
+export type FirmAutomationMonth = { month: string; manual: number; saftImport: number; eFatura: number; saftBilling: number; bankStatement: number; entries: number; automatic: number; automaticShare: number | null }
+export type FirmDashboard = { date: string; dueSoonDays: number; companies: FirmDashboardCompany[]; automation: FirmAutomationMonth[] | null }
 export type SupplierEntryRuleRow = { supplierTaxId: string; supplierName: string | null; entryTemplateCode: string; entryTemplateName: string; description: string | null; isActive: boolean }
 export type StructureItem = { label: string; amount: number; share: number }
 export type ExerciseStructure = { year: number; expenses: StructureItem[]; income: StructureItem[]; topCustomers: StructureItem[]; topSuppliers: StructureItem[] }
