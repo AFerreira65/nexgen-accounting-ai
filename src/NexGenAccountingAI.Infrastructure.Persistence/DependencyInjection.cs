@@ -112,6 +112,8 @@ public static class DependencyInjection
         services.AddScoped<JournalPostingService>();
         services.AddScoped<DocumentNumberSeriesService>();
         services.AddScoped<AccountLedgerService>();
+        services.AddScoped<MapDataProvider>();
+        services.AddScoped<TrialBalanceTreeService>();
         services.AddScoped<JournalReportService>();
         services.AddScoped<YearEndClosingService>();
         services.AddScoped<YearOpeningService>();

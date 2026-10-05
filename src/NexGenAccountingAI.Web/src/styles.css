@@ -653,3 +653,36 @@ html[data-theme='dark'] tr.detail-row td { background: #14262e; }
 .export-buttons-label { display: inline-flex; align-items: center; gap: 4px; margin-right: 2px; color: #4d5f66; font-size: 11px; }
 .export-buttons .button { min-height: 30px; padding: 0 9px; }
 @media print { .export-buttons { display: none; } }
+
+/* Balancete em árvore (F4B-02): a hierarquia lê-se pela indentação e pelo peso de cada nível. */
+.balancete-filters { justify-content: flex-start; align-items: flex-end; }
+.filterbar label.balancete-field { width: auto; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 0; padding: 0; border: 0; background: transparent; color: #5a6b72; font-size: 9px; font-weight: 750; text-transform: uppercase; letter-spacing: .04em; }
+.balancete-field select, .balancete-field input { min-height: 40px; padding: 0 10px; border: 1px solid #d8e2e4 !important; border-radius: 9px; background: white; color: #293b43; font-size: 11px; text-transform: none; letter-spacing: 0; }
+.balancete-field input[type='number'] { width: 86px; }
+.balancete-warning { color: #8a5a12; }
+.balancete-wrap { max-height: calc(100vh - 150px); overflow: auto; }
+.balancete-table thead th { position: sticky; top: 0; z-index: 1; background: #f7fafa; }
+.balancete-table tfoot td { position: sticky; bottom: 0; background: #eef4f5; border-top: 2px solid #c9d6d9; font-weight: 800; }
+.balancete-table.is-loading tbody { opacity: .55; }
+.balancete-table td { padding-top: 6px; padding-bottom: 6px; }
+.balancete-code { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.balancete-toggle, .balancete-toggle-space { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-right: 4px; vertical-align: middle; }
+.balancete-toggle { border: 0; border-radius: 5px; background: transparent; color: #3f515a; cursor: pointer; }
+.balancete-toggle svg { width: 15px; height: 15px; stroke-width: 2.6; }
+.balancete-toggle:hover { background: #e3ecee; color: #16736a; }
+tr.balancete-depth-1 td { background: #e9f1f2; color: #1d2f37; font-weight: 800; border-top: 2px solid #cfdcdf; }
+tr.balancete-depth-2 td { background: #f5f9f9; color: #263840; font-weight: 750; }
+tr.balancete-depth-3.balancete-aggregate td { font-weight: 650; color: #2b3d45; }
+tr.balancete-depth-4.balancete-aggregate td { font-weight: 600; }
+.balancete-table tbody tr:hover td { background: #eef7f6; }
+.balancete-foot { margin: 0; color: #6b7b82; font-size: 10px; }
+html[data-theme='dark'] .balancete-field select, html[data-theme='dark'] .balancete-field input { background: #13242a; color: #dbe7e9; border-color: #2a4047 !important; }
+html[data-theme='dark'] .balancete-table thead th { background: #13242a; }
+html[data-theme='dark'] .balancete-table tfoot td { background: #1a3037; border-top-color: #35505a; }
+html[data-theme='dark'] tr.balancete-depth-1 td { background: #1c333a; color: #e6f0f1; border-top-color: #35505a; }
+html[data-theme='dark'] tr.balancete-depth-2 td { background: #16292f; color: #d5e2e4; }
+html[data-theme='dark'] tr.balancete-depth-3.balancete-aggregate td { color: #cfdcde; }
+html[data-theme='dark'] .balancete-table tbody tr:hover td { background: #203a41; }
+@media print { .balancete-wrap { max-height: none; overflow: visible; } .balancete-toggle { display: none; } }
+.balancete-table tbody td.numeric.negative { color: #b4472f; }
+html[data-theme='dark'] .balancete-table tbody td.numeric.negative { color: #f0957d; }

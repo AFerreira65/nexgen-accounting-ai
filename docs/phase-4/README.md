@@ -195,9 +195,65 @@ respostas e o ficheiro da declaração contra o esquema oficial.
   preciso classificá-las em «Configuração de IVA» (ou a importação passar a
   propor essa classificação — por fazer).
 
+## Fase 4B — Motor de mapas
+
+O que a comparação de mercado pediu na secção 7: um motor para o utilizador
+desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
+
+### F4B-01 — Motor de mapas
+
+- `Application/Maps`: um mapa é o cruzamento de **linhas** com **colunas**
+  (`MapDefinition`). Uma linha escolhe contas por prefixo (`61 + 62 - 6221`,
+  intervalos `61..63`; `MapAccountSelector`), ou é uma fórmula sobre outras
+  linhas (`L10 - L20`, `A % B` para percentagens; `MapFormula`), ou um título.
+  Cada linha tem uma medida (saldo, saldo devedor, saldo credor, débito,
+  crédito), um sinal (normal, invertido, absoluto, zero se negativo) e uma
+  condição de exibição. Uma coluna é o período pedido, o acumulado do
+  exercício, o saldo inicial, um mês fixo ou outro exercício (`YearOffset`), ou
+  uma fórmula sobre outras colunas.
+- `MapEngine`: valida (mensagens em português, deteta ciclos), corre, explica
+  (as contas por trás de uma linha) e verifica a cobertura (contas que nenhuma
+  linha apanha, ou que duas apanham — o que faz um balanço não fechar).
+- `MapColumnSets`: conjuntos prontos — período; balancete clássico (saldo
+  inicial, débito, crédito, saldo devedor, saldo credor); período e acumulado;
+  comparativo com o ano anterior (variação e %); mensal (12 meses e total).
+- `Persistence/MapDataProvider`: por conta e exercício, débito e crédito da
+  abertura, de cada mês e do apuramento, numa consulta agregada por exercício.
+  O apuramento vindo de um SAF-T (não marcado) reconhece-se por mexer na 811 ou
+  818. Sem abertura lançada, as contas de balanço trazem o acumulado desde a
+  última abertura anterior.
+
+### F4B-02 — Balancete em árvore
+
+- `TrialBalanceTree` (Application) arruma as contas com valores pelo plano da
+  empresa, da classe à conta de movimento, somando para cima; os saldos
+  devedores e credores das subcontas não se compensam na conta de agregação.
+- `TrialBalanceTreeService` e `GET …/accounting/balancete?year=&fromMonth=&toMonth=&columns=&depth=|parent=|search=&excludeClosing=&all=`:
+  calcula a árvore toda no servidor (0,3–0,5 s na Vidreira, 2 500 contas com
+  valores) e devolve só o pedido — as classes, um ramo, até um nível, ou uma
+  pesquisa; no máximo 3 000 linhas de cada vez (`all=true` para exportar).
+  Avisa quando o exercício não tem abertura lançada.
+- `pages/BalancetePage.tsx` em `/balancete` (com a base de dados; em
+  demonstração fica a lista antiga, que continua em `/balancete/lista` com o
+  agrupamento por taxonomia): exercício, de mês a mês, conjunto de colunas,
+  nível, com ou sem apuramento, pesquisa; abrir e fechar ramos; zeros a traço,
+  negativos a vermelho; exportação CSV/Excel/PDF do que está à vista (ou de
+  tudo, se o ecrã cortou).
+- Corrige o defeito da secção 3.2 da comparação: a coluna «Abertura» do
+  balancete do ano inteiro já não sai a zero — a abertura tem o seu lugar
+  próprio, separada dos meses.
+
+### Por fazer na 4B
+
+- F4B-03 — mapas desenhados pelo utilizador: guardar definições por empresa,
+  modelos do sistema (balanço e demonstração de resultados sintéticos, mapa de
+  exploração) para duplicar e alterar, o desenhador, «explicar» uma célula.
+- O balanço e a DR oficiais assentes no motor (hoje continuam no serviço das
+  demonstrações).
+
 ## Validação
 
-- .NET: 304 testes. PWA: 124 testes.
+- .NET: 316 testes. PWA: 126 testes.
 - Vistos a funcionar com a base real: a validação e a exportação do SAF-T, a
   exportação para PDF e Excel pela API, e a tarefa diária a correr sozinha.
 - **Ainda não vistos no browser** com a sessão do utilizador: o painel do

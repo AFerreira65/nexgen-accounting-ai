@@ -127,6 +127,27 @@ public sealed class MapDataProviderTests
             CollectionAssert.AreEqual(new decimal?[] { 1380m, 0m, 400m, 980m, 0m }, result.Rows[0].Values.ToArray());
             CollectionAssert.AreEqual(new decimal?[] { 0m, 400m, 0m, 400m, 0m }, result.Rows[1].Values.ToArray());
 
+
+            // O balancete em árvore: as classes, um ramo, até um nível e a pesquisa.
+            var balancete = new TrialBalanceTreeService(context, new MapDataProvider(context));
+            var classes = await balancete.RunAsync(companyId, new TrialBalanceTreeQuery(2026, 1, 12)).ConfigureAwait(false);
+            CollectionAssert.AreEqual(new[] { "1", "5" }, classes.Rows.Select(row => row.Code).ToArray());
+            CollectionAssert.AreEqual(new decimal?[] { 1380m, 400m, 400m, 1380m, 0m }, classes.Rows[0].Values.ToArray());
+            Assert.AreEqual(4, classes.AccountCount);
+            Assert.AreEqual(2, classes.MaxDepth);
+            Assert.IsTrue(classes.Warnings.Single().Contains("ainda não tem lançamento de abertura", StringComparison.Ordinal));
+            var branch = await balancete.RunAsync(companyId, new TrialBalanceTreeQuery(2026, 1, 12, Parent: "1")).ConfigureAwait(false);
+            CollectionAssert.AreEqual(new[] { "111", "12" }, branch.Rows.Select(row => row.Code).ToArray());
+            var all = await balancete.RunAsync(companyId, new TrialBalanceTreeQuery(2026, 1, 12, Depth: 9)).ConfigureAwait(false);
+            CollectionAssert.AreEqual(new[] { "1", "111", "12", "5", "511", "561" }, all.Rows.Select(row => row.Code).ToArray());
+            var found = await balancete.RunAsync(companyId, new TrialBalanceTreeQuery(2026, 1, 12, Search: "depósitos")).ConfigureAwait(false);
+            Assert.AreEqual("12", found.Rows.Single().Code);
+            var year2025 = await balancete.RunAsync(companyId, new TrialBalanceTreeQuery(2025, 1, 12, IncludeClosing: false, ColumnSet: MapColumnSets.Period, Depth: 9)).ConfigureAwait(false);
+            Assert.AreEqual(-80m, year2025.Rows.Single(row => row.Code == "7211").Values[0], "Sem o apuramento vê-se o rendimento.");
+            Assert.AreEqual(0, year2025.Warnings.Count);
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => balancete.RunAsync(companyId, new TrialBalanceTreeQuery(2026, 5, 2))).ConfigureAwait(false);
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => balancete.RunAsync(companyId, new TrialBalanceTreeQuery(2026, 1, 12, ColumnSet: "nao-existe"))).ConfigureAwait(false);
+
             Assert.AreEqual(0, (await new MapDataProvider(context).LoadAsync(Guid.NewGuid(), [2026]).ConfigureAwait(false)).Count);
         }
         finally

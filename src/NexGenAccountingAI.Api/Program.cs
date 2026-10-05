@@ -1124,6 +1124,55 @@ if (applicationEndpointsAvailable)
         });
     });
 
+    // O balancete em árvore (F4B-02): por omissão as classes; `parent` abre um ramo,
+    // `depth` mostra até um nível, `search` procura contas, `all=true` é para exportar.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/balancete", async (
+        Guid userId,
+        Guid companyId,
+        AccountingDbContext context,
+        TrialBalanceTreeService balancete,
+        CancellationToken cancellationToken,
+        int year,
+        int? fromMonth,
+        int? toMonth,
+        bool? excludeClosing,
+        string? columns,
+        string? parent,
+        int? depth,
+        string? search,
+        bool? all) =>
+    {
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        try
+        {
+            var view = await balancete.RunAsync(
+                companyId,
+                new TrialBalanceTreeQuery(year, fromMonth ?? 1, toMonth ?? 12, excludeClosing != true, columns, parent, depth, search, all == true),
+                cancellationToken).ConfigureAwait(false);
+            return Results.Ok(new
+            {
+                Columns = view.Columns.Select(column => new { column.Code, column.Label, column.Percent }),
+                Rows = view.Rows.Select(row => new { row.Code, row.Name, row.Depth, row.ParentCode, row.HasChildren, row.IsPosting, row.Values }),
+                view.Totals,
+                view.TotalDebit,
+                view.TotalCredit,
+                view.AccountCount,
+                view.MaxDepth,
+                view.Truncated,
+                view.Warnings,
+                ColumnSets = NexGenAccountingAI.Application.Maps.MapColumnSets.All.Select(set => new { set.Key, set.Label, set.Description }),
+            });
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["balancete"] = [exception.Message] });
+        }
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/journal-report", async (
         Guid userId,
         Guid companyId,

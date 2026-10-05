@@ -165,28 +165,10 @@ public static partial class MapEngine
         }
 
         // Colunas de fórmula: por linha, a partir das outras colunas.
-        var columnFormulas = columns.Select(column => column.Kind == MapColumnKind.Formula ? MapFormula.Parse(column.Formula) : null).ToList();
-        var columnIndex = columns.Select((column, index) => (column.Code, index)).ToDictionary(item => item.Code, item => item.index, StringComparer.OrdinalIgnoreCase);
+        var columnFormulas = new MapColumnFormulas(columns);
         foreach (var values in raw.Values)
         {
-            decimal? ColumnValue(string code)
-            {
-                var index = columnIndex[code];
-                if (values[index] is null && columnFormulas[index] is { } nested)
-                {
-                    values[index] = nested.Evaluate(ColumnValue) is { } number ? decimal.Round(number, 2) : null;
-                }
-
-                return values[index];
-            }
-
-            for (var index = 0; index < columns.Count; index++)
-            {
-                if (columnFormulas[index] is not null)
-                {
-                    values[index] = ColumnValue(columns[index].Code);
-                }
-            }
+            columnFormulas.Fill(values);
         }
 
         var rows = new List<MapResultRow>(definition.Rows.Count);

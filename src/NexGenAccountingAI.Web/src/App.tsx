@@ -14,6 +14,8 @@ import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { TasksPage } from './pages/TasksPage'
 import { TrialBalancePage } from './pages/TrialBalancePage'
+import { BalancetePage } from './pages/BalancetePage'
+import { useWorkContext } from './app/WorkContext'
 import { PartyBalancesPage } from './pages/PartyBalancesPage'
 import { VatSummaryPage } from './pages/VatSummaryPage'
 import { YearEndClosingPage } from './pages/YearEndClosingPage'
@@ -57,6 +59,12 @@ import { AnalyticReportPage, CostCentersPage } from './pages/AnalyticPages'
 import { EntryTemplatesPage } from './pages/EntryTemplatesPage'
 import { RecordProvider } from './app/RecordContext'
 import { AuthGate } from './app/AuthGate'
+
+// O balancete em árvore precisa do servidor; em demonstração fica a lista calculada no browser.
+function BalanceteRoute() {
+  const { source } = useWorkContext()
+  return source === 'database' ? <BalancetePage /> : <TrialBalancePage />
+}
 
 export function App() {
   return (
@@ -106,7 +114,8 @@ export function App() {
             <Route path="/analises" element={<AnalysesPage />} />
             <Route path="/relatorios-gestao" element={<ManagementReportsPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />
-            <Route path="/balancete" element={<TrialBalancePage />} />
+            <Route path="/balancete" element={<BalanceteRoute />} />
+            <Route path="/balancete/lista" element={<TrialBalancePage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />
             <Route path="/balanco" element={<BalanceSheetPage />} />
             <Route path="/iva" element={<VatSummaryPage />} />
