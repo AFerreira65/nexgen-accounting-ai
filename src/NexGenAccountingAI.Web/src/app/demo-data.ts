@@ -657,6 +657,7 @@ export type SaftExportReport = {
 
 export type CostCenterRow = { code: string; name: string; isActive: boolean }
 
+export type AssetDisposalPreview = { assetCode: string; description: string; date: string; acquisitionValue: number; accumulated: number; netBookValue: number; salePrice: number; result: number; kind: 'alienação' | 'abate'; lines: { accountCode: string; accountName: string; debit: number; credit: number }[]; warning: string | null }
 export type FixedAssetRow = {
   code: string
   description: string

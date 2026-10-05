@@ -62,6 +62,11 @@ public sealed class FixedAsset
     /// <summary>A data da alienação ou do abate, quando já saiu da empresa.</summary>
     public DateOnly? DisposalDate { get; private set; }
 
+    public const int EntryReferenceMaxLength = 48;
+
+    /// <summary>A referência do lançamento da alienação ou do abate, quando foi gerado pela aplicação.</summary>
+    public string? DisposalEntryReference { get; private set; }
+
     public bool IsActive { get; private set; }
 
     public uint RowVersion { get; private set; }
@@ -152,6 +157,39 @@ public sealed class FixedAsset
     }
 
     public void SetActive(bool isActive) => IsActive = isActive;
+
+    /// <summary>Regista a saída do ativo: a data (que acerta as depreciações desse ano) e o lançamento que a contabiliza.</summary>
+    public void RecordDisposal(DateOnly date, string entryReference)
+    {
+        if (date < StartOfUseDate)
+        {
+            throw new ArgumentException("A alienação não pode ser anterior à entrada em funcionamento.", nameof(date));
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(entryReference);
+        DisposalDate = date;
+        DisposalEntryReference = entryReference.Trim();
+    }
+
+    /// <summary>
+    /// Simula a saída numa data, sem a registar: as depreciações acumuladas até
+    /// ao mês anterior (a regra de <see cref="AccumulatedAtEndOf"/>) e o valor
+    /// líquido contabilístico nessa data.
+    /// </summary>
+    public (decimal Accumulated, decimal NetBookValue) ValuesAtDisposal(DateOnly date)
+    {
+        var saved = DisposalDate;
+        DisposalDate = date;
+        try
+        {
+            var accumulated = AccumulatedAtEndOf(date.Year);
+            return (accumulated, AcquisitionValue - accumulated);
+        }
+        finally
+        {
+            DisposalDate = saved;
+        }
+    }
 
     /// <summary>A depreciação do exercício <paramref name="year"/>.</summary>
     public decimal DepreciationFor(int year) => AccumulatedAtEndOf(year) - AccumulatedAtEndOf(year - 1);

@@ -112,7 +112,49 @@ fiscal.
 - Um lançamento por exercício, a 31 de dezembro; não há depreciações mensais.
 - Não lança só a diferença: ou o exercício inteiro, ou nada.
 
+### F3-12C — Alienação e abate (feito)
+
+- **`FixedAsset.ValuesAtDisposal`** dá as depreciações acumuladas e o valor
+  líquido numa data de saída, pela mesma regra do mapa (com duodécimos, até
+  ao mês anterior), sem gravar nada. **`RecordDisposal`** regista a data e a
+  referência do lançamento. Migração aditiva `20261005002333_AssetDisposalEntry`, com a
+  coluna `DisposalEntryReference`.
+- **`FixedAssetService.PreviewDisposalAsync` / `PostDisposalAsync`**:
+
+| Linha | Conta |
+|---|---|
+| Depreciações acumuladas, a débito | A conta das depreciações acumuladas do ativo |
+| Ativo, a crédito, pelo valor de aquisição | A conta do ativo |
+| Preço, a débito (só numa venda) | A conta indicada: o comprador, o banco, devedores diversos |
+| Ganho, a crédito | A primeira conta de movimento em **7871** |
+| Perda, a débito | A primeira conta de movimento em **6871** (venda) ou **6873** (abate, sem preço) |
+
+  As contas são as da Taxonomia S (Portaria n.º 302/2016, já no projeto):
+  6871 e 7871 «Alienações», 6873 «Abates».
+  - **Lançamento:** fica por conferir e guarda a referência no ativo. Um
+    segundo lançamento da mesma saída é recusado enquanto o primeiro não for
+    anulado.
+  - **Aviso:** quando as depreciações acumuladas lançadas na conta são menos
+    do que as calculadas, pede para lançar primeiro as depreciações do
+    exercício da saída.
+  - **IVA:** o preço é sem IVA, e o IVA da venda lança-se à parte.
+- **API:** `POST .../fixed-assets/{código}/disposal/preview` e
+  `POST .../fixed-assets/{código}/disposal`, com a data, o preço, a conta do
+  preço, o diário e o documento.
+- **PWA:** no ecrã «Ativos fixos», o botão «Alienar / abater» abre o painel
+  com os valores, as linhas e o botão «Lançar por conferir».
+
+**Validação efetuada:** `AssetDisposalTests`, em PostgreSQL, cobre:
+
+- a venda com ganho: depreciações de 6 250, valor líquido de 3 750, ganho de
+  1 250 na 7871, com o aviso das depreciações por lançar;
+- o lançamento e o registo no ativo;
+- a recusa de um segundo lançamento;
+- o abate (1 500 na 6873) e a venda com perda (500 na 6871);
+- a venda sem conta do preço, a data anterior ao funcionamento, o ativo
+  inexistente e a falta de acesso.
+
 ### A seguir
 
-- **F3-12C** — alienação e abate com a mais ou menos-valia; mapa fiscal
-  (modelo 32) e tabelas do Decreto Regulamentar n.º 25/2009.
+- O mapa fiscal (Modelo 32, mais e menos-valias para o Modelo 22) e as
+  tabelas do Decreto Regulamentar n.º 25/2009, com fonte.

@@ -10,6 +10,7 @@ internal sealed class FixedAssetConfiguration : IEntityTypeConfiguration<FixedAs
     public void Configure(EntityTypeBuilder<FixedAsset> builder)
     {
         builder.ToTable("FixedAssets", "accounting");
+        builder.Property(item => item.DisposalEntryReference).HasMaxLength(FixedAsset.EntryReferenceMaxLength);
         builder.HasKey(item => item.Id);
         builder.Property(item => item.Code).HasMaxLength(FixedAsset.CodeMaxLength).IsRequired();
         builder.Property(item => item.Description).HasMaxLength(FixedAsset.DescriptionMaxLength).IsRequired();

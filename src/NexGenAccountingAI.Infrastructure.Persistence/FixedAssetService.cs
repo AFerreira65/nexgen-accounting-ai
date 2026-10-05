@@ -61,6 +61,32 @@ public sealed record DepreciationSchedule(
     decimal LedgerDepreciation,
     decimal Difference);
 
+/// <summary>Os dados de uma alienação (ou de um abate, com preço zero).</summary>
+public sealed record AssetDisposalInput(DateOnly Date, decimal SalePrice, string? CounterpartAccountCode, string JournalCode, string? DocumentReference);
+
+/// <summary>A conta de uma linha do lançamento da alienação, com o valor a débito ou a crédito.</summary>
+public sealed record AssetDisposalLine(string AccountCode, string AccountName, decimal Debit, decimal Credit);
+
+/// <summary>
+/// A alienação ou o abate de um ativo numa data: o valor de aquisição, as
+/// depreciações acumuladas até ao mês anterior, o valor líquido, o preço e o
+/// resultado (positivo, um ganho), com as linhas do lançamento proposto.
+/// </summary>
+public sealed record AssetDisposalPreview(
+    string AssetCode,
+    string Description,
+    DateOnly Date,
+    decimal AcquisitionValue,
+    decimal Accumulated,
+    decimal NetBookValue,
+    decimal SalePrice,
+    decimal Result,
+    string Kind,
+    IReadOnlyList<AssetDisposalLine> Lines,
+    string? Warning);
+
+public sealed record AssetDisposalResult(AssetDisposalPreview Preview, PostedMovement Movement);
+
 /// <summary>
 /// Mantém o cadastro de ativos fixos (<see cref="FixedAsset"/>) e calcula o
 /// mapa de depreciações de um exercício, por quotas constantes. O mapa é um
@@ -258,6 +284,166 @@ public sealed class FixedAssetService(AccountingDbContext context, JournalPostin
         return await posting
             .PostAsync(companyId, journalCode, new DateOnly(year, 12, 31), documentReference, description, reviewed: false, lines, cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Calcula a alienação (ou o abate) de um ativo numa data, sem lançar nada:
+    /// as depreciações acumuladas até ao mês anterior pela regra do mapa, o valor
+    /// líquido e o ganho ou a perda contra o preço. As linhas: as depreciações
+    /// acumuladas a débito, o ativo a crédito pelo valor de aquisição, a
+    /// contrapartida do preço a débito, e a diferença em 7871 (ganho), 6871
+    /// (perda numa venda) ou 6873 (abate, sem preço) — as contas da Taxonomia S
+    /// (Portaria n.º 302/2016) para «Alienações» e «Abates».
+    /// </summary>
+    public async Task<AssetDisposalPreview?> PreviewDisposalAsync(
+        Guid userId, Guid companyId, string assetCode, AssetDisposalInput input, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        if (!await HasAccessAsync(userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        var code = FixedAsset.NormalizeCode(assetCode);
+        var asset = await context.FixedAssets
+            .AsNoTracking()
+            .Include(item => item.AssetAccount)
+            .Include(item => item.AccumulatedAccount)
+            .SingleOrDefaultAsync(item => item.CompanyId == companyId && item.Code == code, cancellationToken)
+            .ConfigureAwait(false);
+        if (asset is null)
+        {
+            return null;
+        }
+
+        return await BuildDisposalAsync(companyId, asset, input, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Lança a alienação (ou o abate) — por conferir — e regista no ativo a data e
+    /// a referência do lançamento. Recusa um ativo que já tem uma alienação
+    /// lançada (por anular) e um ativo sem as contas do ativo e das depreciações.
+    /// </summary>
+    public async Task<AssetDisposalResult?> PostDisposalAsync(
+        Guid userId, Guid companyId, string assetCode, AssetDisposalInput input, CancellationToken cancellationToken = default)
+    {
+        var preview = await PreviewDisposalAsync(userId, companyId, assetCode, input, cancellationToken).ConfigureAwait(false);
+        if (preview is null)
+        {
+            return null;
+        }
+
+        var code = FixedAsset.NormalizeCode(assetCode);
+        var asset = await context.FixedAssets
+            .AsNoTracking()
+            .SingleAsync(item => item.CompanyId == companyId && item.Code == code, cancellationToken)
+            .ConfigureAwait(false);
+        if (asset.DisposalEntryReference is { } previous &&
+            await context.JournalEntries.AsNoTracking().AnyAsync(
+                entry => entry.CompanyId == companyId && entry.Reference == previous && entry.Status != JournalEntryStatus.Voided, cancellationToken).ConfigureAwait(false))
+        {
+            throw new InvalidOperationException($"A saída do ativo {asset.Code} já foi lançada ({previous}). Anule esse lançamento para a lançar de novo.");
+        }
+
+        var description = $"{(preview.Kind == "abate" ? "Abate" : "Alienação")} do ativo {asset.Code} — {asset.Description}";
+        var movement = await posting.PostAsync(
+            companyId,
+            input.JournalCode,
+            input.Date,
+            string.IsNullOrWhiteSpace(input.DocumentReference) ? $"Saída do ativo {asset.Code}" : input.DocumentReference.Trim(),
+            description.Length <= 500 ? description : description[..500],
+            reviewed: false,
+            preview.Lines.Select(line => new JournalEntryLineInput(line.AccountCode, description.Length <= 300 ? description : description[..300], line.Debit, line.Credit)).ToList(),
+            cancellationToken,
+            notes: string.Create(System.Globalization.CultureInfo.GetCultureInfo("pt-PT"),
+                $"Valor de aquisição {preview.AcquisitionValue:N2}; depreciações acumuladas {preview.Accumulated:N2}; valor líquido {preview.NetBookValue:N2}; preço {preview.SalePrice:N2}."))
+            .ConfigureAwait(false);
+
+        context.ChangeTracker.Clear();
+        var tracked = await context.FixedAssets
+            .SingleAsync(item => item.CompanyId == companyId && item.Code == code, cancellationToken)
+            .ConfigureAwait(false);
+        tracked.RecordDisposal(input.Date, movement.Reference);
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return new AssetDisposalResult(preview, movement);
+    }
+
+    private async Task<AssetDisposalPreview> BuildDisposalAsync(Guid companyId, FixedAsset asset, AssetDisposalInput input, CancellationToken cancellationToken)
+    {
+        if (asset.AssetAccount is null || asset.AccumulatedAccount is null)
+        {
+            throw new InvalidOperationException($"Falta a conta do ativo ou a das depreciações acumuladas em {asset.Code}. Complete o cadastro antes de lançar a saída.");
+        }
+
+        if (input.Date < asset.StartOfUseDate)
+        {
+            throw new ArgumentException("A alienação não pode ser anterior à entrada em funcionamento.", nameof(input));
+        }
+
+        var price = decimal.Round(input.SalePrice, 2, MidpointRounding.AwayFromZero);
+        if (price < 0m)
+        {
+            throw new ArgumentException("O preço de venda não pode ser negativo.", nameof(input));
+        }
+
+        var (accumulated, netBookValue) = asset.ValuesAtDisposal(input.Date);
+        var result = price - netBookValue;
+        var kind = price == 0m ? "abate" : "alienação";
+
+        var lines = new List<AssetDisposalLine>();
+        if (accumulated > 0m)
+        {
+            lines.Add(new AssetDisposalLine(asset.AccumulatedAccount.Code, asset.AccumulatedAccount.Name, accumulated, 0m));
+        }
+
+        lines.Add(new AssetDisposalLine(asset.AssetAccount.Code, asset.AssetAccount.Name, 0m, asset.AcquisitionValue));
+        if (price > 0m)
+        {
+            var counterpart = (input.CounterpartAccountCode ?? string.Empty).Trim();
+            var account = counterpart.Length == 0
+                ? null
+                : await context.Accounts.AsNoTracking()
+                    .Where(item => item.CompanyId == companyId && item.Code == counterpart && item.AllowsPosting)
+                    .Select(item => new { item.Code, item.Name })
+                    .SingleOrDefaultAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            if (account is null)
+            {
+                throw new ArgumentException("Indique a conta de movimento que recebe o preço (o comprador, o banco).", nameof(input));
+            }
+
+            lines.Add(new AssetDisposalLine(account.Code, account.Name, price, 0m));
+        }
+
+        if (result != 0m)
+        {
+            var prefix = result > 0m ? "7871" : price == 0m ? "6873" : "6871";
+            var account = await context.Accounts.AsNoTracking()
+                .Where(item => item.CompanyId == companyId && item.AllowsPosting && item.Code.StartsWith(prefix))
+                .OrderBy(item => item.Code)
+                .Select(item => new { item.Code, item.Name })
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false)
+                ?? throw new InvalidOperationException($"O plano de contas não tem uma conta de movimento em {prefix}: crie-a para lançar o {(result > 0m ? "ganho" : "gasto")}.");
+            lines.Add(result > 0m
+                ? new AssetDisposalLine(account.Code, account.Name, 0m, result)
+                : new AssetDisposalLine(account.Code, account.Name, -result, 0m));
+        }
+
+        string? warning = null;
+        var ledgerAccumulated = await context.JournalEntryLines.AsNoTracking()
+            .Where(line => line.CompanyId == companyId && line.AccountId == asset.AccumulatedAccountId &&
+                line.JournalEntry.Status != JournalEntryStatus.Voided && line.JournalEntry.EntryDate <= input.Date)
+            .SumAsync(line => (decimal?)(line.Credit - line.Debit), cancellationToken)
+            .ConfigureAwait(false) ?? 0m;
+        if (ledgerAccumulated < accumulated)
+        {
+            warning = string.Create(System.Globalization.CultureInfo.GetCultureInfo("pt-PT"),
+                $"A conta {asset.AccumulatedAccount.Code} tem {ledgerAccumulated:N2} de depreciações acumuladas lançadas até à data, menos do que as {accumulated:N2} calculadas: lance primeiro as depreciações do exercício da alienação.");
+        }
+
+        return new AssetDisposalPreview(
+            asset.Code, asset.Description, input.Date, asset.AcquisitionValue, accumulated, netBookValue, price, result, kind, lines, warning);
     }
 
     private async Task<(string? Asset, string? Accumulated, string? Expense)> ApplyAsync(

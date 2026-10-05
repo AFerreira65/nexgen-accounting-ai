@@ -2,7 +2,7 @@ import { CircleAlert, CircleCheck, Database, Download, Factory, Plus, Printer, X
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
-import { euro, type DepreciationSchedule, type FixedAssetRow } from '../app/demo-data'
+import { euro, type AssetDisposalPreview, type DepreciationSchedule, type FixedAssetRow } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -94,6 +94,7 @@ export function FixedAssetsPage() {
   const [error, setError] = useState('')
   const [reload, setReload] = useState(0)
   const [editor, setEditor] = useState<{ mode: 'create' } | { mode: 'edit'; asset: FixedAssetRow } | null>(null)
+  const [disposing, setDisposing] = useState<FixedAssetRow | null>(null)
   usePublishRecord(editor?.mode === 'edit' ? 'ativos-fixos' : undefined, editor?.mode === 'edit' ? editor.asset.code : undefined)
 
   useEffect(() => {
@@ -125,6 +126,8 @@ export function FixedAssetsPage() {
       <button className="button button-primary" type="button" onClick={() => setEditor({ mode: 'create' })}><Plus size={16} /> Novo ativo</button>
     </div>
 
+    {disposing && <AssetDisposalPanel key={disposing.code} asset={disposing} onDone={() => { setDisposing(null); setReload((value) => value + 1) }} onClose={() => setDisposing(null)} />}
+
     {editor && <FixedAssetEditor key={editor.mode === 'edit' ? editor.asset.code : 'novo'} asset={editor.mode === 'edit' ? editor.asset : null} onSaved={saved} onClose={() => setEditor(null)} />}
 
     <section className="panel">
@@ -138,7 +141,7 @@ export function FixedAssetsPage() {
           <td className="numeric">{percent.format(row.annualRate)} %{row.byMonths ? ' · duodécimos' : ''}</td>
           <td>{[row.assetAccountCode, row.accumulatedAccountCode, row.expenseAccountCode].filter(Boolean).join(' · ') || '—'}</td>
           <td><span className={`badge ${row.disposalDate ? 'warning' : row.isActive ? 'success' : 'warning'}`}>{row.disposalDate ? `Alienado em ${shortDate(row.disposalDate)}` : row.isActive ? 'Ativo' : 'Inativo'}</span></td>
-          <td><button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', asset: row })}>Editar</button></td>
+          <td><span className="inline-check"><button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', asset: row })}>Editar</button>{!row.disposalDate && <button className="text-link" type="button" onClick={() => setDisposing(row)}>Alienar / abater</button>}</span></td>
         </tr>)}</tbody>
       </table></div>
       {rows.length === 0 && <p className="empty-state">Ainda não há ativos no cadastro. Registe cada ativo com o valor de aquisição, a data de entrada em funcionamento e a taxa anual.</p>}
@@ -269,4 +272,57 @@ export function DepreciationSchedulePage() {
       <p className="statement-note">Quotas constantes sobre o valor de aquisição menos o valor residual. Sem duodécimos, o ano de entrada em funcionamento leva a quota anual inteira e o da alienação nenhuma; com duodécimos contam os meses desde o de entrada em funcionamento e até ao anterior ao da alienação. Não é o mapa fiscal modelo 32: não separa as depreciações não aceites fiscalmente.</p>
     </>}
   </div>
+}
+
+/** A saída de um ativo: a pré-visualização do ganho ou da perda e o lançamento, por conferir. */
+function AssetDisposalPanel({ asset, onDone, onClose }: { asset: FixedAssetRow; onDone: () => void; onClose: () => void }) {
+  const { activeCompany, previewAssetDisposal, postAssetDisposal } = useWorkContext()
+  const companyId = activeCompany.companyId
+  const [date, setDate] = useState(today())
+  const [price, setPrice] = useState('0')
+  const [counterpart, setCounterpart] = useState('')
+  const [journal, setJournal] = useState('')
+  const [document, setDocument] = useState('')
+  const [preview, setPreview] = useState<AssetDisposalPreview | null>(null)
+  const [posted, setPosted] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const input = () => ({ date, salePrice: Number(price.replace(/\s/g, '').replace(',', '.')) || 0, counterpartAccountCode: counterpart.trim() || null, journalCode: journal.trim(), documentReference: document.trim() || null })
+  const run = async (action: () => Promise<void>) => {
+    setBusy(true)
+    setError('')
+    try { await action() } catch (problem) { setError(problem instanceof Error ? problem.message : 'Não foi possível concluir.') } finally { setBusy(false) }
+  }
+
+  return <section className="panel settings-panel">
+    <div className="panel-heading"><div><h2>Saída do ativo {asset.code}</h2><p>{asset.description}. Com preço, é uma alienação; sem preço, um abate. As depreciações contam até ao mês anterior ao da saída; o ganho vai para a 7871 e a perda para a 6871 (alienação) ou 6873 (abate).</p></div><button className="text-link" type="button" onClick={onClose}>Fechar</button></div>
+    <div className="filterbar">
+      <label className="inline-check">Data <input type="date" aria-label="Data da saída" value={date} onChange={(event) => { setDate(event.target.value); setPreview(null) }} /></label>
+      <label className="inline-check">Preço sem IVA <input aria-label="Preço de venda" inputMode="decimal" value={price} onChange={(event) => { setPrice(event.target.value); setPreview(null) }} style={{ width: '8em' }} /></label>
+      <label className="inline-check">Conta do preço <input aria-label="Conta que recebe o preço" value={counterpart} onChange={(event) => { setCounterpart(event.target.value); setPreview(null) }} placeholder="ex.: 2781 ou 12" style={{ width: '8em' }} /></label>
+      <label className="inline-check">Diário <input aria-label="Diário" value={journal} onChange={(event) => setJournal(event.target.value.toUpperCase())} placeholder="código" style={{ width: '7em' }} /></label>
+      <label className="inline-check">Documento <input aria-label="Documento" value={document} onChange={(event) => setDocument(event.target.value)} placeholder="opcional" style={{ width: '9em' }} /></label>
+      <button className="button button-secondary" type="button" disabled={busy || !date} onClick={() => void run(async () => setPreview(await previewAssetDisposal(companyId, asset.code, input())))}>Calcular</button>
+    </div>
+    {error && <p className="save-status error">{error}</p>}
+    {posted && <p className="save-status">Lançado por conferir: <Link to={`/movimentos/${posted}`}>{posted}</Link>.</p>}
+    {preview && <>
+      <div className="metadata-strip">
+        <span><small>Valor de aquisição</small><strong>{euro.format(preview.acquisitionValue)}</strong></span>
+        <span><small>Depreciações acumuladas</small><strong>{euro.format(preview.accumulated)}</strong></span>
+        <span><small>Valor líquido</small><strong>{euro.format(preview.netBookValue)}</strong></span>
+        <span><small>{preview.result >= 0 ? 'Ganho' : 'Perda'}</small><strong>{euro.format(Math.abs(preview.result))}</strong><small>{preview.kind}</small></span>
+      </div>
+      {preview.warning && <p className="save-status error">{preview.warning}</p>}
+      <div className="table-wrap"><table>
+        <thead><tr><th>Conta</th><th className="numeric">Débito</th><th className="numeric">Crédito</th></tr></thead>
+        <tbody>{preview.lines.map((line) => <tr key={line.accountCode}><td>{line.accountCode} {line.accountName}</td><td className="numeric">{line.debit ? euro.format(line.debit) : ''}</td><td className="numeric">{line.credit ? euro.format(line.credit) : ''}</td></tr>)}</tbody>
+      </table></div>
+      <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
+        <button className="button button-primary" type="button" disabled={busy || !journal.trim() || posted !== ''} onClick={() => void run(async () => { const result = await postAssetDisposal(companyId, asset.code, input()); setPosted(result.movement.id); onDone() })}>Lançar por conferir</button>
+        {!journal.trim() && <small>Indique o diário para lançar.</small>}
+      </div>
+    </>}
+  </section>
 }

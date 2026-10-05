@@ -1486,6 +1486,8 @@ public sealed class FoundationApiTests
         using var notSaftBody = new StringContent("isto não é XML", System.Text.Encoding.UTF8, "application/xml");
         using var notSaft = await client.PostAsync($"{basePath}/sales-documents/import?dryRun=true", notSaftBody).ConfigureAwait(false);
         using var bankAccounts = await client.GetAsync($"{basePath}/bank-accounts").ConfigureAwait(false);
+        using var missingDisposalBody = new StringContent("{\"date\":\"2026-07-15\",\"salePrice\":0,\"journalCode\":\"GERAL\"}", System.Text.Encoding.UTF8, "application/json");
+        using var missingDisposal = await client.PostAsync($"{basePath}/fixed-assets/NAO-HA/disposal/preview", missingDisposalBody).ConfigureAwait(false);
         using var attachments = await client.GetAsync($"{basePath}/attachments?unlinked=true").ConfigureAwait(false);
         using var exeBody = new ByteArrayContent([1, 2, 3]);
         using var exeUpload = await client.PostAsync($"{basePath}/attachments?fileName=programa.exe", exeBody).ConfigureAwait(false);
@@ -1563,6 +1565,7 @@ public sealed class FoundationApiTests
         Assert.AreEqual(HttpStatusCode.BadRequest, badSalesRule.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, notSaft.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, bankAccounts.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, missingDisposal.StatusCode);
         Assert.AreEqual(HttpStatusCode.OK, attachments.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, exeUpload.StatusCode);
         Assert.AreEqual(HttpStatusCode.BadRequest, badQr.StatusCode);

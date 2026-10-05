@@ -2312,6 +2312,35 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Alienação ou abate de um ativo (F3-12C): pré-visualização e lançamento.
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/{code}/disposal/preview", async (
+        Guid userId, Guid companyId, string code, AssetDisposalRequest request, FixedAssetService assets, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var preview = await assets.PreviewDisposalAsync(userId, companyId, code, request.ToInput(), cancellationToken).ConfigureAwait(false);
+            return preview is null ? Results.NotFound() : Results.Ok(preview);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["alienacao"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/{code}/disposal", async (
+        Guid userId, Guid companyId, string code, AssetDisposalRequest request, FixedAssetService assets, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var result = await assets.PostDisposalAsync(userId, companyId, code, request.ToInput(), cancellationToken).ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Ok(new { result.Preview, Movement = ToMovementResponse(result.Movement) });
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or TimeoutException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["alienacao"] = [exception.Message] });
+        }
+    });
+
     app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/{code}", async (
         Guid userId, Guid companyId, string code, FixedAssetInput request, FixedAssetService assets, CancellationToken cancellationToken) =>
     {
@@ -4824,6 +4853,11 @@ public sealed record FiscalDossierItemRequest(string? Status, string? Note);
 public sealed record BudgetLineRequest(string? AccountCode, string? CostCenterCode, decimal AnnualAmount, IReadOnlyList<decimal>? MonthlyAmounts = null);
 
 public sealed record BudgetCopyRequest(string? Source, int SourceYear, decimal? AdjustmentPercent);
+
+public sealed record AssetDisposalRequest(DateOnly Date, decimal SalePrice, string? CounterpartAccountCode, string? JournalCode, string? DocumentReference)
+{
+    public AssetDisposalInput ToInput() => new(Date, SalePrice, CounterpartAccountCode, JournalCode ?? string.Empty, DocumentReference);
+}
 
 public sealed record ObligationUpdateRequest(string? State, DateOnly? DeliveredOn, string? Note, DateOnly? DueDateOverride);
 

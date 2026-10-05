@@ -306,6 +306,7 @@ internal static class DataDictionaryText
         ["TaxObligationRecords.DeliveredOn"] = "A data em que foi entregue.",
         ["TaxObligationRecords.Note"] = "Uma nota: o comprovativo, a referência de pagamento.",
         ["TaxObligationRecords.DueDateOverride"] = "O prazo alterado à mão (prorrogação, dia não útil); vazio usa o prazo legal.",
+        ["FixedAssets.DisposalEntryReference"] = "A referência do lançamento da alienação ou do abate gerado pela aplicação.",
         ["BudgetLines.Year"] = "O exercício orçamentado.",
         ["BudgetLines.Month"] = "O mês (1 a 12).",
         ["BudgetLines.AccountCode"] = "O código da conta, ou do grupo de contas, orçamentado.",

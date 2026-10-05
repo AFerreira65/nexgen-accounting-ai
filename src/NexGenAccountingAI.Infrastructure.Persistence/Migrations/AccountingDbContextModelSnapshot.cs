@@ -555,6 +555,10 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly?>("DisposalDate")
                         .HasColumnType("date");
 
+                    b.Property<string>("DisposalEntryReference")
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)");
+
                     b.Property<Guid?>("ExpenseAccountId")
                         .HasColumnType("uuid");
 
