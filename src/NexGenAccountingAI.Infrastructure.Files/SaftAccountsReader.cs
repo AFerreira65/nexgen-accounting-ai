@@ -92,7 +92,8 @@ public sealed class SaftAccountsReader : ISaftAccountsReader
                 code,
                 Field("AccountDescription") ?? string.Empty,
                 ParseAmount(Field("OpeningDebitBalance")),
-                ParseAmount(Field("OpeningCreditBalance"))));
+                ParseAmount(Field("OpeningCreditBalance")),
+                Field("GroupingCategory")));
         }
 
         return result;

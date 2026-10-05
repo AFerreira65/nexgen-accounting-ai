@@ -2,13 +2,15 @@ namespace NexGenAccountingAI.Application.Saft;
 
 /// <summary>
 /// Uma conta do plano geral lida do bloco <c>GeneralLedgerAccounts</c> de um SAF-T,
-/// com os saldos de abertura declarados (0 quando ausentes).
+/// com os saldos de abertura declarados (0 quando ausentes) e a categoria
+/// (<c>GroupingCategory</c>): <c>GR</c> 1.º grau, <c>GA</c> agregadora, <c>GM</c> de movimento.
 /// </summary>
 public sealed record SaftAccount(
     string Code,
     string Description,
     decimal OpeningDebit = 0m,
-    decimal OpeningCredit = 0m);
+    decimal OpeningCredit = 0m,
+    string? GroupingCategory = null);
 
 /// <summary>Situação de uma conta do ficheiro face ao plano de contas da empresa.</summary>
 public enum SaftAccountState

@@ -177,6 +177,115 @@ function SaftValidationPanel({ file, companyId, companyName, validation, onResul
   </section>
 }
 
+const ACCOUNTS_SHOWN = 300
+
+type ImportStep = { key: 'entriesPreview' | 'accounts' | 'parties' | 'opening' | 'entries'; label: string; state: 'pending' | 'running' | 'done' | 'skipped' | 'error'; detail: string }
+
+const importSteps = (): ImportStep[] => [
+  { key: 'entriesPreview', label: 'Ler os movimentos e os diários', state: 'pending', detail: '' },
+  { key: 'accounts', label: 'Plano de contas', state: 'pending', detail: '' },
+  { key: 'parties', label: 'Clientes e fornecedores', state: 'pending', detail: '' },
+  { key: 'opening', label: 'Saldos iniciais', state: 'pending', detail: '' },
+  { key: 'entries', label: 'Movimentos e diários', state: 'pending', detail: '' },
+]
+
+/**
+ * Importa tudo o que o ficheiro tem, pela ordem certa: o plano de contas, os
+ * terceiros (para os movimentos ficarem ligados a eles), os saldos iniciais e os
+ * movimentos, que criam os diários em falta. Cada passo é o mesmo dos painéis de
+ * baixo e nenhum duplica ao repetir; para no primeiro erro.
+ */
+function ImportAllPanel({ companyId, file, fiscalYear, importBlocked }: { companyId: string; file: File; fiscalYear: number; importBlocked: boolean }) {
+  const { importSaftAccounts, importPartiesFromSaft, importSaftOpeningBalances, previewSaftEntries, importSaftEntries } = useWorkContext()
+  const [steps, setSteps] = useState<ImportStep[]>(importSteps)
+  const [running, setRunning] = useState(false)
+
+  useEffect(() => { setSteps(importSteps()); setRunning(false) }, [companyId, file])
+
+  const update = (key: ImportStep['key'], patch: Partial<ImportStep>) =>
+    setSteps((current) => current.map((step) => step.key === key ? { ...step, ...patch } : step))
+
+  async function runAll() {
+    setRunning(true)
+    setSteps(importSteps())
+    let current: ImportStep['key'] = 'entriesPreview'
+    try {
+      update(current, { state: 'running' })
+      const entries = await previewSaftEntries(companyId, file)
+      const newJournals = entries.journals.filter((journal) => !journal.exists)
+      // Uma abertura dentro dos movimentos já traz os saldos iniciais: importá-los também duplicava.
+      const openingJournal = entries.journals.find((journal) => /abertura/i.test(journal.description ?? ''))
+      update(current, { state: 'done', detail: entries.hasEntries ? `${entries.transactionCount} movimentos em ${entries.journals.length} diários (${newJournals.length} novos).` : 'O ficheiro não tem movimentos.' })
+
+      current = 'accounts'
+      update(current, { state: 'running' })
+      const accounts = await importSaftAccounts(companyId, file, fiscalYear)
+      update(current, { state: 'done', detail: `${accounts.createdCount} contas criadas, ${accounts.alreadyExistedCount} já existiam.` })
+
+      // Os terceiros e os saldos iniciais não impedem os movimentos: uma falha fica
+      // marcada, o resto continua, e o passo repete-se depois sem duplicar.
+      const optional = async (key: ImportStep['key'], action: () => Promise<string>) => {
+        update(key, { state: 'running' })
+        try {
+          update(key, { state: 'done', detail: await action() })
+        } catch (problem) {
+          update(key, { state: 'error', detail: `${problem instanceof Error ? problem.message : 'Falhou.'} Os passos seguintes continuam.` })
+        }
+      }
+
+      current = 'parties'
+      await optional(current, async () => {
+        const parties = await importPartiesFromSaft(companyId, file, true)
+        return `${parties.newCount} novos, ${parties.updatedCount} atualizados, ${parties.unchangedCount} sem alterações${parties.skippedCount > 0 ? `, ${parties.skippedCount} ignorados` : ''}.`
+      })
+
+      current = 'opening'
+      if (openingJournal) {
+        update(current, { state: 'skipped', detail: `Não importados: o diário ${openingJournal.code} (${openingJournal.description}) dos movimentos já traz a abertura.` })
+      } else {
+        await optional(current, async () => {
+          const opening = await importSaftOpeningBalances(companyId, fiscalYear, file)
+          return opening.alreadyImported
+            ? `Já existia a abertura de ${fiscalYear}${opening.entryReference ? ` (${opening.entryReference})` : ''}; não foi repetida.`
+            : opening.lineCount > 0 ? `Abertura ${opening.entryReference ?? ''} com ${opening.lineCount} linhas (${euro.format(opening.totalDebit)}).` : 'O ficheiro não tem saldos iniciais.'
+        })
+      }
+
+      current = 'entries'
+      if (!entries.hasEntries || entries.transactionCount === 0) {
+        update(current, { state: 'skipped', detail: 'Sem movimentos no ficheiro.' })
+      } else {
+        update(current, { state: 'running' })
+        const imported = await importSaftEntries(companyId, file, fiscalYear)
+        update(current, {
+          state: 'done',
+          detail: `${imported.importedCount} movimentos importados${imported.skippedCount > 0 ? `, ${imported.skippedCount} saltados (veja «Movimentos do ficheiro»)` : ''}; ${imported.journalsCreated.length > 0 ? `diários criados: ${imported.journalsCreated.join(', ')}` : 'nenhum diário novo'}.${imported.matchesDeclaredTotals === true ? ' Os totais coincidem com os do ficheiro.' : imported.matchesDeclaredTotals === false ? ' Os totais NÃO coincidem com os do ficheiro.' : ''}`,
+        })
+      }
+    } catch (problem) {
+      update(current, { state: 'error', detail: problem instanceof Error ? problem.message : 'Falhou.' })
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  const done = !running && steps.every((step) => step.state !== 'pending' && step.state !== 'running') && steps.some((step) => step.key === 'entries' && (step.state === 'done' || step.state === 'skipped'))
+  const icon = (step: ImportStep) => step.state === 'done' ? <CircleCheck size={15} /> : step.state === 'error' ? <CircleAlert size={15} /> : <Info size={15} />
+  const label = { pending: 'Por fazer', running: 'A importar…', done: 'Feito', skipped: 'Não aplicável', error: 'Erro' }
+
+  return <section className="panel">
+    <div className="panel-heading"><div><h2>Importar tudo</h2><p>Plano de contas, clientes e fornecedores, saldos iniciais de {fiscalYear} e movimentos, com os diários em falta — por esta ordem, sem duplicar o que já foi importado. Um ficheiro grande demora alguns minutos.</p></div></div>
+    <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
+      <button className="button button-primary" type="button" disabled={running || importBlocked} onClick={() => void runAll()}><Download size={16} /> {running ? 'A importar…' : done ? 'Importar de novo' : 'Importar'}</button>
+      {importBlocked && <span className="save-status error">A validação encontrou erros: confirme acima para importar mesmo assim.</span>}
+    </div>
+    {steps.some((step) => step.state !== 'pending') && <ol className="import-steps">{steps.map((step) => <li key={step.key} className={`save-status ${step.state === 'error' ? 'error' : step.state === 'done' ? 'success' : ''}`}>
+      {icon(step)} <strong>{step.label}</strong> · {label[step.state]}{step.detail ? ` — ${step.detail}` : ''}
+    </li>)}</ol>}
+    {done && <p className={`save-status ${steps.some((step) => step.state === 'error') ? 'warning' : 'success'}`}><CircleCheck size={15} /> Importação concluída{steps.some((step) => step.state === 'error') ? ', com passos por rever (acima)' : ''}. Os pormenores de cada passo estão nos painéis de baixo.</p>}
+  </section>
+}
+
 function AccountsPreviewPanel({ companyId, file, fiscalYear, importBlocked }: { companyId: string; file: File | null; fiscalYear: number; importBlocked: boolean }) {
   const { previewSaftAccounts, importSaftAccounts, importSaftOpeningBalances, source } = useWorkContext()
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
@@ -229,6 +338,11 @@ function AccountsPreviewPanel({ companyId, file, fiscalYear, importBlocked }: { 
     }
   }
 
+  // As novas primeiro e no máximo ACCOUNTS_SHOWN linhas.
+  const shownAccounts = useMemo(() => preview
+    ? [...preview.accounts.filter((account) => account.state !== 'Existing'), ...preview.accounts.filter((account) => account.state === 'Existing')].slice(0, ACCOUNTS_SHOWN)
+    : [], [preview])
+
   return <section className="panel">
     <div className="panel-heading"><div><h2>Plano de contas do ficheiro</h2><p>Compara os códigos do <code>GeneralLedgerAccounts</code> com o plano da empresa. Os saldos de abertura das contas de movimento podem entrar como um lançamento de abertura ({fiscalYear}).</p></div></div>
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
@@ -252,13 +366,14 @@ function AccountsPreviewPanel({ companyId, file, fiscalYear, importBlocked }: { 
       </div>
       {preview.fileAccountCount === 0
         ? <p className="save-status"><Info size={15} /> O ficheiro não tem plano geral de contas.</p>
-        : <div className="table-wrap"><table><thead><tr><th>Código</th><th>Descrição</th><th>Situação</th></tr></thead><tbody>
-            {preview.accounts.map((account) => <tr key={account.code}>
+        : <><div className="table-wrap"><table><thead><tr><th>Código</th><th>Descrição</th><th>Situação</th></tr></thead><tbody>
+            {shownAccounts.map((account) => <tr key={account.code}>
               <td className="primary-cell">{account.code}</td>
               <td>{account.description || '—'}</td>
               <td><span className={`badge ${account.state === 'Existing' ? 'success' : 'warning'}`}>{account.state === 'Existing' ? 'Já existe' : 'Nova'}</span></td>
             </tr>)}
-          </tbody></table></div>}
+          </tbody></table></div>
+          {preview.accounts.length > shownAccounts.length && <p className="statement-note">Mostram-se as primeiras {shownAccounts.length} contas, as novas primeiro, de {preview.accounts.length}. A importação cria todas.</p>}</>}
     </>}
   </section>
 }
@@ -479,8 +594,9 @@ export function SaftImportPage() {
             <section className="panel">
               <div className="panel-heading"><div><h2>Correspondência de empresa</h2><p>Pesquisa pelo NIF do ficheiro entre as empresas a que tem acesso.</p></div><span className="success"><CircleCheck /></span></div>
               <p>Empresa encontrada: <strong>{result.match.legalName}</strong>{result.match.accountingStandard ? ` · ${accountingStandardName(result.match.accountingStandard)}` : ''}{result.match.accountingSetupVersion ? ` · ${result.match.accountingSetupVersion}` : ''}.</p>
-              <p className="save-status"><Info size={15} /> Importe primeiro o plano de contas do ficheiro; só depois os movimentos, para que as contas referidas existam.</p>
+              <p className="save-status"><Info size={15} /> Use «Importar» para trazer tudo de uma vez, ou os painéis de baixo para cada parte: primeiro o plano de contas, depois os movimentos, para que as contas referidas existam.</p>
             </section>
+            {result.match.companyId && file && source === 'database' && <ImportAllPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} importBlocked={importBlocked} />}
             {result.match.companyId && <AccountsPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} importBlocked={importBlocked} />}
             {result.match.companyId && source === 'database' && <EntriesPreviewPanel companyId={result.match.companyId} file={file} fiscalYear={result.header.fiscalYear} importBlocked={importBlocked} />}
           </>

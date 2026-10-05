@@ -108,6 +108,8 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<CurrentUserMiddleware>();
 // Depois de saber quem é: a função «Consulta» só lê (ADR-0015).
 app.UseMiddleware<CompanyRoleMiddleware>();
+// Os SAF-T chegam inteiros antes de o endpoint responder (o proxy cortava a meio).
+app.UseMiddleware<FullRequestBodyMiddleware>();
 
 var migrateOnly = args.Contains("--migrate-only", StringComparer.OrdinalIgnoreCase);
 var applyMigrations = migrateOnly || builder.Configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup");

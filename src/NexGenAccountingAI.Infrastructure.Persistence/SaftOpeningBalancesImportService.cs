@@ -79,7 +79,7 @@ public sealed class SaftOpeningBalancesImportService(
         var lines = new List<JournalEntryLineInput>();
         var totalDebit = 0m;
         var totalCredit = 0m;
-        foreach (var account in fileAccounts)
+        foreach (var account in OpeningAccounts(fileAccounts))
         {
             if (!postingAccounts.Contains(account.Code))
             {
@@ -135,5 +135,38 @@ public sealed class SaftOpeningBalancesImportService(
             posted.Lines.Sum(line => line.Credit),
             posted.Reference,
             AlreadyImported: false);
+    }
+
+    /// <summary>
+    /// As contas cujos saldos de abertura entram no lançamento. O ficheiro diz quais
+    /// são de movimento (<c>GM</c>); as agregadoras (<c>GR</c>, <c>GA</c>) repetem os
+    /// saldos das de baixo e contavam duas vezes, porque no plano da aplicação uma
+    /// conta de 3 ou mais dígitos é de movimento. Uma <c>GM</c> com subcontas
+    /// <c>GM</c> (acontece em ficheiros reais) fica também de fora, pela mesma razão.
+    /// Sem categorias no ficheiro, ficam todas e decide o plano da empresa, como antes.
+    /// </summary>
+    public static IReadOnlyList<SaftAccount> OpeningAccounts(IReadOnlyList<SaftAccount> fileAccounts)
+    {
+        ArgumentNullException.ThrowIfNull(fileAccounts);
+        if (!fileAccounts.Any(account => !string.IsNullOrWhiteSpace(account.GroupingCategory)))
+        {
+            return fileAccounts;
+        }
+
+        var movement = fileAccounts
+            .Where(account => string.Equals(account.GroupingCategory?.Trim(), "GM", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var codes = movement.Select(account => account.Code.Trim()).Order(StringComparer.Ordinal).ToList();
+        // Por ordem, uma subconta vem logo a seguir à conta-mãe.
+        var parents = new HashSet<string>(StringComparer.Ordinal);
+        for (var index = 0; index + 1 < codes.Count; index++)
+        {
+            if (codes[index + 1].StartsWith(codes[index], StringComparison.Ordinal))
+            {
+                parents.Add(codes[index]);
+            }
+        }
+
+        return movement.Where(account => !parents.Contains(account.Code.Trim())).ToList();
     }
 }

@@ -33,7 +33,7 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
         }
 
         var read = await entriesReader.ReadTransactionsAsync(content, cancellationToken).ConfigureAwait(false);
-        var transactions = read.Items;
+        var transactions = read.Items.Select(WithoutZeroLines).ToList();
         var (periodFrom, periodTo) = FilePeriod(transactions);
 
         if (transactions.Count == 0)
@@ -179,6 +179,7 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
 
         var read = await entriesReader.ReadTransactionsAsync(content, cancellationToken).ConfigureAwait(false);
         var withParty = read.Items
+            .Select(WithoutZeroLines)
             .Where(item => !string.IsNullOrWhiteSpace(item.CustomerId) || !string.IsNullOrWhiteSpace(item.SupplierId))
             .ToList();
 
@@ -380,7 +381,7 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
         }
 
         var read = await entriesReader.ReadTransactionsAsync(content, cancellationToken).ConfigureAwait(false);
-        var transactions = read.Items;
+        var transactions = read.Items.Select(WithoutZeroLines).ToList();
         var (periodFrom, periodTo) = FilePeriod(transactions);
 
         if (transactions.Count == 0)
@@ -489,10 +490,13 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
             return (0m, 0m);
         }
 
+        // Sem a abertura: os totais declarados no SAF-T são só os dos movimentos, e os
+        // saldos iniciais vêm à parte, no plano de contas.
         var rows = await context.JournalEntries
             .AsNoTracking()
             .Where(entry => entry.CompanyId == companyId &&
                 entry.Status != JournalEntryStatus.Voided &&
+                entry.Source != EntrySource.Opening &&
                 entry.EntryDate >= start &&
                 entry.EntryDate <= end)
             .Select(entry => new
@@ -654,4 +658,18 @@ public sealed class SaftEntriesImportService(ISaftEntriesReader entriesReader, A
     {
         public static TransactionCheck Skip(string reason) => new(reason, 0m, 0m, default, string.Empty);
     }
+
+    /// <summary>
+    /// Tira as linhas a zero (débito e crédito 0,00), que o SAF-T permite e alguns
+    /// programas exportam (um ficheiro real tinha três movimentos assim, 22 978,26 €
+    /// que ficavam de fora). Não mudam o lançamento; o resto da transação entra.
+    /// </summary>
+    public static SaftTransaction WithoutZeroLines(SaftTransaction transaction) =>
+        transaction.Lines.Any(IsZeroLine)
+            ? transaction with { Lines = transaction.Lines.Where(line => !IsZeroLine(line)).ToList() }
+            : transaction;
+
+    private static bool IsZeroLine(SaftTransactionLine line) =>
+        decimal.Round(line.Debit, 2, MidpointRounding.AwayFromZero) == 0m &&
+        decimal.Round(line.Credit, 2, MidpointRounding.AwayFromZero) == 0m;
 }

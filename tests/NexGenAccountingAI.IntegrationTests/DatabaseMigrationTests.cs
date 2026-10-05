@@ -543,6 +543,17 @@ public sealed class DatabaseMigrationTests
                         new SaftTransactionLine("121", "D", 10m, 0m)
                     ])
                 };
+                // Linhas a 0,00 (o SAF-T permite-as): tiram-se e o resto do movimento entra.
+                var withZero = SaftEntriesImportService.WithoutZeroLines(new SaftTransaction("GERAL", "Diversas", "Z 1", new DateOnly(2026, 3, 4), "Com linha a zero", "Z 1",
+                [
+                    new SaftTransactionLine("121", "D", 55m, 0m),
+                    new SaftTransactionLine("111", "C", 0m, 55m),
+                    new SaftTransactionLine("111", "Zero", 0m, 0.004m),
+                ]));
+                Assert.HasCount(2, withZero.Lines);
+                Assert.HasCount(0, SaftEntriesImportService.WithoutZeroLines(new SaftTransaction("GERAL", "Diversas", "Z 2", new DateOnly(2026, 3, 4), "Só zero", "Z 2",
+                    [new SaftTransactionLine("121", "Zero", 0m, 0m)])).Lines, "Sem valor nenhum, continua a ser saltado (menos de duas linhas).");
+
                 var importReader = new FixedEntriesReader(
                     new SaftEntriesSummary(true, 5, 5, null, null, null, null, []),
                     new SaftTransactions(5, 150m, 150m, importTransactions));
@@ -683,6 +694,22 @@ public sealed class DatabaseMigrationTests
                 Assert.HasCount(3, abEntry.Lines);
                 Assert.AreEqual(new DateOnly(2026, 1, 1), abEntry.EntryDate);
                 Assert.AreEqual(abEntry.Lines.Sum(line => line.Debit), abEntry.Lines.Sum(line => line.Credit));
+
+                // Com as categorias do ficheiro, só as contas de movimento (GM) sem subcontas GM:
+                // as agregadoras repetiam os saldos (um SAF-T real dava 82,8 contra 78,8 milhões).
+                var chosen = SaftOpeningBalancesImportService.OpeningAccounts(
+                [
+                    new SaftAccount("21", "Clientes", 900m, 0m, "GR"),
+                    new SaftAccount("211", "Clientes c/c", 900m, 0m, "GA"),
+                    new SaftAccount("2111", "Clientes gerais", 900m, 0m, "GM"),
+                    new SaftAccount("21111", "Cliente A", 400m, 0m, "GM"),
+                    new SaftAccount("21112", "Cliente B", 500m, 0m, "GM"),
+                    new SaftAccount("111", "Caixa", 0m, 900m, "GM"),
+                ]);
+                CollectionAssert.AreEquivalent(new[] { "21111", "21112", "111" }, chosen.Select(account => account.Code).ToArray());
+                Assert.AreEqual(chosen.Sum(account => account.OpeningDebit), chosen.Sum(account => account.OpeningCredit));
+                Assert.HasCount(2, SaftOpeningBalancesImportService.OpeningAccounts([new SaftAccount("11", "Sem categoria"), new SaftAccount("111", "Sem categoria")]),
+                    "Sem categorias no ficheiro, decide o plano da empresa.");
 
                 // Saldos de abertura que não equilibram: recusa com mensagem em pt-PT.
                 var unbalancedOpening = new SaftOpeningBalancesImportService(
