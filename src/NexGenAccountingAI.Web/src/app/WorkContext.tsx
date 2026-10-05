@@ -17,6 +17,9 @@ export type NewPartyInput = PartyEditInput & { countryCode: string; taxRegistrat
 export type MovementLineInput = { accountCode: string; description: string; debit: number; credit: number; partyTaxNumber?: string | null; partyCountryCode?: string | null; vatCode?: string | null; costCenter?: string | null }
 export type MovementInput = { journalCode: string; entryDate: string; documentReference: string; documentDate?: string | null; description: string; reviewed: boolean; lines: MovementLineInput[]; documentTypeCode?: string | null; notes?: string | null }
 
+/** O que se envia de um SAF-T para ler o cabeçalho: chega com folga (acaba perto do byte 1 200). */
+export const saftHeaderBytes = 256 * 1024
+
 export async function problemMessage(response: Response) {
   try {
     const body = await response.json() as { errors?: Record<string, string[]>; detail?: string; title?: string }
@@ -733,10 +736,13 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
     },
     inspectSaft: async (file) => {
       if (source === 'database') {
+        // Só o início do ficheiro: o cabeçalho acaba nos primeiros KB, e o servidor
+        // responde mal o lê. Com o ficheiro inteiro (um SAF-T anual passa os 60 MB),
+        // a resposta chegava a meio do envio e o proxy cortava a ligação («Failed to fetch»).
         const response = await fetch(`/api/v1/development/users/${data.user.id}/saft/inspect`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/xml' },
-          body: file,
+          body: file.slice(0, saftHeaderBytes),
         })
         if (!response.ok) throw new Error(await problemMessage(response))
         return await response.json() as SaftInspection
