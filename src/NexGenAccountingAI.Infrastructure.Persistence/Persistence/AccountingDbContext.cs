@@ -32,6 +32,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<JournalEntryLine> JournalEntryLines => Set<JournalEntryLine>();
 
+    public DbSet<JournalEntryChange> JournalEntryChanges => Set<JournalEntryChange>();
+
     public DbSet<AccountingDocumentType> AccountingDocumentTypes => Set<AccountingDocumentType>();
 
     public DbSet<DocumentNumberSeries> DocumentNumberSeries => Set<DocumentNumberSeries>();
@@ -114,6 +116,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new AccountingJournalConfiguration());
         modelBuilder.ApplyConfiguration(new JournalEntryConfiguration());
         modelBuilder.ApplyConfiguration(new JournalEntryLineConfiguration());
+        modelBuilder.ApplyConfiguration(new JournalEntryChangeConfiguration());
         modelBuilder.ApplyConfiguration(new AccountingDocumentTypeConfiguration());
         modelBuilder.ApplyConfiguration(new DocumentNumberSeriesConfiguration());
         modelBuilder.ApplyConfiguration(new SaftValidationRunConfiguration());

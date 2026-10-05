@@ -810,6 +810,42 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("JournalEntries", "accounting");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.JournalEntryChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Action")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("ChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ChangedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "ChangedAtUtc");
+
+                    b.HasIndex("CompanyId", "Reference", "ChangedAtUtc");
+
+                    b.ToTable("JournalEntryChanges", "accounting");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.JournalEntryLine", b =>
                 {
                     b.Property<Guid>("Id")

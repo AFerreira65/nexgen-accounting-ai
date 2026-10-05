@@ -786,6 +786,14 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Histórico de alterações de um lançamento (F4-03): o estado anterior a cada alteração.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/{reference}/history", async (
+        Guid userId, Guid companyId, string reference, JournalEntryHistoryService history, CancellationToken cancellationToken) =>
+    {
+        var rows = await history.ListAsync(userId, companyId, reference, cancellationToken).ConfigureAwait(false);
+        return rows is null ? Results.NotFound() : Results.Ok(rows);
+    });
+
     app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/{reference}", async (
         Guid userId,
         Guid companyId,

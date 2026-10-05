@@ -7,6 +7,7 @@ import { useMovementGuards } from '../app/movementGuards'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 import { MovementDocuments } from './MovementDocuments'
+import { MovementHistory } from './MovementHistory'
 import { MovementEditor } from './MovementEditor'
 
 export function MovementPage() {
@@ -101,6 +102,7 @@ export function MovementPage() {
     </section>
 
     {onDatabase && <MovementDocuments reference={movement.id} />}
+    {onDatabase && <MovementHistory reference={movement.id} revision={revision} />}
 
     {movement.notes ? <section className="panel notes-panel"><div className="panel-heading"><div><h2>Observações</h2><p>Nota interna, não sai em documentos oficiais</p></div></div><p className="notes-body">{movement.notes}</p></section> : null}
 

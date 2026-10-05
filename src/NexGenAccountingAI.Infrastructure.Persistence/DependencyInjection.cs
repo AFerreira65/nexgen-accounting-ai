@@ -24,10 +24,14 @@ public static class DependencyInjection
 
         services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
         services.AddScoped<AuditStampingInterceptor>();
+        services.AddScoped<JournalEntryHistoryInterceptor>();
 
         services.AddDbContext<AccountingDbContext>((serviceProvider, options) =>
             options
-                .AddInterceptors(serviceProvider.GetRequiredService<AuditStampingInterceptor>())
+                // O histórico primeiro: lê os valores de antes; o carimbo de auditoria vem depois.
+                .AddInterceptors(
+                    serviceProvider.GetRequiredService<JournalEntryHistoryInterceptor>(),
+                    serviceProvider.GetRequiredService<AuditStampingInterceptor>())
                 .UseNpgsql(
                 connectionString,
                 npgsqlOptions =>
@@ -49,6 +53,7 @@ public static class DependencyInjection
         services.AddScoped<SaftAccountsPreviewService>();
         services.AddScoped<SaftAccountsImportService>();
         services.AddScoped<SaftOpeningBalancesImportService>();
+        services.AddScoped<JournalEntryHistoryService>();
         services.AddScoped<SaftEntriesPreviewService>();
         services.AddScoped<SaftEntriesImportService>();
         services.AddScoped<EFaturaPurchaseImportService>();
