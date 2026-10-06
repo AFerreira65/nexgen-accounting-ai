@@ -307,9 +307,43 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   o período preferido por mapa, e partilhar mapas entre as empresas de um
   gabinete.
 
+## Fase 4C — Impressos oficiais
+
+### F4C-01 — Declaração periódica de IVA no impresso da AT
+
+- `pages/VatDeclarationForm.tsx`: a declaração com o aspeto do modelo oficial
+  (Portaria n.º 221/2017; o modelo em vigor até aos períodos de junho de
+  2027) — quadros 01 (identificação e sede), 02 (ano, período, prazo), 03
+  (operações noutra região, por enquanto só informativo), 04 (recapitulativa),
+  05 (inexistência de operações), 06 (as três colunas com os números dos
+  campos 1 a 96), 06-A (97 a 107 com a soma 106) e 20 (NIF do CC). Os campos
+  apurados pela contabilidade aparecem a cinzento e abrem as contas que os
+  formam; os que a aplicação não apura (14, 15, 18, 19, 95, 97–107, os
+  assinalamentos e o NIF) escrevem-se no impresso. A vista «Tabela» continua
+  disponível. Imprime-se com o aspeto do impresso.
+- `VatDeclarationInputs` (Application) e a tabela `accounting.VatDeclarationInputs`
+  (migração `20261006070630_VatDeclarationInputs`): o que se preencheu à mão
+  fica guardado por (empresa, período) e entra no cálculo (campos 14/15/18/19
+  nos totais, 95 limitado ao 94, 96 = 94 − 95, 106 = soma do 06-A) e no XML
+  (`prazo`, `apresentouDeclRecapitulativa`, `semOperacoes`, `nifCC`,
+  `temOperacoesAdquirenteComLiqImposto` «01»/«02» e os elementos do
+  `desenvolvimento`). Endpoints `GET/PUT …/vat-declaration/inputs?from&to`;
+  a entrega (XML, validar, submeter) lê o que está guardado — o painel de
+  entrega deixou de ter as caixas de prazo e recapitulativa.
+- O ficheiro com o quadro 06-A continua válido face ao `dpiva-06.xsd` oficial
+  (teste de integração).
+
+### Por fazer na 4C
+
+- Anexo R (operações noutra região) e os anexos das regularizações dos campos
+  40 e 41, com as suas listas.
+- O modelo novo da Portaria n.º 298/2026/1 (períodos a partir de julho de
+  2027): campos 108/109 e a parte E do 06-A.
+- Modelo 22 e IES no impresso da AT, assentes nos mesmos componentes.
+
 ## Validação
 
-- .NET: 323 testes. PWA: 131 testes.
+- .NET: 323 testes. PWA: 133 testes.
 - Vistos a funcionar com a base real: a validação e a exportação do SAF-T, a
   exportação para PDF e Excel pela API, e a tarefa diária a correr sozinha.
 - **Ainda não vistos no browser** com a sessão do utilizador: o painel do

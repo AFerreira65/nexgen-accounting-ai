@@ -19,8 +19,6 @@ const dateTime = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short', timeStyl
  */
 export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: { companyId: string; from: string; to: string; priorCredit: number | null }) {
   const { user } = useWorkContext()
-  const [late, setLate] = useState(false)
-  const [recapitulative, setRecapitulative] = useState(false)
   const [busy, setBusy] = useState<'validate' | 'submit' | 'xml' | null>(null)
   const [outcome, setOutcome] = useState<{ operation: string; value: Outcome } | null>(null)
   const [error, setError] = useState('')
@@ -31,8 +29,6 @@ export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: 
   const query = () => {
     const params = new URLSearchParams({ from, to })
     if (priorCredit !== null) params.set('priorCredit', String(priorCredit))
-    if (late) params.set('lateFiling', 'true')
-    if (recapitulative) params.set('recapitulative', 'true')
     return params
   }
 
@@ -91,11 +87,7 @@ export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: 
   </table></div>
 
   return <section className="panel no-print">
-    <div className="panel-heading"><div><h2>Entrega na AT</h2><p>O ficheiro XML da declaração no formato oficial, a validação pelas regras da AT e a submissão. O ficheiro leva o quadro 06; o quadro 06-A e os anexos não são gerados. A submissão por aqui só funciona, por agora, no ambiente de testes da AT: em produção, valide e entregue o ficheiro no Portal das Finanças.</p></div></div>
-    <div className="builder-row">
-      <label className="inline-check"><input type="checkbox" checked={late} onChange={(event) => setLate(event.target.checked)} /> Fora do prazo</label>
-      <label className="inline-check"><input type="checkbox" checked={recapitulative} onChange={(event) => setRecapitulative(event.target.checked)} /> Apresentou declaração recapitulativa no período</label>
-    </div>
+    <div className="panel-heading"><div><h2>Entrega na AT</h2><p>O ficheiro XML da declaração no formato oficial, a validação pelas regras da AT e a submissão. O ficheiro leva os quadros 02 a 06-A e 20 tal como estão no impresso acima; o Anexo R e os anexos das regularizações não são gerados. A submissão por aqui só funciona, por agora, no ambiente de testes da AT: em produção, valide e entregue o ficheiro no Portal das Finanças.</p></div></div>
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
       <button className="button button-secondary" type="button" disabled={busy !== null} onClick={() => void downloadXml()}><FileDown size={16} /> {busy === 'xml' ? 'A gerar…' : 'Ficheiro XML'}</button>
       <button className="button button-primary" type="button" disabled={busy !== null} onClick={() => void send('validate')}><ShieldCheck size={16} /> {busy === 'validate' ? 'A validar…' : 'Validar na AT'}</button>

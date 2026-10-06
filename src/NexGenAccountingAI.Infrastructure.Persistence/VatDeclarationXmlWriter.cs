@@ -57,6 +57,15 @@ public static class VatDeclarationXmlWriter
     ];
 
     /// <summary>Totais que vão sempre no ficheiro, mesmo a zero (como no que o Portal exporta).</summary>
+    /// <summary>Os elementos do quadro 06-A e os campos do impresso a que correspondem.</summary>
+    private static readonly (string Element, int Field)[] Development =
+    [
+        ("aquisicaoSujPassivoCorticaProdutosSivicola", 107), ("bensServicosParaPessoalEmpresa", 103),
+        ("inversaoSujPassivoConstrucaoCivil", 102), ("inversaoSujPassivoEmissaoGasesEfEstufa", 105),
+        ("inversaoSujPassivoImoveisRenunciaIsencao", 100), ("inversaoSujPassivoOuro", 99), ("inversaoSujPassivoSucatas", 101),
+        ("operacoesArtigo42", 104), ("operacoesPTFeitasPorContribuintesForaUE", 98), ("operacoesPTFeitasPorContribuintesUE", 97),
+    ];
+
     private static readonly HashSet<string> AlwaysWritten = new(StringComparer.Ordinal)
     {
         "btBensUETotal", "btTotal", "excessoAReportar", "excessoAReportarPeriodoAnterior", "ivaAEntregar", "ivaARecuperar",
@@ -128,12 +137,23 @@ public static class VatDeclarationXmlWriter
                 }
             }
 
-            // Não apuramos o quadro 06-A (operações em que o adquirente liquida o imposto).
-            writer.WriteElementString("temOperacoesAdquirenteComLiqImposto", Namespace, "02");
+            // A pergunta do quadro 06: «01» sim, «02» não.
+            var inputs = declaration.Inputs ?? NexGenAccountingAI.Application.Fiscal.VatDeclarationInputs.Empty;
+            writer.WriteElementString("temOperacoesAdquirenteComLiqImposto", Namespace, inputs.HasOperationsAsAcquirer ? "01" : "02");
             writer.WriteEndElement();
 
+            // Quadro 06-A, preenchido à mão no impresso.
             writer.WriteStartElement("desenvolvimento", Namespace);
-            writer.WriteElementString("totalQuadro06A", Namespace, "0");
+            foreach (var (element, field) in Development)
+            {
+                var amount = Value(field);
+                if (amount != 0m)
+                {
+                    writer.WriteElementString(element, Namespace, Cents(amount));
+                }
+            }
+
+            writer.WriteElementString("totalQuadro06A", Namespace, Cents(Value(106)));
             writer.WriteEndElement();
 
             writer.WriteStartElement("inicio", Namespace);
@@ -154,6 +174,11 @@ public static class VatDeclarationXmlWriter
 
             writer.WriteElementString("periodoDeclaracao", Namespace, declaration.Period);
             writer.WriteElementString("prazo", Namespace, filing.WithinDeadline ? "1" : "2");
+            if (inputs.NoOperations)
+            {
+                writer.WriteElementString("semOperacoes", Namespace, "true");
+            }
+
             writer.WriteElementString("temAnexoRAcores", Namespace, "false");
             writer.WriteElementString("temAnexoRContinente", Namespace, "false");
             writer.WriteElementString("temAnexoRMadeira", Namespace, "false");

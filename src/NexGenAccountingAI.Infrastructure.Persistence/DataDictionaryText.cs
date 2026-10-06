@@ -39,6 +39,7 @@ internal static class DataDictionaryText
         ["ReportTemplate"] = "Configuração de impressão de um relatório fixo numa empresa (linhas de cabeçalho, identificação, orientação).",
         ["ManagementReport"] = "Relatório de gestão gerado por IA: o tipo, o período, o modelo, e o dossiê e o resultado guardados.",
         ["CompanyAiSettings"] = "Interruptor dos relatórios de gestão com IA de uma empresa (ativo, geração mensal automática).",
+        ["VatDeclarationInputs"] = "O que o utilizador preencheu à mão na declaração periódica de IVA de um período (prazo, inexistência de operações, campos 14, 15, 18, 19 e 95, quadro 06-A, NIF do contabilista).",
         ["VatReturnFiling"] = "Apuramento periódico de IVA guardado por uma empresa (período, excesso reportado do período anterior, fotografia do cálculo).",
         ["CompanyAtCredentials"] = "Credenciais e definições da AT de uma empresa: o subutilizador e a senha (cifrada) do perfil e-Fatura, a periodicidade da declaração periódica e o ambiente da AT.",
         ["AccountVatClassification"] = "Classificação de IVA de uma conta (taxa, natureza da operação, região) para a desagregação da declaração periódica.",
@@ -227,6 +228,9 @@ internal static class DataDictionaryText
         ["CompanyAiSettings.Enabled"] = "Se os relatórios de gestão com IA estão disponíveis para a empresa.",
         ["CompanyAiSettings.AutoMonthly"] = "Se a síntese mensal é gerada automaticamente.",
 
+        ["VatDeclarationInputs.PeriodFrom"] = "Data inicial do período da declaração.",
+        ["VatDeclarationInputs.PeriodTo"] = "Data final do período da declaração.",
+        ["VatDeclarationInputs.InputsJson"] = "Os valores preenchidos à mão (VatDeclarationInputs) em JSON.",
         ["VatReturnFiling.PeriodFrom"] = "Data inicial do período do apuramento.",
         ["VatReturnFiling.PeriodTo"] = "Data final do período do apuramento.",
         ["VatReturnFiling.PriorPeriodCredit"] = "Excesso a reportar do período anterior, indicado pelo utilizador.",

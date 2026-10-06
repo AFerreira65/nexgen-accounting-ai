@@ -2106,6 +2106,55 @@ if (applicationEndpointsAvailable)
         return declaration is null ? Results.NotFound() : Results.Ok(declaration);
     });
 
+    // O que se preenche à mão no impresso da declaração periódica (F4C-01), por período.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-declaration/inputs", async (
+        Guid userId, Guid companyId, string? from, string? to, AccountingDbContext context, VatDeclarationService declarations, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) || !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) || end < start)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = ["Indique um período válido (aaaa-mm-dd)."] });
+        }
+
+        if (!await HasCompanyAccessAsync(context, userId, companyId, cancellationToken).ConfigureAwait(false))
+        {
+            return Results.NotFound();
+        }
+
+        return Results.Json(await declarations.LoadInputsAsync(companyId, start, end, cancellationToken).ConfigureAwait(false), NexGenAccountingAI.Application.Fiscal.VatDeclarationInputs.Json);
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-declaration/inputs", async (
+        Guid userId, Guid companyId, string? from, string? to, HttpRequest request, VatDeclarationService declarations, CancellationToken cancellationToken) =>
+    {
+        if (!DateOnly.TryParseExact(from, "yyyy-MM-dd", out var start) || !DateOnly.TryParseExact(to, "yyyy-MM-dd", out var end) || end < start)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = ["Indique um período válido (aaaa-mm-dd)."] });
+        }
+
+        NexGenAccountingAI.Application.Fiscal.VatDeclarationInputs? body;
+        try
+        {
+            body = await request.ReadFromJsonAsync<NexGenAccountingAI.Application.Fiscal.VatDeclarationInputs>(NexGenAccountingAI.Application.Fiscal.VatDeclarationInputs.Json, cancellationToken).ConfigureAwait(false);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            body = null;
+        }
+
+        if (body is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["declaracao"] = ["Indique os campos preenchidos à mão."] });
+        }
+
+        var (saved, errors) = await declarations.SaveInputsAsync(userId, companyId, start, end, body, cancellationToken).ConfigureAwait(false);
+        if (errors.Count > 0)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["declaracao"] = [.. errors] });
+        }
+
+        return saved is null ? Results.NotFound() : Results.Json(saved, NexGenAccountingAI.Application.Fiscal.VatDeclarationInputs.Json);
+    });
+
     // Declaração periódica de IVA na AT (F4A-02): o ficheiro XML oficial, validar e submeter.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/vat-declaration/xml", async (
         Guid userId, Guid companyId, string? from, string? to, decimal? priorCredit, bool? lateFiling, bool? recapitulative,

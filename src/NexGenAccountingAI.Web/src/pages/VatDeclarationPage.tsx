@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, Database, Printer, Receipt } from 'lucide-react'
+import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, Database, FileText, Printer, Receipt, Table2 } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
@@ -9,6 +9,7 @@ import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 import { VatSettlementEntryPanel } from './VatSettlementEntryPanel'
 import { VatDeclarationFilingPanel } from './VatDeclarationFilingPanel'
+import { EMPTY_INPUTS, VatDeclarationForm, type VatDeclarationInputs } from './VatDeclarationForm'
 
 const shortDate = (value: string) => value.split('-').reverse().join('/')
 const seatLabels: Record<string, string> = { Continente: 'Continente', Acores: 'Açores', Madeira: 'Madeira' }
@@ -20,7 +21,7 @@ function periodLabel(period: string | null) {
 }
 
 export function VatDeclarationPage() {
-  const { activeCompany, source, vatDeclaration } = useWorkContext()
+  const { activeCompany, source, user, vatDeclaration } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const fiscalYear = activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()
@@ -29,7 +30,13 @@ export function VatDeclarationPage() {
   const [declaration, setDeclaration] = useState<VatDeclaration | null>(null)
   const [open, setOpen] = useState<Set<number>>(new Set())
   const [error, setError] = useState('')
+  const [view, setView] = useState<'impresso' | 'tabela'>('impresso')
+  const [inputs, setInputs] = useState<VatDeclarationInputs>(EMPTY_INPUTS)
+  const [inspecting, setInspecting] = useState<VatFormField | null>(null)
+  const [saveState, setSaveState] = useState('')
+  const [version, setVersion] = useState(0)
   usePublishRecord(undefined, undefined)
+  const inputsUrl = `/api/v1/development/users/${user.id}/companies/${companyId}/vat-declaration/inputs?from=${range.from}&to=${range.to}`
 
   useEffect(() => { setRange(quarterRange(periodReference(fiscalYear))); setPriorCredit('') }, [fiscalYear, companyId])
 
@@ -40,10 +47,32 @@ export function VatDeclarationPage() {
     const credit = priorCredit.trim() === '' ? null : Number(priorCredit.replace(',', '.'))
     if (credit !== null && (!Number.isFinite(credit) || credit < 0)) { setError('O excesso a reportar tem de ser um valor positivo.'); return }
     void vatDeclaration(companyId, { from: range.from, to: range.to, priorCredit: credit })
-      .then((value) => { if (!controller.signal.aborted) setDeclaration(value) })
+      .then((value) => {
+        if (controller.signal.aborted) return
+        setDeclaration(value)
+        setInputs(value.inputs ? { ...EMPTY_INPUTS, ...value.inputs, fields: value.inputs.fields ?? {} } : EMPTY_INPUTS)
+        setInspecting(null)
+      })
       .catch((problem: unknown) => { if (!controller.signal.aborted) { setDeclaration(null); setError(problem instanceof Error ? problem.message : 'Não foi possível preparar a declaração.') } })
     return () => controller.abort()
-  }, [vatDeclaration, companyId, onDatabase, range, priorCredit])
+  }, [vatDeclaration, companyId, onDatabase, range, priorCredit, version])
+
+  // O que se escreve no impresso grava-se logo e a declaração volta a calcular-se.
+  async function saveInputs(next: VatDeclarationInputs) {
+    setInputs(next)
+    setSaveState('A guardar…')
+    try {
+      const response = await fetch(inputsUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) })
+      if (!response.ok) {
+        const problem = await response.json().catch(() => null) as { errors?: Record<string, string[]> } | null
+        throw new Error(Object.values(problem?.errors ?? {}).flat()[0] ?? 'Não foi possível guardar.')
+      }
+      setSaveState('Guardado.')
+      setVersion((current) => current + 1)
+    } catch (problem) {
+      setSaveState(problem instanceof Error ? problem.message : 'Não foi possível guardar.')
+    }
+  }
 
   if (!onDatabase) {
     return <div className="page-stack">
@@ -74,7 +103,7 @@ export function VatDeclarationPage() {
   )
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Declaração periódica de IVA</h1><p>O quadro 06 preenchido a partir da contabilidade: cada linha vale pelo seu código de IVA ou pela classificação da conta. Abra um campo para ver as contas que o formam.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Fiscal</p><h1>Declaração periódica de IVA</h1><p>O impresso da AT preenchido a partir da contabilidade: cada campo vale pelo código de IVA ou pela classificação da conta. Os campos a cinzento abrem as contas que os formam; os restantes preenchem-se aqui e ficam guardados por período.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 
@@ -86,9 +115,14 @@ export function VatDeclarationPage() {
         {quarters.map((quarter, index) => <button key={quarter.from} type="button" className={`period-chip${quarter.from === range.from && quarter.to === range.to ? ' active' : ''}`} onClick={() => setRange(quarter)}>{index + 1}.º T</button>)}
       </div>
       <label className="inline-check">Excesso a reportar do período anterior <input type="text" inputMode="decimal" aria-label="Excesso a reportar do período anterior" placeholder="do razão (2437)" value={priorCredit} onChange={(event) => setPriorCredit(event.target.value)} /></label>
+      <span className="view-toggle" role="group" aria-label="Vista">
+        <button type="button" className={`button button-secondary ${view === 'impresso' ? 'is-active' : ''}`} aria-pressed={view === 'impresso'} onClick={() => setView('impresso')}><FileText size={15} /> Impresso</button>
+        <button type="button" className={`button button-secondary ${view === 'tabela' ? 'is-active' : ''}`} aria-pressed={view === 'tabela'} onClick={() => setView('tabela')}><Table2 size={15} /> Tabela</button>
+      </span>
       <ExportButtons run={exportCsv} disabled={!declaration} />
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!declaration}><Printer size={15} /> Imprimir / PDF</button>
     </div>
+    {saveState && <p className={`save-status ${saveState === 'Guardado.' ? 'success' : saveState === 'A guardar…' ? '' : 'error'}`} role={saveState === 'Guardado.' || saveState === 'A guardar…' ? undefined : 'alert'}>{saveState}</p>}
 
     {declaration && <>
       <section className="metadata-strip">
@@ -106,11 +140,22 @@ export function VatDeclarationPage() {
         <ul className="warning-list">{declaration.warnings.map((warning) => <li key={warning}><CircleAlert size={15} /> {warning}</li>)}</ul>
       </section>}
 
-      <section className="panel">
-        <div className="panel-heading"><div><h2>Quadro 06 — Apuramento do imposto</h2><p>«À mão» assinala os campos que a aplicação não apura.</p></div></div>
+      {view === 'impresso' && <section className="panel atf-panel">
+        <VatDeclarationForm declaration={declaration} inputs={inputs} companyName={activeCompany.legalName} taxNumber={activeCompany.taxRegistrationNumber} onChange={(next) => void saveInputs(next)} onInspect={(field) => setInspecting((current) => current?.number === field.number ? null : field)} inspecting={inspecting?.number ?? null} />
+        {inspecting && <div className="atf-sources no-print">
+          <div className="panel-heading"><div><h2>Campo {inspecting.number} — {inspecting.label}</h2><p>As contas que formam o campo, pela classificação de IVA.</p></div><button type="button" className="button button-secondary" onClick={() => setInspecting(null)}>Fechar</button></div>
+          <div className="table-wrap"><table>
+            <thead><tr><th>Conta</th><th>Descrição</th><th className="numeric">Valor</th></tr></thead>
+            <tbody>{inspecting.sources.map((item) => <tr key={item.accountCode}><td><Link className="primary-cell" to={`/contas/${item.accountCode}`}>{item.accountCode}</Link></td><td>{item.accountName}</td><td className="numeric">{euro.format(item.amount)}</td></tr>)}</tbody>
+          </table></div>
+        </div>}
+      </section>}
+
+      {view === 'tabela' && <section className="panel">
+        <div className="panel-heading"><div><h2>Quadro 06 — Apuramento do imposto</h2><p>«À mão» assinala os campos que se preenchem no impresso.</p></div></div>
         <div className="table-wrap"><table>
           <thead><tr><th>Campo</th><th>Descrição</th><th className="numeric">Base tributável</th><th className="numeric">A favor do sujeito passivo</th><th className="numeric">A favor do Estado</th><th className="numeric">Apuramento</th></tr></thead>
-          <tbody>{fields.map((field) => {
+          <tbody>{fields.filter((field) => field.column !== 'desenvolvimento').map((field) => {
             const expanded = open.has(field.number)
             return <Fragment key={field.number}>
               <tr className={field.computed && field.number >= 90 ? 'subtotal-row' : !field.supported ? 'muted-row' : undefined}>
@@ -128,7 +173,7 @@ export function VatDeclarationPage() {
             </Fragment>
           })}</tbody>
         </table></div>
-      </section>
+      </section>}
 
       <VatDeclarationFilingPanel companyId={companyId} from={range.from} to={range.to} priorCredit={priorCredit.trim() === '' ? null : Number(priorCredit.replace(',', '.'))} />
       <VatSettlementEntryPanel companyId={companyId} from={range.from} to={range.to} />

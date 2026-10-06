@@ -58,6 +58,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<VatReturnFiling> VatReturnFilings => Set<VatReturnFiling>();
 
+    public DbSet<VatDeclarationInput> VatDeclarationInputs => Set<VatDeclarationInput>();
+
     public DbSet<CompanyAtCredentials> CompanyAtCredentials => Set<CompanyAtCredentials>();
 
     public DbSet<AccountVatClassification> AccountVatClassifications => Set<AccountVatClassification>();
@@ -135,6 +137,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new ManagementReportConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyAiSettingsConfiguration());
         modelBuilder.ApplyConfiguration(new VatReturnFilingConfiguration());
+        modelBuilder.ApplyConfiguration(new VatDeclarationInputConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyAtCredentialsConfiguration());
         modelBuilder.ApplyConfiguration(new AccountVatClassificationConfiguration());
         modelBuilder.ApplyConfiguration(new IrcEstimateFilingConfiguration());

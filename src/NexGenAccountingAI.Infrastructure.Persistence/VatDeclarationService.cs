@@ -32,7 +32,8 @@ public sealed record VatDeclaration(
     decimal AccountingCredit,
     decimal Difference,
     string Source,
-    string Disclaimer);
+    string Disclaimer,
+    VatDeclarationInputs? Inputs = null);
 
 /// <summary>
 /// Preenche o quadro 06 da declaração periódica de IVA a partir da
@@ -52,14 +53,31 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
 
     public const string Disclaimer =
         "Mapa de apoio ao preenchimento, não validado pela AT. Não apura " +
-        "os campos 14, 15, 18 e 19, o quadro 06-A nem os anexos das regularizações dos campos 40 e 41; " +
+        "os campos 14, 15, 18 e 19, o reembolso (95) nem o quadro 06-A, que se preenchem à mão no impresso, nem os anexos das regularizações dos campos 40 e 41; " +
         "as operações de outra região vão só em total para os campos 65 a 68 (o Anexo R não é preenchido).";
 
-    private const string Base = "base", Taxpayer = "sujeito-passivo", State = "estado", Settlement = "apuramento";
+    private const string Base = "base", Taxpayer = "sujeito-passivo", State = "estado", Settlement = "apuramento", Development = "desenvolvimento";
+
+    /// <summary>Os campos do quadro 06-A, pela ordem e com os textos do impresso.</summary>
+    private static readonly (int Number, string Label)[] DevelopmentLabels =
+    [
+        (97, "Operações localizadas em Portugal em que liquidou o IVA devido, efetuadas por entidades residentes em países comunitários"),
+        (98, "Operações localizadas em Portugal em que liquidou o IVA devido, efetuadas por entidades residentes em países ou territórios terceiros"),
+        (99, "Inversão do sujeito passivo — ouro (Decreto-Lei 362/99)"),
+        (100, "Inversão do sujeito passivo — aquisição de imóveis com renúncia à isenção (Decreto-Lei 21/2007)"),
+        (101, "Inversão do sujeito passivo — sucatas [alínea i) do n.º 1 do artigo 2.º do CIVA]"),
+        (102, "Inversão do sujeito passivo — serviços de construção civil [alínea j) do n.º 1 do artigo 2.º do CIVA]"),
+        (105, "Inversão do sujeito passivo — emissão de gases com efeito de estufa [alínea l) do n.º 1 do artigo 2.º do CIVA]"),
+        (107, "Inversão do sujeito passivo — aquisição de cortiça e outros produtos de origem silvícola [alínea m) do n.º 1 do artigo 2.º do CIVA]"),
+        (103, "Operações referidas nas alíneas f) e g) do n.º 3 do artigo 3.º e alíneas a) e b) do n.º 2 do artigo 4.º do CIVA"),
+        (104, "Operações referidas nas alíneas a), b) e c) do artigo 42.º do CIVA"),
+    ];
 
     /// <returns><c>null</c> sem acesso à empresa.</returns>
+    /// <param name="inputs">O que o utilizador preencheu à mão; sem isto, lê o que está guardado para o período.</param>
     public async Task<VatDeclaration?> BuildAsync(
-        Guid userId, Guid companyId, DateOnly from, DateOnly to, decimal? priorPeriodCredit = null, CancellationToken cancellationToken = default)
+        Guid userId, Guid companyId, DateOnly from, DateOnly to, decimal? priorPeriodCredit = null, CancellationToken cancellationToken = default,
+        VatDeclarationInputs? inputs = null)
     {
         // O apuramento contabilístico verifica o acesso e dá o excesso a reportar do período anterior.
         var settlement = await returns.BuildAsync(userId, companyId, from, to, priorPeriodCredit, cancellationToken).ConfigureAwait(false);
@@ -68,6 +86,8 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
         {
             return null;
         }
+
+        inputs ??= await LoadInputsAsync(companyId, from, to, cancellationToken).ConfigureAwait(false);
 
         var taxRegion = await context.Companies
             .AsNoTracking()
@@ -203,9 +223,12 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
             }
         }
 
-        decimal Value(int field) => sources.TryGetValue(field, out var byAccount) ? decimal.Round(byAccount.Values.Sum(), 2) : 0m;
+        decimal Value(int field) => VatDeclarationInputs.SettlementManualFields.Contains(field)
+            ? inputs.Field(field)
+            : sources.TryGetValue(field, out var byAccount) ? decimal.Round(byAccount.Values.Sum(), 2) : 0m;
 
         var fields = new List<VatFormField>();
+        // Os campos que a aplicação não apura levam o que o utilizador preencheu à mão.
         void Field(int number, string label, string column, bool supported = true) => fields.Add(new VatFormField(
             number, label, column, Value(number), false, supported,
             sources.TryGetValue(number, out var byAccount)
@@ -260,8 +283,18 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
             Value(2) + Value(6) + Value(4) + field11 + Value(17) + Value(19) + Value(41) + Value(66) + Value(68));
         var field93 = Total(93, "Imposto a entregar ao Estado (92 − 91)", Settlement, Math.Max(0m, field92 - field91));
         var field94 = Total(94, "Imposto a recuperar (91 − 92)", Settlement, Math.Max(0m, field91 - field92));
-        Total(95, "Reembolso pedido", Settlement, 0m);
-        Total(96, "Excesso a reportar para o período seguinte (94 − 95)", Settlement, field94);
+        // O reembolso pede-se à mão; não pode exceder o crédito.
+        var field95 = Math.Min(inputs.Field(95), field94);
+        fields.Add(new VatFormField(95, "Reembolso pedido", Settlement, field95, false, false, []));
+        Total(96, "Excesso a reportar para o período seguinte (94 − 95)", Settlement, field94 - field95);
+
+        // Quadro 06-A: preenchido à mão, com a soma (106) calculada.
+        foreach (var (number, label) in DevelopmentLabels)
+        {
+            fields.Add(new VatFormField(number, label, Development, inputs.Field(number), false, false, []));
+        }
+
+        Total(106, "Soma do quadro 06-A (97 + … + 105 + 107)", Development, inputs.DevelopmentTotal);
 
         var warnings = new List<string>();
         var period = PeriodOf(from, to);
@@ -290,9 +323,19 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
             }
         }
 
-        if (selfAssessed || Value(12) != 0m || Value(16) != 0m)
+        if ((selfAssessed || Value(12) != 0m || Value(16) != 0m) && inputs.DevelopmentTotal == 0m)
         {
-            warnings.Add("Há operações em que liquidou o imposto como adquirente: assinale o quadro 06-A e, nos casos de inversão do sujeito passivo, preencha os campos 97 a 102.");
+            warnings.Add("Há operações em que liquidou o imposto como adquirente: responda «sim» no quadro 06 e, nos casos de inversão do sujeito passivo, preencha os campos 97 a 107 do quadro 06-A.");
+        }
+
+        if (inputs.Field(95) > field94)
+        {
+            warnings.Add($"O reembolso pedido ({inputs.Field(95):N2}) é maior do que o crédito a recuperar ({field94:N2}): fica limitado ao campo 94.");
+        }
+
+        if (inputs.NoOperations && (Value(90) != 0m || field91 != 0m || field92 != 0m))
+        {
+            warnings.Add("Está assinalada a inexistência de operações (quadro 05), mas há valores no quadro 06.");
         }
 
         if (otherRegions.Count > 0)
@@ -319,7 +362,67 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
 
         return new VatDeclaration(
             from, to, period, seat.ToString(), fields, warnings,
-            settlement.NetPayable, settlement.CreditToCarryForward, difference, Source, Disclaimer);
+            settlement.NetPayable, settlement.CreditToCarryForward, difference, Source, Disclaimer, inputs);
+    }
+
+    /// <summary>O que está guardado à mão para o período (vazio se nada).</summary>
+    public async Task<VatDeclarationInputs> LoadInputsAsync(Guid companyId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    {
+        var json = await context.VatDeclarationInputs
+            .AsNoTracking()
+            .Where(item => item.CompanyId == companyId && item.PeriodFrom == from && item.PeriodTo == to)
+            .Select(item => item.InputsJson)
+            .SingleOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return VatDeclarationInputs.Deserialize(json);
+    }
+
+    /// <summary>Guarda o que o utilizador preencheu à mão para o período. <c>null</c> sem acesso; erros de validação em português.</summary>
+    public async Task<(VatDeclarationInputs? Saved, IReadOnlyList<string> Errors)> SaveInputsAsync(
+        Guid userId, Guid companyId, DateOnly from, DateOnly to, VatDeclarationInputs inputs, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(inputs);
+        var hasAccess = await context.Companies
+            .AsNoTracking()
+            .AnyAsync(company => company.Id == companyId && company.IsActive &&
+                company.UserMemberships.Any(membership => membership.UserId == userId && membership.IsActive), cancellationToken)
+            .ConfigureAwait(false);
+        if (!hasAccess)
+        {
+            return (null, []);
+        }
+
+        var problems = inputs.Validate();
+        if (to < from)
+        {
+            problems = [.. problems, "A data final não pode ser anterior à data inicial."];
+        }
+
+        if (problems.Count > 0)
+        {
+            return (null, problems);
+        }
+
+        // Só os campos com valor ficam guardados; o NIF sem espaços.
+        var clean = inputs with
+        {
+            Fields = (inputs.Fields ?? new Dictionary<int, decimal>()).Where(item => item.Value != 0m).ToDictionary(item => item.Key, item => decimal.Round(item.Value, 2)),
+            CertifiedAccountantTaxNumber = string.IsNullOrWhiteSpace(inputs.CertifiedAccountantTaxNumber) ? null : inputs.CertifiedAccountantTaxNumber.Trim(),
+        };
+        var entity = await context.VatDeclarationInputs
+            .SingleOrDefaultAsync(item => item.CompanyId == companyId && item.PeriodFrom == from && item.PeriodTo == to, cancellationToken)
+            .ConfigureAwait(false);
+        if (entity is null)
+        {
+            context.VatDeclarationInputs.Add(VatDeclarationInput.Create(companyId, from, to, clean.Serialize()));
+        }
+        else
+        {
+            entity.Update(clean.Serialize());
+        }
+
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return (clean, []);
     }
 
     private static bool IsRegularisation(VatOperationNature nature) =>

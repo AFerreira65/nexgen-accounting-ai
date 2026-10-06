@@ -1,3 +1,4 @@
+using NexGenAccountingAI.Application.Fiscal;
 using NexGenAccountingAI.Domain.Accounting;
 using NexGenAccountingAI.Domain.Organizations;
 using NexGenAccountingAI.Infrastructure.Persistence;
@@ -178,6 +179,54 @@ public sealed class VatDeclarationServiceTests
             Assert.AreEqual(73m, withCredit.Fields.Single(field => field.Number == 94).Amount);
             Assert.AreEqual(73m, withCredit.Fields.Single(field => field.Number == 96).Amount);
             Assert.AreEqual(0m, withCredit.Difference);
+
+            // O impresso (F4C-01): o que se preenche à mão fica guardado por período e entra na
+            // declaração e no ficheiro — reembolso, campos 14/15/18/19, quadro 06-A, quadro 20.
+            var from = new DateOnly(2026, 1, 1);
+            var to = new DateOnly(2026, 3, 31);
+            var manual = new VatDeclarationInputs(
+                WithinDeadline: false, FiledRecapitulativeStatement: true, NoOperations: false, OperationsAsAcquirer: null,
+                Fields: new Dictionary<int, decimal> { [95] = 50m, [18] = 300m, [19] = 69m, [102] = 1000m, [97] = 250m, [14] = 0m },
+                CertifiedAccountantTaxNumber: " 123456789 ");
+            var (saved, errors) = await service.SaveInputsAsync(userId, companyId, from, to, manual).ConfigureAwait(false);
+            Assert.AreEqual(0, errors.Count, string.Join(" | ", errors));
+            Assert.IsNotNull(saved);
+            Assert.AreEqual("123456789", saved.CertifiedAccountantTaxNumber);
+            Assert.IsFalse(saved.Fields!.ContainsKey(14), "Os zeros não ficam guardados.");
+            var invalid = await service.SaveInputsAsync(userId, companyId, from, to, manual with { Fields = new Dictionary<int, decimal> { [3] = 1m, [97] = -5m } }).ConfigureAwait(false);
+            Assert.AreEqual(2, invalid.Errors.Count, string.Join(" | ", invalid.Errors));
+            Assert.IsNull((await service.SaveInputsAsync(Guid.NewGuid(), companyId, from, to, manual).ConfigureAwait(false)).Saved);
+
+            var filled = await service.BuildAsync(userId, companyId, from, to, 200m, CancellationToken.None).ConfigureAwait(false);
+            VatFormField Filled(int number) => filled!.Fields.Single(field => field.Number == number);
+            Assert.AreEqual(300m, Filled(18).Amount);
+            Assert.IsFalse(Filled(18).Supported);
+            Assert.AreEqual(1900m, Filled(90).Amount, "O campo 18 entra no total da base.");
+            Assert.AreEqual(436m, Filled(92).Amount, "O campo 19 entra no imposto a favor do Estado.");
+            Assert.AreEqual(4m, Filled(94).Amount, "240 + 200 − 436.");
+            Assert.AreEqual(4m, Filled(95).Amount, "O reembolso pedido (50) fica limitado ao crédito (4).");
+            Assert.AreEqual(0m, Filled(96).Amount);
+            Assert.AreEqual(1000m, Filled(102).Amount);
+            Assert.AreEqual(1250m, Filled(106).Amount);
+            Assert.AreEqual("desenvolvimento", Filled(106).Column);
+            Assert.IsTrue(filled!.Warnings.Any(warning => warning.Contains("reembolso pedido", StringComparison.OrdinalIgnoreCase)));
+            Assert.IsFalse(filled.Warnings.Any(warning => warning.Contains("06-A", StringComparison.Ordinal)), "Com o 06-A preenchido, o aviso desaparece.");
+            Assert.IsTrue(filled.Inputs!.HasOperationsAsAcquirer);
+
+            var filledXml = System.Text.Encoding.UTF8.GetString(VatDeclarationXmlWriter.Write(
+                filled with { Fields = filled.Fields.Select(field => field.Number is 65 or 66 or 67 or 68 ? field with { Amount = 0m } : field).ToList() },
+                new VatDeclarationFiling("500584095", filled.Inputs.CertifiedAccountantTaxNumber, filled.Inputs.WithinDeadline, filled.Inputs.FiledRecapitulativeStatement)));
+            StringAssert.Contains(filledXml, "<temOperacoesAdquirenteComLiqImposto>01</temOperacoesAdquirenteComLiqImposto>");
+            StringAssert.Contains(filledXml, "<inversaoSujPassivoConstrucaoCivil>100000</inversaoSujPassivoConstrucaoCivil>");
+            StringAssert.Contains(filledXml, "<operacoesPTFeitasPorContribuintesUE>25000</operacoesPTFeitasPorContribuintesUE>");
+            StringAssert.Contains(filledXml, "<totalQuadro06A>125000</totalQuadro06A>");
+            StringAssert.Contains(filledXml, "<btImportDeclarante>30000</btImportDeclarante>");
+            StringAssert.Contains(filledXml, "<reembolso>400</reembolso>");
+            StringAssert.Contains(filledXml, "<nifCC>123456789</nifCC>");
+            StringAssert.Contains(filledXml, "<prazo>2</prazo>");
+            StringAssert.Contains(filledXml, "<apresentouDeclRecapitulativa>true</apresentouDeclRecapitulativa>");
+            Assert.IsFalse(filledXml.Contains("<semOperacoes>", StringComparison.Ordinal));
+            XsdValidation.ValidateIfConfigured(filledXml, "ACCOUNTINGAI_DPIVA_XSD", VatDeclarationXmlWriter.Namespace, "dpiva-06.xsd");
 
             Assert.IsNull(await service
                 .BuildAsync(Guid.NewGuid(), companyId, new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), null, CancellationToken.None)

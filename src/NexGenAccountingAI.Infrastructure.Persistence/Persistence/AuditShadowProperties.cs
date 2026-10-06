@@ -32,6 +32,7 @@ internal static class AuditShadowProperties
         typeof(UserCompanySettings),
         typeof(SavedAnalysis),
         typeof(FinancialMap),
+        typeof(VatDeclarationInput),
         typeof(ReportTemplate),
         typeof(ManagementReport),
         typeof(CompanyAiSettings),

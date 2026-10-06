@@ -58,8 +58,10 @@ public sealed class VatDeclarationFilingService(
             .Select(company => company.TaxRegistrationNumber)
             .SingleAsync(cancellationToken)
             .ConfigureAwait(false);
+        // O prazo, a recapitulativa e o contabilista vêm do que o utilizador preencheu no impresso (F4C-01).
+        var inputs = declaration.Inputs ?? NexGenAccountingAI.Application.Fiscal.VatDeclarationInputs.Empty;
         var content = VatDeclarationXmlWriter.Write(
-            declaration, new VatDeclarationFiling(taxNumber, null, request.WithinDeadline, request.FiledRecapitulativeStatement));
+            declaration, new VatDeclarationFiling(taxNumber, inputs.CertifiedAccountantTaxNumber, inputs.WithinDeadline, inputs.FiledRecapitulativeStatement));
         return (content, $"dpiva-{taxNumber}-{request.To.Year}-{declaration.Period}.xml");
     }
 
