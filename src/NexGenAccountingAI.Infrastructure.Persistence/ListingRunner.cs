@@ -36,6 +36,9 @@ internal sealed class ListingBinding<TRow>
 
     public required Func<TRow, ListingRowLink> Link { get; init; }
 
+    /// <summary>O valor que cada linha acrescenta ao saldo acumulado (o débito menos o crédito, o valor do movimento); sem ele a origem não tem a coluna.</summary>
+    public Expression<Func<TRow, decimal>>? RunningDelta { get; init; }
+
     /// <summary>Linhas escondidas, salvo se a definição filtrar pelo campo indicado (por exemplo, os anulados).</summary>
     public (string Field, Expression<Func<TRow, bool>> Visible)? HiddenUnlessFiltered { get; init; }
 }
@@ -47,6 +50,10 @@ internal interface IListingRunner
 
     Task<(IReadOnlyList<ListingColumn> Columns, IReadOnlyList<ListingRow> Rows, bool Truncated)> ExportAsync(
         Guid companyId, ListingDefinition definition, IReadOnlyDictionary<string, string>? parameters, DateOnly today, CancellationToken cancellationToken);
+
+    Task<ListingPivot> PivotAsync(
+        Guid companyId, ListingDefinition definition, IReadOnlyDictionary<string, string>? parameters, string rowField, string columnField, string measure,
+        DateOnly today, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -131,12 +138,21 @@ internal sealed class ListingRunner<TRow>(ListingBinding<TRow> binding) : IListi
             return new ListingResult("groups", columns, groupBy, groups, [], totalRows, totals, []);
         }
 
-        var rows = await Sorted(query, definition.Sort)
-            .Skip(Math.Max(0, request.Skip))
+        var sorted = Sorted(query, definition.Sort);
+        var skip = Math.Max(0, request.Skip);
+        var rows = await sorted
+            .Skip(skip)
             .Take(Math.Clamp(request.Take, 1, MaxPageSize))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-        return new ListingResult("rows", columns, groupBy, [], Project(rows, definition.Columns), totalRows, totals, []);
+        // O saldo acumulado continua do que ficou nas páginas anteriores.
+        var opening = 0m;
+        if (skip > 0 && definition.Columns.Contains(ListingCatalog.RunningBalance) && binding.RunningDelta is { } delta)
+        {
+            opening = await sorted.Take(skip).Select(delta).SumAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return new ListingResult("rows", columns, groupBy, [], Project(rows, definition.Columns, opening), totalRows, totals, []);
     }
 
     public async Task<(IReadOnlyList<ListingColumn> Columns, IReadOnlyList<ListingRow> Rows, bool Truncated)> ExportAsync(
@@ -147,7 +163,90 @@ internal sealed class ListingRunner<TRow>(ListingBinding<TRow> binding) : IListi
         var sort = (definition.GroupBy ?? []).Select(key => new ListingSort(key)).Concat(definition.Sort ?? []).ToList();
         var rows = await Sorted(query, sort).Take(MaxExportRows + 1).ToListAsync(cancellationToken).ConfigureAwait(false);
         var columns = Columns(ListingCatalog.Source(definition.Source)!, definition.Columns);
-        return (columns, Project(rows.Take(MaxExportRows).ToList(), definition.Columns), rows.Count > MaxExportRows);
+        return (columns, Project(rows.Take(MaxExportRows).ToList(), definition.Columns, 0m), rows.Count > MaxExportRows);
+    }
+
+    /// <summary>O máximo de linhas e de colunas de uma tabela cruzada.</summary>
+    public const int MaxPivotRows = 500, MaxPivotColumns = 40;
+
+    private const string Missing = "(sem valor)";
+
+    public async Task<ListingPivot> PivotAsync(
+        Guid companyId, ListingDefinition definition, IReadOnlyDictionary<string, string>? parameters, string rowField, string columnField, string measure,
+        DateOnly today, CancellationToken cancellationToken)
+    {
+        var source = ListingCatalog.Source(definition.Source)!;
+        if (source.Field(rowField) is not { Groupable: true } || source.Field(columnField) is not { Groupable: true })
+        {
+            throw new ArgumentException("As linhas e as colunas da tabela cruzada têm de ser campos de agrupamento.");
+        }
+
+        if (rowField == columnField)
+        {
+            throw new ArgumentException("As linhas e as colunas da tabela cruzada não podem ser o mesmo campo.");
+        }
+
+        var measureIndex = binding.Sums.ToList().FindIndex(item => item.Key == measure);
+        var isCount = measure == "contagem";
+        var isDerived = !isCount && measureIndex < 0 && source.Field(measure) is { Measure: true };
+        if (!isCount && measureIndex < 0 && !isDerived)
+        {
+            throw new ArgumentException($"A medida «{measure}» não existe nesta origem.");
+        }
+
+        var query = Filtered(companyId, definition, new ListingRequest(parameters), today);
+        // A chave composta junta os dois campos; o separador não aparece em texto normal.
+        var rowKey = binding.GroupKeys[rowField];
+        var columnKey = binding.GroupKeys[columnField];
+        var parameter = rowKey.Parameters[0];
+        var concat = typeof(string).GetMethod(nameof(string.Concat), [typeof(string), typeof(string), typeof(string)])!;
+        Expression Fill(Expression body) => Expression.Coalesce(body, Expression.Constant(Missing));
+        var composite = Expression.Lambda<Func<TRow, string?>>(
+            Expression.Call(
+                concat,
+                Fill(rowKey.Body),
+                Expression.Constant("\u001f"),
+                Fill(new ParameterReplacer(columnKey.Parameters[0], parameter).Visit(columnKey.Body)!)),
+            parameter);
+
+        var cells = await Aggregates(query, composite).ToListAsync(cancellationToken).ConfigureAwait(false);
+        var rowNumeric = source.Field(rowField) is { Type: ListingFieldType.Integer };
+        var columnNumeric = source.Field(columnField) is { Type: ListingFieldType.Integer };
+
+        List<string> Distinct(IEnumerable<string> keys, bool numeric) => keys
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(key => key == Missing ? 1 : 0)
+            .ThenBy(key => numeric && int.TryParse(key, out var number) ? number : 0)
+            .ThenBy(key => key, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        var parsed = cells.Select(cell => (Parts: (cell.Key ?? string.Empty).Split('\u001f'), Cell: cell)).ToList();
+        var rows = Distinct(parsed.Select(item => item.Parts[0]), rowNumeric);
+        var columns = Distinct(parsed.Select(item => item.Parts[1]), columnNumeric);
+        if (rows.Count > MaxPivotRows)
+        {
+            throw new ArgumentException($"A tabela cruzada teria {rows.Count} linhas (o máximo é {MaxPivotRows}): acrescente filtros.");
+        }
+
+        if (columns.Count > MaxPivotColumns)
+        {
+            throw new ArgumentException($"A tabela cruzada teria {columns.Count} colunas (o máximo é {MaxPivotColumns}): acrescente filtros.");
+        }
+
+        var values = rows.Select(_ => new decimal[columns.Count]).ToList();
+        foreach (var (parts, cell) in parsed)
+        {
+            var amount = isCount ? cell.Count : Measures(cell)[measure];
+            values[rows.IndexOf(parts[0])][columns.IndexOf(parts[1])] += amount;
+        }
+
+        var rowTotals = values.Select(row => row.Sum()).ToList();
+        var columnTotals = Enumerable.Range(0, columns.Count).Select(index => values.Sum(row => row[index])).ToList();
+        ListingPivotHeader Header(string key) => new(key == Missing ? null : key, key);
+        return new ListingPivot(
+            rowField, columnField, measure, isCount ? "Número de linhas" : source.Field(measure)!.Label,
+            rows.Select(Header).ToList(), columns.Select(Header).ToList(),
+            values.Select(row => (IReadOnlyList<decimal>)row).ToList(), rowTotals, columnTotals, rowTotals.Sum());
     }
 
     private static List<ListingColumn> Columns(ListingSource source, IReadOnlyList<string> keys) =>
@@ -346,19 +445,34 @@ internal sealed class ListingRunner<TRow>(ListingBinding<TRow> binding) : IListi
         return (IQueryable<TRow>)method.Invoke(null, [query, selector])!;
     }
 
-    private List<ListingRow> Project(IReadOnlyList<TRow> rows, IReadOnlyList<string> columns)
+    private List<ListingRow> Project(IReadOnlyList<TRow> rows, IReadOnlyList<string> columns, decimal opening)
     {
         var readers = columns.Select(key =>
         {
+            if (key == ListingCatalog.RunningBalance)
+            {
+                return null;
+            }
+
             var selector = binding.Values[key];
             var boxed = Expression.Lambda<Func<TRow, object?>>(Expression.Convert(selector.Body, typeof(object)), selector.Parameters[0]).Compile();
-            return (Func<TRow, object?>)(row => boxed(row) switch
+            return (Func<TRow, object?>?)(row => boxed(row) switch
             {
                 DateOnly date => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 var other => other,
             });
         }).ToList();
-        return rows.Select(row => new ListingRow([.. readers.Select(read => read(row))], binding.Link(row))).ToList();
+        var delta = binding.RunningDelta?.Compile();
+        var running = opening;
+        return rows.Select(row =>
+        {
+            if (delta is not null)
+            {
+                running += delta(row);
+            }
+
+            return new ListingRow([.. readers.Select(read => read is null ? (object?)running : read(row))], binding.Link(row));
+        }).ToList();
     }
 
     /// <summary>Troca o parâmetro de uma expressão por outro, para juntar condições numa só.</summary>

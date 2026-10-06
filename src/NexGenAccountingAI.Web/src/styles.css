@@ -874,3 +874,13 @@ input.atf-rate { width: 90px; font: inherit; font-size: 12px; font-weight: 700; 
 .atf-table.atf-q07 tr.atf-band td { text-align: center; width: auto; }
 .atf-q07 .atf-cell { flex-wrap: wrap; justify-content: flex-end; }
 .atf-q07 .atf-suggest { flex-basis: 100%; margin: 3px 0 0; text-align: center; }
+
+/* Formatação condicional das listagens (F4D-04): só dá cor, não muda o valor. */
+td.tone-danger { color: #9a2c18; background: #fbe9e5; }
+td.tone-warning { color: #7a5200; background: #fff3d6; }
+td.tone-success { color: #1d6b3a; background: #e3f4ea; }
+td.tone-muted { color: #5b6b70; background: #eef2f3; }
+html[data-theme='dark'] td.tone-danger { color: #f6b3a3; background: #4a2119; }
+html[data-theme='dark'] td.tone-warning { color: #f3d18a; background: #463614; }
+html[data-theme='dark'] td.tone-success { color: #9bdcb3; background: #173a26; }
+html[data-theme='dark'] td.tone-muted { color: #b8c4c8; background: #29353a; }

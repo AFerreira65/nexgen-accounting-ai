@@ -1,12 +1,15 @@
 import { ArrowLeft, ChevronDown, ChevronRight, Copy, Database, Download, Pencil, Play, Plus, Save, Star, Trash2, X } from 'lucide-react'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Chart, type ChartTone } from '../app/charts'
+import { csvFilename, downloadCsv, toCsv } from '../app/csv'
+import { ExportButtons } from '../app/ExportButtons'
 import { signalLoadFailure } from '../app/loadFailure'
 import {
-  DATE_TOKEN_LABELS, MAX_GROUP_LEVELS, OPERATOR_LABELS, PARAMETER_TYPE_LABELS, SCOPE_LABELS,
+  COUNT_MEASURE, DATE_TOKEN_LABELS, FORMAT_OPERATORS, MAX_GROUP_LEVELS, OPERATOR_LABELS, PARAMETER_TYPE_LABELS, SCOPE_LABELS, TONE_LABELS, toneOf,
   cloneDefinition, emptyDefinition, newCondition,
   type CatalogField, type CatalogSource, type ListingCatalog, type ListingColumn, type ListingDefinition, type ListingFilterGroup, type ListingTemplate,
-  type ListingParameter, type ListingResult, type ListingRow, type ListingScope, type SavedListing,
+  type ListingFormatRule, type ListingFormatTone, type ListingParameter, type ListingPivot, type ListingResult, type ListingRow, type ListingScope, type SavedListing,
 } from '../app/listingLabels'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -48,6 +51,8 @@ export function ListingPage() {
   const [levels, setLevels] = useState<Record<string, ListingResult>>({})
   const [open, setOpen] = useState<Set<string>>(new Set())
   const [running, setRunning] = useState(false)
+  const [pivotSpec, setPivotSpec] = useState({ rowField: '', columnField: '', measure: '' })
+  const [pivot, setPivot] = useState<ListingPivot | null>(null)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -126,6 +131,29 @@ export function ListingPage() {
     if (path.length === 0) setResult(merged); else setLevels((existing) => ({ ...existing, [key]: merged }))
   }
 
+  /** A tabela cruzada: os filtros e os parâmetros da listagem, com as linhas e colunas escolhidas aqui. */
+  async function runPivot() {
+    if (!definition || !sourceInfo) return
+    const groupable = sourceInfo.fields.filter((field) => field.groupable)
+    const measures = sourceInfo.fields.filter((field) => field.measure)
+    const spec = {
+      rowField: pivotSpec.rowField || groupable[0]?.key || '',
+      columnField: pivotSpec.columnField || groupable.find((field) => field.key !== (pivotSpec.rowField || groupable[0]?.key))?.key || '',
+      measure: pivotSpec.measure || measures[0]?.key || COUNT_MEASURE,
+    }
+    setError(''); setPivot(null)
+    const response = await post('pivot', { definition, parameters: values, ...spec })
+    if (!response.ok) { setError(await refusal(response, 'Não foi possível gerar a tabela cruzada.')); return }
+    setPivot(await response.json() as ListingPivot)
+  }
+
+  function exportPivot() {
+    if (!pivot) return
+    const header = [fieldOf(pivot.rowField)?.label ?? pivot.rowField, ...pivot.columns.map((column) => column.label), 'Total']
+    const body = pivot.rows.map((row, index) => [row.label, ...pivot.values[index], pivot.rowTotals[index]])
+    downloadCsv(csvFilename('tabela-cruzada', activeCompany.legalName), toCsv([header, ...body, ['Total', ...pivot.columnTotals, pivot.grandTotal]]))
+  }
+
   async function download(kind: 'xlsx' | 'pdf') {
     if (!definition) return
     setError('')
@@ -194,7 +222,7 @@ export function ListingPage() {
       </Fragment>
     })}
     {level.kind === 'rows' && level.rows.map((row, index) => <tr key={`${JSON.stringify(path)}-${index}`}>
-      {level.columns.map((column, position) => <td key={column.key} className={column.type === 'money' || column.type === 'integer' ? 'numeric' : ''} style={position === 0 ? { paddingLeft: depth * 16 } : undefined}>
+      {level.columns.map((column, position) => <td key={column.key} className={[column.type === 'money' || column.type === 'integer' ? 'numeric' : '', toneOf(definition?.formatting, column.key, row.cells[position]) ? `tone-${toneOf(definition?.formatting, column.key, row.cells[position])}` : ''].filter(Boolean).join(' ')} style={position === 0 ? { paddingLeft: depth * 16 } : undefined}>
         {linkCell(column, row, format(column, row.cells[position]))}
       </td>)}
     </tr>)}
@@ -294,6 +322,9 @@ export function ListingPage() {
         ? <GroupEditor group={definition.filter} fields={sourceInfo.fields} parameters={parameters} tokens={catalog?.dateTokens ?? []} onChange={(filter) => change({ filter })} onRemove={() => change({ filter: null })} depth={1} />
         : <button type="button" className="button button-secondary" onClick={() => change({ filter: { op: 'and', conditions: [], groups: [] } })}><Plus size={14} /> Filtrar</button>}
 
+      <h3>Formatação condicional</h3>
+      <FormatEditor rules={definition.formatting ?? []} columns={definition.columns.map((key) => fieldOf(key)).filter((field): field is CatalogField => !!field && field.type !== 'text')} onChange={(next) => change({ formatting: next })} />
+
       <h3>Parâmetros pedidos ao abrir</h3>
       <ParameterEditor parameters={parameters} tokens={catalog?.dateTokens ?? []} onChange={(next) => change({ parameters: next })} />
 
@@ -302,6 +333,56 @@ export function ListingPage() {
         {saved && <button type="button" className="button button-secondary" disabled={!name.trim()} onClick={() => void save(true)}><Copy size={15} /> Guardar cópia</button>}
         {saved && saved.mine && <button type="button" className="button button-secondary" onClick={() => void remove()}><Trash2 size={15} /> Apagar</button>}
       </div>
+    </section>}
+
+    {definition && sourceInfo && <section className="panel no-print" aria-label="Tabela cruzada">
+      <div className="panel-heading"><h2>Tabela cruzada</h2></div>
+      <p className="statement-note">Cruza dois campos de agrupamento: um nas linhas e outro nas colunas, somando uma medida. Usa os filtros e os parâmetros desta listagem.</p>
+      <div className="filterbar">
+        <label className="inline-check">Linhas
+          <select aria-label="Campo das linhas" value={pivotSpec.rowField} onChange={(event) => setPivotSpec({ ...pivotSpec, rowField: event.target.value })}>
+            <option value="">(o primeiro)</option>
+            {sourceInfo.fields.filter((field) => field.groupable).map((field) => <option key={field.key} value={field.key}>{field.label}</option>)}
+          </select>
+        </label>
+        <label className="inline-check">Colunas
+          <select aria-label="Campo das colunas" value={pivotSpec.columnField} onChange={(event) => setPivotSpec({ ...pivotSpec, columnField: event.target.value })}>
+            <option value="">(o segundo)</option>
+            {sourceInfo.fields.filter((field) => field.groupable).map((field) => <option key={field.key} value={field.key}>{field.label}</option>)}
+          </select>
+        </label>
+        <label className="inline-check">Medida
+          <select aria-label="Medida da tabela cruzada" value={pivotSpec.measure} onChange={(event) => setPivotSpec({ ...pivotSpec, measure: event.target.value })}>
+            <option value="">(a primeira)</option>
+            {sourceInfo.fields.filter((field) => field.measure).map((field) => <option key={field.key} value={field.key}>{field.label}</option>)}
+            <option value={COUNT_MEASURE}>Número de linhas</option>
+          </select>
+        </label>
+        <button type="button" className="button button-primary" onClick={() => void runPivot()}>Gerar tabela cruzada</button>
+        <ExportButtons run={exportPivot} disabled={!pivot} />
+      </div>
+      {pivot && <>
+        <div className="table-wrap"><table className="dense-table" aria-label="Resultado da tabela cruzada">
+          <thead><tr><th>{fieldOf(pivot.rowField)?.label} \ {fieldOf(pivot.columnField)?.label}</th>{pivot.columns.map((column) => <th key={column.label} className="numeric">{column.label}</th>)}<th className="numeric">Total</th></tr></thead>
+          <tbody>{pivot.rows.map((row, index) => <tr key={row.label}>
+            <td>{row.label}</td>
+            {pivot.values[index].map((value, position) => <td key={position} className="numeric">{pivot.measure === COUNT_MEASURE ? value : amount.format(value)}</td>)}
+            <td className="numeric"><strong>{pivot.measure === COUNT_MEASURE ? pivot.rowTotals[index] : amount.format(pivot.rowTotals[index])}</strong></td>
+          </tr>)}</tbody>
+          <tfoot><tr><td><strong>Total</strong></td>
+            {pivot.columnTotals.map((value, position) => <td key={position} className="numeric"><strong>{pivot.measure === COUNT_MEASURE ? value : amount.format(value)}</strong></td>)}
+            <td className="numeric"><strong>{pivot.measure === COUNT_MEASURE ? pivot.grandTotal : amount.format(pivot.grandTotal)}</strong></td></tr></tfoot>
+        </table></div>
+        {pivot.columns.length > 1 && <Chart
+          title={`${pivot.measureLabel} por ${fieldOf(pivot.columnField)?.label ?? ''}`}
+          labels={pivot.columns.map((column) => column.label)}
+          series={pivot.rows
+            .map((row, index) => ({ row, index, weight: Math.abs(pivot.rowTotals[index]) }))
+            .sort((a, b) => b.weight - a.weight)
+            .slice(0, 5)
+            .map((item, position) => ({ name: item.row.label, kind: 'bar' as const, tone: (['primary', 'accent', 'warning', 'danger', 'muted'] as ChartTone[])[position], values: pivot.values[item.index] }))}
+          format={(value) => pivot.measure === COUNT_MEASURE ? String(value) : amount.format(value)} />}
+      </>}
     </section>}
 
     {result && <section className="panel" aria-label="Resultado">
@@ -403,5 +484,25 @@ function ParameterEditor({ parameters, tokens, onChange }: { parameters: Listing
       <button type="button" className="icon-button" aria-label={`Tirar o parâmetro ${index + 1}`} onClick={() => onChange(parameters.filter((_, position) => position !== index))}><X size={14} /></button>
     </div>)}
     {parameters.length < 10 && <button type="button" className="button button-secondary" onClick={() => onChange([...parameters, { name: `p${parameters.length + 1}`, label: '', type: 'date', default: '' }])}><Plus size={14} /> Parâmetro</button>}
+  </div>
+}
+
+function FormatEditor({ rules, columns, onChange }: { rules: ListingFormatRule[]; columns: CatalogField[]; onChange: (rules: ListingFormatRule[]) => void }) {
+  const update = (index: number, patch: Partial<ListingFormatRule>) => onChange(rules.map((entry, position) => position === index ? { ...entry, ...patch } : entry))
+  return <div>
+    {rules.map((rule, index) => <div key={index} className="filterbar">
+      <select aria-label={`Coluna da regra ${index + 1}`} value={rule.column} onChange={(event) => update(index, { column: event.target.value })}>
+        {columns.map((field) => <option key={field.key} value={field.key}>{field.label}</option>)}
+      </select>
+      <select aria-label={`Operador da regra ${index + 1}`} value={rule.operator} onChange={(event) => update(index, { operator: event.target.value })}>
+        {FORMAT_OPERATORS.map((operator) => <option key={operator} value={operator}>{OPERATOR_LABELS[operator]}</option>)}
+      </select>
+      <input aria-label={`Valor da regra ${index + 1}`} value={rule.value} onChange={(event) => update(index, { value: event.target.value })} />
+      <select aria-label={`Cor da regra ${index + 1}`} value={rule.tone} onChange={(event) => update(index, { tone: event.target.value as ListingFormatTone })}>
+        {(Object.keys(TONE_LABELS) as ListingFormatTone[]).map((tone) => <option key={tone} value={tone}>{TONE_LABELS[tone]}</option>)}
+      </select>
+      <button type="button" className="icon-button" aria-label={`Tirar a regra ${index + 1}`} onClick={() => onChange(rules.filter((_, position) => position !== index))}><X size={14} /></button>
+    </div>)}
+    {rules.length < 10 && columns.length > 0 && <button type="button" className="button button-secondary" onClick={() => onChange([...rules, { column: columns[0].key, operator: 'lt', value: '0', tone: 'danger' }])}><Plus size={14} /> Regra</button>}
   </div>
 }

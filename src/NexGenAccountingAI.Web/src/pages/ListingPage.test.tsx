@@ -51,6 +51,14 @@ function serve(calls: { url: string; body?: unknown }[]) {
     calls.push({ url: `${init?.method ?? 'GET'} ${url}`, body })
     if (url.endsWith('/listings/catalog')) return Promise.resolve(json(catalog))
     if (url.endsWith('/listings/templates')) return Promise.resolve(json(templates))
+    if (url.endsWith('/listings/pivot')) {
+      return Promise.resolve(json({
+        rowField: 'conta', columnField: 'terceiro', measure: 'debito', measureLabel: 'Débito',
+        rows: [{ key: '1201', label: '1201' }, { key: '6221', label: '6221' }],
+        columns: [{ key: 'A', label: 'Cliente A' }, { key: null, label: '(sem valor)' }],
+        values: [[100, 50], [0, 300]], rowTotals: [150, 300], columnTotals: [100, 350], grandTotal: 450,
+      }))
+    }
     if (url.endsWith('/listings') && !init?.method) return Promise.resolve(json(saved))
     if (url.endsWith('/listings') && init?.method === 'POST') return Promise.resolve(json({ ...saved[0], id: 'l2' }))
     if (url.endsWith('/listings/run')) {
@@ -156,5 +164,43 @@ describe('listagens à medida', () => {
     expect(screen.getByLabelText('Débito')).toBeChecked()
     fireEvent.change(origin, { target: { value: 'compras' } })
     await waitFor(() => expect(screen.queryByLabelText('Débito')).not.toBeInTheDocument())
+  })
+
+  it('gera a tabela cruzada com os filtros da listagem e mostra os totais', async () => {
+    const calls: { url: string; body?: unknown }[] = []
+    vi.stubGlobal('fetch', serve(calls))
+    renderAt('/listagens/l1')
+    await screen.findByRole('heading', { name: 'Vendas por conta' })
+    fireEvent.change(screen.getByLabelText('Campo das linhas'), { target: { value: 'conta' } })
+    fireEvent.change(screen.getByLabelText('Campo das colunas'), { target: { value: 'terceiro' } })
+    fireEvent.change(screen.getByLabelText('Medida da tabela cruzada'), { target: { value: 'debito' } })
+    fireEvent.click(screen.getByRole('button', { name: /Gerar tabela cruzada/ }))
+    const table = await screen.findByRole('table', { name: 'Resultado da tabela cruzada' })
+    expect(table).toHaveTextContent('Cliente A')
+    expect(table).toHaveTextContent('450,00')
+    const body = calls.find((call) => call.url.endsWith('/listings/pivot'))!.body as { rowField: string; columnField: string; measure: string; definition: { filter: unknown } }
+    expect(body).toMatchObject({ rowField: 'conta', columnField: 'terceiro', measure: 'debito' })
+    expect(body.definition.filter).toBeTruthy()
+  })
+
+  it('pinta as células que cumprem uma regra de formatação, sem mudar o valor', async () => {
+    const withRule = { ...saved[0], definition: { ...definition, groupBy: [], formatting: [{ column: 'credito', operator: 'gt', value: '700', tone: 'danger' }] } }
+    const base = serve([])
+    vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+      if (url.endsWith('/listings') && !init?.method) return Promise.resolve(json([withRule]))
+      if (url.endsWith('/listings/run')) {
+        return Promise.resolve(json({
+          kind: 'rows', columns, groupBy: [], groups: [], totalRows: 2, totals: { debito: 0, credito: 1500, saldo: -1500 }, warnings: [],
+          rows: [{ cells: ['7211', 0, 1000], link: { entryReference: 'L-1', partyId: null } }, { cells: ['7211', 0, 500], link: { entryReference: 'L-2', partyId: null } }],
+        }))
+      }
+      return base(url, init)
+    }))
+    renderAt('/listagens/l1')
+    await screen.findByRole('heading', { name: 'Vendas por conta' })
+    fireEvent.click(screen.getByRole('button', { name: /Executar/ }))
+    const high = await screen.findByText('1 000,00', { selector: 'td' })
+    expect(high).toHaveClass('tone-danger')
+    expect(screen.getByText('500,00', { selector: 'td' })).not.toHaveClass('tone-danger')
   })
 })

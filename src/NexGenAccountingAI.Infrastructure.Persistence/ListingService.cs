@@ -159,6 +159,20 @@ public sealed class ListingService(AccountingDbContext context, ListingEngine en
         return await engine.ExportAsync(companyId, definition, parameters, Today, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Uma tabela cruzada sobre a definição. <c>null</c> sem acesso à empresa.</summary>
+    /// <exception cref="ArgumentException">A definição ou o pedido não são válidos (mensagem em português).</exception>
+    public async Task<ListingPivot?> PivotAsync(
+        Guid userId, Guid companyId, ListingDefinition definition, IReadOnlyDictionary<string, string>? parameters,
+        string rowField, string columnField, string measure, CancellationToken cancellationToken = default)
+    {
+        if (await FirmOfAsync(userId, companyId, cancellationToken).ConfigureAwait(false) is null)
+        {
+            return null;
+        }
+
+        return await engine.PivotAsync(companyId, definition, parameters, rowField, columnField, measure, Today, cancellationToken).ConfigureAwait(false);
+    }
+
     private static IReadOnlyList<string> Validate(string scope, string name, ListingDefinition? definition, out ListingScope parsedScope)
     {
         var errors = new List<string>();

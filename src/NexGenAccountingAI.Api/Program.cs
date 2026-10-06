@@ -1810,6 +1810,26 @@ if (applicationEndpointsAvailable)
     })
         .WithMetadata(new ViewerAllowedAttribute("Só lê e calcula; não altera dados."));
 
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/pivot", async (
+        Guid userId, Guid companyId, PivotListingRequest body, ListingService listings, CancellationToken cancellationToken) =>
+    {
+        if (body?.Definition is null || string.IsNullOrWhiteSpace(body.RowField) || string.IsNullOrWhiteSpace(body.ColumnField) || string.IsNullOrWhiteSpace(body.Measure))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = ["Indique a definição, as linhas, as colunas e a medida."] });
+        }
+
+        try
+        {
+            var pivot = await listings.PivotAsync(userId, companyId, body.Definition, body.Parameters, body.RowField, body.ColumnField, body.Measure, cancellationToken).ConfigureAwait(false);
+            return pivot is null ? Results.NotFound() : Results.Ok(pivot);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = [exception.Message] });
+        }
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Só lê e calcula; não altera dados."));
+
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/export", async (
         Guid userId, Guid companyId, string? format, ExportListingRequest body, ListingService listings, AccountingDbContext context, CancellationToken cancellationToken) =>
     {
@@ -5636,6 +5656,13 @@ public sealed record RunListingRequest(
     List<string?>? GroupPath,
     int? Skip,
     int? Take);
+
+public sealed record PivotListingRequest(
+    NexGenAccountingAI.Application.Listings.ListingDefinition? Definition,
+    Dictionary<string, string>? Parameters,
+    string? RowField,
+    string? ColumnField,
+    string? Measure);
 
 public sealed record ExportListingRequest(NexGenAccountingAI.Application.Listings.ListingDefinition? Definition, Dictionary<string, string>? Parameters, string? Title);
 

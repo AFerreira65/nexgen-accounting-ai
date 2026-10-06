@@ -200,6 +200,28 @@ public sealed class ListingSourcesTests
             var perParty = await Run(ListingTemplates.Find("saldo-por-terceiro")!.Definition).ConfigureAwait(false);
             Assert.AreEqual("groups", perParty.Kind);
 
+            // Tabela cruzada: contas nas linhas e meses nas colunas, a somar o débito; os filtros da definição valem.
+            var pivot = await engine.PivotAsync(companyId, new ListingDefinition("saldos", ["conta"]), null, "conta", "mes", "debito", Today, none).ConfigureAwait(false);
+            CollectionAssert.AreEqual(new[] { "1201", "7211" }, pivot.Rows.Select(row => row.Label).ToArray());
+            CollectionAssert.AreEqual(new[] { "1", "2" }, pivot.Columns.Select(column => column.Label).ToArray());
+            CollectionAssert.AreEqual(new[] { 150m, 200m }, pivot.Values[0].ToArray());
+            CollectionAssert.AreEqual(new[] { 0m, 0m }, pivot.Values[1].ToArray());
+            CollectionAssert.AreEqual(new[] { 350m, 0m }, pivot.RowTotals.ToArray());
+            CollectionAssert.AreEqual(new[] { 150m, 200m }, pivot.ColumnTotals.ToArray());
+            Assert.AreEqual(350m, pivot.GrandTotal);
+            Assert.AreEqual("Débito", pivot.MeasureLabel);
+            var net = await engine.PivotAsync(companyId, new ListingDefinition("saldos", ["conta"]), null, "classe", "ano", "saldo", Today, none).ConfigureAwait(false);
+            CollectionAssert.AreEqual(new[] { 350m, -350m }, net.Values.Select(row => row[0]).ToArray(), "A medida derivada (saldo) também se cruza.");
+            var counted = await engine.PivotAsync(
+                companyId, new ListingDefinition("vendas", ["documento"], new ListingFilterGroup("and", [new ListingCondition("data", "ge", "2026-01-01")])), null, "cliente", "contabilizado", "contagem", Today, none).ConfigureAwait(false);
+            Assert.AreEqual(2m, counted.GrandTotal);
+            CollectionAssert.AreEqual(new[] { "Não", "Sim" }, counted.Columns.Select(column => column.Label).ToArray());
+            var noValue = await engine.PivotAsync(companyId, new ListingDefinition("ativos", ["codigo"]), null, "conta", "estado", "valorAquisicao", Today, none).ConfigureAwait(false);
+            Assert.IsTrue(noValue.Rows.Any(row => row.Key is null && row.Label == "(sem valor)"), "O ativo sem conta fica na linha «sem valor».");
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => engine.PivotAsync(companyId, new ListingDefinition("saldos", ["conta"]), null, "conta", "conta", "debito", Today, none)).ConfigureAwait(false);
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => engine.PivotAsync(companyId, new ListingDefinition("saldos", ["conta"]), null, "descricao", "mes", "debito", Today, none)).ConfigureAwait(false);
+            await Assert.ThrowsExactlyAsync<ArgumentException>(() => engine.PivotAsync(companyId, new ListingDefinition("saldos", ["conta"]), null, "conta", "mes", "total", Today, none)).ConfigureAwait(false);
+
             // Exportar vale para todas as origens.
             foreach (var source in ListingCatalog.Sources)
             {

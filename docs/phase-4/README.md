@@ -478,9 +478,24 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   guardam-se como listagem própria. Todos são validados e corridos pelo teste.
 - O desenhador passou a ter o seletor de origem (numa listagem nova).
 
+### F4D-04 — Tabela cruzada, gráfico, saldo acumulado e formatação condicional
+
+- **Tabela cruzada** (`listings/pivot`): dois campos de agrupamento (linhas e colunas) e uma medida
+  (qualquer soma da origem, o saldo derivado, ou o número de linhas). Usa os filtros e os parâmetros
+  da listagem; o servidor agrupa por uma chave composta, até 500 linhas e 40 colunas (acima disso
+  pede filtros). A página mostra a matriz com os totais, um gráfico das cinco linhas maiores e
+  exporta para CSV, Excel e PDF.
+- **Saldo acumulado** (linhas de lançamentos e movimentos bancários): soma o débito menos o crédito
+  (ou o valor) pela ordem da listagem e continua de página para página, calculando o que ficou nas
+  anteriores na base de dados. O extrato de uma conta usa-o.
+- **Formatação condicional**: até dez regras por listagem (coluna numérica ou de data, comparação,
+  valor e tom). Só dá cor à célula; o valor não muda. Validada no servidor, aplicada no browser.
+- Testes: pivot sobre saldos, vendas e ativos (incluindo medidas derivadas, contagem e o grupo
+  «sem valor»), pedidos inválidos, saldo acumulado entre páginas, regras de formatação válidas e
+  inválidas, e o painel e a coloração no browser.
+
 - **Ainda por fazer na 4D** (secção 7.2 do documento de mercado): mais origens (terceiros e
-  pendentes, IVA, obrigações); coluna de saldo acumulado; colunas calculadas; tabela cruzada; gráfico e
-  indicador com semáforo para o painel; formatação condicional; modelos guiados; análise presa a
+  pendentes, IVA, obrigações); colunas calculadas; indicador com semáforo para o painel; análise presa a
   um ecrã; subscrição por email; modo especialista; criar a listagem a pedir em português com a IA.
   Não visto no browser.
 

@@ -191,6 +191,26 @@ public sealed class ListingEngineTests
             var secondPage = await Run(sorted, new ListingRequest(Skip: 2, Take: 2)).ConfigureAwait(false);
             CollectionAssert.AreEqual(new object[] { 300m, 0m }, secondPage.Rows.Select(row => row.Cells[0]).ToArray());
 
+            // Saldo acumulado: soma débito menos crédito pela ordem da listagem e continua de página para página.
+            var running = new ListingDefinition("linhas", ["lancamento", "debito", "credito", "saldoAcumulado"], Sort: [new ListingSort("data"), new ListingSort("lancamento")]);
+            var pageOne = await Run(running, new ListingRequest(Skip: 0, Take: 2)).ConfigureAwait(false);
+            Assert.AreEqual(0m, pageOne.Rows[1].Cells[3], "Depois das duas linhas do primeiro lançamento o saldo volta a zero.");
+            var pageTwo = await Run(running, new ListingRequest(Skip: 2, Take: 2)).ConfigureAwait(false);
+            Assert.AreEqual(500m, Math.Abs((decimal)pageTwo.Rows[0].Cells[3]!), "A segunda página continua do saldo da primeira.");
+            Assert.AreEqual(0m, pageTwo.Rows[1].Cells[3]);
+            var runningRows = (await Run(running).ConfigureAwait(false)).Rows;
+            Assert.AreEqual(0m, runningRows[^1].Cells[3]);
+            Assert.AreEqual(0, ListingCatalog.Validate(running).Count);
+            Assert.IsTrue(ListingCatalog.Validate(running with { Filter = new ListingFilterGroup("and", [new ListingCondition("saldoAcumulado", "gt", "0")]) }).Count > 0, "O saldo acumulado não se filtra.");
+            Assert.IsTrue(ListingCatalog.Validate(running with { Sort = [new ListingSort("saldoAcumulado")] }).Count > 0, "Nem se ordena.");
+
+            // Formatação condicional: só para colunas numéricas da listagem, com um tom que exista.
+            Assert.AreEqual(0, ListingCatalog.Validate(running with { Formatting = [new ListingFormatRule("saldoAcumulado", "lt", "0", "danger")] }).Count);
+            Assert.IsTrue(ListingCatalog.Validate(running with { Formatting = [new ListingFormatRule("conta", "lt", "0", "danger")] }).Count > 0, "Coluna fora da listagem.");
+            Assert.IsTrue(ListingCatalog.Validate(running with { Formatting = [new ListingFormatRule("debito", "contains", "1", "danger")] }).Count > 0, "Operador que não serve.");
+            Assert.IsTrue(ListingCatalog.Validate(running with { Formatting = [new ListingFormatRule("debito", "gt", "abc", "danger")] }).Count > 0, "Valor que não é número.");
+            Assert.IsTrue(ListingCatalog.Validate(running with { Formatting = [new ListingFormatRule("debito", "gt", "1", "rosa")] }).Count > 0, "Tom desconhecido.");
+
             // Exportar: todas as linhas, com os campos de grupo primeiro na ordenação.
             var export = await engine.ExportAsync(companyId, grouped, null, Today, none).ConfigureAwait(false);
             Assert.AreEqual(6, export.Rows.Count);

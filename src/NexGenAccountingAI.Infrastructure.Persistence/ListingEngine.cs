@@ -38,6 +38,16 @@ public sealed class ListingEngine(AccountingDbContext context)
         return RunnerFor(definition).ExportAsync(companyId, definition, parameters, today, cancellationToken);
     }
 
+    /// <summary>Uma tabela cruzada sobre a definição (os filtros e os parâmetros valem; as colunas e o agrupamento não).</summary>
+    /// <exception cref="ArgumentException">A definição ou o pedido não são válidos (mensagem em português).</exception>
+    public Task<ListingPivot> PivotAsync(
+        Guid companyId, ListingDefinition definition, IReadOnlyDictionary<string, string>? parameters,
+        string rowField, string columnField, string measure, DateOnly today, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        return RunnerFor(definition).PivotAsync(companyId, definition, parameters, rowField, columnField, measure, today, cancellationToken);
+    }
+
     private IListingRunner RunnerFor(ListingDefinition definition)
     {
         var problems = ListingCatalog.Validate(definition);
@@ -162,6 +172,7 @@ public sealed class ListingEngine(AccountingDbContext context)
         Derive = Balance("debito", "credito", "saldo"),
         DefaultSort = [(Value<LineRow, DateOnly>(row => row.Date), false), (Value<LineRow, string>(row => row.Reference), false), (Value<LineRow, int>(row => row.Sequence), false)],
         TieBreak = Value<LineRow, Guid>(row => row.Id),
+        RunningDelta = row => row.Debit - row.Credit,
         Link = row => new ListingRowLink(row.Reference, row.PartyId),
         HiddenUnlessFiltered = ("estado", row => row.Status != JournalEntryStatus.Voided),
     };
@@ -516,6 +527,7 @@ public sealed class ListingEngine(AccountingDbContext context)
         Sums = [new("valor", row => row.Amount)],
         DefaultSort = [(Value<BankRow, DateOnly>(row => row.Date), false)],
         TieBreak = Value<BankRow, Guid>(row => row.Id),
+        RunningDelta = row => row.Amount,
         Link = row => new ListingRowLink(null, null),
     };
 

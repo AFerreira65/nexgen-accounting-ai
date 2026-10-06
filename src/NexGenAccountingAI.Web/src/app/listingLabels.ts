@@ -21,6 +21,9 @@ export type ListingFilterGroup = { op: 'and' | 'or'; conditions?: ListingConditi
 export type ListingSort = { field: string; descending: boolean }
 export type ListingParameter = { name: string; label: string; type: 'date' | 'text' | 'number'; default?: string | null }
 
+export type ListingFormatTone = 'danger' | 'warning' | 'success' | 'muted'
+export type ListingFormatRule = { column: string; operator: string; value: string; tone: ListingFormatTone }
+
 export type ListingDefinition = {
   source: string
   columns: string[]
@@ -28,6 +31,7 @@ export type ListingDefinition = {
   sort?: ListingSort[] | null
   groupBy?: string[] | null
   parameters?: ListingParameter[] | null
+  formatting?: ListingFormatRule[] | null
 }
 
 export type ListingScope = 'private' | 'company' | 'firm'
@@ -118,4 +122,45 @@ export function newCondition(field: CatalogField): ListingCondition {
 /** Cópia de uma definição para editar sem mexer na guardada. */
 export function cloneDefinition(definition: ListingDefinition): ListingDefinition {
   return JSON.parse(JSON.stringify(definition)) as ListingDefinition
+}
+
+export type ListingPivotHeader = { key: string | null; label: string }
+export type ListingPivot = {
+  rowField: string
+  columnField: string
+  measure: string
+  measureLabel: string
+  rows: ListingPivotHeader[]
+  columns: ListingPivotHeader[]
+  values: number[][]
+  rowTotals: number[]
+  columnTotals: number[]
+  grandTotal: number
+}
+
+/** A medida que conta linhas, em vez de somar um valor. */
+export const COUNT_MEASURE = 'contagem'
+
+export const TONE_LABELS: Record<ListingFormatTone, string> = { danger: 'Vermelho', warning: 'Amarelo', success: 'Verde', muted: 'Cinzento' }
+
+/** Os operadores das regras de formatação: comparações, sem «entre». */
+export const FORMAT_OPERATORS = ['eq', 'ne', 'gt', 'ge', 'lt', 'le'] as const
+
+/** O tom da primeira regra que o valor cumpre; `null` se nenhuma. */
+export function toneOf(rules: ListingFormatRule[] | null | undefined, column: string, value: string | number | null): ListingFormatTone | null {
+  if (value === null || value === '' || value === undefined) return null
+  for (const rule of rules ?? []) {
+    if (rule.column !== column) continue
+    const left = typeof value === 'number' ? value : Number(value)
+    const right = Number(String(rule.value).replace(',', '.'))
+    if (Number.isNaN(left) || Number.isNaN(right)) continue
+    const hit = rule.operator === 'eq' ? left === right
+      : rule.operator === 'ne' ? left !== right
+        : rule.operator === 'gt' ? left > right
+          : rule.operator === 'ge' ? left >= right
+            : rule.operator === 'lt' ? left < right
+              : rule.operator === 'le' ? left <= right : false
+    if (hit) return rule.tone
+  }
+  return null
 }

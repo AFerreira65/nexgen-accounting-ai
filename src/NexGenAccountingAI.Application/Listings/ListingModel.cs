@@ -59,6 +59,13 @@ public sealed record ListingSort(string Field, bool Descending = false);
 /// <param name="Default">Um valor, ou para datas uma data relativa (<see cref="ListingParameters.DateTokens"/>).</param>
 public sealed record ListingParameter(string Name, string Label, string Type, string? Default = null);
 
+/// <summary>
+/// Uma regra de formatação condicional: quando o valor da <paramref name="Column"/> cumpre a condição,
+/// a célula mostra-se com o tom indicado. Só dá cor; não muda nem esconde dados.
+/// </summary>
+/// <param name="Tone"><c>danger</c>, <c>warning</c>, <c>success</c> ou <c>muted</c>.</param>
+public sealed record ListingFormatRule(string Column, string Operator, string Value, string Tone);
+
 /// <summary>A definição de uma listagem: dados, nunca código.</summary>
 public sealed record ListingDefinition(
     string Source,
@@ -66,7 +73,8 @@ public sealed record ListingDefinition(
     ListingFilterGroup? Filter = null,
     IReadOnlyList<ListingSort>? Sort = null,
     IReadOnlyList<string>? GroupBy = null,
-    IReadOnlyList<ListingParameter>? Parameters = null);
+    IReadOnlyList<ListingParameter>? Parameters = null,
+    IReadOnlyList<ListingFormatRule>? Formatting = null);
 
 /// <summary>O que se pede ao correr: os valores dos parâmetros, o caminho dentro dos grupos e a página.</summary>
 /// <param name="GroupPath">Os valores dos grupos já abertos, do primeiro nível para baixo (<c>null</c> é o grupo «sem valor»).</param>
@@ -151,3 +159,24 @@ public static class ListingParameters
         return values;
     }
 }
+
+/// <summary>Uma linha ou coluna de uma tabela cruzada: a chave do grupo e o texto a mostrar.</summary>
+public sealed record ListingPivotHeader(string? Key, string Label);
+
+/// <summary>
+/// Uma tabela cruzada (F4D-04): as linhas e as colunas são os valores de dois campos de agrupamento
+/// e cada célula soma uma medida (ou conta as linhas).
+/// </summary>
+/// <param name="Measure">O campo somado, ou <c>contagem</c> para contar linhas.</param>
+/// <param name="Values">Uma linha da matriz por cada <paramref name="Rows"/> e uma coluna por cada <paramref name="Columns"/>.</param>
+public sealed record ListingPivot(
+    string RowField,
+    string ColumnField,
+    string Measure,
+    string MeasureLabel,
+    IReadOnlyList<ListingPivotHeader> Rows,
+    IReadOnlyList<ListingPivotHeader> Columns,
+    IReadOnlyList<IReadOnlyList<decimal>> Values,
+    IReadOnlyList<decimal> RowTotals,
+    IReadOnlyList<decimal> ColumnTotals,
+    decimal GrandTotal);

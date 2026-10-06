@@ -9,6 +9,12 @@ public static class ListingCatalog
 {
     public const string JournalLines = "linhas";
 
+    /// <summary>A coluna que soma os valores das linhas pela ordem da listagem (só existe nas origens com um valor por linha).</summary>
+    public const string RunningBalance = "saldoAcumulado";
+
+    /// <summary>Os tons das regras de formatação condicional.</summary>
+    public static IReadOnlyList<string> FormatTones { get; } = ["danger", "warning", "success", "muted"];
+
     public const string Balances = "saldos", Sales = "vendas", Purchases = "compras", Assets = "ativos", Bank = "bancos", Archive = "arquivo";
 
     private const string Voided = "Os lançamentos anulados ficam de fora, salvo se filtrar pelo estado.";
@@ -35,6 +41,7 @@ public static class ListingCatalog
                 new("debito", "Débito", ListingFieldType.Money, Measure: true),
                 new("credito", "Crédito", ListingFieldType.Money, Measure: true),
                 new("saldo", "Saldo (débito − crédito)", ListingFieldType.Money, Measure: true),
+                new(RunningBalance, "Saldo acumulado", ListingFieldType.Money, Filterable: false, Sortable: false),
             ]),
         new(Balances, "Saldos por conta e mês",
             "O débito, o crédito e o saldo de cada conta em cada mês, já somados. É a base das evoluções e das comparações entre períodos. " + Voided,
@@ -109,6 +116,7 @@ public static class ListingCatalog
                 new("ano", "Ano", ListingFieldType.Integer, Groupable: true),
                 new("mes", "Mês", ListingFieldType.Integer, Groupable: true),
                 new("valor", "Valor", ListingFieldType.Money, Measure: true),
+                new(RunningBalance, "Saldo acumulado", ListingFieldType.Money, Filterable: false, Sortable: false),
             ]),
         new(Archive, "Arquivo digital",
             "Os documentos arquivados, com os dados lidos do código QR e o lançamento a que estão ligados.",
@@ -129,7 +137,7 @@ public static class ListingCatalog
     public static ListingSource? Source(string? key) => Sources.FirstOrDefault(source => string.Equals(source.Key, key, StringComparison.Ordinal));
 
     /// <summary>Máximos que protegem o servidor de definições desmedidas.</summary>
-    public const int MaxColumns = 30, MaxGroupLevels = 3, MaxConditions = 50, MaxDepth = 4, MaxParameters = 10, MaxSort = 5;
+    public const int MaxFormatRules = 10, MaxColumns = 30, MaxGroupLevels = 3, MaxConditions = 50, MaxDepth = 4, MaxParameters = 10, MaxSort = 5;
 
     /// <summary>Os problemas da definição, em português; vazio quando está bem.</summary>
     public static IReadOnlyList<string> Validate(ListingDefinition? definition)
@@ -230,6 +238,35 @@ public static class ListingCatalog
             {
                 problems.Add($"O valor por omissão do parâmetro «{parameter.Name}» não é uma data.");
             }
+        }
+
+        foreach (var rule in definition.Formatting ?? [])
+        {
+            var field = source.Field(rule.Column);
+            if (field is null || !columns.Contains(rule.Column))
+            {
+                problems.Add($"A regra de formatação usa a coluna «{rule.Column}», que não está na listagem.");
+                continue;
+            }
+
+            if (field.Type == ListingFieldType.Text || !ListingOperators.For(field.Type).Contains(rule.Operator) || rule.Operator == ListingOperators.Between)
+            {
+                problems.Add($"A regra de formatação sobre «{field.Label}» tem um operador que não serve (use igual, diferente, maior ou menor).");
+            }
+            else if (field.Type == ListingFieldType.Date ? ListingParameters.ResolveDate(rule.Value, new DateOnly(2000, 1, 1)) is null : !TryDecimal(rule.Value, out _))
+            {
+                problems.Add($"O valor «{rule.Value}» da regra de formatação sobre «{field.Label}» não serve.");
+            }
+
+            if (!FormatTones.Contains(rule.Tone))
+            {
+                problems.Add($"O tom «{rule.Tone}» da regra de formatação não existe.");
+            }
+        }
+
+        if ((definition.Formatting?.Count ?? 0) > MaxFormatRules)
+        {
+            problems.Add($"Há regras de formatação a mais (o máximo é {MaxFormatRules}).");
         }
 
         var conditions = 0;

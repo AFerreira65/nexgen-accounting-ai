@@ -16,10 +16,10 @@ public static class ListingTemplates
     public static IReadOnlyList<ListingTemplate> All { get; } =
     [
         new("extrato-conta", "Extrato de uma conta",
-            "Os movimentos de uma conta (ou de todas as que começam por um prefixo) num período, com o débito, o crédito e o saldo de cada linha.",
+            "Os movimentos de uma conta (ou de todas as que começam por um prefixo) num período, com o débito, o crédito e o saldo acumulado a cada linha.",
             new ListingDefinition(
                 ListingCatalog.JournalLines,
-                ["data", "lancamento", "descricao", "terceiro", "debito", "credito", "saldo"],
+                ["data", "lancamento", "descricao", "terceiro", "debito", "credito", "saldoAcumulado"],
                 new ListingFilterGroup(ListingFilterGroup.And,
                 [
                     new ListingCondition("conta", ListingOperators.StartsWith, "@conta"),
