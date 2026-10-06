@@ -122,6 +122,7 @@ public static class DependencyInjection
         services.AddScoped<ListingDraftService>();
         services.AddScoped<FirmTaskService>();
         services.AddScoped<AnomalyService>();
+        services.AddScoped<ClosingChecklistService>();
         services.AddScoped<ReportPackService>();
         services.AddScoped<JournalReportService>();
         services.AddScoped<YearEndClosingService>();

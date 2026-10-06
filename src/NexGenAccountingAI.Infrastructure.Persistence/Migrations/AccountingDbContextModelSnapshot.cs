@@ -277,6 +277,46 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("BudgetLines", "accounting");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.ClosingCheck", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Checked")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("CheckedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CheckedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ItemKey")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("PeriodKey")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "PeriodKey", "ItemKey")
+                        .IsUnique();
+
+                    b.ToTable("ClosingChecks", "accounting");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.CostCenter", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2953,6 +2993,15 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("CostCenter");
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.ClosingCheck", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.CostCenter", b =>

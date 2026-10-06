@@ -3288,6 +3288,36 @@ if (applicationEndpointsAvailable)
         Guid userId, Guid companyId, DismissAnomalyRequest body, AnomalyService anomalies, CancellationToken cancellationToken) =>
         await anomalies.RestoreAsync(userId, companyId, body?.Key ?? string.Empty, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
 
+    // Papel de trabalho de fecho de um mês (F4F-02): verificações automáticas e manuais.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/closing", async (
+        Guid userId, Guid companyId, int year, int month, ClosingChecklistService closing, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var checklist = await closing.BuildAsync(userId, companyId, year, month, cancellationToken).ConfigureAwait(false);
+            return checklist is null ? Results.NotFound() : Results.Ok(checklist);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = [exception.Message] });
+        }
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/closing/{itemKey}", async (
+        Guid userId, Guid companyId, string itemKey, int year, int month, ClosingCheckRequest body, ClosingChecklistService closing, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            return await closing.SetManualAsync(userId, companyId, year, month, itemKey, body?.Checked ?? false, body?.Note, cancellationToken).ConfigureAwait(false)
+                ? Results.NoContent()
+                : Results.NotFound();
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["fecho"] = [exception.Message] });
+        }
+    });
+
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
         Guid userId, Guid companyId, int year, int? month, BudgetService budget, CancellationToken cancellationToken) =>
@@ -5742,6 +5772,8 @@ public sealed record RunListingRequest(
     int? Take);
 
 public sealed record DismissAnomalyRequest(string? Key, string? Reason);
+
+public sealed record ClosingCheckRequest(bool Checked, string? Note);
 
 public sealed record AiListingDraftRequest(string? Request);
 

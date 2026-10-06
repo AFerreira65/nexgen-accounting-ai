@@ -566,8 +566,23 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
 - Página `/anomalias`: período (o exercício por omissão), resumo por regra, achados por regra com a
   razão à vista e ligação ao lançamento. São pistas para conferir, não erros confirmados.
 - Testes: cada regra com os seus dados, o que não conta, o período sem achados, dispensar e repor,
-  acesso e validação; o ecrã. Ainda por fazer na 4F: explicação das variações com IA, papéis de trabalho
-  de fecho, conversa com memória, ligação a assistentes externos.
+  acesso e validação; o ecrã. Ainda por fazer na 4F: explicação das variações com IA, conversa com memória, ligação a assistentes externos.
+
+### F4F-02 — Papel de trabalho de fecho do mês
+
+- `ClosingChecklistService` + página `/fecho`: para cada mês, o que falta tratar antes de fechar.
+  **Automáticas** (calculadas de cada vez): lançamentos por conferir, lançamentos com débito diferente
+  de crédito, anomalias por tratar (as da F4F-01), compras do e-Fatura por lançar, vendas por
+  contabilizar, documentos arquivados por ligar, movimentos bancários por conciliar, a declaração de
+  IVA do período (mensal, ou o trimestre que acaba no mês) e as contas com saldo fora das
+  demonstrações. Cada uma diz quantos faltam e leva ao ecrã onde se trata.
+- **Manuais** (`ClosingChecks`, migração `ClosingChecks`): seis conferências (saldos bancários com os
+  extratos, acréscimos e diferimentos, provisões e imparidades, depreciações, ordenados e encargos,
+  resumo enviado ao cliente), com nota, quem e quando; desmarcar volta a pendente.
+- «Pronto para fechar» quando nada está por tratar nas automáticas e todas as manuais estão feitas.
+  Não bloqueia nada nem fecha o período: é um guia, não um cadeado. Quem só tem consulta vê e não marca.
+- Teste do percurso completo: o mês com pendências, o tratamento de cada uma, as marcas, a reabertura,
+  outro mês sem marcas, acesso e validação; o ecrã.
 
 ### Por fazer na 4C
 
