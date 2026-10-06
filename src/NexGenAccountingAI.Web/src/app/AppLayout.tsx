@@ -60,6 +60,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/previsao-tesouraria', label: 'Previsão de tesouraria', icon: PiggyBank },
     { to: '/analises', label: 'Análises', icon: BarChart3 },
     { to: '/relatorios-gestao', label: 'Relatórios de gestão', icon: Sparkles },
+    { to: '/relatorio-banca', label: 'Relatório para a banca', icon: Landmark },
   ] },
   { label: 'Exercício', links: [
     { to: '/apuramento', label: 'Apuramento', icon: CalendarCheck },

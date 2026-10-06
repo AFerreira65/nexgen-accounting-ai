@@ -724,3 +724,25 @@ html[data-theme='dark'] .map-table tr.map-row-title td { background: #16292f; co
 html[data-theme='dark'] .map-table tr.map-row-open td, html[data-theme='dark'] .map-table tbody tr.map-row-accounts:hover td { background: #203a41; }
 html[data-theme='dark'] .map-table tr.map-explain > td { background: #13242a; }
 html[data-theme='dark'] .map-table tbody td.numeric.negative { color: #f0957d; }
+
+/* Relatório para a banca (F4B-04): as secções do relato e a pré-visualização. */
+.pack-sections { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.pack-section { padding: 10px 12px; border: 1px solid #e0e8ea; border-radius: 10px; background: #fbfdfd; }
+.pack-section.is-off { opacity: .55; }
+.pack-section-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pack-section-head .toggle-inline { margin: 0; }
+.pack-kind { padding: 2px 8px; border-radius: 999px; background: #e8f0f2; color: #33474f; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.pack-section-head input.pack-title { flex: 1 1 220px; min-height: 34px; padding: 0 9px; border: 1px solid #d4dfe2; border-radius: 8px; background: white; font-size: 12px; font-weight: 650; }
+.pack-section-head select { min-height: 34px; padding: 0 8px; border: 1px solid #d4dfe2; border-radius: 8px; background: white; font-size: 11px; }
+.pack-text { display: grid; gap: 6px; margin-top: 8px; }
+.pack-text textarea { width: 100%; padding: 9px 11px; border: 1px solid #d4dfe2; border-radius: 9px; background: white; font: inherit; font-size: 12px; line-height: 1.5; resize: vertical; }
+.pack-ai { display: flex; flex-wrap: wrap; gap: 8px; }
+.pack-ai input { flex: 1 1 260px; min-height: 36px; padding: 0 10px; border: 1px solid #d4dfe2; border-radius: 8px; background: white; font-size: 11px; }
+.pack-add { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; font-size: 11px; color: #5a6b72; }
+.pack-preview-section { margin: 0 0 18px; }
+.pack-preview-section h3 { margin: 0 0 6px; color: #16736a; font-size: 14px; }
+.pack-preview-section p { margin: 0 0 8px; font-size: 12px; line-height: 1.55; }
+.pack-note { color: #6b7b82; font-size: 10px !important; }
+html[data-theme='dark'] .pack-section { background: #13242a; border-color: #2a4047; }
+html[data-theme='dark'] .pack-kind { background: #1c333a; color: #cfe0e2; }
+html[data-theme='dark'] .pack-section-head input.pack-title, html[data-theme='dark'] .pack-section-head select, html[data-theme='dark'] .pack-text textarea, html[data-theme='dark'] .pack-ai input { background: #0f1d22; color: #dbe7e9; border-color: #2a4047; }

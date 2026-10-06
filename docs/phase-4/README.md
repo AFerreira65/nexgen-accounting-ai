@@ -272,17 +272,44 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   balanço não fecham nessa empresa por razões dos dados (compras da classe 31
   não transferidas, resultado de 2024 por aplicar) — o próprio mapa avisa.
 
+### F4B-04 — Relato em PDF e relatório para a banca
+
+- `Application/Maps/ReportPack.cs`: um relato é uma capa e secções — texto
+  (parágrafos), mapa (guardado ou modelo), balancete (até um nível) ou rácios.
+  `ReportPackPresets.Bank` é o relatório para a banca: apresentação, balanço,
+  DR, exploração mensal, rácios e balancete sintético, lido antes do apuramento.
+- `Infrastructure.Files/ReportPackWriter`: o PDF (MigraDoc) com capa (empresa,
+  título, período, preparado por, índice), secções numeradas, tabelas com os
+  níveis e negritos dos mapas, as tabelas largas (mais de 8 colunas, o mapa
+  mensal) ao alto, rodapé com página; no máximo 3 000 linhas por tabela.
+- `ReportPackService.BuildAsync` compõe o relato a partir dos números; o
+  texto de IA é à parte (`NarrateAsync`): pede ao narrador dos relatórios de
+  gestão (`ManagementReportService`, pergunta livre com o dossier do período)
+  uma apresentação para a banca, e devolve os parágrafos para o utilizador
+  **rever e corrigir antes** de gerar o PDF. Respeita o interruptor de IA da
+  empresa e a chave do servidor; um texto marcado `[IA]` põe o aviso no fim do
+  relato.
+- Endpoints `GET …/reports/pack/presets`, `POST …/reports/pack` (PDF, ou
+  `?format=json` para pré-visualizar; permitido a Consulta) e
+  `POST …/reports/pack/narrate`.
+- PWA `/relatorio-banca` (menu Gestão → «Relatório para a banca»): capa e
+  período, secções a ligar/desligar, reordenar, acrescentar (texto, mapa,
+  balancete, rácios), texto à mão ou «Redigir com IA» com indicações,
+  pré-visualização e «Gerar PDF».
+- Validado na Vidreira: 6 páginas em 1,8 s; a IA responde «desligada para
+  esta empresa» enquanto não houver chave e interruptor.
+
 ### Por fazer na 4B
 
 - O balanço e a DR oficiais assentes no motor (hoje continuam no serviço das
-  demonstrações), e a pré-visualização em PDF de relato (capa, cabeçalho,
-  notas) de que o relatório para a banca vai precisar.
-- Guardar, por mapa, o período preferido (antes/com apuramento) e partilhar
-  mapas entre as empresas de um gabinete.
+  demonstrações).
+- Guardar relatos compostos pela empresa (hoje parte-se sempre do modelo),
+  o período preferido por mapa, e partilhar mapas entre as empresas de um
+  gabinete.
 
 ## Validação
 
-- .NET: 319 testes. PWA: 129 testes.
+- .NET: 323 testes. PWA: 131 testes.
 - Vistos a funcionar com a base real: a validação e a exportação do SAF-T, a
   exportação para PDF e Excel pela API, e a tarefa diária a correr sozinha.
 - **Ainda não vistos no browser** com a sessão do utilizador: o painel do

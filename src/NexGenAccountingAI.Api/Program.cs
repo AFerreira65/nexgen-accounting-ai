@@ -1800,6 +1800,75 @@ if (applicationEndpointsAvailable)
     })
         .WithMetadata(new ViewerAllowedAttribute("Corre um mapa sem o gravar."));
 
+    // Relatos em PDF (F4B-04): o relatório para a banca e outros compostos de mapas.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/reports/pack/presets", (int? year, int? fromMonth, int? toMonth) =>
+    {
+        var exercise = year ?? DateTime.UtcNow.Year;
+        return Results.Json(NexGenAccountingAI.Application.Maps.ReportPackPresets.All.Select(preset => new
+        {
+            preset.Key,
+            preset.Label,
+            preset.Description,
+            Request = NexGenAccountingAI.Application.Maps.ReportPackPresets.Build(preset.Key, exercise, fromMonth ?? 1, toMonth ?? 12),
+        }), NexGenAccountingAI.Application.Maps.MapJson.Options);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/reports/pack", async (
+        Guid userId, Guid companyId, HttpRequest request, ReportPackService packs, CancellationToken cancellationToken, string? format) =>
+    {
+        NexGenAccountingAI.Application.Maps.ReportPackRequest? body;
+        try
+        {
+            body = await request.ReadFromJsonAsync<NexGenAccountingAI.Application.Maps.ReportPackRequest>(NexGenAccountingAI.Application.Maps.MapJson.Options, cancellationToken).ConfigureAwait(false);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            body = null;
+        }
+
+        if (body?.Sections is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["relato"] = ["Indique o título, o período e as secções do relato."] });
+        }
+
+        try
+        {
+            var pack = await packs.BuildAsync(userId, companyId, body, cancellationToken).ConfigureAwait(false);
+            if (pack is null)
+            {
+                return Results.NotFound();
+            }
+
+            if (string.Equals(format, "json", StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.Json(pack, NexGenAccountingAI.Application.Maps.MapJson.Options);
+            }
+
+            var bytes = NexGenAccountingAI.Infrastructure.Files.ReportPackWriter.ToPdf(pack);
+            var name = string.Concat(pack.Title.Where(character => char.IsLetterOrDigit(character) || character == ' ')).Trim().Replace(' ', '-');
+            return Results.File(bytes, "application/pdf", $"{(name.Length == 0 ? "relato" : name)}-{body.Year}.pdf");
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["relato"] = [exception.Message] });
+        }
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Só formata o que o utilizador já pode ler; não altera dados."));
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/reports/pack/narrate", async (
+        Guid userId, Guid companyId, NarrateSectionRequest request, ReportPackService packs, CancellationToken cancellationToken) =>
+    {
+        if (request.Year is < 1990 or > 2100 || request.FromMonth is < 1 or > 12 || request.ToMonth is < 1 or > 12 || request.ToMonth < request.FromMonth)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["relato"] = ["O período tem de ser de um mês a outro do mesmo exercício."] });
+        }
+
+        var narration = await packs
+            .NarrateAsync(userId, companyId, string.IsNullOrWhiteSpace(request.SectionTitle) ? "Apresentação" : request.SectionTitle, request.Instructions, request.Year, request.FromMonth, request.ToMonth, cancellationToken)
+            .ConfigureAwait(false);
+        return narration is null ? Results.NotFound() : Results.Ok(narration);
+    });
+
     // Tabelas fiscais por ano: valores propostos, com a fonte de cada grupo.
     app.MapGet("/api/v1/development/fiscal-tables/{year:int}", (int year) =>
         NexGenAccountingAI.Application.Fiscal.FiscalTableCatalog.For(year) is { } table ? Results.Ok(table) : Results.NotFound());
@@ -5284,6 +5353,8 @@ public sealed record UpdateDocumentTypeRequest(string Name, string DefaultJourna
 public sealed record UpdateDocumentNumberSeriesRequest(int NextNumber, int? Width = null);
 
 /// <summary>Gravar ou correr um mapa: a definição, o nome (ao gravar) e o período (ao correr); <c>RowCode</c> pede a explicação de uma linha.</summary>
+public sealed record NarrateSectionRequest(string? SectionTitle, string? Instructions, int Year, int FromMonth, int ToMonth);
+
 public sealed record SaveMapRequest(
     string? Name,
     string? Description,

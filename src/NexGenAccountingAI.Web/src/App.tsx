@@ -17,6 +17,7 @@ import { TrialBalancePage } from './pages/TrialBalancePage'
 import { BalancetePage } from './pages/BalancetePage'
 import { MapsPage } from './pages/MapsPage'
 import { MapPage } from './pages/MapPage'
+import { ReportPackPage } from './pages/ReportPackPage'
 import { useWorkContext } from './app/WorkContext'
 import { PartyBalancesPage } from './pages/PartyBalancesPage'
 import { VatSummaryPage } from './pages/VatSummaryPage'
@@ -122,6 +123,7 @@ export function App() {
             <Route path="/mapas/novo" element={<MapPage />} />
             <Route path="/mapas/modelo/:template" element={<MapPage />} />
             <Route path="/mapas/:id" element={<MapPage />} />
+            <Route path="/relatorio-banca" element={<ReportPackPage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />
             <Route path="/balanco" element={<BalanceSheetPage />} />
             <Route path="/iva" element={<VatSummaryPage />} />
