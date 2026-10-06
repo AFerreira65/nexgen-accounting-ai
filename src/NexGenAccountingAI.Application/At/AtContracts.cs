@@ -71,3 +71,17 @@ public interface IModelo22AtGateway
     Task<AtDeclarationResult> SubmitAsync(
         byte[] declarationXml, IReadOnlyList<AtCredential> credentials, bool production, bool acceptAlerts, CancellationToken cancellationToken = default);
 }
+
+/// <summary>A IES/DA no webservice da AT (validar e submeter). A AT não tem «alertas» neste serviço.</summary>
+public interface IIesAtGateway
+{
+    AtGatewayStatus Status();
+
+    /// <summary>Valida a declaração pelas regras da AT, sem a registar.</summary>
+    Task<AtDeclarationResult> ValidateAsync(
+        byte[] declarationXml, IReadOnlyList<AtCredential> credentials, bool production, CancellationToken cancellationToken = default);
+
+    /// <summary>Submete a declaração.</summary>
+    Task<AtDeclarationResult> SubmitAsync(
+        byte[] declarationXml, IReadOnlyList<AtCredential> credentials, bool production, CancellationToken cancellationToken = default);
+}

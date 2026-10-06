@@ -2618,6 +2618,34 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/ies/at/{operation}", async (
+        Guid userId, Guid companyId, string operation, int year, IesAtCredentialsRequest? credentials, IesFilingService filing, CancellationToken cancellationToken) =>
+    {
+        if (operation is not ("validate" or "submit"))
+        {
+            return Results.NotFound();
+        }
+
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        // As senhas só atravessam este pedido: não se guardam nem se registam.
+        var login = new IesAtCredentials(credentials?.AccountantUser ?? string.Empty, credentials?.AccountantPassword ?? string.Empty, credentials?.TaxpayerPassword);
+        try
+        {
+            var outcome = operation == "submit"
+                ? await filing.SubmitAsync(userId, companyId, year, login, cancellationToken).ConfigureAwait(false)
+                : await filing.ValidateAsync(userId, companyId, year, login, cancellationToken).ConfigureAwait(false);
+            return outcome is null ? Results.NotFound() : Results.Ok(outcome);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["ies"] = [exception.Message] });
+        }
+    });
+
     // IES: os quadros 03 e 04 do Anexo A, a partir das demonstrações financeiras.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/ies/annex-a", async (
         Guid userId, Guid companyId, int year, IesAnnexAService ies, CancellationToken cancellationToken) =>
@@ -5454,6 +5482,9 @@ public sealed record UpdateAccountRequest(
     bool IsActive,
     string? TaxonomyReference,
     int? TaxonomyCode);
+
+/// <summary>As credenciais da IES, pedidas em cada entrega e nunca guardadas.</summary>
+public sealed record IesAtCredentialsRequest(string? AccountantUser, string? AccountantPassword, string? TaxpayerPassword);
 
 public sealed record CreateJournalRequest(string Code, string Name);
 

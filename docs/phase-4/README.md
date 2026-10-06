@@ -378,7 +378,7 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   admite outra leitura (IES de 2028 sobre 2027); confirmar quando a AT o disser.
   O pacote «2025 e anteriores» usa outros códigos (`A5001-1/-2`) e não foi usado.
 - **Não confirmado:** o valor do atributo `versao` (o esquema não o indica; está
-  a 1). Rosto sem os quadros 02, 04, 06 e 07; sem os outros anexos.
+  a 10). Rosto sem os quadros 02, 04, 06 e 07; sem os outros anexos.
 
 ### F4C-05 — Anexo R da DP de IVA
 
@@ -413,6 +413,22 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   (2222 em 2020, depois 2223, 2224…); está `2228` por extrapolação (`At:Modelo22Version`
   corrige-a sem alterar código). A «Validar na AT» dirá se é aceite. Nada foi exercido
   contra a AT: falta o certificado de testes e o subutilizador com permissão para o serviço.
+
+### F4C-07 — IES pelo webservice
+
+- `IesAtGateway` (portas 407 e 707, WSDL `wsSubmeterDeclaracaoIES`, manual de 31-07-2025):
+  ficheiro em Base64 simples, e a `versaoDeclaracao` é a do atributo `versao` do próprio
+  ficheiro. O serviço não tem alertas.
+- A IES é entregue pelo **contabilista certificado**: o pedido leva o utilizador e a senha
+  dele (actor TOC) e o sujeito passivo (só o NIF se o contabilista tem plenos poderes
+  declarativos; com a senha da empresa se não tem). O manual manda pedir estas credenciais
+  em cada entrega, por isso `IesFilingService` recebe-as no pedido e **não as guarda nem
+  as regista**; o painel limpa as senhas depois de cada pedido.
+- Mesmos limites que os outros serviços: submissão só no ambiente de testes; cada pedido
+  fica em `AtExchanges`. O painel «Entrega na AT» aparece na página da IES.
+- **Não confirmado:** o valor de `versao` (10, extrapolado de «Versão 9» do pacote de 2024)
+  e se o modelo de 2027 serve para os dados de 2026; a AT dirá ao validar. A permissão «TIE»
+  do subutilizador do contabilista (manual, ponto 3) tem de estar atribuída.
 
 ### Por fazer na 4C
 

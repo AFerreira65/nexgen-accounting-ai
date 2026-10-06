@@ -83,6 +83,7 @@ public static class DependencyInjection
         services.AddScoped<FinancialStatementsService>();
         services.AddScoped<Modelo22Service>();
         services.AddScoped<Modelo22FilingService>();
+        services.AddScoped<IesFilingService>();
         services.AddScoped<IesAnnexAService>();
         services.AddScoped<WithholdingService>();
         services.AddScoped<PartyAgingService>();

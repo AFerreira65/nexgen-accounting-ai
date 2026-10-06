@@ -6,6 +6,7 @@ import { ExportButtons } from '../app/ExportButtons'
 import { euro, type IesAnnexA } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { problemMessage, useWorkContext } from '../app/WorkContext'
+import { IesFilingPanel } from './VatDeclarationFilingPanel'
 
 const normLabels: Record<string, string> = { S: 'NCRF (S)', P: 'NCRF-PE (P)', M: 'NC-ME (M)', N: 'NIC (N)' }
 const quadros = [
@@ -119,6 +120,7 @@ export function IesPage() {
 
       <p className="statement-note">{annex.disclaimer}</p>
       <p className="statement-note">Fonte dos campos: {annex.source}</p>
+      <IesFilingPanel companyId={companyId} year={year} />
     </>}
   </div>
 }

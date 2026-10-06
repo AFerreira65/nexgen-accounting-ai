@@ -13,15 +13,19 @@ namespace NexGenAccountingAI.Infrastructure.Persistence;
 /// Os outros quadros e anexos não são gerados.
 /// <para>
 /// <b>Não confirmado:</b> o valor do atributo <c>versao</c> (o esquema só diz que é
-/// obrigatório e numérico) e que o modelo de 2027 serve para o período de 2026.
+/// obrigatório e numérico; está 10 por extrapolação) e que o modelo de 2027 serve para o período de 2026.
 /// </para>
 /// </summary>
 public static class IesXmlWriter
 {
     public const string Namespace = "http://www.portaldasfinancas.gov.pt/de/schema/IES-DA/2021";
 
-    /// <summary>O atributo <c>versao</c> do elemento raiz; o valor não consta do esquema.</summary>
-    public const int SchemaVersion = 1;
+    /// <summary>
+    /// O atributo <c>versao</c> do elemento raiz; o esquema não diz o valor. O pacote de 2024 traz «Versão 9» no
+    /// seu histórico de alterações, por isso o do modelo de 2027 extrapola-se para 10. <b>Não confirmado</b>:
+    /// a validação na AT diz se é aceite.
+    /// </summary>
+    public const int SchemaVersion = 10;
 
     // Os campos do Anexo A pela ordem do esquema; os que acabam em «-soma» são os totais.
     private static readonly string[] Quadro03 =

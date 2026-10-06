@@ -80,6 +80,21 @@ public sealed class AtWebServiceTests
     }
 
     [TestMethod]
+    public void TheIesBodyCarriesTheFileVersionAndPlainBase64()
+    {
+        var xml = Encoding.UTF8.GetBytes("<IES-DA xmlns=\"http://www.portaldasfinancas.gov.pt/de/schema/IES-DA/2021\" versao=\"10\" nif=\"500584095\" ano=\"2026\"/>");
+        var body = IesAtGateway.Body("submeterDeclaracaoIESRequest", xml);
+        XNamespace service = "https://servicos.portaldasfinancas.gov.pt/iesws/SubmeterDeclaracaoIESService/201505";
+        Assert.AreEqual(service + "submeterDeclaracaoIESRequest", body.Name);
+        Assert.AreEqual("10", body.Element("versaoDeclaracao")!.Value, "A versão é a do atributo do próprio ficheiro.");
+        CollectionAssert.AreEqual(xml, Convert.FromBase64String(body.Element("declaracao")!.Value));
+        Assert.IsNull(body.Element("aceitaAlertas"), "O serviço da IES não tem alertas.");
+        StringAssert.Contains(IesAtGateway.TestEndpoint, ":707/iesws/");
+        StringAssert.Contains(IesAtGateway.ProductionEndpoint, ":407/iesws/");
+        Assert.ThrowsExactly<InvalidOperationException>(() => IesAtGateway.VersionOf(Encoding.UTF8.GetBytes("<IES-DA/>")));
+    }
+
+    [TestMethod]
     public void TheDeclarationTravelsZippedAndTheEnvelopeFollowsTheWsdl()
     {
         var xml = Encoding.UTF8.GetBytes("<dpiva xmlns=\"http://www.at.gov.pt/schemas/dpiva\" version=\"06\"/>");

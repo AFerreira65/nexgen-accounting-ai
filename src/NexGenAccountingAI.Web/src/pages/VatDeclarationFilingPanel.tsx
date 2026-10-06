@@ -18,7 +18,7 @@ const dateTime = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short', timeStyl
  * regras da AT e a submissão (por agora só no ambiente de testes da AT). Serve a declaração
  * periódica de IVA e o Modelo 22: cada uma diz os seus endereços e o serviço do histórico.
  */
-export function AtFilingPanel({ companyId, resetKey, service, xmlPath, sendPath, defaultFileName, description }: {
+export function AtFilingPanel({ companyId, resetKey, service, xmlPath, sendPath, defaultFileName, description, accountantLogin = false }: {
   companyId: string
   /** Muda quando o que se vai entregar muda (período, exercício…): limpa o último resultado. */
   resetKey: string
@@ -29,6 +29,8 @@ export function AtFilingPanel({ companyId, resetKey, service, xmlPath, sendPath,
   sendPath: (operation: 'validate' | 'submit') => string
   defaultFileName: string
   description: string
+  /** A IES é entregue pelo contabilista certificado: pede as credenciais dele em cada pedido, sem as guardar. */
+  accountantLogin?: boolean
 }) {
   const { user } = useWorkContext()
   const [busy, setBusy] = useState<'validate' | 'submit' | 'xml' | null>(null)
@@ -36,6 +38,7 @@ export function AtFilingPanel({ companyId, resetKey, service, xmlPath, sendPath,
   const [error, setError] = useState('')
   const [history, setHistory] = useState<Exchanges | null>(null)
   const [reload, setReload] = useState(0)
+  const [login, setLogin] = useState({ accountantUser: '', accountantPassword: '', taxpayerPassword: '' })
 
   const base = `/api/v1/development/users/${user.id}/companies/${companyId}`
 
@@ -74,10 +77,14 @@ export function AtFilingPanel({ companyId, resetKey, service, xmlPath, sendPath,
   async function send(operation: 'validate' | 'submit') {
     setBusy(operation); setError(''); setOutcome(null)
     try {
-      const response = await fetch(`${base}/${sendPath(operation)}`, { method: 'POST' })
+      const response = await fetch(`${base}/${sendPath(operation)}`, accountantLogin
+        ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...login, taxpayerPassword: login.taxpayerPassword || null }) }
+        : { method: 'POST' })
       if (!response.ok) throw new Error(await problemMessage(response))
       setOutcome({ operation, value: await response.json() as Outcome })
       setReload((value) => value + 1)
+      // As senhas só servem para este pedido.
+      if (accountantLogin) setLogin((value) => ({ ...value, accountantPassword: '', taxpayerPassword: '' }))
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : 'Não foi possível contactar a AT.')
     } finally {
@@ -93,6 +100,12 @@ export function AtFilingPanel({ companyId, resetKey, service, xmlPath, sendPath,
 
   return <section className="panel no-print">
     <div className="panel-heading"><div><h2>Entrega na AT</h2><p>{description} A submissão por aqui só funciona, por agora, no ambiente de testes da AT: em produção, valide e entregue o ficheiro no Portal das Finanças.</p></div></div>
+    {accountantLogin && <div className="filterbar">
+      <label className="inline-check">Utilizador do contabilista certificado <input aria-label="Utilizador do contabilista certificado" autoComplete="off" value={login.accountantUser} onChange={(event) => setLogin({ ...login, accountantUser: event.target.value })} placeholder="NIF ou NIF/subutilizador" /></label>
+      <label className="inline-check">Senha do contabilista <input type="password" aria-label="Senha do contabilista" autoComplete="new-password" value={login.accountantPassword} onChange={(event) => setLogin({ ...login, accountantPassword: event.target.value })} /></label>
+      <label className="inline-check">Senha da empresa (sem plenos poderes) <input type="password" aria-label="Senha da empresa" autoComplete="new-password" value={login.taxpayerPassword} onChange={(event) => setLogin({ ...login, taxpayerPassword: event.target.value })} /></label>
+      <small className="atf-hint">A IES é entregue pelo contabilista certificado. As senhas só servem para este pedido: não ficam guardadas. Se o contabilista tem plenos poderes declarativos, deixe a senha da empresa em branco.</small>
+    </div>}
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
       <button className="button button-secondary" type="button" disabled={busy !== null} onClick={() => void downloadXml()}><FileDown size={16} /> {busy === 'xml' ? 'A gerar…' : 'Ficheiro XML'}</button>
       <button className="button button-primary" type="button" disabled={busy !== null} onClick={() => void send('validate')}><ShieldCheck size={16} /> {busy === 'validate' ? 'A validar…' : 'Validar na AT'}</button>
@@ -147,5 +160,15 @@ export function Modelo22FilingPanel({ companyId, year }: { companyId: string; ye
     xmlPath={`modelo-22/xml?year=${year}`}
     sendPath={(operation) => `modelo-22/at/${operation}?year=${year}${operation === 'submit' ? '&acceptAlerts=true' : ''}`}
     description="O ficheiro XML do Modelo 22 no formato oficial (rosto, quadros 07 a 11; sem anexos), a validação pelas regras da AT e a submissão."
+  />
+}
+
+/** A IES (Anexo A) na entrega à AT. */
+export function IesFilingPanel({ companyId, year }: { companyId: string; year: number }) {
+  return <AtFilingPanel
+    companyId={companyId} resetKey={String(year)} service="ies" defaultFileName={`ies-${year}.xml`} accountantLogin
+    xmlPath={`ies/xml?year=${year}`}
+    sendPath={(operation) => `ies/at/${operation}?year=${year}`}
+    description="O ficheiro XML da IES com o Anexo A (quadros 03 e 04), a validação pelas regras da AT e a submissão."
   />
 }

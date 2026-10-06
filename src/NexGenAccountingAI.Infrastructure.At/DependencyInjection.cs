@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddSingleton<AtSoapClient>();
         services.AddSingleton<IVatReturnAtGateway, VatReturnAtGateway>();
         services.AddSingleton<IModelo22AtGateway, Modelo22AtGateway>();
+        services.AddSingleton<IIesAtGateway, IesAtGateway>();
         return services;
     }
 }
