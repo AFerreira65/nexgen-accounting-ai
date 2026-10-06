@@ -22,6 +22,7 @@ public sealed class ListingDraftPromptsTests
         }
 
         StringAssert.Contains(system, "inicio-mes-anterior");
+        StringAssert.Contains(system, "Saldo (débito − crédito)", "Os acentos seguem como texto, não escapados.");
         Assert.IsFalse(system.Contains("{CATALOGO}", StringComparison.Ordinal), "O marcador do catálogo foi substituído.");
         StringAssert.Contains(ListingDraftPrompts.User("vendas por cliente", new DateOnly(2026, 10, 6)), "Hoje é 2026-10-06");
     }

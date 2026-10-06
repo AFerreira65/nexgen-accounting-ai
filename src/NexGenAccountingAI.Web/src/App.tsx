@@ -14,6 +14,7 @@ import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { AnomaliesPage } from './pages/AnomaliesPage'
 import { ClosingPage } from './pages/ClosingPage'
+import { VariancePage } from './pages/VariancePage'
 import { FirmTasksPage } from './pages/FirmTasksPage'
 import { TasksPage } from './pages/TasksPage'
 import { TrialBalancePage } from './pages/TrialBalancePage'
@@ -155,6 +156,7 @@ export function App() {
             <Route path="/tarefas-gabinete" element={<FirmTasksPage />} />
             <Route path="/anomalias" element={<AnomaliesPage />} />
             <Route path="/fecho" element={<ClosingPage />} />
+            <Route path="/variacoes" element={<VariancePage />} />
             <Route path="/definicoes" element={<SettingsPage />} />
           </Route>
         </Routes>

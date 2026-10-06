@@ -1,3 +1,4 @@
+using NexGenAccountingAI.Application.Analysis;
 using NexGenAccountingAI.Application.Classification;
 using NexGenAccountingAI.Application.Listings;
 using NexGenAccountingAI.Application.ManagementReports;
@@ -31,6 +32,7 @@ public static class DependencyInjection
         services.AddSingleton<IManagementReportNarrator, ClaudeManagementReportNarrator>();
         services.AddSingleton<IPurchaseClassifier, ClaudePurchaseClassifier>();
         services.AddSingleton<IListingDrafter, ClaudeListingDrafter>();
+        services.AddSingleton<IVarianceExplainer, ClaudeVarianceExplainer>();
         return services;
     }
 }

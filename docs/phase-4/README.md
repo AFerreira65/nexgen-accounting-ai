@@ -566,7 +566,7 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
 - Página `/anomalias`: período (o exercício por omissão), resumo por regra, achados por regra com a
   razão à vista e ligação ao lançamento. São pistas para conferir, não erros confirmados.
 - Testes: cada regra com os seus dados, o que não conta, o período sem achados, dispensar e repor,
-  acesso e validação; o ecrã. Ainda por fazer na 4F: explicação das variações com IA, conversa com memória, ligação a assistentes externos.
+  acesso e validação; o ecrã. Ainda por fazer na 4F: conversa com memória, ligação a assistentes externos.
 
 ### F4F-02 — Papel de trabalho de fecho do mês
 
@@ -583,6 +583,24 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   Não bloqueia nada nem fecha o período: é um guia, não um cadeado. Quem só tem consulta vê e não marca.
 - Teste do percurso completo: o mês com pendências, o tratamento de cada uma, as marcas, a reabertura,
   outro mês sem marcas, acesso e validação; o ecrã.
+
+### F4F-03 — Variações entre períodos, com explicação da IA
+
+- **Comparação determinística** (`VarianceService`, `/variacoes`): gastos (classe 6) e rendimentos
+  (classe 7) conta a conta entre dois períodos (o último mês fechado contra o mês antes, o ano até ao
+  último mês fechado contra o mesmo período do ano anterior, ou quatro datas à escolha). Mostra totais
+  e resultado, a diferença, a percentagem (sem ela quando o período anterior é zero) e se a variação é
+  favorável; nas oito maiores, os três terceiros que mais pesaram. Anulados, abertura e apuramento ficam
+  de fora.
+- **Explicar com IA** (`VarianceExplanationService`, `IVarianceExplainer`): um texto curto, em português,
+  a partir dos mesmos números, sem inventar causas (as sugestões vêm como hipóteses) e a terminar com o
+  que convém verificar primeiro. Mesmas guardas da criação de listagens: acesso à empresa, interruptor
+  da IA nessa empresa e chave configurada.
+- **Privacidade:** à IA seguem só os totais e as 15 maiores variações, com o nome da conta e dos
+  terceiros que pesam; nenhum lançamento, referência nem NIF (o teste verifica-o). O JSON segue com os
+  acentos como texto, também no catálogo das listagens.
+- Testes: totais, ordem, percentagens, o favorável, os terceiros, o que não conta, o período só no
+  atual e a validação; as guardas da IA e o conteúdo enviado; o ecrã. Não exercido contra a API real.
 
 ### Por fazer na 4C
 

@@ -55,6 +55,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
   { label: 'Gestão', links: [
     { to: '/tarefas-gabinete', label: 'Tarefas do gabinete', icon: ListTodo },
     { to: '/fecho', label: 'Fecho do mês', icon: ClipboardCheck },
+    { to: '/variacoes', label: 'Variações', icon: ChartLine },
     { to: '/anomalias', label: 'Anomalias', icon: ScanSearch },
     { to: '/evolucao', label: 'Evolução mensal', icon: ChartLine },
     { to: '/mapa-exploracao', label: 'Mapa de exploração', icon: TrendingUp },

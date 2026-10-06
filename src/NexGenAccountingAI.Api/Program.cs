@@ -3318,6 +3318,63 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Variações entre dois períodos (F4F-03): a comparação por conta e, a pedido, um texto da IA sobre esses números.
+    static bool TryVariancePeriods(string? from, string? to, string? compareFrom, string? compareTo, out DateOnly[] dates, out IResult? problem)
+    {
+        dates = [];
+        problem = null;
+        var parsed = new[] { from, to, compareFrom, compareTo }
+            .Select(text => DateOnly.TryParseExact(text, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var date) ? (DateOnly?)date : null)
+            .ToArray();
+        if (parsed.Any(date => date is null))
+        {
+            problem = Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = ["Indique as quatro datas dos dois períodos (AAAA-MM-DD)."] });
+            return false;
+        }
+
+        dates = parsed.Select(date => date!.Value).ToArray();
+        return true;
+    }
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/variance", async (
+        Guid userId, Guid companyId, string? from, string? to, string? compareFrom, string? compareTo, VarianceService variance, CancellationToken cancellationToken) =>
+    {
+        if (!TryVariancePeriods(from, to, compareFrom, compareTo, out var d, out var problem))
+        {
+            return problem!;
+        }
+
+        try
+        {
+            var report = await variance.BuildAsync(userId, companyId, d[0], d[1], d[2], d[3], cancellationToken).ConfigureAwait(false);
+            return report is null ? Results.NotFound() : Results.Ok(report);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/variance/explain", async (
+        Guid userId, Guid companyId, string? from, string? to, string? compareFrom, string? compareTo, VarianceExplanationService explanations, CancellationToken cancellationToken) =>
+    {
+        if (!TryVariancePeriods(from, to, compareFrom, compareTo, out var d, out var problem))
+        {
+            return problem!;
+        }
+
+        try
+        {
+            var outcome = await explanations.ExplainAsync(userId, companyId, d[0], d[1], d[2], d[3], cancellationToken).ConfigureAwait(false);
+            return outcome is null ? Results.NotFound() : Results.Ok(outcome);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = [exception.Message] });
+        }
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Só escreve um texto sobre números que o utilizador já pode ler; não grava nada."));
+
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
         Guid userId, Guid companyId, int year, int? month, BudgetService budget, CancellationToken cancellationToken) =>

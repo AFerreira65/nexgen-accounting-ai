@@ -85,7 +85,11 @@ public static class ListingDraftPrompts
 {
     public sealed record Parsed(string? Name, string Explanation, ListingDefinition? Definition, string? Error);
 
-    private static readonly JsonSerializerOptions CompactJson = new(JsonSerializerDefaults.Web) { WriteIndented = false };
+    private static readonly JsonSerializerOptions CompactJson = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = false,
+        Encoder = global::System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
 
     /// <summary>O catálogo em JSON compacto: o que o modelo pode usar, e mais nada.</summary>
     public static string CatalogJson() => JsonSerializer.Serialize(
