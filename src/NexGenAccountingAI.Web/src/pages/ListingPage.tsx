@@ -1,6 +1,6 @@
 import { ArrowLeft, ChevronDown, ChevronRight, Copy, Database, Download, Pencil, Play, Plus, Save, Star, Trash2, X } from 'lucide-react'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Chart, type ChartTone } from '../app/charts'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { ExportButtons } from '../app/ExportButtons'
@@ -9,7 +9,7 @@ import {
   COUNT_MEASURE, DATE_TOKEN_LABELS, FORMAT_OPERATORS, MAX_GROUP_LEVELS, OPERATOR_LABELS, PARAMETER_TYPE_LABELS, SCOPE_LABELS, TONE_LABELS, toneOf,
   cloneDefinition, emptyDefinition, newCondition,
   type CatalogField, type CatalogSource, type ListingCatalog, type ListingColumn, type ListingDefinition, type ListingFilterGroup, type ListingTemplate,
-  type ListingFormatRule, type ListingFormatTone, type ListingParameter, type ListingPivot, type ListingResult, type ListingRow, type ListingScope, type SavedListing,
+  type ListingDraft, type ListingFormatRule, type ListingFormatTone, type ListingParameter, type ListingPivot, type ListingResult, type ListingRow, type ListingScope, type SavedListing,
 } from '../app/listingLabels'
 import { useWorkContext } from '../app/WorkContext'
 
@@ -36,6 +36,7 @@ function format(column: ListingColumn, value: string | number | null): string {
 export function ListingPage() {
   const { id, template: templateKey } = useParams()
   const navigate = useNavigate()
+  const draft = (useLocation().state as { draft?: ListingDraft } | null)?.draft ?? null
   const { activeCompany, user, source } = useWorkContext()
   const root = `/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/listings`
 
@@ -86,6 +87,9 @@ export function ListingPage() {
         if (!found) { setError('A listagem já não existe.'); return }
         setSaved(found); setName(found.name); setDescription(found.description ?? ''); setScope(found.scope); setDefinition(cloneDefinition(found.definition))
         setEditing(false)
+      } else if (draft?.definition) {
+        setSaved(null); setName(draft.name ?? ''); setDescription(''); setScope('private'); setDefinition(cloneDefinition(draft.definition))
+        setEditing(true)
       } else {
         setSaved(null); setName(''); setDescription(''); setScope('private'); setDefinition(emptyDefinition(loaded.sources[0]))
         setEditing(true)
@@ -93,7 +97,7 @@ export function ListingPage() {
     }
     void load()
     return () => { cancelled = true }
-  }, [root, id, templateKey, source])
+  }, [root, id, templateKey, source, draft])
 
   const post = useCallback(async (path: string, body: unknown): Promise<Response> =>
     fetch(`${root}/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), [root])
@@ -242,6 +246,7 @@ export function ListingPage() {
     </header>
     {error && <p className="save-status error" role="alert">{error}</p>}
     {notice && <p className="save-status success" role="status">{notice}</p>}
+    {draft?.definition && !saved && <p className="save-status" role="note">Rascunho montado pela IA ({draft.model}). {draft.explanation} Confira as colunas, os filtros e os parâmetros antes de guardar: a IA pode enganar-se.</p>}
 
     <section className="panel no-print">
       <div className="filterbar">

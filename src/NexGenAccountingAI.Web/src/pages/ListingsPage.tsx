@@ -1,8 +1,8 @@
-import { Database, LayoutTemplate, ListFilter, Plus, Search, Star } from 'lucide-react'
+import { Database, LayoutTemplate, ListFilter, Plus, Search, Sparkles, Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signalLoadFailure } from '../app/loadFailure'
-import { SCOPE_LABELS, type ListingTemplate, type SavedListing } from '../app/listingLabels'
+import { SCOPE_LABELS, type ListingDraftOutcome, type ListingTemplate, type SavedListing } from '../app/listingLabels'
 import { useWorkContext } from '../app/WorkContext'
 
 /**
@@ -16,6 +16,9 @@ export function ListingsPage() {
   const [templates, setTemplates] = useState<ListingTemplate[]>([])
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
+  const [ask, setAsk] = useState('')
+  const [asking, setAsking] = useState(false)
+  const [askNote, setAskNote] = useState('')
   const root = `/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/listings`
 
   useEffect(() => {
@@ -37,6 +40,24 @@ export function ListingsPage() {
     return (listings ?? []).filter((item) => term === '' || item.name.toLowerCase().includes(term) || (item.description ?? '').toLowerCase().includes(term))
   }, [listings, search])
 
+  /** Pede à IA um rascunho: nada se guarda; o desenhador abre-o para o utilizador rever. */
+  async function draft() {
+    setAsking(true); setAskNote(''); setError('')
+    try {
+      const response = await fetch(`${root}/ai-draft`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ request: ask }) })
+      if (!response.ok) { setError('Não foi possível pedir o rascunho à IA.'); return }
+      const outcome = await response.json() as ListingDraftOutcome
+      if (outcome.refusal) { setAskNote(outcome.refusal); return }
+      if (!outcome.draft?.definition) {
+        setAskNote(`A IA não conseguiu montar a listagem. ${outcome.draft?.problems.join(' ') ?? ''} ${outcome.draft?.explanation ?? ''}`.trim())
+        return
+      }
+      navigate('/listagens/nova', { state: { draft: outcome.draft } })
+    } finally {
+      setAsking(false)
+    }
+  }
+
   if (source !== 'database') {
     return <div className="page-stack"><header className="page-heading"><div><p className="eyebrow">Mapas</p><h1>Listagens à medida</h1><p>As listagens precisam da base de dados; em demonstração não estão disponíveis.</p></div></header></div>
   }
@@ -47,6 +68,15 @@ export function ListingsPage() {
       <span className="connection-badge database"><Database size={15} />Dados da BD</span>
     </header>
     {error && <p className="save-status error" role="alert">{error}</p>}
+    <section className="panel" aria-label="Pedir em português">
+      <div className="panel-heading"><h2><Sparkles size={17} /> Pedir em português</h2></div>
+      <p className="statement-note">Descreva o que quer ver e a IA monta a listagem. Só o seu pedido e a lista de campos seguem para a IA, nunca dados da empresa. Vê o rascunho e corrige-o antes de guardar.</p>
+      <div className="filterbar">
+        <label className="inline-check">O que quer ver <input aria-label="O que quer ver" value={ask} maxLength={1000} style={{ minWidth: 340 }} placeholder="vendas por cliente em 2026, por mês" onChange={(event) => setAsk(event.target.value)} /></label>
+        <button type="button" className="button button-primary" disabled={asking || ask.trim() === ''} onClick={() => void draft()}><Sparkles size={15} /> {asking ? 'A montar…' : 'Criar com IA'}</button>
+      </div>
+      {askNote && <p className="save-status error" role="status">{askNote}</p>}
+    </section>
     <section className="panel">
       <div className="panel-heading">
         <h2><ListFilter size={17} /> As suas listagens</h2>

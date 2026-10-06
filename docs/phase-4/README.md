@@ -494,9 +494,25 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   «sem valor»), pedidos inválidos, saldo acumulado entre páginas, regras de formatação válidas e
   inválidas, e o painel e a coloração no browser.
 
+### F4D-05 — Criar a listagem a pedir em português
+
+- `ListingsPage` tem a caixa «Pedir em português». O servidor (`ListingDraftService`) exige acesso
+  à empresa, o interruptor da IA ligado nessa empresa e a chave da Anthropic; sem isso devolve a
+  razão em português e não chama nada.
+- **Privacidade:** ao modelo (`ClaudeListingDrafter`) só vão o pedido e o catálogo de origens e
+  campos, com os operadores e as datas relativas; nunca dados da empresa.
+- A resposta é uma definição em JSON, validada contra o catálogo (`ListingCatalog.Validate`). Se
+  tiver problemas, o modelo recebe-os e tenta uma segunda vez; se continuar mal, o utilizador vê os
+  problemas e a explicação, sem definição.
+- O rascunho nunca se guarda sozinho: abre no desenhador (`/listagens/nova`) com o aviso de que a IA
+  pode enganar-se, e é o utilizador quem corrige e guarda. Os tokens usados vêm na resposta.
+- Testes: leitura da resposta (com texto à volta, sem definição, campo inventado), todos os modelos
+  do sistema a atravessar o formato da resposta, as guardas do serviço e o fluxo no browser. Não foi
+  exercido contra a API real (não há chave configurada nesta máquina).
+
 - **Ainda por fazer na 4D** (secção 7.2 do documento de mercado): mais origens (terceiros e
   pendentes, IVA, obrigações); colunas calculadas; indicador com semáforo para o painel; análise presa a
-  um ecrã; subscrição por email; modo especialista; criar a listagem a pedir em português com a IA.
+  um ecrã; subscrição por email; modo especialista.
   Não visto no browser.
 
 ### Por fazer na 4C

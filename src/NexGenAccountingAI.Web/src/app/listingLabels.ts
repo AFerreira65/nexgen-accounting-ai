@@ -164,3 +164,13 @@ export function toneOf(rules: ListingFormatRule[] | null | undefined, column: st
   }
   return null
 }
+
+/** O rascunho que a IA montou a partir de um pedido (espelho de `ListingDraft`). */
+export type ListingDraft = {
+  name: string | null
+  explanation: string
+  definition: ListingDefinition | null
+  problems: string[]
+  model: string
+}
+export type ListingDraftOutcome = { refusal: string | null; draft: ListingDraft | null }

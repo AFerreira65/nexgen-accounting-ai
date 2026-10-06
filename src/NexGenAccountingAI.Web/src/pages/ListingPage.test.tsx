@@ -51,6 +51,11 @@ function serve(calls: { url: string; body?: unknown }[]) {
     calls.push({ url: `${init?.method ?? 'GET'} ${url}`, body })
     if (url.endsWith('/listings/catalog')) return Promise.resolve(json(catalog))
     if (url.endsWith('/listings/templates')) return Promise.resolve(json(templates))
+    if (url.endsWith('/listings/ai-draft')) {
+      const request = (body as { request: string }).request
+      if (request === 'desligada') return Promise.resolve(json({ refusal: 'A IA está desligada para esta empresa.', draft: null }))
+      return Promise.resolve(json({ refusal: null, draft: { name: 'Vendas por cliente', explanation: 'Agrupa por cliente.', definition: templates[0].definition, problems: [], model: 'modelo' } }))
+    }
     if (url.endsWith('/listings/pivot')) {
       return Promise.resolve(json({
         rowField: 'conta', columnField: 'terceiro', measure: 'debito', measureLabel: 'Débito',
@@ -202,5 +207,25 @@ describe('listagens à medida', () => {
     const high = await screen.findByText('1 000,00', { selector: 'td' })
     expect(high).toHaveClass('tone-danger')
     expect(screen.getByText('500,00', { selector: 'td' })).not.toHaveClass('tone-danger')
+  })
+
+  it('pede uma listagem em português e abre o rascunho no desenhador, sem guardar', async () => {
+    const calls: { url: string; body?: unknown }[] = []
+    vi.stubGlobal('fetch', serve(calls))
+    renderAt('/listagens')
+    fireEvent.change(await screen.findByLabelText('O que quer ver'), { target: { value: 'compras por lançar' } })
+    fireEvent.click(screen.getByRole('button', { name: /Criar com IA/ }))
+    expect(await screen.findByLabelText('Nome da listagem')).toHaveValue('Vendas por cliente')
+    expect(screen.getByRole('note')).toHaveTextContent('Confira as colunas')
+    expect(calls.find((call) => call.url.endsWith('/listings/ai-draft'))!.body).toEqual({ request: 'compras por lançar' })
+    expect(calls.some((call) => call.url.startsWith('POST') && call.url.endsWith('/listings'))).toBe(false)
+  })
+
+  it('mostra a recusa quando a IA está desligada', async () => {
+    vi.stubGlobal('fetch', serve([]))
+    renderAt('/listagens')
+    fireEvent.change(await screen.findByLabelText('O que quer ver'), { target: { value: 'desligada' } })
+    fireEvent.click(screen.getByRole('button', { name: /Criar com IA/ }))
+    expect(await screen.findByText('A IA está desligada para esta empresa.')).toBeInTheDocument()
   })
 })

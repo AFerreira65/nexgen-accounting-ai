@@ -1810,6 +1810,14 @@ if (applicationEndpointsAvailable)
     })
         .WithMetadata(new ViewerAllowedAttribute("Só lê e calcula; não altera dados."));
 
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/ai-draft", async (
+        Guid userId, Guid companyId, AiListingDraftRequest body, ListingDraftService drafts, CancellationToken cancellationToken) =>
+    {
+        var outcome = await drafts.DraftAsync(userId, companyId, body?.Request ?? string.Empty, cancellationToken).ConfigureAwait(false);
+        return outcome is null ? Results.NotFound() : Results.Ok(outcome);
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Só monta um rascunho para o utilizador rever; não grava nada."));
+
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/pivot", async (
         Guid userId, Guid companyId, PivotListingRequest body, ListingService listings, CancellationToken cancellationToken) =>
     {
@@ -5656,6 +5664,8 @@ public sealed record RunListingRequest(
     List<string?>? GroupPath,
     int? Skip,
     int? Take);
+
+public sealed record AiListingDraftRequest(string? Request);
 
 public sealed record PivotListingRequest(
     NexGenAccountingAI.Application.Listings.ListingDefinition? Definition,
