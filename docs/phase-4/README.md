@@ -347,9 +347,21 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
 - Os assinalamentos do rosto guardam-se como os outros campos do exercício
   (`tipo-sujeito-passivo`, `tipo-declaracao`, `nif-representante`, `nif-cc`,
   `regime-reducao-taxa`, `regime-geral`), sem tabela nova.
-- Por fazer: quadros 06, 10-A, 10-B, 11-A, 11-B, 12 a 14 e os anexos; o XML
-  do Modelo 22 (`Modelo22IRCv2026.xsd` já está no catálogo de esquemas) e a
+- Por fazer: quadros 06, 10-A, 10-B, 11-A, 11-B, 12 a 14 e os anexos; a
   entrega pelo webservice.
+
+### F4C-03 — XML do Modelo 22
+
+- `Modelo22XmlWriter` escreve o ficheiro pelo esquema oficial
+  `Modelo22IRCv2026.xsd` (namespace `dm22irccli-net`, `version="v2026"`): rosto
+  (quadros 01 a 05, o 02 em branco), 07, 08, 09 (regime geral), 10 e 11. Os
+  valores vão em euros com duas casas decimais (a DP de IVA vai em cêntimos).
+  Recusa NIF sem nove dígitos e valores negativos onde o esquema não admite sinal.
+- Endpoint `.../modelo-22/xml?year=` e botão «Ficheiro XML (AT)» na página.
+- O teste valida o ficheiro contra o XSD oficial com zero erros. Para isso o
+  auxiliar `XsdValidation` passou a resolver os `include` (o `types.xsd`).
+- Não verificado: o significado do quadro 02 (serviço de finanças), que fica em
+  branco, e o que a AT aceita na entrega; a validação final é a do Portal.
 
 ### Por fazer na 4C
 
@@ -357,7 +369,7 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   40 e 41, com as suas listas.
 - O modelo novo da Portaria n.º 298/2026/1 (períodos a partir de julho de
   2027): campos 108/109 e a parte E do 06-A.
-- XML e entrega do Modelo 22; IES no impresso da AT, assente nos mesmos componentes.
+- Entrega do Modelo 22 pelo webservice (precisa do WSDL); IES no impresso da AT, assente nos mesmos componentes.
 
 ## Validação
 

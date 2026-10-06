@@ -46,7 +46,7 @@ public sealed class Modelo22ServiceTests
             var firmId = Guid.NewGuid();
             context.Add(new AccountingFirm(firmId, "Gabinete Modelo 22", "gabinete-modelo-22"));
             var companyId = Guid.NewGuid();
-            context.Add(new Company(companyId, firmId, "Empresa Modelo 22, Lda.", "M22-PT-0001", TaxRegion.Mainland));
+            context.Add(new Company(companyId, firmId, "Empresa Modelo 22, Lda.", "500584095", TaxRegion.Mainland));
             var userId = Guid.NewGuid();
             context.Add(new UserAccount(userId, "Utilizador Modelo 22", "m22@test.invalid"));
             context.Add(new CompanyUser(companyId, userId, CompanyUserRole.Accountant));
@@ -142,6 +142,20 @@ public sealed class Modelo22ServiceTests
             Assert.AreEqual(123456789m, Value(withForm, "nif-cc"));
             Assert.AreEqual(246m, Value(withForm, "regime-geral"));
             Assert.AreEqual(Value(withForm, "347-A") + Value(withForm, "347-B") + 100m, Value(withForm, "351"), "O imposto a outras taxas entra na coleta.");
+
+            // O ficheiro XML (F4C-03): válido face ao esquema oficial e com os valores apurados.
+            var file = await service.BuildXmlAsync(userId, companyId, 2026, CancellationToken.None).ConfigureAwait(false);
+            Assert.IsNotNull(file);
+            Assert.AreEqual("modelo22-500584095-2026.xml", file!.Value.FileName);
+            var xml = System.Text.Encoding.UTF8.GetString(file.Value.Content);
+            StringAssert.Contains(xml, "<Q01C2>2026</Q01C2>");
+            StringAssert.Contains(xml, "<Q03S3TipoSujeito>1</Q03S3TipoSujeito>");
+            StringAssert.Contains(xml, "<Q05C2>123456789</Q05C2>");
+            StringAssert.Contains(xml, "<Q08S2C246>true</Q08S2C246>");
+            StringAssert.Contains(xml, $"<Q07C778>{Value(withForm, "778"):0.00}</Q07C778>".Replace(',', '.'));
+            StringAssert.Contains(xml, $"<Q10C351>{Value(withForm, "351"):0.00}</Q10C351>".Replace(',', '.'));
+            XsdValidation.ValidateIfConfigured(xml, "ACCOUNTINGAI_MODELO22_XSD", Modelo22XmlWriter.Namespace, "Modelo22IRCv2026.xsd");
+            Assert.IsNull(await service.BuildXmlAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false), "Sem acesso à empresa.");
 
             // Guardar de novo substitui: o que não vem deixa de estar guardado. Um prejuízo fica no campo 777.
             var loss = await service.SaveAsync(userId, companyId, 2026, [new("774", 180000m)], CancellationToken.None).ConfigureAwait(false);

@@ -2628,6 +2628,25 @@ if (applicationEndpointsAvailable)
         return result is null ? Results.NotFound() : Results.Ok(result);
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/modelo-22/xml", async (
+        Guid userId, Guid companyId, int year, Modelo22Service modelo22, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        try
+        {
+            var file = await modelo22.BuildXmlAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+            return file is null ? Results.NotFound() : Results.File(file.Value.Content, "application/xml", file.Value.FileName);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["modelo22"] = [exception.Message] });
+        }
+    });
+
     app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/modelo-22", async (
         Guid userId, Guid companyId, int year, Modelo22Input[] values, Modelo22Service modelo22, CancellationToken cancellationToken) =>
     {

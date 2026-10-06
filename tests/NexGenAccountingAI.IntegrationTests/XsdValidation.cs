@@ -28,7 +28,8 @@ internal static class XsdValidation
 
         // Os esquemas da AT vêm em Windows-1252.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        var schemas = new XmlSchemaSet();
+        // Alguns esquemas (Modelo 22) incluem outros ficheiros da mesma pasta.
+        var schemas = new XmlSchemaSet { XmlResolver = new XmlUrlResolver() };
         using (var schemaReader = XmlReader.Create(path, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit }))
         {
             schemas.Add(targetNamespace, schemaReader);

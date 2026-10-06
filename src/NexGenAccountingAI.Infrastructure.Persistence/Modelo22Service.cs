@@ -388,6 +388,26 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
         return (new Modelo22Return(year, sme, municipalRate, fields, warnings, Source, Disclaimer), closingLosses);
     }
 
+    /// <summary>O ficheiro XML do Modelo 22 do exercício, pelo esquema oficial da AT (F4C-03).</summary>
+    /// <returns><c>null</c> sem acesso à empresa. Lança <see cref="InvalidOperationException"/> quando a declaração não pode ir para ficheiro.</returns>
+    public async Task<(byte[] Content, string FileName)?> BuildXmlAsync(
+        Guid userId, Guid companyId, int year, CancellationToken cancellationToken = default)
+    {
+        var model = await BuildAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        if (model is null)
+        {
+            return null;
+        }
+
+        var taxNumber = await context.Companies
+            .AsNoTracking()
+            .Where(company => company.Id == companyId)
+            .Select(company => company.TaxRegistrationNumber)
+            .SingleAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return (Modelo22XmlWriter.Write(model, taxNumber), $"modelo22-{taxNumber}-{year}.xml");
+    }
+
     /// <summary>
     /// Substitui os valores do exercício pelos indicados: os campos a zero
     /// deixam de estar guardados. Recusa campos que não sejam do utilizador.

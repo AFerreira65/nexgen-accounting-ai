@@ -1,11 +1,11 @@
-import { Calculator, CircleAlert, CircleCheck, Database, FileText, Printer, Table2 } from 'lucide-react'
+import { Calculator, CircleAlert, CircleCheck, Database, FileDown, FileText, Printer, Table2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { ExportButtons } from '../app/ExportButtons'
 import { euro, type Modelo22Field, type Modelo22Return } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
-import { useWorkContext } from '../app/WorkContext'
+import { problemMessage, useWorkContext } from '../app/WorkContext'
 import { Modelo22Form } from './Modelo22Form'
 
 const sections = ['Quadro 07', 'Quadro 09', 'Tributações autónomas', 'Quadro 10'] as const
@@ -18,7 +18,7 @@ const sectionTitles: Record<string, string> = {
 const parse = (value: string) => Number(value.replace(/\s/g, '').replace(',', '.'))
 
 export function Modelo22Page() {
-  const { activeCompany, source, modelo22, saveModelo22 } = useWorkContext()
+  const { activeCompany, source, user, modelo22, saveModelo22 } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const defaultYear = activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()
@@ -32,6 +32,7 @@ export function Modelo22Page() {
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [view, setView] = useState<'impresso' | 'tabela'>('impresso')
   const [error, setError] = useState('')
+  const [xmlBusy, setXmlBusy] = useState(false)
   usePublishRecord(undefined, undefined)
 
   useEffect(() => { setYear(defaultYear) }, [defaultYear, companyId])
@@ -54,6 +55,28 @@ export function Modelo22Page() {
       .catch((problem: unknown) => { if (!controller.signal.aborted) { setResult(null); setError(problem instanceof Error ? problem.message : 'Não foi possível preparar o Modelo 22.') } })
     return () => controller.abort()
   }, [modelo22, companyId, onDatabase, year])
+
+  /** O ficheiro XML no formato da AT, para entregar no Portal das Finanças. */
+  async function downloadXml() {
+    setXmlBusy(true); setError('')
+    try {
+      const response = await fetch(`/api/v1/development/users/${user.id}/companies/${companyId}/modelo-22/xml?year=${year}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      const name = /filename="?([^";]+)/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? `modelo22-${year}.xml`
+      const url = URL.createObjectURL(await response.blob())
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = name
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(url)
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Não foi possível gerar o ficheiro.')
+    } finally {
+      setXmlBusy(false)
+    }
+  }
 
   const fields = useMemo(() => result?.fields ?? [], [result])
   const hidden = useMemo(
@@ -125,6 +148,7 @@ export function Modelo22Page() {
         <button type="button" className={`button button-secondary ${view === 'tabela' ? 'is-active' : ''}`} aria-pressed={view === 'tabela'} onClick={() => setView('tabela')}><Table2 size={15} /> Tabela</button>
       </span>
       <ExportButtons run={exportCsv} disabled={!result} />
+      <button className="button button-secondary" type="button" onClick={() => void downloadXml()} disabled={!result || xmlBusy}><FileDown size={15} /> {xmlBusy ? 'A gerar…' : 'Ficheiro XML (AT)'}</button>
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!result}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 
