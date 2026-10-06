@@ -394,12 +394,32 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   texto único; está o nome da região) e se a AT aceita o desenvolvimento vazio.
   As taxas da região não são verificadas contra as tabelas fiscais.
 
+### F4C-06 — Anexos dos campos 40 e 41 e entrega do Modelo 22
+
+- **Anexos 40 e 41** (`anexoCampo40R`, `anexoCampo41R`): quando há regularizações, o
+  ficheiro leva o total em «Outras regularizações» (campos 3B e 4B) com a base de
+  incidência dos lançamentos de base. Os lançamentos não dizem o artigo do CIVA
+  (78.º-A, 78.º-B, 78.º-C, 23.º a 26.º, crédito até 750 €), por isso as listas por
+  artigo não são geradas e o aviso pede para reclassificar no Portal, se for caso disso.
+- **Modelo 22 pelo webservice**: ao contrário do que se registou, a AT publica o WSDL
+  (`wsSubmeterDeclaracaoIRC.wsdl`) e o manual de integração de 31-07-2025. O
+  `AtSoapClient` passou a ser o transporte comum (DP de IVA e Modelo 22);
+  `Modelo22AtGateway` traz os endereços (portas 405 e 705), as operações
+  `validarDeclaracao` e `submeterDeclaracao` e o ficheiro em Base64 simples (sem ZIP).
+  `Modelo22FilingService` guarda cada pedido em `AtExchanges` e, como na DP de IVA, só
+  submete no ambiente de testes. O painel «Entrega na AT» é agora genérico e aparece
+  também na página do Modelo 22.
+- **Não confirmado:** a `versaoDeclaracao`. O manual diz «22» mais a versão do ficheiro
+  (2222 em 2020, depois 2223, 2224…); está `2228` por extrapolação (`At:Modelo22Version`
+  corrige-a sem alterar código). A «Validar na AT» dirá se é aceite. Nada foi exercido
+  contra a AT: falta o certificado de testes e o subutilizador com permissão para o serviço.
+
 ### Por fazer na 4C
 
-- Os anexos das regularizações dos campos 40 e 41, com as suas listas.
+- As listas por artigo dos anexos das regularizações dos campos 40 e 41 (exige guardar o artigo em cada lançamento).
 - O modelo novo da Portaria n.º 298/2026/1 (períodos a partir de julho de
   2027): campos 108/109 e a parte E do 06-A.
-- Entrega do Modelo 22 pelo webservice (precisa do WSDL); IES no impresso da AT, assente nos mesmos componentes.
+- IES no impresso da AT, assente nos mesmos componentes.
 
 ## Validação
 

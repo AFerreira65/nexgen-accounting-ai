@@ -22,35 +22,15 @@ namespace NexGenAccountingAI.Infrastructure.At;
 /// </list>
 /// Nenhuma senha nem o conteúdo cifrado ficam em logs.
 /// </summary>
-public sealed class VatReturnAtGateway(
-    IOptions<AtOptions> options,
-    AtCertificateProvider certificates,
-    AtSecretProtector protector,
-    TimeProvider time) : IVatReturnAtGateway
+public sealed class VatReturnAtGateway(AtSoapClient client) : IVatReturnAtGateway
 {
     public const string ProductionEndpoint = "https://servicos.portaldasfinancas.gov.pt:406/dpivaws/DeclaracaoPeriodicaIVAWebService";
     public const string TestEndpoint = "https://servicos.portaldasfinancas.gov.pt:706/dpivaws/DeclaracaoPeriodicaIVAWebService";
     public const string DeclarationVersion = "2016";
 
     private static readonly XNamespace Service = "https://servicos.portaldasfinancas.gov.pt/dpivaws/DeclaracaoPeriodicaIVAWebService";
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
 
-    public AtGatewayStatus Status()
-    {
-        var certificateReady = certificates.TryGetCertificate(out var certificate);
-        certificate?.Dispose();
-        var keyPath = PublicKeyPath();
-        var keyReady = keyPath is not null && File.Exists(keyPath);
-        var problem = (certificateReady, keyReady) switch
-        {
-            (false, _) => "O certificado da AT não está configurado ou não abre (At:Certificate). " + certificates.Describe().Problem,
-            (_, false) => keyPath is null
-                ? "Falta indicar a chave pública do sistema de autenticação da AT (At:PublicKey:Path)."
-                : $"O ficheiro da chave pública da AT não existe: {keyPath}",
-            _ => null,
-        };
-        return new AtGatewayStatus(certificateReady, keyReady, problem);
-    }
+    public AtGatewayStatus Status() => client.Status();
 
     public Task<AtDeclarationResult> ValidateAsync(
         byte[] declarationXml, IReadOnlyList<AtCredential> credentials, bool production, CancellationToken cancellationToken = default) =>
@@ -144,59 +124,7 @@ public sealed class VatReturnAtGateway(
             Messages("erros", "erro"), Messages("alertas", "alerta"), declarationId, httpStatus, durationMilliseconds);
     }
 
-    private async Task<AtDeclarationResult> SendAsync(
-        string operation, XElement body, IReadOnlyList<AtCredential> credentials, bool production, CancellationToken cancellationToken)
-    {
-        var status = Status();
-        if (!status.Ready)
-        {
-            return new AtDeclarationResult(false, null, status.Problem!, [], [], null, null, 0);
-        }
-
-        if (!certificates.TryGetCertificate(out var certificate))
-        {
-            return new AtDeclarationResult(false, null, "O certificado da AT não abre.", [], [], null, null, 0);
-        }
-
-        var stopwatch = Stopwatch.StartNew();
-        try
-        {
-            using var authenticationCertificate = X509CertificateLoader.LoadCertificateFromFile(PublicKeyPath()!);
-            using var publicKey = authenticationCertificate.GetRSAPublicKey()
-                ?? throw new InvalidOperationException("O ficheiro da chave pública da AT não tem uma chave RSA.");
-            var envelope = Envelope(body, credentials, publicKey, time.GetUtcNow());
-
-            using var handler = new SocketsHttpHandler();
-            handler.SslOptions.ClientCertificates = [certificate];
-            using var client = new HttpClient(handler) { Timeout = Timeout };
-            using var request = new HttpRequestMessage(HttpMethod.Post, production ? ProductionEndpoint : TestEndpoint);
-            request.Content = new StringContent(envelope.ToString(SaveOptions.DisableFormatting), Encoding.UTF8);
-            request.Content.Headers.ContentType = new MediaTypeHeaderValue("text/xml") { CharSet = "utf-8" };
-            request.Headers.TryAddWithoutValidation("SOAPAction", $"\"tns:{operation}\"");
-
-            using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            return Parse(content, (int)response.StatusCode, stopwatch.ElapsedMilliseconds);
-        }
-        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or CryptographicException or InvalidOperationException or IOException)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-
-            var detail = exception.InnerException?.Message ?? exception.Message;
-            return new AtDeclarationResult(false, null, $"Não foi possível comunicar com a AT: {detail}", [], [], null, null, stopwatch.ElapsedMilliseconds);
-        }
-        finally
-        {
-            certificate.Dispose();
-        }
-    }
-
-    private string? PublicKeyPath()
-    {
-        var path = protector.Unprotect(options.Value.PublicKey.Path);
-        return string.IsNullOrWhiteSpace(path) ? null : path;
-    }
+    private Task<AtDeclarationResult> SendAsync(
+        string operation, XElement body, IReadOnlyList<AtCredential> credentials, bool production, CancellationToken cancellationToken) =>
+        client.SendAsync(production ? ProductionEndpoint : TestEndpoint, operation, body, credentials, cancellationToken);
 }

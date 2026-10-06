@@ -200,6 +200,31 @@ public static class VatDeclarationXmlWriter
 
             writer.WriteEndElement();
 
+            // Anexos dos campos 40 e 41: o total em «Outras regularizações» (3B e 4B), sem as listas por artigo.
+            if (Value(40) != 0m)
+            {
+                var bases = declaration.RegularisationBases;
+                writer.WriteStartElement("anexoCampo40R", Namespace);
+                writer.WriteStartElement("regularizacoes", Namespace);
+                writer.WriteElementString("btOutrasRegularizacoes", Namespace, Cents(bases?.Field40 ?? 0m));
+                writer.WriteElementString("campo40Total", Namespace, Cents(Value(40)));
+                writer.WriteElementString("ivaOutrasRegularizacoes", Namespace, Cents(Value(40)));
+                writer.WriteEndElement();
+                writer.WriteEndElement();
+            }
+
+            if (Value(41) != 0m)
+            {
+                var bases = declaration.RegularisationBases;
+                writer.WriteStartElement("anexoCampo41R", Namespace);
+                writer.WriteStartElement("regularizacoes", Namespace);
+                writer.WriteElementString("btOutrasRegularizacoes", Namespace, Cents(bases?.Field41 ?? 0m));
+                writer.WriteElementString("campo41Total", Namespace, Cents(Value(41)));
+                writer.WriteElementString("ivaOutrasRegularizacoes", Namespace, Cents(Value(41)));
+                writer.WriteEndElement();
+                writer.WriteEndElement();
+            }
+
             // Um Anexo R por região onde há operações; o identificador é o nome da região.
             foreach (var annex in annexes)
             {

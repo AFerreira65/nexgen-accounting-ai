@@ -35,7 +35,11 @@ public sealed record VatDeclaration(
     string Source,
     string Disclaimer,
     VatDeclarationInputs? Inputs = null,
-    IReadOnlyList<VatRegionalAnnex>? RegionalAnnexes = null);
+    IReadOnlyList<VatRegionalAnnex>? RegionalAnnexes = null,
+    VatRegularisationBases? RegularisationBases = null);
+
+/// <summary>As bases de incidência das regularizações dos campos 40 e 41, para os anexos dos campos 40 e 41 (campo 3 de cada anexo).</summary>
+public sealed record VatRegularisationBases(decimal Field40, decimal Field41);
 
 /// <summary>O Anexo R de uma região: os campos 1 a 24 das operações aí localizadas, mais os totais 62, 63 e 64.</summary>
 /// <param name="Region"><c>Continente</c>, <c>Acores</c> ou <c>Madeira</c>.</param>
@@ -59,7 +63,7 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
 
     public const string Disclaimer =
         "Mapa de apoio ao preenchimento, não validado pela AT. Não apura " +
-        "os campos 14, 15, 18 e 19, o reembolso (95) nem o quadro 06-A, que se preenchem à mão no impresso, nem os anexos das regularizações dos campos 40 e 41; " +
+        "os campos 14, 15, 18 e 19, o reembolso (95) nem o quadro 06-A, que se preenchem à mão no impresso, nem as listas dos anexos das regularizações dos campos 40 e 41 (o total vai em «Outras regularizações»); " +
         "as operações de outra região vão para o Anexo R dessa região (campos 1 a 24) e em total para os campos 65 a 68.";
 
     private const string Base = "base", Taxpayer = "sujeito-passivo", State = "estado", Settlement = "apuramento", Development = "desenvolvimento";
@@ -142,6 +146,7 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
             .Order()
             .ToList();
         var selfAssessed = false;
+        decimal regularisationBase40 = 0m, regularisationBase41 = 0m;
 
         foreach (var part in parts)
         {
@@ -155,6 +160,18 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
             }
 
             // As regularizações são da totalidade da atividade, qualquer que seja a região.
+            if (!tax && part.Nature == VatOperationNature.RegularizacoesFavorSujeitoPassivo)
+            {
+                regularisationBase40 += Math.Abs(debit);
+                continue;
+            }
+
+            if (!tax && part.Nature == VatOperationNature.RegularizacoesFavorEstado)
+            {
+                regularisationBase41 += Math.Abs(credit);
+                continue;
+            }
+
             if (tax && part.Nature == VatOperationNature.RegularizacoesFavorSujeitoPassivo)
             {
                 Put(40, part, debit);
@@ -404,7 +421,9 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
 
         if (Value(40) != 0m || Value(41) != 0m)
         {
-            warnings.Add("Os campos 40 e 41 obrigam aos anexos das regularizações, que a aplicação não preenche.");
+            warnings.Add(
+                "Os campos 40 e 41 obrigam aos anexos das regularizações. A aplicação põe o total em «Outras regularizações» (campos 3B e 4B) porque os lançamentos não dizem o artigo do CIVA: " +
+                "se alguma for do artigo 78.º-A, 78.º-B, 78.º-C, 23.º a 26.º ou de crédito até 750 €, reclassifique-a no Portal e preencha as listas antes de entregar.");
         }
 
         var difference = (field93 - field94) - (settlement.NetPayable - settlement.CreditToCarryForward);
@@ -416,7 +435,8 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
 
         return new VatDeclaration(
             from, to, period, seat.ToString(), fields, warnings,
-            settlement.NetPayable, settlement.CreditToCarryForward, difference, Source, Disclaimer, inputs, annexes);
+            settlement.NetPayable, settlement.CreditToCarryForward, difference, Source, Disclaimer, inputs, annexes,
+            new VatRegularisationBases(decimal.Round(regularisationBase40, 2), decimal.Round(regularisationBase41, 2)));
     }
 
     /// <summary>O que está guardado à mão para o período (vazio se nada).</summary>

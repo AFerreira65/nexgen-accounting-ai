@@ -169,6 +169,8 @@ public sealed class VatDeclarationServiceTests
             StringAssert.Contains(xml, "<periodoDeclaracao>03T</periodoDeclaracao>");
             StringAssert.Contains(xml, "<localizacaoSede>1</localizacaoSede>");
             StringAssert.Contains(xml, "<temAnexoRAcores>true</temAnexoRAcores>");
+            StringAssert.Contains(xml, "<campo40Total>1000</campo40Total>", "O anexo do campo 40 leva o total das regularizações em «Outras regularizações».");
+            StringAssert.Contains(xml, "<ivaOutrasRegularizacoes>1000</ivaOutrasRegularizacoes>");
             StringAssert.Contains(xml, "<anexoR id=\"Acores\">");
             StringAssert.Contains(xml, "<btTaxaNormal>10000</btTaxaNormal>", "O Anexo R leva a base dos Açores em cêntimos.");
             StringAssert.Contains(xml, "<ivaTaxaNormal>1600</ivaTaxaNormal>");

@@ -11,6 +11,14 @@ public sealed class AtOptions
     public AtCertificateOptions Certificate { get; set; } = new();
 
     public AtPublicKeyOptions PublicKey { get; set; } = new();
+
+    /// <summary>
+    /// A <c>versaoDeclaracao</c> do Modelo 22: «22» seguido da versão do ficheiro publicado
+    /// (o manual dá 2222 em 2020 e 2223, 2224… nos anos seguintes). O valor por omissão
+    /// extrapola essa sequência para o impresso de 2026 e <b>não está confirmado</b>: a
+    /// validação na AT diz se é aceite; se não for, indique-o aqui (<c>At:Modelo22Version</c>).
+    /// </summary>
+    public string Modelo22Version { get; set; } = "2228";
 }
 
 /// <summary>

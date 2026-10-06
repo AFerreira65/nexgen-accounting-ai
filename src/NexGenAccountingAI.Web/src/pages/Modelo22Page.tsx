@@ -7,6 +7,7 @@ import { euro, type Modelo22Field, type Modelo22Return } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { problemMessage, useWorkContext } from '../app/WorkContext'
 import { Modelo22Form } from './Modelo22Form'
+import { Modelo22FilingPanel } from './VatDeclarationFilingPanel'
 
 const sections = ['Quadro 07', 'Quadro 09', 'Tributações autónomas', 'Quadro 10'] as const
 const sectionTitles: Record<string, string> = {
@@ -188,6 +189,7 @@ export function Modelo22Page() {
 
       <p className="statement-note">{result.disclaimer} As taxas vêm das <Link to="/tabelas-fiscais">tabelas fiscais</Link> de {result.year}.</p>
       <p className="statement-note">Fonte dos campos e das fórmulas: {result.source}</p>
+      <Modelo22FilingPanel companyId={companyId} year={year} />
     </>}
   </div>
 }

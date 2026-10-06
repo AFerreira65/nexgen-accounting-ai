@@ -6,7 +6,7 @@ import { problemMessage, useWorkContext } from '../app/WorkContext'
 type AtMessage = { annex: string | null; section: string | null; field: string | null; code: string | null; text: string }
 type AtResult = { reached: boolean; code: number | null; message: string; errors: AtMessage[]; alerts: AtMessage[]; declarationId: number | null; succeeded: boolean }
 type Outcome = { environment: string; refusal: string | null; result: AtResult | null }
-type Exchange = { operation: string; production: boolean; period: string; requestedAtUtc: string; requestedByName: string | null; reached: boolean; resultCode: number | null; message: string; declarationId: number | null }
+type Exchange = { service: string; operation: string; production: boolean; period: string; requestedAtUtc: string; requestedByName: string | null; reached: boolean; resultCode: number | null; message: string; declarationId: number | null }
 type Exchanges = { gateway: { ready: boolean; problem: string | null }; exchanges: Exchange[] }
 
 const OPERATIONS: Record<string, string> = { validarDeclaracao: 'Validação', submeterDeclaracao: 'Submissão' }
@@ -14,10 +14,22 @@ const ENVIRONMENTS: Record<string, string> = { Testes: 'testes', Producao: 'prod
 const dateTime = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short', timeStyle: 'short' })
 
 /**
- * A entrega da declaração periódica de IVA (F4A-02): o ficheiro XML oficial, a validação
- * pelas regras da AT e a submissão (por agora só no ambiente de testes da AT).
+ * A entrega de uma declaração na AT (F4A-02, F4C-06): o ficheiro XML oficial, a validação pelas
+ * regras da AT e a submissão (por agora só no ambiente de testes da AT). Serve a declaração
+ * periódica de IVA e o Modelo 22: cada uma diz os seus endereços e o serviço do histórico.
  */
-export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: { companyId: string; from: string; to: string; priorCredit: number | null }) {
+export function AtFilingPanel({ companyId, resetKey, service, xmlPath, sendPath, defaultFileName, description }: {
+  companyId: string
+  /** Muda quando o que se vai entregar muda (período, exercício…): limpa o último resultado. */
+  resetKey: string
+  /** O serviço no histórico de pedidos: <c>dpiva</c> ou <c>modelo22</c>. */
+  service: string
+  /** O caminho do ficheiro XML, a partir da empresa, com a pesquisa. */
+  xmlPath: string
+  sendPath: (operation: 'validate' | 'submit') => string
+  defaultFileName: string
+  description: string
+}) {
   const { user } = useWorkContext()
   const [busy, setBusy] = useState<'validate' | 'submit' | 'xml' | null>(null)
   const [outcome, setOutcome] = useState<{ operation: string; value: Outcome } | null>(null)
@@ -26,13 +38,8 @@ export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: 
   const [reload, setReload] = useState(0)
 
   const base = `/api/v1/development/users/${user.id}/companies/${companyId}`
-  const query = () => {
-    const params = new URLSearchParams({ from, to })
-    if (priorCredit !== null) params.set('priorCredit', String(priorCredit))
-    return params
-  }
 
-  useEffect(() => { setOutcome(null); setError('') }, [companyId, from, to, priorCredit])
+  useEffect(() => { setOutcome(null); setError('') }, [companyId, resetKey])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -46,9 +53,9 @@ export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: 
   async function downloadXml() {
     setBusy('xml'); setError('')
     try {
-      const response = await fetch(`${base}/vat-declaration/xml?${query()}`)
+      const response = await fetch(`${base}/${xmlPath}`)
       if (!response.ok) throw new Error(await problemMessage(response))
-      const name = /filename="?([^";]+)/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? 'dpiva.xml'
+      const name = /filename="?([^";]+)/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? defaultFileName
       const url = URL.createObjectURL(await response.blob())
       const anchor = document.createElement('a')
       anchor.href = url
@@ -67,9 +74,7 @@ export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: 
   async function send(operation: 'validate' | 'submit') {
     setBusy(operation); setError(''); setOutcome(null)
     try {
-      const params = query()
-      if (operation === 'submit') params.set('acceptAlerts', 'true')
-      const response = await fetch(`${base}/vat-declaration/at/${operation}?${params}`, { method: 'POST' })
+      const response = await fetch(`${base}/${sendPath(operation)}`, { method: 'POST' })
       if (!response.ok) throw new Error(await problemMessage(response))
       setOutcome({ operation, value: await response.json() as Outcome })
       setReload((value) => value + 1)
@@ -87,7 +92,7 @@ export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: 
   </table></div>
 
   return <section className="panel no-print">
-    <div className="panel-heading"><div><h2>Entrega na AT</h2><p>O ficheiro XML da declaração no formato oficial, a validação pelas regras da AT e a submissão. O ficheiro leva os quadros 02 a 06-A e 20 tal como estão no impresso acima; o Anexo R e os anexos das regularizações não são gerados. A submissão por aqui só funciona, por agora, no ambiente de testes da AT: em produção, valide e entregue o ficheiro no Portal das Finanças.</p></div></div>
+    <div className="panel-heading"><div><h2>Entrega na AT</h2><p>{description} A submissão por aqui só funciona, por agora, no ambiente de testes da AT: em produção, valide e entregue o ficheiro no Portal das Finanças.</p></div></div>
     <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
       <button className="button button-secondary" type="button" disabled={busy !== null} onClick={() => void downloadXml()}><FileDown size={16} /> {busy === 'xml' ? 'A gerar…' : 'Ficheiro XML'}</button>
       <button className="button button-primary" type="button" disabled={busy !== null} onClick={() => void send('validate')}><ShieldCheck size={16} /> {busy === 'validate' ? 'A validar…' : 'Validar na AT'}</button>
@@ -103,11 +108,11 @@ export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: 
     </p>}
     {result && messages('Erros', result.errors)}
     {result && messages('Alertas', result.alerts)}
-    {history && history.exchanges.length > 0 && <>
+    {history && history.exchanges.some((exchange) => exchange.service === service) && <>
       <p className="statement-note">Últimos pedidos à AT desta empresa:</p>
       <div className="table-wrap"><table className="dense-table">
         <thead><tr><th>Quando</th><th>Pedido</th><th>Período</th><th>Ambiente</th><th>Quem</th><th>Resposta</th></tr></thead>
-        <tbody>{history.exchanges.map((exchange, index) => <tr key={index}>
+        <tbody>{history.exchanges.filter((exchange) => exchange.service === service).map((exchange, index) => <tr key={index}>
           <td>{dateTime.format(new Date(exchange.requestedAtUtc))}</td>
           <td>{OPERATIONS[exchange.operation] ?? exchange.operation}</td>
           <td>{exchange.period}</td>
@@ -118,4 +123,29 @@ export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: 
       </table></div>
     </>}
   </section>
+}
+
+/** A declaração periódica de IVA na entrega à AT. */
+export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: { companyId: string; from: string; to: string; priorCredit: number | null }) {
+  const query = () => {
+    const params = new URLSearchParams({ from, to })
+    if (priorCredit !== null) params.set('priorCredit', String(priorCredit))
+    return params
+  }
+  return <AtFilingPanel
+    companyId={companyId} resetKey={`${from}|${to}|${priorCredit}`} service="dpiva" defaultFileName="dpiva.xml"
+    xmlPath={`vat-declaration/xml?${query()}`}
+    sendPath={(operation) => { const params = query(); if (operation === 'submit') params.set('acceptAlerts', 'true'); return `vat-declaration/at/${operation}?${params}` }}
+    description="O ficheiro XML da declaração no formato oficial, a validação pelas regras da AT e a submissão. O ficheiro leva os quadros 02 a 06-A e 20 tal como estão no impresso acima, o Anexo R de cada região e, com os campos 40 e 41, os anexos das regularizações com o total em «Outras regularizações»."
+  />
+}
+
+/** O Modelo 22 na entrega à AT. */
+export function Modelo22FilingPanel({ companyId, year }: { companyId: string; year: number }) {
+  return <AtFilingPanel
+    companyId={companyId} resetKey={String(year)} service="modelo22" defaultFileName={`modelo22-${year}.xml`}
+    xmlPath={`modelo-22/xml?year=${year}`}
+    sendPath={(operation) => `modelo-22/at/${operation}?year=${year}${operation === 'submit' ? '&acceptAlerts=true' : ''}`}
+    description="O ficheiro XML do Modelo 22 no formato oficial (rosto, quadros 07 a 11; sem anexos), a validação pelas regras da AT e a submissão."
+  />
 }

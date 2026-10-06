@@ -57,3 +57,17 @@ public interface IVatReturnAtGateway
     Task<AtDeclarationResult> SubmitAsync(
         byte[] declarationXml, IReadOnlyList<AtCredential> credentials, bool production, bool acceptAlerts, CancellationToken cancellationToken = default);
 }
+
+/// <summary>O Modelo 22 de IRC no webservice da AT (validar e submeter).</summary>
+public interface IModelo22AtGateway
+{
+    AtGatewayStatus Status();
+
+    /// <summary>Valida a declaração pelas regras da AT, sem a registar.</summary>
+    Task<AtDeclarationResult> ValidateAsync(
+        byte[] declarationXml, IReadOnlyList<AtCredential> credentials, bool production, CancellationToken cancellationToken = default);
+
+    /// <summary>Submete a declaração. <paramref name="acceptAlerts"/>: continuar apesar de alertas.</summary>
+    Task<AtDeclarationResult> SubmitAsync(
+        byte[] declarationXml, IReadOnlyList<AtCredential> credentials, bool production, bool acceptAlerts, CancellationToken cancellationToken = default);
+}

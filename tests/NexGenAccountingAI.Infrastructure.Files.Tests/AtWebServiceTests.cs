@@ -66,6 +66,20 @@ public sealed class AtWebServiceTests
     }
 
     [TestMethod]
+    public void TheModelo22TravelsAsPlainBase64AndTheBodyFollowsTheWsdl()
+    {
+        var xml = Encoding.UTF8.GetBytes("<Modelo22IRCv2026 xmlns=\"dm22irccli-net\" version=\"v2026\"/>");
+        var body = Modelo22AtGateway.ValidateBody("2228", xml);
+        XNamespace service = "https://servicos.portaldasfinancas.gov.pt/dm22ircws/SubmeterDeclaracaoIRCService/2020";
+        Assert.AreEqual(service + "validarDeclaracaoIRCRequest", body.Name);
+        Assert.AreEqual("2228", body.Element("versaoDeclaracao")!.Value);
+        // O manual do Modelo 22 pede o ficheiro em Base64, sem ZIP nem dupla codificação.
+        CollectionAssert.AreEqual(xml, Convert.FromBase64String(body.Element("declaracao")!.Value));
+        StringAssert.Contains(Modelo22AtGateway.TestEndpoint, ":705/dm22ircws/");
+        StringAssert.Contains(Modelo22AtGateway.ProductionEndpoint, ":405/dm22ircws/");
+    }
+
+    [TestMethod]
     public void TheDeclarationTravelsZippedAndTheEnvelopeFollowsTheWsdl()
     {
         var xml = Encoding.UTF8.GetBytes("<dpiva xmlns=\"http://www.at.gov.pt/schemas/dpiva\" version=\"06\"/>");

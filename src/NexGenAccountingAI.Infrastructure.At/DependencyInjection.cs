@@ -30,7 +30,9 @@ public static class DependencyInjection
         services.AddSingleton<AtCertificateProvider>();
         services.AddSingleton<IAtCertificateProvider>(sp => sp.GetRequiredService<AtCertificateProvider>());
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<AtSoapClient>();
         services.AddSingleton<IVatReturnAtGateway, VatReturnAtGateway>();
+        services.AddSingleton<IModelo22AtGateway, Modelo22AtGateway>();
         return services;
     }
 }
