@@ -131,6 +131,18 @@ public sealed class Modelo22ServiceTests
             Assert.AreEqual("Estimativa de IRC", saved.Fields.Single(field => field.Code == "724").Note);
             Assert.IsFalse(saved.Warnings.Any(warning => warning.Contains("campo 724", StringComparison.Ordinal)));
 
+            // O impresso (F4C-02): quadro 11 da DR, e o rosto e o imposto a outras taxas guardados como os outros campos.
+            Assert.IsTrue(Value(saved, "411") > 0m, "O volume de negócios vem das vendas e serviços prestados.");
+            Assert.IsTrue(Value(saved, "410") >= Value(saved, "411"));
+            var withForm = await service.SaveAsync(userId, companyId, 2026,
+                [new("724", 45000m), new("349", 100m), new("348", 10m), new("tipo-sujeito-passivo", 1m), new("tipo-declaracao", 2m), new("nif-cc", 123456789m), new("regime-geral", 246m)],
+                CancellationToken.None).ConfigureAwait(false);
+            Assert.IsNotNull(withForm);
+            Assert.AreEqual(1m, Value(withForm, "tipo-sujeito-passivo"));
+            Assert.AreEqual(123456789m, Value(withForm, "nif-cc"));
+            Assert.AreEqual(246m, Value(withForm, "regime-geral"));
+            Assert.AreEqual(Value(withForm, "347-A") + Value(withForm, "347-B") + 100m, Value(withForm, "351"), "O imposto a outras taxas entra na coleta.");
+
             // Guardar de novo substitui: o que não vem deixa de estar guardado. Um prejuízo fica no campo 777.
             var loss = await service.SaveAsync(userId, companyId, 2026, [new("774", 180000m)], CancellationToken.None).ConfigureAwait(false);
             Assert.AreEqual(0m, Value(loss!, "724"));

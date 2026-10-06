@@ -333,17 +333,35 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
 - O ficheiro com o quadro 06-A continua válido face ao `dpiva-06.xsd` oficial
   (teste de integração).
 
+### F4C-02 — Modelo 22 no impresso da AT
+
+- `pages/Modelo22Form.tsx`: o Modelo 22 com o aspeto do impresso em vigor a
+  partir de janeiro de 2026 (Despacho n.º 320/2026): rosto (quadros 01 a 05:
+  período, designação, NIF, tipo de sujeito passivo, tipo de declaração,
+  NIF do representante e do CC), quadro 07 completo pela ordem oficial (com as
+  faixas «A acrescer» / «A deduzir», as somas 708/753/776 e 777/778), quadro 08
+  (regimes de taxa, a assinalar), quadro 09 (a coluna do regime geral apurada;
+  as outras em branco), quadro 10 (todas as linhas, incluindo 348/349/350/370,
+  que passam a entrar na coleta) e quadro 11 (410 e 411 da DR). A vista
+  «Tabela» mantém a ajuda das tributações autónomas e a lista de campos.
+- Os assinalamentos do rosto guardam-se como os outros campos do exercício
+  (`tipo-sujeito-passivo`, `tipo-declaracao`, `nif-representante`, `nif-cc`,
+  `regime-reducao-taxa`, `regime-geral`), sem tabela nova.
+- Por fazer: quadros 06, 10-A, 10-B, 11-A, 11-B, 12 a 14 e os anexos; o XML
+  do Modelo 22 (`Modelo22IRCv2026.xsd` já está no catálogo de esquemas) e a
+  entrega pelo webservice.
+
 ### Por fazer na 4C
 
 - Anexo R (operações noutra região) e os anexos das regularizações dos campos
   40 e 41, com as suas listas.
 - O modelo novo da Portaria n.º 298/2026/1 (períodos a partir de julho de
   2027): campos 108/109 e a parte E do 06-A.
-- Modelo 22 e IES no impresso da AT, assentes nos mesmos componentes.
+- XML e entrega do Modelo 22; IES no impresso da AT, assente nos mesmos componentes.
 
 ## Validação
 
-- .NET: 323 testes. PWA: 133 testes.
+- .NET: 323 testes. PWA: 134 testes.
 - Vistos a funcionar com a base real: a validação e a exportação do SAF-T, a
   exportação para PDF e Excel pela API, e a tarefa diária a correr sozinha.
 - **Ainda não vistos no browser** com a sessão do utilizador: o painel do

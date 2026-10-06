@@ -71,9 +71,18 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
         "Dos limites legais só verifica o da dedução de prejuízos (65 % do lucro tributável); os prejuízos anteriores a 2023, que tinham prazo de reporte, " +
         "e os limites dos benefícios e da derrama municipal não são verificados.";
 
-    private const string Q07 = "Quadro 07", Q09 = "Quadro 09", Q10 = "Quadro 10", QTA = "Tributações autónomas";
+    private const string Q07 = "Quadro 07", Q09 = "Quadro 09", Q10 = "Quadro 10", QTA = "Tributações autónomas", Q11 = "Quadro 11", Rosto = "Rosto";
 
     // Os campos dos quadros 09 e 10 que o utilizador indica, com a designação do impresso.
+    /// <summary>As rubricas de rendimentos da DR por naturezas que formam o campo 410 (a primeira é o volume de negócios).</summary>
+    private static readonly string[] IncomeLines =
+    [
+        "Vendas e serviços prestados", "Subsídios à exploração",
+        "Ganhos / perdas imputados de subsidiárias, associadas e empreendimentos conjuntos",
+        "Variação nos inventários da produção", "Trabalhos para a própria entidade",
+        "Aumentos / reduções de justo valor", "Outros rendimentos", "Juros e rendimentos similares obtidos",
+    ];
+
     private static readonly (string Code, string Section, string Label)[] UserFields =
     [
         ("309", Q09, "Prejuízos fiscais deduzidos"),
@@ -93,6 +102,17 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
         ("365", Q10, "Tributações autónomas"),
         ("366", Q10, "Juros compensatórios"),
         ("369", Q10, "Juros de mora"),
+        ("348", Q10, "Taxa do imposto a outras taxas (%)"),
+        ("349", Q10, "Imposto a outras taxas"),
+        ("350", Q10, "Imposto imputável à Região Autónoma dos Açores"),
+        ("370", Q10, "Imposto imputável à Região Autónoma da Madeira"),
+        // O rosto do impresso (F4C-02): assinalamentos guardados como números.
+        ("tipo-sujeito-passivo", Rosto, "Quadro 03 — tipo de sujeito passivo (1 a 4)"),
+        ("tipo-declaracao", Rosto, "Quadro 04 — tipo de declaração (1 a 6)"),
+        ("nif-representante", Rosto, "Quadro 05 — NIF do representante legal"),
+        ("nif-cc", Rosto, "Quadro 05 — NIF do contabilista certificado"),
+        ("regime-reducao-taxa", Rosto, "Quadro 08.1 — campo assinalado (242 a 265) ou 0"),
+        ("regime-geral", Rosto, "Quadro 08.2 — campo assinalado (246 a 268) ou 0"),
     ];
 
     private static readonly Lazy<(string Source, IReadOnlyList<Modelo22CatalogField> Fields)> Catalog = new(LoadCatalog);
@@ -290,7 +310,11 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
             }
         }
 
-        var field351 = Computed("351", Q10, "Coleta (347-A + 347-B + 349 + 350 + 370)", field347A + field347B);
+        UserField("348");
+        UserField("349");
+        UserField("350");
+        UserField("370");
+        var field351 = Computed("351", Q10, "Coleta (347-A + 347-B + 349 + 350 + 370)", field347A + field347B + Saved("349") + Saved("350") + Saved("370"));
         Computed("373", Q10, "Derrama estadual (art.º 87.º-A)", stateSurtax);
         var field378 = Computed("378", Q10, "Coleta total (351 + 373)", field351 + stateSurtax);
         foreach (var code in new[] { "353", "375", "355", "470", "356" })
@@ -335,6 +359,16 @@ public sealed class Modelo22Service(AccountingDbContext context, FinancialStatem
         var total = balance + Saved("363") + Saved("372") + municipal - Saved("379") + autonomous + Saved("366") + Saved("369");
         Computed("367", Q10, "Total a pagar [361 ou (−362) + 363 + 372 + 364 − 379 + 365 + 366 + 369] > 0", Math.Max(0m, total));
         Computed("368", Q10, "Total a recuperar [(−362) + 363 + 372 + 364 − 379 + 365 + 366 + 369] < 0", Math.Max(0m, -total));
+
+        // Quadro 11 — outras informações, da demonstração de resultados; e o rosto.
+        decimal Line(string label) => income.Lines.FirstOrDefault(line => line.Label == label)?.Amount ?? 0m;
+        var turnover = Line("Vendas e serviços prestados");
+        Computed("411", Q11, "Volume de negócios do período", turnover);
+        Computed("410", Q11, "Total de rendimentos do período", turnover + IncomeLines.Skip(1).Sum(label => Math.Max(0m, Line(label))));
+        foreach (var code in new[] { "tipo-sujeito-passivo", "tipo-declaracao", "nif-representante", "nif-cc", "regime-reducao-taxa", "regime-geral" })
+        {
+            UserField(code);
+        }
 
         if (income.Excluded.Count > 0)
         {

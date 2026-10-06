@@ -833,3 +833,44 @@ html[data-theme='dark'] .atf-sources { background: #13242a; border-color: #2a404
   .atf-quadro > header, .atf-qn, .atf-table th, .atf-title { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .view-toggle { display: none; }
 }
+
+/* Modelo 22 (F4C-02): o mesmo impresso, mas a preto e cinzento como o modelo do IRC. */
+.atf-irc { --atf-blue: #566770; --atf-blue-dark: #2b3a42; --atf-orange: #2b3a42; --atf-light: #dfe6ea; }
+.atf-irc-head { grid-template-columns: 1.1fr 2fr .7fr; }
+.atf-irc-title { align-items: center; text-align: center; gap: 2px; }
+.atf-irc-title span { font-size: 9px; font-weight: 700; color: #3a4a52; }
+.atf-irc-title strong { margin-top: 6px; font-size: 13px; letter-spacing: .2em; }
+.atf-irc-period { display: grid; gap: 6px; border: 0 !important; padding: 0 !important; }
+.atf-irc-period .atf-quadro { margin: 0; }
+.atf-irc .atf-tax strong { font-size: 26px; }
+.atf-irc .atf-tax span { font-size: 11px; }
+.atf-field.atf-grow { flex: 1 1 320px; }
+.atf-field.atf-grow .atf-input { width: 100%; }
+.atf-checks-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 18px; align-items: start; }
+.atf-num-box { border: 1.5px solid var(--atf-blue); border-radius: 3px; margin-right: 2px; }
+.atf-table.atf-q07 td:first-child { width: auto; font-weight: 500; font-size: 10px; }
+.atf-table.atf-q07 td:last-child { width: 200px; text-align: right; }
+.atf-table.atf-q07 tr.atf-computed td { font-weight: 800; background: #f4f6f7; }
+.atf-table tr.atf-band td { background: #566770; color: white; font-weight: 800; letter-spacing: .12em; font-size: 9.5px; text-align: center; padding: 4px; }
+.atf-table.atf-q09 td:first-child { width: 28%; font-weight: 700; font-size: 10px; }
+.atf-table.atf-q09 td:not(:first-child) { width: 18%; }
+.atf-table.atf-q10 td:first-child { width: 58%; font-weight: 500; font-size: 10px; }
+.atf-table.atf-q10 td:not(:first-child) { width: 21%; }
+.atf-table.atf-q10 tr.atf-computed td { font-weight: 800; background: #f4f6f7; }
+.atf-inline { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; }
+.atf-inline .atf-cell { min-width: 90px; }
+.atf-cell.atf-wide { min-width: 200px; }
+.atf-value.atf-blank { background: white; }
+.atf-suggest { margin-left: 4px; padding: 0 7px; border: 1px solid #45a89e; border-radius: 999px; background: #edf8f6; color: #1f5049; font-size: 9px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.atf-regimes { display: grid; gap: 4px; padding: 4px 10px 8px; }
+.atf-regime { display: grid; grid-template-columns: 1fr 34px 20px 110px; align-items: center; gap: 8px; font-size: 10px; }
+.atf-regime em { font-style: normal; font-weight: 700; text-align: center; }
+.atf-regime input { width: 15px; height: 15px; margin: 0; }
+.atf-q10-options { align-items: center; gap: 24px; border-bottom: 1px solid #cfd8dc; }
+input.atf-rate { width: 90px; font: inherit; font-size: 12px; font-weight: 700; outline: 0; }
+.atf-q11 .atf-field { min-width: 260px; }
+.atf-pad { display: block; padding: 4px 10px 8px; margin: 0; }
+@media print { .atf-suggest { display: none; } }
+.atf-table.atf-q07 tr.atf-band td { text-align: center; width: auto; }
+.atf-q07 .atf-cell { flex-wrap: wrap; justify-content: flex-end; }
+.atf-q07 .atf-suggest { flex-basis: 100%; margin: 3px 0 0; text-align: center; }
