@@ -125,6 +125,8 @@ public static class DependencyInjection
         services.AddScoped<VarianceService>();
         services.AddScoped<VarianceExplanationService>();
         services.AddScoped<ClosingChecklistService>();
+        services.AddScoped(sp => new NexGenAccountingAI.Application.Chat.DataChatAgent(sp.GetRequiredService<NexGenAccountingAI.Application.Chat.IChatModelClient>()));
+        services.AddScoped<DataChatService>();
         services.AddScoped<ReportPackService>();
         services.AddScoped<JournalReportService>();
         services.AddScoped<YearEndClosingService>();

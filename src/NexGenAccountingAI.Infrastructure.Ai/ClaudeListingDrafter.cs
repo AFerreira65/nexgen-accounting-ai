@@ -85,36 +85,9 @@ public static class ListingDraftPrompts
 {
     public sealed record Parsed(string? Name, string Explanation, ListingDefinition? Definition, string? Error);
 
-    private static readonly JsonSerializerOptions CompactJson = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = false,
-        Encoder = global::System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    };
 
     /// <summary>O catálogo em JSON compacto: o que o modelo pode usar, e mais nada.</summary>
-    public static string CatalogJson() => JsonSerializer.Serialize(
-        new
-        {
-            origens = ListingCatalog.Sources.Select(source => new
-            {
-                chave = source.Key,
-                nome = source.Label,
-                descricao = source.Description,
-                campos = source.Fields.Select(field => new
-                {
-                    chave = field.Key,
-                    nome = field.Label,
-                    tipo = field.Type.ToString().ToLowerInvariant(),
-                    filtravel = field.Filterable,
-                    ordenavel = field.Sortable,
-                    agrupavel = field.Groupable,
-                    medida = field.Measure,
-                    operadores = field.Filterable ? ListingOperators.For(field.Type) : [],
-                }),
-            }),
-            datasRelativas = ListingParameters.DateTokens,
-        },
-        CompactJson);
+    public static string CatalogJson() => NexGenAccountingAI.Application.Chat.ListingCatalogPrompt.Json();
 
     private const string SystemText = """
         És um contabilista certificado português a montar listagens à medida numa aplicação de contabilidade.

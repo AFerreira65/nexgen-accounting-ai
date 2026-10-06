@@ -58,6 +58,10 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<ClosingCheck> ClosingChecks => Set<ClosingCheck>();
 
+    public DbSet<AiConversation> AiConversations => Set<AiConversation>();
+
+    public DbSet<AiMessage> AiMessages => Set<AiMessage>();
+
     public DbSet<ReportTemplate> ReportTemplates => Set<ReportTemplate>();
 
     public DbSet<ManagementReport> ManagementReports => Set<ManagementReport>();
@@ -145,6 +149,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new FirmTaskConfiguration());
         modelBuilder.ApplyConfiguration(new AnomalyDismissalConfiguration());
         modelBuilder.ApplyConfiguration(new ClosingCheckConfiguration());
+        modelBuilder.ApplyConfiguration(new AiConversationConfiguration());
+        modelBuilder.ApplyConfiguration(new AiMessageConfiguration());
         modelBuilder.ApplyConfiguration(new ReportTemplateConfiguration());
         modelBuilder.ApplyConfiguration(new ManagementReportConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyAiSettingsConfiguration());

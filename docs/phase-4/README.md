@@ -566,7 +566,7 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
 - Página `/anomalias`: período (o exercício por omissão), resumo por regra, achados por regra com a
   razão à vista e ligação ao lançamento. São pistas para conferir, não erros confirmados.
 - Testes: cada regra com os seus dados, o que não conta, o período sem achados, dispensar e repor,
-  acesso e validação; o ecrã. Ainda por fazer na 4F: conversa com memória, ligação a assistentes externos.
+  acesso e validação; o ecrã. Ainda por fazer na 4F: ligação a assistentes externos (MCP).
 
 ### F4F-02 — Papel de trabalho de fecho do mês
 
@@ -601,6 +601,36 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   acentos como texto, também no catálogo das listagens.
 - Testes: totais, ordem, percentagens, o favorável, os terceiros, o que não conta, o período só no
   atual e a validação; as guardas da IA e o conteúdo enviado; o ecrã. Não exercido contra a API real.
+
+### F4F-04 — Conversa com a IA sobre os dados (com memória)
+
+- **Página `/assistente`:** o utilizador pergunta em português e a IA responde consultando a contabilidade
+  da empresa ativa. Cada resposta traz «A IA consultou N fonte(s)», com o resumo de cada consulta, para se
+  poder conferir. Sugestões de um clique e conversas guardadas por utilizador e empresa.
+- **Ferramentas só de leitura** (`CompanyChatToolHost`), pelos mesmos serviços do resto da aplicação, por
+  isso com os mesmos direitos e o mesmo isolamento: `run_listing` (qualquer origem do catálogo, com
+  grupos), `pivot`, `variance`, `anomalies` e `closing_status`. A empresa e o utilizador vêm da sessão,
+  nunca dos argumentos (o teste tenta um `companyId` inventado); um pedido mal feito volta à IA como erro
+  para ela o corrigir; os resultados vêm compactos (40 linhas, 14 000 caracteres). Não há ferramentas de escrita.
+- **O ciclo** (`DataChatAgent`, em `Application`, atrás de `IChatModelClient` e `IChatToolHost`): o modelo
+  responde ou pede ferramentas; até seis rondas por pergunta; todos os resultados de uma ronda voltam
+  numa só mensagem e o raciocínio do modelo volta inalterado dentro do mesmo pedido. `ClaudeChatModelClient`
+  é só o adaptador do SDK (ferramentas, blocos de raciocínio, `tool_use`, tokens).
+- **Memória** (`AiConversations`, `AiMessages`, migração `AiConversations`): perguntas e respostas em texto,
+  com o que a IA consultou e os tokens gastos; as últimas 20 mensagens voltam ao modelo; cada utilizador
+  vê, continua e apaga só as suas conversas.
+- **Guardas:** acesso à empresa, interruptor da IA nessa empresa, chave configurada, pergunta até 2 000
+  caracteres, 100 mensagens por conversa e 100 perguntas por dia e utilizador e empresa. Erros do serviço
+  da IA dão uma mensagem e não gravam nada.
+- **Privacidade e injeção:** ao modelo vão os resultados das consultas (valores, contas, nomes de terceiros),
+  por isso a página avisa e só funciona com a IA ligada na empresa. O enunciado manda tratar tudo o que as
+  ferramentas devolvem como dados e ignorar instruções que apareçam em descrições ou notas; como as
+  ferramentas só leem, o pior caso é uma resposta enganada, não uma ação.
+- Testes: o ciclo com um modelo simulado (resposta direta, ferramentas, resultados numa só mensagem, erros,
+  limite de rondas, o enunciado), as ferramentas contra uma base real (isolamento, argumentos inventados,
+  ferramenta inexistente), o serviço (recusas por ordem, memória, isolamento entre utilizadores, limite
+  diário, apagar) e o ecrã. **Não exercido contra a API real**: não há chave configurada nesta máquina; o
+  adaptador do SDK compila e segue a documentação, mas a primeira chamada real pode pedir ajustes.
 
 ### Por fazer na 4C
 

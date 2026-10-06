@@ -1,4 +1,5 @@
 using NexGenAccountingAI.Application.Analysis;
+using NexGenAccountingAI.Application.Chat;
 using NexGenAccountingAI.Application.Classification;
 using NexGenAccountingAI.Application.Listings;
 using NexGenAccountingAI.Application.ManagementReports;
@@ -33,6 +34,7 @@ public static class DependencyInjection
         services.AddSingleton<IPurchaseClassifier, ClaudePurchaseClassifier>();
         services.AddSingleton<IListingDrafter, ClaudeListingDrafter>();
         services.AddSingleton<IVarianceExplainer, ClaudeVarianceExplainer>();
+        services.AddSingleton<IChatModelClient, ClaudeChatModelClient>();
         return services;
     }
 }

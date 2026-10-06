@@ -13,6 +13,7 @@ import { OrganizationPage } from './pages/OrganizationPage'
 import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { AnomaliesPage } from './pages/AnomaliesPage'
+import { AssistantPage } from './pages/AssistantPage'
 import { ClosingPage } from './pages/ClosingPage'
 import { VariancePage } from './pages/VariancePage'
 import { FirmTasksPage } from './pages/FirmTasksPage'
@@ -155,6 +156,7 @@ export function App() {
             <Route path="/tarefas" element={<TasksPage />} />
             <Route path="/tarefas-gabinete" element={<FirmTasksPage />} />
             <Route path="/anomalias" element={<AnomaliesPage />} />
+            <Route path="/assistente" element={<AssistantPage />} />
             <Route path="/fecho" element={<ClosingPage />} />
             <Route path="/variacoes" element={<VariancePage />} />
             <Route path="/definicoes" element={<SettingsPage />} />

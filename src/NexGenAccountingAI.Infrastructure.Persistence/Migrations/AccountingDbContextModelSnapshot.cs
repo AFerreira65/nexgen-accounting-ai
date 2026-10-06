@@ -2527,6 +2527,80 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("UserCompanySettings", "identity");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Reporting.AiConversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "UserId", "UpdatedAtUtc");
+
+                    b.ToTable("AiConversations", "reporting");
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Reporting.AiMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<int>("OutputTokens")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PromptTokens")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ToolsJson")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("AiMessages", "reporting");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Reporting.CompanyAiSettings", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3430,6 +3504,24 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.Navigation("CompanyUser");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Reporting.AiConversation", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Reporting.AiMessage", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Reporting.AiConversation", null)
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.AccountingJournal", b =>
                 {
                     b.Navigation("Entries");
@@ -3468,6 +3560,11 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("NexGenAccountingAI.Domain.Organizations.UserAccount", b =>
                 {
                     b.Navigation("CompanyMemberships");
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Reporting.AiConversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }

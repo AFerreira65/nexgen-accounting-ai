@@ -3375,6 +3375,34 @@ if (applicationEndpointsAvailable)
     })
         .WithMetadata(new ViewerAllowedAttribute("Só escreve um texto sobre números que o utilizador já pode ler; não grava nada."));
 
+    // Conversa com a IA sobre os dados da empresa (F4F-04): com memória, e a IA só lê, pelos mesmos serviços e direitos do utilizador.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/chat", async (
+        Guid userId, Guid companyId, DataChatService chat, CancellationToken cancellationToken) =>
+    {
+        var list = await chat.ListAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/chat/{conversationId:guid}", async (
+        Guid userId, Guid companyId, Guid conversationId, DataChatService chat, CancellationToken cancellationToken) =>
+    {
+        var messages = await chat.MessagesAsync(userId, companyId, conversationId, cancellationToken).ConfigureAwait(false);
+        return messages is null ? Results.NotFound() : Results.Ok(messages);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/chat", async (
+        Guid userId, Guid companyId, AskChatRequest body, DataChatService chat, CancellationToken cancellationToken) =>
+    {
+        var outcome = await chat.AskAsync(userId, companyId, body?.ConversationId, body?.Question ?? string.Empty, cancellationToken).ConfigureAwait(false);
+        return outcome is null ? Results.NotFound() : Results.Ok(outcome);
+    })
+        .WithMetadata(new ViewerAllowedAttribute("A IA só lê, com os direitos do utilizador; a conversa é do próprio utilizador."));
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/chat/{conversationId:guid}", async (
+        Guid userId, Guid companyId, Guid conversationId, DataChatService chat, CancellationToken cancellationToken) =>
+        await chat.DeleteAsync(userId, companyId, conversationId, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound())
+        .WithMetadata(new ViewerAllowedAttribute("Só apaga a conversa do próprio utilizador."));
+
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
         Guid userId, Guid companyId, int year, int? month, BudgetService budget, CancellationToken cancellationToken) =>
@@ -5829,6 +5857,8 @@ public sealed record RunListingRequest(
     int? Take);
 
 public sealed record DismissAnomalyRequest(string? Key, string? Reason);
+
+public sealed record AskChatRequest(Guid? ConversationId, string? Question);
 
 public sealed record ClosingCheckRequest(bool Checked, string? Note);
 
