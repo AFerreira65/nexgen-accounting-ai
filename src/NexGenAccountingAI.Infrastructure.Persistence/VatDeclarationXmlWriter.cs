@@ -31,8 +31,9 @@ public sealed record VatDeclarationFiling(
 /// só a operação de validação do webservice dá.
 /// </para>
 /// <para>
-/// Só leva o que a aplicação apura: o quadro 06. O quadro 06-A vai a zero e os anexos
-/// (R, campos 40 e 41, clientes, fornecedores) não são gerados.
+/// Só leva o que a aplicação apura: o quadro 06 e um Anexo R por região com operações
+/// (apuramento; o desenvolvimento do anexo vai vazio). O quadro 06-A vai a zero e os
+/// anexos dos campos 40 e 41, clientes e fornecedores não são gerados.
 /// </para>
 /// </summary>
 public static class VatDeclarationXmlWriter
@@ -57,6 +58,23 @@ public static class VatDeclarationXmlWriter
     ];
 
     /// <summary>Totais que vão sempre no ficheiro, mesmo a zero (como no que o Portal exporta).</summary>
+    /// <summary>Os elementos do apuramento de um Anexo R pela ordem do esquema, com o número do campo (62 a 64 são os totais do anexo).</summary>
+    private static readonly (string Element, int Field)[] AnnexSettlement =
+    [
+        ("btBensUEArtigo15", 14), ("btBensUEArtigo22", 15), ("btBensUELiquidadoDeclarante", 12), ("btBensUETotal", 10),
+        ("btImportDeclarante", 18), ("btOperacoesIsentasComDeducao", 8), ("btOperacoesIsentasSemDeducao", 9), ("btServicosUE", 16),
+        ("btTaxaIntermedia", 5), ("btTaxaNormal", 3), ("btTaxaReduzida", 1), ("btTotal", 62), ("btTransmissoesUEIsentas", 7),
+        ("ivaBensUELiquidadoDeclarante", 13), ("ivaBensUETotal", 11), ("ivaDedutivelExistenciasTaxaIntermedia", 23),
+        ("ivaDedutivelExistenciasTaxaNormal", 22), ("ivaDedutivelExistenciasTaxaReduzida", 21), ("ivaDedutivelImobilizado", 20),
+        ("ivaDedutivelOutros", 24), ("ivaFavorEstadoTotal", 64), ("ivaFavorSujPassivoTotal", 63), ("ivaImportDeclarante", 19),
+        ("ivaServicosUE", 17), ("ivaTaxaIntermedia", 6), ("ivaTaxaNormal", 4), ("ivaTaxaReduzida", 2),
+    ];
+
+    private static readonly HashSet<string> AnnexAlwaysWritten = new(StringComparer.Ordinal)
+    {
+        "btBensUETotal", "btTotal", "ivaBensUETotal", "ivaFavorEstadoTotal", "ivaFavorSujPassivoTotal",
+    };
+
     /// <summary>Os elementos do quadro 06-A e os campos do impresso a que correspondem.</summary>
     private static readonly (string Element, int Field)[] Development =
     [
@@ -104,12 +122,6 @@ public static class VatDeclarationXmlWriter
                 $"Os campos {string.Join(", ", negative)} têm valor negativo, o que a declaração não aceita. Corrija os lançamentos ou a classificação de IVA das contas.");
         }
 
-        if (new[] { 65, 66, 67, 68 }.Any(field => Value(field) != 0m))
-        {
-            throw new InvalidOperationException(
-                "Há operações localizadas noutra região (campos 65 a 68), que exigem o Anexo R. A aplicação ainda não gera esse anexo, por isso o ficheiro seria recusado.");
-        }
-
         // Somas que o esquema pede e que não têm número de campo no impresso.
         decimal Computed(string element) => element switch
         {
@@ -118,6 +130,7 @@ public static class VatDeclarationXmlWriter
             _ => 0m,
         };
 
+        var annexes = declaration.RegionalAnnexes ?? [];
         using var stream = new MemoryStream();
         var settings = new XmlWriterSettings { Encoding = new UTF8Encoding(false), Indent = true };
         using (var writer = XmlWriter.Create(stream, settings))
@@ -179,12 +192,37 @@ public static class VatDeclarationXmlWriter
                 writer.WriteElementString("semOperacoes", Namespace, "true");
             }
 
-            writer.WriteElementString("temAnexoRAcores", Namespace, "false");
-            writer.WriteElementString("temAnexoRContinente", Namespace, "false");
-            writer.WriteElementString("temAnexoRMadeira", Namespace, "false");
+            bool HasAnnex(string region) => annexes.Any(annex => annex.Region == region);
+            writer.WriteElementString("temAnexoRAcores", Namespace, HasAnnex("Acores") ? "true" : "false");
+            writer.WriteElementString("temAnexoRContinente", Namespace, HasAnnex("Continente") ? "true" : "false");
+            writer.WriteElementString("temAnexoRMadeira", Namespace, HasAnnex("Madeira") ? "true" : "false");
             writer.WriteEndElement();
 
             writer.WriteEndElement();
+
+            // Um Anexo R por região onde há operações; o identificador é o nome da região.
+            foreach (var annex in annexes)
+            {
+                var values = annex.Fields.ToDictionary(field => field.Number, field => field.Amount);
+                writer.WriteStartElement("anexoR", Namespace);
+                writer.WriteAttributeString("id", annex.Region);
+                writer.WriteStartElement("apuramento", Namespace);
+                foreach (var (element, field) in AnnexSettlement)
+                {
+                    var amount = values.GetValueOrDefault(field);
+                    if (amount != 0m || AnnexAlwaysWritten.Contains(element))
+                    {
+                        writer.WriteElementString(element, Namespace, Cents(amount));
+                    }
+                }
+
+                writer.WriteElementString("temOperacoesAdquirenteComLiqImposto", Namespace, "02");
+                writer.WriteEndElement();
+                writer.WriteStartElement("desenvolvimento", Namespace);
+                writer.WriteEndElement();
+                writer.WriteEndElement();
+            }
+
             writer.WriteEndElement();
             writer.WriteEndDocument();
         }

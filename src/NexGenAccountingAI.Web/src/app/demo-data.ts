@@ -765,6 +765,7 @@ export type VatSettlementEntryPreview = {
   blocker: string | null
 }
 export type VatFormField = { number: number; label: string; column: 'base' | 'sujeito-passivo' | 'estado' | 'apuramento' | 'desenvolvimento'; amount: number; computed: boolean; supported: boolean; sources: { accountCode: string; accountName: string; amount: number }[] }
+export type VatRegionalAnnex = { region: string; fields: VatFormField[] }
 export type VatDeclaration = {
   from: string
   to: string
@@ -777,6 +778,7 @@ export type VatDeclaration = {
   difference: number
   source: string
   disclaimer: string
+  regionalAnnexes?: VatRegionalAnnex[] | null
   inputs?: { withinDeadline: boolean; filedRecapitulativeStatement: boolean; noOperations: boolean; operationsAsAcquirer: boolean | null; fields: Record<string, number> | null; certifiedAccountantTaxNumber: string | null } | null
 }
 export type OperatingMap = {

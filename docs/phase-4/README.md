@@ -380,10 +380,23 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
 - **Não confirmado:** o valor do atributo `versao` (o esquema não o indica; está
   a 1). Rosto sem os quadros 02, 04, 06 e 07; sem os outros anexos.
 
+### F4C-05 — Anexo R da DP de IVA
+
+- `VatDeclarationService` passa a somar as operações de outra região (até duas)
+  também em campos próprios dessa região: os campos 1 a 24 e os totais 62, 63 e
+  64 do Anexo R (`VatRegionalAnnex`), além dos totais 65 a 68 que já entravam no
+  quadro 06. As regularizações (40 e 41) continuam globais.
+- `VatDeclarationXmlWriter` deixou de recusar o ficheiro com operações noutra
+  região: escreve um `anexoR` por região (apuramento; o desenvolvimento vai vazio)
+  e marca `temAnexoRAcores/Continente/Madeira`. Válido face ao `dpiva-06.xsd`.
+- O impresso mostra o Anexo R de cada região, com as contas de cada campo.
+- **Não confirmado:** o valor do atributo `id` do anexo (o esquema só pede um
+  texto único; está o nome da região) e se a AT aceita o desenvolvimento vazio.
+  As taxas da região não são verificadas contra as tabelas fiscais.
+
 ### Por fazer na 4C
 
-- Anexo R (operações noutra região) e os anexos das regularizações dos campos
-  40 e 41, com as suas listas.
+- Os anexos das regularizações dos campos 40 e 41, com as suas listas.
 - O modelo novo da Portaria n.º 298/2026/1 (períodos a partir de julho de
   2027): campos 108/109 e a parte E do 06-A.
 - Entrega do Modelo 22 pelo webservice (precisa do WSDL); IES no impresso da AT, assente nos mesmos componentes.

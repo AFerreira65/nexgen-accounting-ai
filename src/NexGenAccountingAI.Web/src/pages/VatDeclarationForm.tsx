@@ -27,6 +27,8 @@ type Props = {
   inspecting?: number | null
 }
 
+const REGION_NAMES: Record<string, string> = { Continente: 'Continente', Acores: 'Açores', Madeira: 'Madeira' }
+
 function periodParts(declaration: VatDeclaration) {
   const year = declaration.to.slice(0, 4)
   return { year, period: declaration.period ?? `${declaration.from.slice(5, 7)}–${declaration.to.slice(5, 7)}` }
@@ -200,6 +202,19 @@ export function VatDeclarationForm({ declaration, inputs, companyName, taxNumber
         <small className="atf-hint">O justo impedimento (artigo 12.º-A do Estatuto da OCC) não é preenchido pela aplicação.</small>
       </div>
     </section>
+
+    {(declaration.regionalAnnexes ?? []).map((annex) => <section className="atf-quadro" key={annex.region} aria-label={`Anexo R — ${REGION_NAMES[annex.region] ?? annex.region}`}>
+      <header><span className="atf-qn">R</span><span>ANEXO R — OPERAÇÕES LOCALIZADAS NA REGIÃO {(REGION_NAMES[annex.region] ?? annex.region).toUpperCase()}</span></header>
+      <table className="atf-table">
+        <thead><tr><th>Campo</th><th>Designação</th><th>Valor</th></tr></thead>
+        <tbody>
+          {annex.fields.filter((field) => field.amount !== 0 || field.number >= 62).map((field) => <tr key={field.number}>
+            <td>{field.number}</td><td>{field.label}</td>
+            <td><button type="button" className="atf-value" disabled={!onInspect || field.sources.length === 0} title={field.sources.length > 0 ? 'Ver as contas que formam o campo' : undefined} onClick={() => onInspect?.(field)}>{amount.format(field.amount)}</button></td>
+          </tr>)}
+        </tbody>
+      </table>
+    </section>)}
 
     <p className="atf-foot"><strong>A PRESENTE DECLARAÇÃO CORRESPONDE À VERDADE E NÃO OMITE QUALQUER INFORMAÇÃO PEDIDA.</strong></p>
   </div>

@@ -18,6 +18,7 @@ public sealed record VatFormField(
     int Number, string Label, string Column, decimal Amount, bool Computed, bool Supported, IReadOnlyList<VatFormSource> Sources);
 
 /// <param name="Period">O período como a declaração o identifica (<c>03</c>, <c>06T</c>…), ou <c>null</c> se as datas não formam um mês nem um trimestre.</param>
+/// <param name="RegionalAnnexes">Um Anexo R por região onde há operações que não são da região da sede (no máximo dois).</param>
 /// <param name="AccountingPayable">O valor a entregar segundo o apuramento contabilístico das contas 243.</param>
 /// <param name="AccountingCredit">O excesso a reportar segundo o apuramento contabilístico.</param>
 /// <param name="Difference">(campo 93 − campo 94) − (a entregar − a reportar) do apuramento contabilístico: zero quando a declaração e a contabilidade batem.</param>
@@ -33,7 +34,12 @@ public sealed record VatDeclaration(
     decimal Difference,
     string Source,
     string Disclaimer,
-    VatDeclarationInputs? Inputs = null);
+    VatDeclarationInputs? Inputs = null,
+    IReadOnlyList<VatRegionalAnnex>? RegionalAnnexes = null);
+
+/// <summary>O Anexo R de uma região: os campos 1 a 24 das operações aí localizadas, mais os totais 62, 63 e 64.</summary>
+/// <param name="Region"><c>Continente</c>, <c>Acores</c> ou <c>Madeira</c>.</param>
+public sealed record VatRegionalAnnex(string Region, IReadOnlyList<VatFormField> Fields);
 
 /// <summary>
 /// Preenche o quadro 06 da declaração periódica de IVA a partir da
@@ -54,7 +60,7 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
     public const string Disclaimer =
         "Mapa de apoio ao preenchimento, não validado pela AT. Não apura " +
         "os campos 14, 15, 18 e 19, o reembolso (95) nem o quadro 06-A, que se preenchem à mão no impresso, nem os anexos das regularizações dos campos 40 e 41; " +
-        "as operações de outra região vão só em total para os campos 65 a 68 (o Anexo R não é preenchido).";
+        "as operações de outra região vão para o Anexo R dessa região (campos 1 a 24) e em total para os campos 65 a 68.";
 
     private const string Base = "base", Taxpayer = "sujeito-passivo", State = "estado", Settlement = "apuramento", Development = "desenvolvimento";
 
@@ -111,6 +117,9 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
             .ConfigureAwait(false);
 
         var sources = new Dictionary<int, Dictionary<Guid, decimal>>();
+        // As operações de outra região somam-se, além dos totais 65 a 68, aos campos do Anexo R dessa região.
+        var regional = new Dictionary<VatRegion, Dictionary<int, Dictionary<Guid, decimal>>>();
+        var target = sources;
         void Put(int field, VatSummaryPart part, decimal amount)
         {
             if (amount == 0m)
@@ -118,9 +127,9 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
                 return;
             }
 
-            if (!sources.TryGetValue(field, out var byAccount))
+            if (!target.TryGetValue(field, out var byAccount))
             {
-                sources[field] = byAccount = [];
+                target[field] = byAccount = [];
             }
 
             byAccount[part.AccountId] = byAccount.GetValueOrDefault(part.AccountId) + amount;
@@ -136,6 +145,7 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
 
         foreach (var part in parts)
         {
+            target = sources;
             var credit = part.Credit - part.Debit;
             var debit = part.Debit - part.Credit;
             var tax = part.Kind == "imposto";
@@ -159,15 +169,25 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
 
             if (part.Region != seat)
             {
-                // Outra região: só os totais de imposto do Anexo R (campos 65/66 e 67/68).
+                // Outra região: os totais de imposto do Anexo R (campos 65/66 e 67/68) e o próprio Anexo R.
                 var index = otherRegions.IndexOf(part.Region);
-                if (tax && index >= 0)
+                if (index < 0)
+                {
+                    continue;
+                }
+
+                if (tax)
                 {
                     var deductible = IsDeductible(part.Nature);
                     Put((index == 0 ? 65 : 67) + (deductible ? 0 : 1), part, deductible ? debit : credit);
                 }
 
-                continue;
+                if (!regional.TryGetValue(part.Region, out var regionTarget))
+                {
+                    regional[part.Region] = regionTarget = [];
+                }
+
+                target = regionTarget;
             }
 
             switch (part.Nature)
@@ -296,6 +316,40 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
 
         Total(106, "Soma do quadro 06-A (97 + … + 105 + 107)", Development, inputs.DevelopmentTotal);
 
+        // Anexo R: um por região com operações, com os mesmos campos 1 a 24 e os totais 62, 63 e 64.
+        var annexes = new List<VatRegionalAnnex>();
+        foreach (var region in otherRegions.Where(regional.ContainsKey))
+        {
+            var byField = regional[region];
+            decimal Of(int number) => byField.TryGetValue(number, out var byAccount) ? decimal.Round(byAccount.Values.Sum(), 2) : 0m;
+            var main = fields.ToDictionary(field => field.Number);
+            var annexFields = new List<VatFormField>();
+            foreach (var number in new[] { 1, 2, 5, 6, 3, 4, 7, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 22, 24 })
+            {
+                var template = main[number];
+                annexFields.Add(new VatFormField(
+                    number, template.Label, template.Column, Of(number), false, template.Supported,
+                    byField.TryGetValue(number, out var byAccount)
+                        ? byAccount
+                            .Select(item => new VatFormSource(accounts[item.Key].Code, accounts[item.Key].Name, decimal.Round(item.Value, 2)))
+                            .OrderBy(item => item.AccountCode, StringComparer.Ordinal)
+                            .ToList()
+                        : []));
+            }
+
+            void AnnexTotal(int number, string label, string column, decimal amount) =>
+                annexFields.Add(new VatFormField(number, label, column, amount, true, true, []));
+            AnnexTotal(10, "Aquisições intracomunitárias de bens — total da base (12 + 14 + 15)", Base, Of(12) + Of(14) + Of(15));
+            AnnexTotal(11, "Aquisições intracomunitárias de bens — total do imposto (13)", State, Of(13));
+            AnnexTotal(62, "Total da base tributável (1 + 3 + 5 + 7 + 8 + 9 + 10 + 16 + 18)", Base,
+                Of(1) + Of(3) + Of(5) + Of(7) + Of(8) + Of(9) + Of(12) + Of(14) + Of(15) + Of(16) + Of(18));
+            AnnexTotal(63, "Total do imposto a favor do sujeito passivo (20 + 21 + 22 + 23 + 24)", Taxpayer,
+                Of(20) + Of(21) + Of(22) + Of(23) + Of(24));
+            AnnexTotal(64, "Total do imposto a favor do Estado (2 + 4 + 6 + 11 + 17 + 19)", State,
+                Of(2) + Of(4) + Of(6) + Of(13) + Of(17) + Of(19));
+            annexes.Add(new VatRegionalAnnex(region.ToString(), annexFields));
+        }
+
         var warnings = new List<string>();
         var period = PeriodOf(from, to);
         if (period is null)
@@ -340,7 +394,7 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
 
         if (otherRegions.Count > 0)
         {
-            warnings.Add($"Há operações localizadas noutra região ({string.Join(", ", otherRegions)}): é preciso preencher o Anexo R; aqui só entram os totais nos campos 65 a 68.");
+            warnings.Add($"Há operações localizadas noutra região ({string.Join(", ", otherRegions)}): o Anexo R de cada região segue a declaração e os totais entram nos campos 65 a 68. Confirme as taxas dessa região e o campo de identificação do anexo.");
         }
 
         if (Value(7) != 0m)
@@ -362,7 +416,7 @@ public sealed class VatDeclarationService(AccountingDbContext context, VatSummar
 
         return new VatDeclaration(
             from, to, period, seat.ToString(), fields, warnings,
-            settlement.NetPayable, settlement.CreditToCarryForward, difference, Source, Disclaimer, inputs);
+            settlement.NetPayable, settlement.CreditToCarryForward, difference, Source, Disclaimer, inputs, annexes);
     }
 
     /// <summary>O que está guardado à mão para o período (vazio se nada).</summary>

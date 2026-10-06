@@ -145,14 +145,20 @@ public sealed class VatDeclarationServiceTests
             Assert.IsFalse(declaration.Warnings.Any(warning => warning.Contains("correspondência rigorosa", StringComparison.Ordinal)));
             Assert.IsFalse(declaration.Warnings.Any(warning => warning.Contains("difere do apuramento", StringComparison.Ordinal)));
 
-            // O ficheiro XML da AT (F4A-02). Este período tem operações noutra região (campo 66),
-            // que exigem o Anexo R: sem ele o ficheiro é recusado com a explicação.
-            var filing = new VatDeclarationFiling("500584095", "123456789", WithinDeadline: true, FiledRecapitulativeStatement: true);
-            var refusal = Assert.ThrowsExactly<InvalidOperationException>(() => VatDeclarationXmlWriter.Write(declaration, filing));
-            StringAssert.Contains(refusal.Message, "Anexo R");
+            // O Anexo R dos Açores: a venda de 100 € a 16 % e o imposto liquidado, com os totais do anexo.
+            var annex = declaration.RegionalAnnexes!.Single();
+            Assert.AreEqual("Acores", annex.Region);
+            decimal AnnexValue(int number) => annex.Fields.Single(field => field.Number == number).Amount;
+            Assert.AreEqual(100m, AnnexValue(3), "A base à taxa normal da região.");
+            Assert.AreEqual(16m, AnnexValue(4));
+            Assert.AreEqual(100m, AnnexValue(62));
+            Assert.AreEqual(16m, AnnexValue(64));
+            Assert.AreEqual(0m, AnnexValue(63));
+            CollectionAssert.AreEqual(new[] { "7111" }, annex.Fields.Single(field => field.Number == 3).Sources.Select(source => source.AccountCode).ToArray());
 
-            // Sem essas operações, o ficheiro sai e é válido face ao esquema oficial dpiva-06.xsd.
-            var mainlandOnly = declaration with { Fields = declaration.Fields.Select(field => field.Number is 65 or 66 or 67 or 68 ? field with { Amount = 0m } : field).ToList() };
+            // O ficheiro XML da AT (F4A-02), com o Anexo R dos Açores, válido face ao esquema oficial dpiva-06.xsd.
+            var filing = new VatDeclarationFiling("500584095", "123456789", WithinDeadline: true, FiledRecapitulativeStatement: true);
+            var mainlandOnly = declaration;
             var xml = System.Text.Encoding.UTF8.GetString(VatDeclarationXmlWriter.Write(mainlandOnly, filing));
             StringAssert.Contains(xml, "<dpiva version=\"06\" xmlns=\"http://www.at.gov.pt/schemas/dpiva\">");
             StringAssert.Contains(xml, "<btTaxaNormal>100000</btTaxaNormal>", "1 000,00 € em cêntimos.");
@@ -162,6 +168,10 @@ public sealed class VatDeclarationServiceTests
             StringAssert.Contains(xml, "<ivaDedutivelTotal>23000</ivaDedutivelTotal>", "Soma dos campos 20 a 24: 207 + 23.");
             StringAssert.Contains(xml, "<periodoDeclaracao>03T</periodoDeclaracao>");
             StringAssert.Contains(xml, "<localizacaoSede>1</localizacaoSede>");
+            StringAssert.Contains(xml, "<temAnexoRAcores>true</temAnexoRAcores>");
+            StringAssert.Contains(xml, "<anexoR id=\"Acores\">");
+            StringAssert.Contains(xml, "<btTaxaNormal>10000</btTaxaNormal>", "O Anexo R leva a base dos Açores em cêntimos.");
+            StringAssert.Contains(xml, "<ivaTaxaNormal>1600</ivaTaxaNormal>");
             StringAssert.Contains(xml, "<nif>500584095</nif>");
             StringAssert.Contains(xml, "<nifCC>123456789</nifCC>");
             StringAssert.Contains(xml, "<prazo>1</prazo>");
@@ -214,7 +224,7 @@ public sealed class VatDeclarationServiceTests
             Assert.IsTrue(filled.Inputs!.HasOperationsAsAcquirer);
 
             var filledXml = System.Text.Encoding.UTF8.GetString(VatDeclarationXmlWriter.Write(
-                filled with { Fields = filled.Fields.Select(field => field.Number is 65 or 66 or 67 or 68 ? field with { Amount = 0m } : field).ToList() },
+                filled,
                 new VatDeclarationFiling("500584095", filled.Inputs.CertifiedAccountantTaxNumber, filled.Inputs.WithinDeadline, filled.Inputs.FiledRecapitulativeStatement)));
             StringAssert.Contains(filledXml, "<temOperacoesAdquirenteComLiqImposto>01</temOperacoesAdquirenteComLiqImposto>");
             StringAssert.Contains(filledXml, "<inversaoSujPassivoConstrucaoCivil>100000</inversaoSujPassivoConstrucaoCivil>");
