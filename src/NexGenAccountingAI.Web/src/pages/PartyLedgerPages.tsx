@@ -1,4 +1,4 @@
-import { ArrowLeft, Contact, Database, Search } from 'lucide-react'
+import { ArrowLeft, Contact, Database, ListFilter, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
@@ -133,6 +133,7 @@ export function PartyStatementPage() {
       <PeriodShortcuts fiscalYear={fiscalYear} onPick={pick} />
       <button className="button button-secondary" type="button" onClick={() => pick('', '')}>Limpar datas</button>
       <ExportButtons run={exportCsv} disabled={!statement || statement.lines.length === 0} />
+      {statement && <Link className="button button-secondary" to={`/listagens/modelo/extrato-terceiro?${new URLSearchParams({ terceiro: statement.name, ...(from ? { inicio: from } : {}), ...(to ? { fim: to } : {}), run: '1' })}`}><ListFilter size={15} /> Ver em listagem</Link>}
     </div>
 
     {statement && <section className="metadata-strip">

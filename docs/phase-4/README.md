@@ -510,9 +510,16 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   do sistema a atravessar o formato da resposta, as guardas do serviço e o fluxo no browser. Não foi
   exercido contra a API real (não há chave configurada nesta máquina).
 
+### F4D-06 — Listagens presas aos ecrãs de registo
+
+- O extrato de uma conta e o extrato de um terceiro têm o botão «Ver em listagem»: abre o modelo
+  `extrato-conta` ou `extrato-terceiro` já com os parâmetros no endereço (conta, terceiro, datas
+  do filtro do ecrã) e corre-o logo. Os parâmetros do endereço valem para qualquer listagem com
+  parâmetros do mesmo nome; `run=1` manda corrê-la ao abrir.
+- Novo modelo guiado «Extrato de um terceiro», com o saldo acumulado a cada linha.
+
 - **Ainda por fazer na 4D** (secção 7.2 do documento de mercado): mais origens (terceiros e
-  pendentes, IVA, obrigações); colunas calculadas; indicador com semáforo para o painel; análise presa a
-  um ecrã; subscrição por email; modo especialista.
+  pendentes, IVA, obrigações); colunas calculadas; indicador com semáforo para o painel; subscrição por email; modo especialista.
   Não visto no browser.
 
 ### Por fazer na 4C

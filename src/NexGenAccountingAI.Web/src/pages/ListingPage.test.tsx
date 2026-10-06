@@ -228,4 +228,14 @@ describe('listagens à medida', () => {
     fireEvent.click(screen.getByRole('button', { name: /Criar com IA/ }))
     expect(await screen.findByText('A IA está desligada para esta empresa.')).toBeInTheDocument()
   })
+
+  it('abre já com os parâmetros do endereço e corre sozinha (vindo de um ecrã de registo)', async () => {
+    const calls: { url: string; body?: unknown }[] = []
+    vi.stubGlobal('fetch', serve(calls))
+    renderAt('/listagens/l1?inicio=2026-03-01&run=1')
+    expect(await screen.findByText('(sem valor)')).toBeInTheDocument()
+    const runs = calls.filter((call) => call.url.endsWith('/listings/run'))
+    expect(runs).toHaveLength(1)
+    expect((runs[0].body as { parameters: Record<string, string> }).parameters).toEqual({ inicio: '2026-03-01' })
+  })
 })

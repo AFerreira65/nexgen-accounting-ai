@@ -1,6 +1,6 @@
 import { ArrowLeft, ChevronDown, ChevronRight, Copy, Database, Download, Pencil, Play, Plus, Save, Star, Trash2, X } from 'lucide-react'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Chart, type ChartTone } from '../app/charts'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { ExportButtons } from '../app/ExportButtons'
@@ -36,6 +36,7 @@ function format(column: ListingColumn, value: string | number | null): string {
 export function ListingPage() {
   const { id, template: templateKey } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const draft = (useLocation().state as { draft?: ListingDraft } | null)?.draft ?? null
   const { activeCompany, user, source } = useWorkContext()
   const root = `/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/listings`
@@ -113,6 +114,25 @@ export function ListingPage() {
     setRunning(true); setError(''); setNotice(''); setLevels({}); setOpen(new Set())
     try { setResult(await fetchLevel([], 0)) } finally { setRunning(false) }
   }
+
+  // Um ecrã de registo (terceiro, conta) abre a listagem já com os parâmetros no endereço e manda corrê-la.
+  const [autoRun, setAutoRun] = useState(searchParams.get('run') === '1')
+  useEffect(() => {
+    if (!definition) return
+    const fromAddress: Record<string, string> = {}
+    for (const parameter of definition.parameters ?? []) {
+      const given = searchParams.get(parameter.name)
+      if (given) fromAddress[parameter.name] = given
+    }
+
+    if (Object.keys(fromAddress).length > 0) setValues((current) => ({ ...fromAddress, ...current }))
+  }, [definition?.source, definition?.parameters?.length, searchParams])
+  useEffect(() => {
+    if (!autoRun || !definition || !sourceInfo) return
+    // Só corre quando os parâmetros do endereço já estão nos valores (evita correr com os valores por omissão).
+    const ready = (definition.parameters ?? []).every((parameter) => !searchParams.get(parameter.name) || values[parameter.name] === searchParams.get(parameter.name))
+    if (ready) { setAutoRun(false); void run() }
+  }, [autoRun, definition, sourceInfo, values])
 
   async function toggle(path: (string | null)[]) {
     const key = JSON.stringify(path)

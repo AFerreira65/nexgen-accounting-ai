@@ -188,7 +188,10 @@ public sealed class ListingSourcesTests
             foreach (var template in ListingTemplates.All)
             {
                 Assert.AreEqual(0, ListingCatalog.Validate(template.Definition).Count, template.Name);
-                var ran = await Run(template.Definition).ConfigureAwait(false);
+                // Os parâmetros de texto sem valor por omissão (o terceiro) pedem-se ao utilizador.
+                var asked = (template.Definition.Parameters ?? []).Where(parameter => parameter.Type == "text" && string.IsNullOrEmpty(parameter.Default))
+                    .ToDictionary(parameter => parameter.Name, _ => "Cliente A");
+                var ran = await Run(template.Definition, new ListingRequest(asked)).ConfigureAwait(false);
                 Assert.IsNotNull(ran, template.Name);
             }
 

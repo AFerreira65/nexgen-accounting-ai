@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Database, Landmark, StickyNote } from 'lucide-react'
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Database, Landmark, ListFilter, StickyNote } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
@@ -141,6 +141,7 @@ export function AccountPage() {
       {(fromDate || toDate) && <button type="button" className="button button-secondary" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>}
       <label><span className="sr-only">Origem</span><select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}><option value="">Todas as origens</option>{ENTRY_SOURCES.map((code) => <option key={code} value={code}>{ENTRY_SOURCE_LABELS[code]}</option>)}</select></label>
       <ExportButtons run={exportCsv} disabled={data.entries.length === 0 && !inPeriod} />
+      <Link className="button button-secondary" to={`/listagens/modelo/extrato-conta?${new URLSearchParams({ conta: accountCode, ...(fromDate ? { inicio: fromDate } : {}), ...(toDate ? { fim: toDate } : {}), run: '1' })}`}><ListFilter size={15} /> Ver em listagem</Link>
     </div>
 
     <section className="panel">

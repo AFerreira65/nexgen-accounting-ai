@@ -28,6 +28,19 @@ public static class ListingTemplates
                 [new ListingSort("data"), new ListingSort("lancamento")],
                 null,
                 [new ListingParameter("conta", "Conta (ou prefixo)", "text", "1"), Since, Until])),
+        new("extrato-terceiro", "Extrato de um terceiro",
+            "Todos os movimentos de um cliente ou fornecedor num período, com o saldo acumulado a cada linha.",
+            new ListingDefinition(
+                ListingCatalog.JournalLines,
+                ["data", "lancamento", "conta", "descricao", "debito", "credito", "saldoAcumulado"],
+                new ListingFilterGroup(ListingFilterGroup.And,
+                [
+                    new ListingCondition("terceiro", ListingOperators.Equal, "@terceiro"),
+                    new ListingCondition("data", ListingOperators.Between, "@inicio", "@fim"),
+                ]),
+                [new ListingSort("data"), new ListingSort("lancamento")],
+                null,
+                [new ListingParameter("terceiro", "Terceiro (nome)", "text"), new ListingParameter("inicio", "Desde", "date", "inicio-ano-anterior"), Until])),
         new("razao-por-conta", "Razão por conta",
             "Todos os movimentos do período, agrupados por conta, com os subtotais de cada uma.",
             new ListingDefinition(
