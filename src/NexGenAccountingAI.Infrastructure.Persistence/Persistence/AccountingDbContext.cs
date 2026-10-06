@@ -54,6 +54,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<FirmTask> FirmTasks => Set<FirmTask>();
 
+    public DbSet<AnomalyDismissal> AnomalyDismissals => Set<AnomalyDismissal>();
+
     public DbSet<ReportTemplate> ReportTemplates => Set<ReportTemplate>();
 
     public DbSet<ManagementReport> ManagementReports => Set<ManagementReport>();
@@ -139,6 +141,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new FinancialMapConfiguration());
         modelBuilder.ApplyConfiguration(new SavedListingConfiguration());
         modelBuilder.ApplyConfiguration(new FirmTaskConfiguration());
+        modelBuilder.ApplyConfiguration(new AnomalyDismissalConfiguration());
         modelBuilder.ApplyConfiguration(new ReportTemplateConfiguration());
         modelBuilder.ApplyConfiguration(new ManagementReportConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyAiSettingsConfiguration());

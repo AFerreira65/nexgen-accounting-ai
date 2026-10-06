@@ -12,6 +12,7 @@ import { MovementsPage } from './pages/MovementsPage'
 import { OrganizationPage } from './pages/OrganizationPage'
 import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { AnomaliesPage } from './pages/AnomaliesPage'
 import { FirmTasksPage } from './pages/FirmTasksPage'
 import { TasksPage } from './pages/TasksPage'
 import { TrialBalancePage } from './pages/TrialBalancePage'
@@ -151,6 +152,7 @@ export function App() {
             <Route path="/livro-diario" element={<JournalReportPage />} />
             <Route path="/tarefas" element={<TasksPage />} />
             <Route path="/tarefas-gabinete" element={<FirmTasksPage />} />
+            <Route path="/anomalias" element={<AnomaliesPage />} />
             <Route path="/definicoes" element={<SettingsPage />} />
           </Route>
         </Routes>

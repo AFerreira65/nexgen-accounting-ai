@@ -546,6 +546,29 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   comentários e histórico das tarefas, notificações, a consola de obrigações em lote (AT-8), o portal do
   cliente e a receção de documentos por email (espera pelos dados do servidor de email).
 
+## Fase 4F — Diferenciação
+
+### F4F-01 — Deteção de anomalias
+
+- **Cinco regras determinísticas** (`AnomalyService`), sobre os lançamentos de um período, sem IA e
+  sem alterar nada: possíveis lançamentos duplicados (mesma conta, dia, valor e terceiro, em
+  lançamentos diferentes; sem terceiro só a partir de 500 €; as linhas do mesmo par de lançamentos
+  dão um achado só); documento repetido (o mesmo documento do mesmo terceiro em mais de um
+  lançamento); valores fora do habitual (linhas de gastos e rendimentos de pelo menos 100 € acima da
+  média mais quatro desvios-padrão dos 24 meses anteriores e de pelo menos três vezes a média, com
+  um mínimo de oito linhas de histórico); linhas nas contas 21 e 22 sem terceiro; e saldos com o
+  sinal trocado (cliente credor, fornecedor devedor) à data final.
+- Ficam de fora os lançamentos anulados e os de abertura e de apuramento. Cada regra mostra no máximo
+  100 achados (o relatório avisa quando truncou), por gravidade e valor.
+- **Dispensar** (`AnomalyDismissals`, migração `AnomalyDismissals`): o utilizador dispensa um achado com
+  uma razão; a chave é estável (regra e dados em causa), por isso não volta enquanto os dados forem
+  os mesmos, e vê-se e repõe-se em «Mostrar os dispensados». Quem só tem acesso de consulta lê e não dispensa.
+- Página `/anomalias`: período (o exercício por omissão), resumo por regra, achados por regra com a
+  razão à vista e ligação ao lançamento. São pistas para conferir, não erros confirmados.
+- Testes: cada regra com os seus dados, o que não conta, o período sem achados, dispensar e repor,
+  acesso e validação; o ecrã. Ainda por fazer na 4F: explicação das variações com IA, papéis de trabalho
+  de fecho, conversa com memória, ligação a assistentes externos.
+
 ### Por fazer na 4C
 
 - As listas por artigo dos anexos das regularizações dos campos 40 e 41 (exige guardar o artigo em cada lançamento).

@@ -3255,6 +3255,39 @@ if (applicationEndpointsAvailable)
         return result is null ? Results.NotFound() : Results.Ok(result);
     });
 
+    // Deteção de anomalias (F4F-01): regras determinísticas sobre os lançamentos; o utilizador pode dispensar um achado.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/anomalies", async (
+        Guid userId, Guid companyId, string? from, string? to, bool? includeDismissed, AnomalyService anomalies, CancellationToken cancellationToken) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        if (fromDate is not { } periodFrom || toDate is not { } periodTo)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = ["Indique a data inicial e a data final do período."] });
+        }
+
+        try
+        {
+            var report = await anomalies.ScanAsync(userId, companyId, periodFrom, periodTo, includeDismissed ?? false, cancellationToken).ConfigureAwait(false);
+            return report is null ? Results.NotFound() : Results.Ok(report);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/anomalies/dismiss", async (
+        Guid userId, Guid companyId, DismissAnomalyRequest body, AnomalyService anomalies, CancellationToken cancellationToken) =>
+        await anomalies.DismissAsync(userId, companyId, body?.Key ?? string.Empty, body?.Reason, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/anomalies/restore", async (
+        Guid userId, Guid companyId, DismissAnomalyRequest body, AnomalyService anomalies, CancellationToken cancellationToken) =>
+        await anomalies.RestoreAsync(userId, companyId, body?.Key ?? string.Empty, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
+
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
         Guid userId, Guid companyId, int year, int? month, BudgetService budget, CancellationToken cancellationToken) =>
@@ -5707,6 +5740,8 @@ public sealed record RunListingRequest(
     List<string?>? GroupPath,
     int? Skip,
     int? Take);
+
+public sealed record DismissAnomalyRequest(string? Key, string? Reason);
 
 public sealed record AiListingDraftRequest(string? Request);
 

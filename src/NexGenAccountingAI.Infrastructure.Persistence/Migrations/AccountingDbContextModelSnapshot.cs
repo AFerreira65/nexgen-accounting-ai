@@ -186,6 +186,38 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("Journals", "accounting");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.AnomalyDismissal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DismissedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DismissedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FindingKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "FindingKey")
+                        .IsUnique();
+
+                    b.ToTable("AnomalyDismissals", "accounting");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.BudgetLine", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2890,6 +2922,15 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.AccountingJournal", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Accounting.AnomalyDismissal", b =>
                 {
                     b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
                         .WithMany()
