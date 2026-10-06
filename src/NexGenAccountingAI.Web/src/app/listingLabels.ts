@@ -93,11 +93,16 @@ export const DATE_TOKEN_LABELS: Record<string, string> = {
 
 export const MAX_GROUP_LEVELS = 3
 
+/** Um modelo guiado do sistema (espelho de `ListingTemplate`). */
+export type ListingTemplate = { key: string; name: string; description: string; definition: ListingDefinition }
+
 export function emptyDefinition(source: CatalogSource): ListingDefinition {
   const preferred = ['data', 'lancamento', 'conta', 'terceiro', 'descricao', 'debito', 'credito']
+  const chosen = preferred.filter((key) => source.fields.some((field) => field.key === key))
   return {
     source: source.key,
-    columns: preferred.filter((key) => source.fields.some((field) => field.key === key)),
+    // Sem nenhum dos campos habituais (outras origens), começa pelos primeiros campos da origem.
+    columns: chosen.length >= 3 ? chosen : source.fields.slice(0, 6).map((field) => field.key),
     filter: null,
     sort: [],
     groupBy: [],

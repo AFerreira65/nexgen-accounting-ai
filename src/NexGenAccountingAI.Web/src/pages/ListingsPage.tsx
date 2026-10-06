@@ -1,8 +1,8 @@
-import { Database, ListFilter, Plus, Search, Star } from 'lucide-react'
+import { Database, LayoutTemplate, ListFilter, Plus, Search, Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signalLoadFailure } from '../app/loadFailure'
-import { SCOPE_LABELS, type SavedListing } from '../app/listingLabels'
+import { SCOPE_LABELS, type ListingTemplate, type SavedListing } from '../app/listingLabels'
 import { useWorkContext } from '../app/WorkContext'
 
 /**
@@ -13,6 +13,7 @@ export function ListingsPage() {
   const { activeCompany, source, user } = useWorkContext()
   const navigate = useNavigate()
   const [listings, setListings] = useState<SavedListing[] | null>(null)
+  const [templates, setTemplates] = useState<ListingTemplate[]>([])
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
   const root = `/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/listings`
@@ -24,6 +25,10 @@ export function ListingsPage() {
       .then(async (response) => response.ok ? await response.json() as SavedListing[] : Promise.reject(new Error()))
       .then((list) => { if (!cancelled) setListings(list) })
       .catch(() => { signalLoadFailure(); setError('Não foi possível ler as listagens.') })
+    void fetch(`${root}/templates`)
+      .then(async (response) => response.ok ? await response.json() as ListingTemplate[] : [])
+      .then((list) => { if (!cancelled) setTemplates(list) })
+      .catch(() => { /* os modelos são um complemento */ })
     return () => { cancelled = true }
   }, [root, source])
 
@@ -59,6 +64,15 @@ export function ListingsPage() {
           <td>{SCOPE_LABELS[item.scope]}{item.mine ? '' : ' (de outro utilizador)'}</td>
         </tr>)}</tbody>
       </table></div>}
+    </section>
+    <section className="panel">
+      <div className="panel-heading"><h2><LayoutTemplate size={17} /> Modelos para começar</h2></div>
+      <div className="maps-templates">
+        {templates.map((template) => <article key={template.key} className="maps-template">
+          <h3><Link to={`/listagens/modelo/${template.key}`}>{template.name}</Link></h3>
+          <p>{template.description}</p>
+        </article>)}
+      </div>
     </section>
   </div>
 }

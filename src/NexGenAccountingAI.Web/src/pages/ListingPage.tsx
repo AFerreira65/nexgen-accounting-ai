@@ -5,7 +5,7 @@ import { signalLoadFailure } from '../app/loadFailure'
 import {
   DATE_TOKEN_LABELS, MAX_GROUP_LEVELS, OPERATOR_LABELS, PARAMETER_TYPE_LABELS, SCOPE_LABELS,
   cloneDefinition, emptyDefinition, newCondition,
-  type CatalogField, type CatalogSource, type ListingCatalog, type ListingColumn, type ListingDefinition, type ListingFilterGroup,
+  type CatalogField, type CatalogSource, type ListingCatalog, type ListingColumn, type ListingDefinition, type ListingFilterGroup, type ListingTemplate,
   type ListingParameter, type ListingResult, type ListingRow, type ListingScope, type SavedListing,
 } from '../app/listingLabels'
 import { useWorkContext } from '../app/WorkContext'
@@ -31,7 +31,7 @@ function format(column: ListingColumn, value: string | number | null): string {
  * agrupamento e parâmetros —; o servidor gera a consulta. Os grupos abrem-se um nível de cada vez.
  */
 export function ListingPage() {
-  const { id } = useParams()
+  const { id, template: templateKey } = useParams()
   const navigate = useNavigate()
   const { activeCompany, user, source } = useWorkContext()
   const root = `/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}/listings`
@@ -69,7 +69,14 @@ export function ListingPage() {
       const list = await listResponse.json() as SavedListing[]
       if (cancelled) return
       setCatalog(loaded)
-      if (id) {
+      if (templateKey) {
+        const templates = await fetch(`${root}/templates`).then(async (response) => response.ok ? await response.json() as ListingTemplate[] : [])
+        const found = templates.find((item) => item.key === templateKey)
+        if (cancelled) return
+        if (!found) { setError('O modelo já não existe.'); return }
+        setSaved(null); setName(found.name); setDescription(found.description); setScope('private'); setDefinition(cloneDefinition(found.definition))
+        setEditing(false)
+      } else if (id) {
         const found = list.find((item) => item.id === id)
         if (!found) { setError('A listagem já não existe.'); return }
         setSaved(found); setName(found.name); setDescription(found.description ?? ''); setScope(found.scope); setDefinition(cloneDefinition(found.definition))
@@ -81,7 +88,7 @@ export function ListingPage() {
     }
     void load()
     return () => { cancelled = true }
-  }, [root, id, source])
+  }, [root, id, templateKey, source])
 
   const post = useCallback(async (path: string, body: unknown): Promise<Response> =>
     fetch(`${root}/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), [root])
@@ -200,7 +207,7 @@ export function ListingPage() {
     <header className="page-heading detail-heading">
       <div>
         <p className="eyebrow"><Link to="/listagens"><ArrowLeft size={13} /> Listagens à medida</Link></p>
-        <h1>{saved ? saved.name : 'Nova listagem'}</h1>
+        <h1>{saved ? saved.name : templateKey ? name : 'Nova listagem'}</h1>
         <p>{sourceInfo ? `${sourceInfo.label}. ${sourceInfo.description}` : 'A ler…'}</p>
       </div>
       <span className="connection-badge database"><Database size={15} />Dados da BD</span>
@@ -229,6 +236,15 @@ export function ListingPage() {
     {editing && definition && sourceInfo && <section className="panel no-print" aria-label="Desenho da listagem">
       <div className="panel-heading"><h2>Desenho</h2></div>
       <div className="filterbar">
+        <label className="inline-check">Origem dos dados
+          <select aria-label="Origem dos dados" value={definition.source} disabled={!!saved}
+            onChange={(event) => {
+              const next = catalog?.sources.find((item) => item.key === event.target.value)
+              if (next) { setDefinition(emptyDefinition(next)); setResult(null); setValues({}) }
+            }}>
+            {(catalog?.sources ?? []).map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+          </select>
+        </label>
         <label className="inline-check">Nome <input aria-label="Nome da listagem" value={name} maxLength={120} onChange={(event) => setName(event.target.value)} /></label>
         <label className="inline-check">Quem a vê
           <select aria-label="Quem vê a listagem" value={scope} disabled={!!saved && !saved.mine} onChange={(event) => setScope(event.target.value as ListingScope)}>

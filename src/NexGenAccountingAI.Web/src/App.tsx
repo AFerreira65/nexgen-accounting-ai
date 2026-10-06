@@ -127,6 +127,7 @@ export function App() {
             <Route path="/mapas/:id" element={<MapPage />} />
             <Route path="/listagens" element={<ListingsPage />} />
             <Route path="/listagens/nova" element={<ListingPage />} />
+            <Route path="/listagens/modelo/:template" element={<ListingPage />} />
             <Route path="/listagens/:id" element={<ListingPage />} />
             <Route path="/relatorio-banca" element={<ReportPackPage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />

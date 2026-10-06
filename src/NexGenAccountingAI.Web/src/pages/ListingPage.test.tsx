@@ -23,6 +23,9 @@ const catalog = {
       field('data', 'Data', 'date'), field('lancamento', 'Lançamento', 'text'), field('conta', 'Conta', 'text', { groupable: true }),
       field('terceiro', 'Terceiro', 'text', { groupable: true }), field('debito', 'Débito', 'money', { measure: true }), field('credito', 'Crédito', 'money', { measure: true }),
     ],
+  }, {
+    key: 'compras', label: 'Compras do e-Fatura', description: 'As faturas de compra.',
+    fields: [field('data', 'Data', 'date'), field('fornecedor', 'Fornecedor', 'text', { groupable: true }), field('total', 'Total', 'money', { measure: true })],
   }],
   dateTokens: ['hoje', 'inicio-ano'],
 }
@@ -32,6 +35,10 @@ const definition = {
   sort: [], parameters: [{ name: 'inicio', label: 'Desde', type: 'date', default: 'inicio-ano' }],
 }
 const saved = [{ id: 'l1', name: 'Vendas por conta', description: 'Do ano', scope: 'company', isFavorite: true, mine: true, definition }]
+const templates = [{
+  key: 'compras-por-lancar', name: 'Compras por lançar', description: 'As faturas do e-Fatura por lançar.',
+  definition: { source: 'compras', columns: ['data', 'total'], filter: null, sort: [], groupBy: [], parameters: [] },
+}]
 const columns = [
   { key: 'conta', label: 'Conta', type: 'text', measure: false },
   { key: 'debito', label: 'Débito', type: 'money', measure: true },
@@ -43,6 +50,7 @@ function serve(calls: { url: string; body?: unknown }[]) {
     const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined
     calls.push({ url: `${init?.method ?? 'GET'} ${url}`, body })
     if (url.endsWith('/listings/catalog')) return Promise.resolve(json(catalog))
+    if (url.endsWith('/listings/templates')) return Promise.resolve(json(templates))
     if (url.endsWith('/listings') && !init?.method) return Promise.resolve(json(saved))
     if (url.endsWith('/listings') && init?.method === 'POST') return Promise.resolve(json({ ...saved[0], id: 'l2' }))
     if (url.endsWith('/listings/run')) {
@@ -66,6 +74,7 @@ function renderAt(path: string) {
   return render(<MemoryRouter initialEntries={[path]}><Routes>
     <Route path="/listagens" element={<ListingsPage />} />
     <Route path="/listagens/nova" element={<ListingPage />} />
+    <Route path="/listagens/modelo/:template" element={<ListingPage />} />
     <Route path="/listagens/:id" element={<ListingPage />} />
   </Routes></MemoryRouter>)
 }
@@ -78,6 +87,7 @@ describe('listagens à medida', () => {
     renderAt('/listagens')
     expect(await screen.findByRole('link', { name: /Vendas por conta/ })).toHaveAttribute('href', '/listagens/l1')
     expect(screen.getByText('Esta empresa')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Compras por lançar' })).toHaveAttribute('href', '/listagens/modelo/compras-por-lancar')
     fireEvent.change(screen.getByLabelText('Procurar listagens'), { target: { value: 'inexistente' } })
     expect(screen.queryByRole('link', { name: /Vendas por conta/ })).not.toBeInTheDocument()
   })
@@ -125,5 +135,26 @@ describe('listagens à medida', () => {
     expect(body.name).toBe('Vendas por conta (cópia)')
     expect(body.scope).toBe('company')
     expect(body.definition.filter.conditions[1]).toMatchObject({ operator: 'starts', value: '72' })
+  })
+
+  it('abre um modelo do sistema e corre-o sem o guardar', async () => {
+    const calls: { url: string; body?: unknown }[] = []
+    vi.stubGlobal('fetch', serve(calls))
+    renderAt('/listagens/modelo/compras-por-lancar')
+    expect(await screen.findByRole('heading', { name: 'Compras por lançar' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Executar/ }))
+    await waitFor(() => expect(calls.some((call) => call.url.endsWith('/listings/run'))).toBe(true))
+    const run = calls.find((call) => call.url.endsWith('/listings/run'))!.body as { definition: { source: string } }
+    expect(run.definition.source).toBe('compras')
+    expect(calls.some((call) => call.url.startsWith('POST') && call.url.endsWith('/listings'))).toBe(false)
+  })
+
+  it('troca a origem dos dados numa listagem nova e repõe as colunas dessa origem', async () => {
+    vi.stubGlobal('fetch', serve([]))
+    renderAt('/listagens/nova')
+    const origin = await screen.findByLabelText('Origem dos dados')
+    expect(screen.getByLabelText('Débito')).toBeChecked()
+    fireEvent.change(origin, { target: { value: 'compras' } })
+    await waitFor(() => expect(screen.queryByLabelText('Débito')).not.toBeInTheDocument())
   })
 })

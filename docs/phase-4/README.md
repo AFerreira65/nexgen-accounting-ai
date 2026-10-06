@@ -454,9 +454,32 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
 - **Excel e PDF no servidor** (`listings/export`): todas as linhas até 100 000, com os campos de
   grupo primeiro na ordenação; o PDF mantém o limite do escritor existente.
 - PWA: `/listagens` (lista) e `/listagens/nova` e `/listagens/:id` (desenho e resultado).
-- **Ainda por fazer na 4D** (secção 7.2 do documento de mercado): as outras origens (saldos por
-  conta e mês, terceiros e pendentes, documentos de compra e de venda, IVA, ativos, bancos,
-  arquivo, obrigações); coluna de saldo acumulado; colunas calculadas; tabela cruzada; gráfico e
+### F4D-02 — Mais origens de dados
+
+- O núcleo passou a ser genérico (`ListingRunner<TRow>`): cada origem diz ao motor a consulta
+  de partida (sempre limitada à empresa), o que cada campo é em SQL, as chaves de agrupamento,
+  até quatro somas e a ligação ao registo. Filtros, ordenação, níveis, parâmetros, paginação e
+  totais são comuns. Campos que admitem nulos (datas de abate, data do documento) filtram-se
+  com comparações entre tipos com nulos.
+- Origens (`ListingCatalog`): linhas de lançamentos, saldos por conta e mês, documentos de venda,
+  compras do e-Fatura, ativos fixos, movimentos bancários e arquivo digital. Os estados que as
+  tabelas não guardam como texto («Por lançar», «Lançada», «Dispensada», «Em uso», «Abatido»,
+  «Conciliado»…) calculam-se na consulta e servem de filtro e de grupo. Os anulados ficam de
+  fora nas linhas, nas vendas e nos saldos, salvo se a listagem filtrar pelo estado.
+- Teste (`ListingSourcesTests`): dados de cada origem numa base real, agregações, filtros, o
+  isolamento entre empresas e a exportação de todas as colunas de todas as origens.
+
+### F4D-03 — Modelos guiados
+
+- `ListingTemplates`: extrato de uma conta, razão por conta, saldo por terceiro, evolução mensal
+  por conta, vendas por cliente, vendas por contabilizar, compras por lançar, ativos por estado,
+  movimentos bancários por conciliar e documentos arquivados por ligar. Abrem-se em
+  `/listagens/modelo/:key`, correm com os valores por omissão (datas relativas ao dia de hoje) e
+  guardam-se como listagem própria. Todos são validados e corridos pelo teste.
+- O desenhador passou a ter o seletor de origem (numa listagem nova).
+
+- **Ainda por fazer na 4D** (secção 7.2 do documento de mercado): mais origens (terceiros e
+  pendentes, IVA, obrigações); coluna de saldo acumulado; colunas calculadas; tabela cruzada; gráfico e
   indicador com semáforo para o painel; formatação condicional; modelos guiados; análise presa a
   um ecrã; subscrição por email; modo especialista; criar a listagem a pedir em português com a IA.
   Não visto no browser.

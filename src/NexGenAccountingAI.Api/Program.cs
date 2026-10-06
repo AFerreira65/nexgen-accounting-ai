@@ -1746,6 +1746,9 @@ if (applicationEndpointsAvailable)
             dateTokens = NexGenAccountingAI.Application.Listings.ListingParameters.DateTokens,
         }));
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/templates", () =>
+        Results.Ok(NexGenAccountingAI.Application.Listings.ListingTemplates.All));
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings", async (
         Guid userId, Guid companyId, ListingService listings, CancellationToken cancellationToken) =>
     {
