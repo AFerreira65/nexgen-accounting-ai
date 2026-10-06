@@ -2649,6 +2649,57 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("SavedAnalysis", "reporting");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Reporting.SavedListing", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DefinitionJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("FirmId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsFavorite")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .UseCollation("case_insensitive");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<int>("Scope")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FirmId");
+
+                    b.HasIndex("CompanyId", "OwnerUserId", "Scope", "Name")
+                        .IsUnique();
+
+                    b.ToTable("SavedListing", "reporting");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Saft.SaftValidationRun", b =>
                 {
                     b.Property<Guid>("Id")

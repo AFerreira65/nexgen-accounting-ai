@@ -1,4 +1,4 @@
-import { Archive, ArrowLeftRight, Banknote, BarChart3, Bell, BookOpen, BookText, Building2, Calculator, CalendarCheck, CalendarClock, ChartLine, ChevronDown, CircleAlert, CircleGauge, ClipboardCheck, Contact, DoorOpen, Factory, FileDown, FileText, FileUp, FolderCheck, FolderTree, HandCoins, Hourglass, Landmark, LayoutDashboard, LayoutTemplate, ListOrdered, LogOut, Menu, Newspaper, PanelLeftClose, PanelLeftOpen, PencilRuler, Percent, PiggyBank, Receipt, Scale, Settings, ShieldCheck, Sparkles, Table2, Tags, Target, TrendingUp, Users, WalletCards, WandSparkles, type LucideIcon } from 'lucide-react'
+import { Archive, ArrowLeftRight, Banknote, BarChart3, Bell, BookOpen, BookText, Building2, Calculator, CalendarCheck, CalendarClock, ChartLine, ChevronDown, CircleAlert, CircleGauge, ClipboardCheck, Contact, DoorOpen, Factory, FileDown, FileText, FileUp, FolderCheck, FolderTree, HandCoins, Hourglass, Landmark, LayoutDashboard, LayoutTemplate, ListFilter, ListOrdered, LogOut, Menu, Newspaper, PanelLeftClose, PanelLeftOpen, PencilRuler, Percent, PiggyBank, Receipt, Scale, Settings, ShieldCheck, Sparkles, Table2, Tags, Target, TrendingUp, Users, WalletCards, WandSparkles, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { clearLoadFailure, useLoadFailure } from './loadFailure'
@@ -33,6 +33,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/mapa-analitico', label: 'Mapa analítico', icon: FolderTree },
     { to: '/mapa-depreciacoes', label: 'Mapa de depreciações', icon: Factory },
     { to: '/mapas', label: 'Mapas à medida', icon: PencilRuler },
+    { to: '/listagens', label: 'Listagens à medida', icon: ListFilter },
   ] },
   { label: 'Fiscal', links: [
     { to: '/obrigacoes', label: 'Calendário de obrigações', icon: CalendarClock },

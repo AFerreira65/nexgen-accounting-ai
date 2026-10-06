@@ -430,6 +430,37 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   e se o modelo de 2027 serve para os dados de 2026; a AT dirá ao validar. A permissão «TIE»
   do subutilizador do contabilista (manual, ponto 3) tem de estar atribuída.
 
+## Fase 4D — Listagens à medida (motor B)
+
+### F4D-01 — Motor de listagens, origem «linhas de lançamentos»
+
+- **Definição só de dados** (`Application/Listings`): origem, colunas, filtros «e»/«ou» com
+  grupos dentro de grupos, ordenação, agrupamento até três níveis e parâmetros com valor por
+  omissão relativo («início do ano», «fim do mês anterior»…). Validada por `ListingCatalog.Validate`
+  (campos que existem, operadores que o tipo admite, máximos de colunas, condições e níveis).
+- **Execução** (`ListingEngine`): cada filtro, ordenação e agrupamento vira uma expressão LINQ
+  tipada que o EF traduz em SQL com parâmetros; nunca se junta texto do utilizador a uma consulta.
+  O filtro de empresa vem da sessão. Os lançamentos anulados ficam de fora, salvo se a listagem
+  filtrar pelo estado. A pesquisa de texto não distingue maiúsculas (`ILIKE`) e os caracteres
+  `%`, `_` e `\` valem como texto: o provider acrescenta `ESCAPE ''` se não se indicar o escape,
+  por isso o caractere é passado de forma explícita (teste com «z_100%» e com texto hostil).
+- **Agrupamento por níveis**: cada pedido traz um nível (grupos com contagem e somas de débito,
+  crédito e saldo) ou, no último, as linhas paginadas; abre-se um nível de cada vez, como no
+  balancete em árvore. Total geral sempre presente.
+- **Navegar da linha ao registo**: cada linha leva o lançamento e o terceiro; a conta liga ao razão.
+- **Guardar** (`SavedListing`, migração `SavedListings`): privada, da empresa ou do gabinete;
+  duplicar; favoritas; procura por nome. A privada e a do gabinete só o dono as muda; a da empresa
+  qualquer membro. A função «Consulta» corre e exporta, não guarda.
+- **Excel e PDF no servidor** (`listings/export`): todas as linhas até 100 000, com os campos de
+  grupo primeiro na ordenação; o PDF mantém o limite do escritor existente.
+- PWA: `/listagens` (lista) e `/listagens/nova` e `/listagens/:id` (desenho e resultado).
+- **Ainda por fazer na 4D** (secção 7.2 do documento de mercado): as outras origens (saldos por
+  conta e mês, terceiros e pendentes, documentos de compra e de venda, IVA, ativos, bancos,
+  arquivo, obrigações); coluna de saldo acumulado; colunas calculadas; tabela cruzada; gráfico e
+  indicador com semáforo para o painel; formatação condicional; modelos guiados; análise presa a
+  um ecrã; subscrição por email; modo especialista; criar a listagem a pedir em português com a IA.
+  Não visto no browser.
+
 ### Por fazer na 4C
 
 - As listas por artigo dos anexos das regularizações dos campos 40 e 41 (exige guardar o artigo em cada lançamento).

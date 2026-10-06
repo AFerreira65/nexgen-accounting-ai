@@ -16,6 +16,8 @@ import { TasksPage } from './pages/TasksPage'
 import { TrialBalancePage } from './pages/TrialBalancePage'
 import { BalancetePage } from './pages/BalancetePage'
 import { MapsPage } from './pages/MapsPage'
+import { ListingPage } from './pages/ListingPage'
+import { ListingsPage } from './pages/ListingsPage'
 import { MapPage } from './pages/MapPage'
 import { ReportPackPage } from './pages/ReportPackPage'
 import { useWorkContext } from './app/WorkContext'
@@ -123,6 +125,9 @@ export function App() {
             <Route path="/mapas/novo" element={<MapPage />} />
             <Route path="/mapas/modelo/:template" element={<MapPage />} />
             <Route path="/mapas/:id" element={<MapPage />} />
+            <Route path="/listagens" element={<ListingsPage />} />
+            <Route path="/listagens/nova" element={<ListingPage />} />
+            <Route path="/listagens/:id" element={<ListingPage />} />
             <Route path="/relatorio-banca" element={<ReportPackPage />} />
             <Route path="/resultados" element={<IncomeStatementPage />} />
             <Route path="/balanco" element={<BalanceSheetPage />} />

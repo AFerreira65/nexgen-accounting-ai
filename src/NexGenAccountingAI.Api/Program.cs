@@ -1722,6 +1722,131 @@ if (applicationEndpointsAvailable)
 
     // Mapas desenhados pelo utilizador (F4B-03): os guardados, os modelos do sistema,
     // correr e explicar. Correr e explicar são leituras; gravar é de quem edita.
+    // Listagens do utilizador (F4D-01): origens prontas, definições guardadas, correr e exportar. O SQL é sempre gerado pelo servidor.
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/catalog", () =>
+        Results.Ok(new
+        {
+            sources = NexGenAccountingAI.Application.Listings.ListingCatalog.Sources.Select(source => new
+            {
+                source.Key,
+                source.Label,
+                source.Description,
+                Fields = source.Fields.Select(field => new
+                {
+                    field.Key,
+                    field.Label,
+                    Type = field.Type.ToString().ToLowerInvariant(),
+                    field.Filterable,
+                    field.Sortable,
+                    field.Groupable,
+                    field.Measure,
+                    Operators = NexGenAccountingAI.Application.Listings.ListingOperators.For(field.Type),
+                }),
+            }),
+            dateTokens = NexGenAccountingAI.Application.Listings.ListingParameters.DateTokens,
+        }));
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings", async (
+        Guid userId, Guid companyId, ListingService listings, CancellationToken cancellationToken) =>
+    {
+        var list = await listings.ListAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings", async (
+        Guid userId, Guid companyId, SaveListingRequest body, ListingService listings, CancellationToken cancellationToken) =>
+    {
+        if (body?.Definition is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = ["Indique o nome e a definição da listagem."] });
+        }
+
+        return ListingWriteResult(await listings.CreateAsync(userId, companyId, body.Scope ?? "private", body.Name ?? string.Empty, body.Description, body.Definition, cancellationToken).ConfigureAwait(false));
+    });
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, SaveListingRequest body, ListingService listings, CancellationToken cancellationToken) =>
+    {
+        if (body?.Definition is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = ["Indique o nome e a definição da listagem."] });
+        }
+
+        return ListingWriteResult(await listings.UpdateAsync(userId, companyId, id, body.Scope ?? "private", body.Name ?? string.Empty, body.Description, body.Definition, cancellationToken).ConfigureAwait(false));
+    });
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, ListingService listings, CancellationToken cancellationToken) =>
+        await listings.DeleteAsync(userId, companyId, id, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/{id:guid}/favorite", async (
+        Guid userId, Guid companyId, Guid id, bool? value, ListingService listings, CancellationToken cancellationToken) =>
+        await listings.SetFavoriteAsync(userId, companyId, id, value ?? true, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound())
+        .WithMetadata(new ViewerAllowedAttribute("Só guarda a preferência do próprio utilizador."));
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/run", async (
+        Guid userId, Guid companyId, RunListingRequest body, ListingService listings, CancellationToken cancellationToken) =>
+    {
+        if (body?.Definition is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = ["Indique a definição da listagem."] });
+        }
+
+        try
+        {
+            var result = await listings.RunAsync(
+                userId, companyId, body.Definition,
+                new NexGenAccountingAI.Application.Listings.ListingRequest(body.Parameters, body.GroupPath, body.Skip ?? 0, body.Take ?? 200),
+                cancellationToken).ConfigureAwait(false);
+            return result is null ? Results.NotFound() : Results.Ok(result);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = [exception.Message] });
+        }
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Só lê e calcula; não altera dados."));
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/export", async (
+        Guid userId, Guid companyId, string? format, ExportListingRequest body, ListingService listings, AccountingDbContext context, CancellationToken cancellationToken) =>
+    {
+        if (body?.Definition is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = ["Indique a definição da listagem."] });
+        }
+
+        try
+        {
+            var data = await listings.ExportAsync(userId, companyId, body.Definition, body.Parameters, cancellationToken).ConfigureAwait(false);
+            if (data is null)
+            {
+                return Results.NotFound();
+            }
+
+            var company = await context.Companies.AsNoTracking()
+                .Where(item => item.Id == companyId)
+                .Select(item => new { item.LegalName, item.TaxRegistrationNumber })
+                .SingleAsync(cancellationToken).ConfigureAwait(false);
+            var title = string.IsNullOrWhiteSpace(body.Title) ? "Listagem" : body.Title.Trim();
+            var table = new TableExport(
+                title.Length > 150 ? title[..150] : title, company.LegalName, company.TaxRegistrationNumber, DateTimeOffset.Now,
+                data.Value.Columns.Select(column => column.Label).ToList(),
+                data.Value.Rows.Select(row => (IReadOnlyList<object?>)row.Cells).ToList(),
+                data.Value.Truncated ? $"Só as primeiras {NexGenAccountingAI.Infrastructure.Persistence.ListingEngine.MaxExportRows:N0} linhas: acrescente filtros." : null);
+            return (format ?? "xlsx").ToLowerInvariant() switch
+            {
+                "xlsx" => Results.File(TableExportWriter.ToXlsx(table), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "listagem.xlsx"),
+                "pdf" => Results.File(TableExportWriter.ToPdf(table), "application/pdf", "listagem.pdf"),
+                _ => Results.ValidationProblem(new Dictionary<string, string[]> { ["format"] = ["O formato tem de ser xlsx ou pdf."] }),
+            };
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = [exception.Message] });
+        }
+    })
+        .WithMetadata(new ViewerAllowedAttribute("Só formata dados que o utilizador já pode ler."));
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/maps", async (
         Guid userId, Guid companyId, FinancialMapService maps, CancellationToken cancellationToken) =>
     {
@@ -5365,6 +5490,18 @@ public partial class Program
         }
     }
 
+    private static IResult ListingWriteResult(SavedListingWriteResult result)
+    {
+        if (result.NotFound)
+        {
+            return Results.NotFound();
+        }
+
+        return result.Errors.Count > 0
+            ? Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = [.. result.Errors] })
+            : Results.Ok(result.Saved);
+    }
+
     private static IResult MapWriteResult(FinancialMapWriteResult result)
     {
         if (result.NotFound)
@@ -5485,6 +5622,19 @@ public sealed record UpdateAccountRequest(
 
 /// <summary>As credenciais da IES, pedidas em cada entrega e nunca guardadas.</summary>
 public sealed record IesAtCredentialsRequest(string? AccountantUser, string? AccountantPassword, string? TaxpayerPassword);
+
+/// <summary>Guardar uma listagem: quem a vê, o nome e a definição.</summary>
+public sealed record SaveListingRequest(string? Scope, string? Name, string? Description, NexGenAccountingAI.Application.Listings.ListingDefinition? Definition);
+
+/// <summary>Correr uma listagem: a definição, os parâmetros, o caminho dos grupos abertos e a página.</summary>
+public sealed record RunListingRequest(
+    NexGenAccountingAI.Application.Listings.ListingDefinition? Definition,
+    Dictionary<string, string>? Parameters,
+    List<string?>? GroupPath,
+    int? Skip,
+    int? Take);
+
+public sealed record ExportListingRequest(NexGenAccountingAI.Application.Listings.ListingDefinition? Definition, Dictionary<string, string>? Parameters, string? Title);
 
 public sealed record CreateJournalRequest(string Code, string Name);
 

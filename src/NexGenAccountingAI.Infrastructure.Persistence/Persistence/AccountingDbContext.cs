@@ -50,6 +50,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<FinancialMap> FinancialMaps => Set<FinancialMap>();
 
+    public DbSet<SavedListing> SavedListings => Set<SavedListing>();
+
     public DbSet<ReportTemplate> ReportTemplates => Set<ReportTemplate>();
 
     public DbSet<ManagementReport> ManagementReports => Set<ManagementReport>();
@@ -133,6 +135,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new EFaturaPurchaseConfiguration());
         modelBuilder.ApplyConfiguration(new SavedAnalysisConfiguration());
         modelBuilder.ApplyConfiguration(new FinancialMapConfiguration());
+        modelBuilder.ApplyConfiguration(new SavedListingConfiguration());
         modelBuilder.ApplyConfiguration(new ReportTemplateConfiguration());
         modelBuilder.ApplyConfiguration(new ManagementReportConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyAiSettingsConfiguration());

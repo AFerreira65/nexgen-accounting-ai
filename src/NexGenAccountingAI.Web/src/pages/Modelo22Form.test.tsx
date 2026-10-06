@@ -34,13 +34,13 @@ describe('impresso do Modelo 22', () => {
     render(<Modelo22Form result={result} draft={{ 'tipo-sujeito-passivo': '1' }} onDraft={onDraft} companyName="Empresa, Lda." taxNumber="500000000" sme onSme={() => {}} municipalRate="1,5" onMunicipalRate={() => {}} />)
 
     expect(screen.getByText('500000000')).toBeInTheDocument()
-    expect(screen.getAllByText(/12[\s ]345,67/).length).toBeGreaterThanOrEqual(4)
+    expect(screen.getAllByText(/12[\s\u00a0]345,67/).length).toBeGreaterThanOrEqual(4)
     expect(screen.getByLabelText('Residente que exerce, a título principal, atividade comercial, industrial ou agrícola')).toBeChecked()
     expect(screen.getByText('800,00')).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Campo 702'), { target: { value: '100' } })
     expect(onDraft).toHaveBeenLastCalledWith('702', '100')
-    fireEvent.click(screen.getByRole('button', { name: /usar 4[\s ]500,00/ }))
+    fireEvent.click(screen.getByRole('button', { name: /usar 4[\s\u00a0]500,00/ }))
     expect(onDraft).toHaveBeenLastCalledWith('724', '4500')
     fireEvent.click(screen.getByLabelText('Declaração de substituição (art.º 122.º, n.ºs 1 e 2)'))
     expect(onDraft).toHaveBeenLastCalledWith('tipo-declaracao', '2')
