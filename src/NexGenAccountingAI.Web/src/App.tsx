@@ -12,6 +12,7 @@ import { MovementsPage } from './pages/MovementsPage'
 import { OrganizationPage } from './pages/OrganizationPage'
 import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { FirmTasksPage } from './pages/FirmTasksPage'
 import { TasksPage } from './pages/TasksPage'
 import { TrialBalancePage } from './pages/TrialBalancePage'
 import { BalancetePage } from './pages/BalancetePage'
@@ -149,6 +150,7 @@ export function App() {
             <Route path="/abertura" element={<YearOpeningPage />} />
             <Route path="/livro-diario" element={<JournalReportPage />} />
             <Route path="/tarefas" element={<TasksPage />} />
+            <Route path="/tarefas-gabinete" element={<FirmTasksPage />} />
             <Route path="/definicoes" element={<SettingsPage />} />
           </Route>
         </Routes>

@@ -2198,6 +2198,82 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.ToTable("CompanyUsers", "identity");
                 });
 
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Organizations.FirmTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssigneeUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CompletedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Origin")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssigneeUserId", "Status");
+
+                    b.HasIndex("CompanyId", "Origin")
+                        .IsUnique()
+                        .HasFilter("\"Origin\" IS NOT NULL");
+
+                    b.HasIndex("CompanyId", "Status");
+
+                    b.ToTable("FirmTasks", "accounting");
+                });
+
             modelBuilder.Entity("NexGenAccountingAI.Domain.Organizations.TaxObligationRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2658,6 +2734,14 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("DefinitionJson")
                         .IsRequired()
                         .HasColumnType("text");
@@ -2671,6 +2755,12 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsFavorite")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -3219,6 +3309,15 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.Navigation("Company");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("NexGenAccountingAI.Domain.Organizations.FirmTask", b =>
+                {
+                    b.HasOne("NexGenAccountingAI.Domain.Organizations.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("NexGenAccountingAI.Domain.Organizations.TaxObligationRecord", b =>

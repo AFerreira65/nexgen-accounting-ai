@@ -522,6 +522,30 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   pendentes, IVA, obrigações); colunas calculadas; indicador com semáforo para o painel; subscrição por email; modo especialista.
   Não visto no browser.
 
+## Fase 4E — Gabinete
+
+### F4E-01 — Tarefas atribuíveis
+
+- **Modelo** (`FirmTask`, migração `FirmTasks`, tabela `accounting.FirmTasks`): título, descrição,
+  prazo, prioridade (baixa, normal, alta), estado (por fazer, em curso, concluída, cancelada),
+  responsável, autor, quem e quando a concluiu, e a origem. A migração acrescenta também as colunas
+  de auditoria às listagens guardadas.
+- **Acesso** (`FirmTaskService`): uma tarefa é sempre de uma empresa. Vê-a quem tem acesso a essa
+  empresa; cria, altera e conclui quem não é só de consulta (a regra vale também no servidor, não só
+  no ecrã); o responsável tem de ser membro da empresa; apaga o autor, o dono ou um administrador.
+- **Das obrigações:** «Criar das obrigações» cria uma tarefa por cada obrigação pendente em atraso ou
+  a vencer nos próximos 15 dias, com o prazo da obrigação, prioridade alta se já passou e entregue ao
+  responsável pela empresa, se houver. A origem (`obrigacao:IVA-DP-M:2026-09`) é única por empresa:
+  repetir a ação não duplica.
+- **Lista** (`/tarefas-gabinete`): filtros por empresa, responsável (todos, minhas, sem responsável),
+  estado e pesquisa (sem distinguir maiúsculas, com `%` e `_` como texto); as em atraso primeiro, depois
+  por prazo e prioridade; concluir e reabrir de um clique; formulário para criar e editar.
+- A página existente «Tarefas» (a fila de trabalho do dia) mantém-se; esta é a das tarefas atribuídas.
+- Testes: acessos e papéis, atribuição, ordem, filtros, conclusão e reabertura, apagar, geração sem
+  duplicar e o ecrã. Não visto no browser. Ainda por fazer na 4E: ligar as tarefas ao painel do gabinete,
+  comentários e histórico das tarefas, notificações, a consola de obrigações em lote (AT-8), o portal do
+  cliente e a receção de documentos por email (espera pelos dados do servidor de email).
+
 ### Por fazer na 4C
 
 - As listas por artigo dos anexos das regularizações dos campos 40 e 41 (exige guardar o artigo em cada lançamento).

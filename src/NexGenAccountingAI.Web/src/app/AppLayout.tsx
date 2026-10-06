@@ -1,4 +1,4 @@
-import { Archive, ArrowLeftRight, Banknote, BarChart3, Bell, BookOpen, BookText, Building2, Calculator, CalendarCheck, CalendarClock, ChartLine, ChevronDown, CircleAlert, CircleGauge, ClipboardCheck, Contact, DoorOpen, Factory, FileDown, FileText, FileUp, FolderCheck, FolderTree, HandCoins, Hourglass, Landmark, LayoutDashboard, LayoutTemplate, ListFilter, ListOrdered, LogOut, Menu, Newspaper, PanelLeftClose, PanelLeftOpen, PencilRuler, Percent, PiggyBank, Receipt, Scale, Settings, ShieldCheck, Sparkles, Table2, Tags, Target, TrendingUp, Users, WalletCards, WandSparkles, type LucideIcon } from 'lucide-react'
+import { Archive, ArrowLeftRight, Banknote, BarChart3, Bell, BookOpen, BookText, Building2, Calculator, CalendarCheck, CalendarClock, ChartLine, ChevronDown, CircleAlert, CircleGauge, ClipboardCheck, Contact, DoorOpen, Factory, FileDown, FileText, FileUp, FolderCheck, FolderTree, HandCoins, Hourglass, Landmark, LayoutDashboard, LayoutTemplate, ListFilter, ListOrdered, ListTodo, LogOut, Menu, Newspaper, PanelLeftClose, PanelLeftOpen, PencilRuler, Percent, PiggyBank, Receipt, Scale, Settings, ShieldCheck, Sparkles, Table2, Tags, Target, TrendingUp, Users, WalletCards, WandSparkles, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { clearLoadFailure, useLoadFailure } from './loadFailure'
@@ -53,6 +53,7 @@ const navGroups: { label: string; links: NavLinkItem[] }[] = [
     { to: '/comunicacao-at', label: 'Comunicação com a AT', icon: ShieldCheck },
   ] },
   { label: 'Gestão', links: [
+    { to: '/tarefas-gabinete', label: 'Tarefas do gabinete', icon: ListTodo },
     { to: '/evolucao', label: 'Evolução mensal', icon: ChartLine },
     { to: '/mapa-exploracao', label: 'Mapa de exploração', icon: TrendingUp },
     { to: '/racios', label: 'Rácios', icon: Percent },

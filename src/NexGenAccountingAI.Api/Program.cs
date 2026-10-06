@@ -3224,6 +3224,37 @@ if (applicationEndpointsAvailable)
         Guid userId, DateOnly? date, Guid? responsible, FirmDashboardService dashboard, CancellationToken cancellationToken) =>
         Results.Ok(await dashboard.BuildAsync(userId, date ?? DateOnly.FromDateTime(DateTime.Today), cancellationToken, responsible).ConfigureAwait(false)));
 
+    // Tarefas do gabinete (F4E-01): as das empresas a que o utilizador tem acesso, e a escrita sempre dentro de uma empresa.
+    app.MapGet("/api/v1/development/users/{userId:guid}/tasks", async (
+        Guid userId, Guid? company, string? assignee, string? status, string? search, FirmTaskService tasks, CancellationToken cancellationToken) =>
+        Results.Ok(await tasks.ListAsync(userId, new FirmTaskFilter(company, assignee, status, search), cancellationToken).ConfigureAwait(false)));
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/tasks/assignees", async (
+        Guid userId, Guid companyId, FirmTaskService tasks, CancellationToken cancellationToken) =>
+    {
+        var list = await tasks.AssigneesAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return list is null ? Results.NotFound() : Results.Ok(list);
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/tasks", async (
+        Guid userId, Guid companyId, FirmTaskInput body, FirmTaskService tasks, CancellationToken cancellationToken) =>
+        FirmTaskResult(await tasks.CreateAsync(userId, companyId, body ?? new FirmTaskInput(null, null, null, null, null, null), cancellationToken).ConfigureAwait(false)));
+
+    app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/tasks/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, FirmTaskInput body, FirmTaskService tasks, CancellationToken cancellationToken) =>
+        FirmTaskResult(await tasks.UpdateAsync(userId, companyId, id, body ?? new FirmTaskInput(null, null, null, null, null, null), cancellationToken).ConfigureAwait(false)));
+
+    app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/tasks/{id:guid}", async (
+        Guid userId, Guid companyId, Guid id, FirmTaskService tasks, CancellationToken cancellationToken) =>
+        await tasks.DeleteAsync(userId, companyId, id, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/tasks/from-obligations", async (
+        Guid userId, Guid companyId, FirmTaskService tasks, CancellationToken cancellationToken) =>
+    {
+        var result = await tasks.GenerateFromObligationsAsync(userId, companyId, cancellationToken).ConfigureAwait(false);
+        return result is null ? Results.NotFound() : Results.Ok(result);
+    });
+
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
         Guid userId, Guid companyId, int year, int? month, BudgetService budget, CancellationToken cancellationToken) =>
@@ -5530,6 +5561,18 @@ public partial class Program
 
         return result.Errors.Count > 0
             ? Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = [.. result.Errors] })
+            : Results.Ok(result.Saved);
+    }
+
+    private static IResult FirmTaskResult(FirmTaskWriteResult result)
+    {
+        if (result.NotFound)
+        {
+            return Results.NotFound();
+        }
+
+        return result.Errors.Count > 0
+            ? Results.ValidationProblem(new Dictionary<string, string[]> { ["tarefa"] = [.. result.Errors] })
             : Results.Ok(result.Saved);
     }
 
