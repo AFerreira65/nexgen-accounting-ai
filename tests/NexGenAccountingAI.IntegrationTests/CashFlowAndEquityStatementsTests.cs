@@ -282,6 +282,17 @@ public sealed class CashFlowAndEquityStatementsTests
             Assert.AreEqual(0, annex.Warnings.Count, string.Join(" | ", annex.Warnings));
             Assert.IsNull(await new IesAnnexAService(context, service).BuildAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
 
+            // O ficheiro XML da IES (F4C-04): válido face ao esquema oficial, com os campos e as somas do Anexo A.
+            var iesFile = await new IesAnnexAService(context, service).BuildXmlAsync(userId, companyId, 2026, CancellationToken.None).ConfigureAwait(false);
+            Assert.AreEqual("ies-500584095-2026.xml", iesFile!.Value.FileName);
+            var iesXml = System.Text.Encoding.UTF8.GetString(iesFile.Value.Content);
+            StringAssert.Contains(iesXml, "<Q02A-opcao>2</Q02A-opcao>");
+            StringAssert.Contains(iesXml, "<Q03-A00001>100.00</Q03-A00001>");
+            StringAssert.Contains(iesXml, "<Q03-A00026-soma>-110.00</Q03-A00026-soma>");
+            StringAssert.Contains(iesXml, "<Q04-A00158-soma>1820.00</Q04-A00158-soma>");
+            XsdValidation.ValidateIfConfigured(iesXml, "ACCOUNTINGAI_IES_XSD", IesXmlWriter.Namespace, "Ies2027/IES-DA.xsd");
+            Assert.IsNull(await new IesAnnexAService(context, service).BuildXmlAsync(Guid.NewGuid(), companyId, 2026, CancellationToken.None).ConfigureAwait(false));
+
             Assert.IsNull(await service.CashFlowsAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
             Assert.IsNull(await service.EquityChangesAsync(Guid.NewGuid(), companyId, from, to, CancellationToken.None).ConfigureAwait(false));
         }

@@ -2599,6 +2599,25 @@ if (applicationEndpointsAvailable)
         return report is null ? Results.NotFound() : Results.Ok(report);
     });
 
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/ies/xml", async (
+        Guid userId, Guid companyId, int year, IesAnnexAService ies, CancellationToken cancellationToken) =>
+    {
+        if (year is < 2000 or > 9999)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["year"] = ["Indique um exercício válido."] });
+        }
+
+        try
+        {
+            var file = await ies.BuildXmlAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+            return file is null ? Results.NotFound() : Results.File(file.Value.Content, "application/xml", file.Value.FileName);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["ies"] = [exception.Message] });
+        }
+    });
+
     // IES: os quadros 03 e 04 do Anexo A, a partir das demonstrações financeiras.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/ies/annex-a", async (
         Guid userId, Guid companyId, int year, IesAnnexAService ies, CancellationToken cancellationToken) =>

@@ -25,6 +25,8 @@ $files = [ordered]@{
     'dpiva.zip'           = "$formats/Suporte_informatico_IVA_2023.zip"
     'modelo22.zip'        = "$formats/Suporte_informatico_XML_M22_2026.zip"
     'recapitulativa.zip'  = "$formats/dr-1.0.zip"
+    # A IES (2027 e seguintes) tem ficheiros com os mesmos nomes dos outros esquemas: vai para a subpasta Ies2027.
+    'ies2027.zip'         = "$formats/Suporte_Informatico_IES_2027_seguintes.zip"
 }
 
 New-Item -ItemType Directory -Force -Path $target | Out-Null
@@ -42,8 +44,13 @@ foreach ($name in $files.Keys) {
         if ($name -like '*.zip') {
             $extract = Join-Path $env:TEMP ("accountingai-schemas-" + [guid]::NewGuid().ToString('N'))
             Expand-Archive -Path $destination -DestinationPath $extract -Force
+            $folder = $target
+            if ($name -eq 'ies2027.zip') {
+                $folder = Join-Path $target 'Ies2027'
+                New-Item -ItemType Directory -Force -Path $folder | Out-Null
+            }
             Get-ChildItem $extract -Recurse -Filter *.xsd | ForEach-Object {
-                Copy-Item $_.FullName (Join-Path $target $_.Name) -Force
+                Copy-Item $_.FullName (Join-Path $folder $_.Name) -Force
                 Write-Host "Descarregado: $($_.Name) (de $name)"
             }
             Remove-Item $extract -Recurse -Force

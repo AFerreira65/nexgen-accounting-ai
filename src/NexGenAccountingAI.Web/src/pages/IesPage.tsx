@@ -1,11 +1,11 @@
-import { CircleAlert, CircleCheck, Database, FileText, Printer } from 'lucide-react'
+import { CircleAlert, CircleCheck, Database, FileDown, FileText, Printer } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
 import { ExportButtons } from '../app/ExportButtons'
 import { euro, type IesAnnexA } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
-import { useWorkContext } from '../app/WorkContext'
+import { problemMessage, useWorkContext } from '../app/WorkContext'
 
 const normLabels: Record<string, string> = { S: 'NCRF (S)', P: 'NCRF-PE (P)', M: 'NC-ME (M)', N: 'NIC (N)' }
 const quadros = [
@@ -14,12 +14,13 @@ const quadros = [
 ]
 
 export function IesPage() {
-  const { activeCompany, source, iesAnnexA } = useWorkContext()
+  const { activeCompany, source, user, iesAnnexA } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const defaultYear = activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()
   const [year, setYear] = useState(defaultYear)
   const [annex, setAnnex] = useState<IesAnnexA | null>(null)
+  const [xmlBusy, setXmlBusy] = useState(false)
   const [error, setError] = useState('')
   usePublishRecord(undefined, undefined)
 
@@ -42,6 +43,28 @@ export function IesPage() {
     </div>
   }
 
+  /** O ficheiro XML no formato da AT (esquema «2027 e seguintes»), para entregar no Portal das Finanças. */
+  async function downloadXml() {
+    setXmlBusy(true); setError('')
+    try {
+      const response = await fetch(`/api/v1/development/users/${user.id}/companies/${companyId}/ies/xml?year=${year}`)
+      if (!response.ok) throw new Error(await problemMessage(response))
+      const name = /filename="?([^";]+)/.exec(response.headers.get('Content-Disposition') ?? '')?.[1] ?? `ies-${year}.xml`
+      const url = URL.createObjectURL(await response.blob())
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = name
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(url)
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Não foi possível gerar o ficheiro.')
+    } finally {
+      setXmlBusy(false)
+    }
+  }
+
   const fields = annex?.fields ?? []
   const value = (code: string) => fields.find((field) => field.code === code)?.amount ?? 0
   const exportCsv = () => downloadCsv(
@@ -57,6 +80,7 @@ export function IesPage() {
     <div className="filterbar">
       <label className="inline-check">Exercício <input type="number" aria-label="Exercício" min={2000} max={9999} value={year} onChange={(event) => { const next = Number(event.target.value); if (next >= 2000 && next <= 9999) setYear(next) }} /></label>
       <ExportButtons run={exportCsv} disabled={fields.length === 0} />
+      <button className="button button-secondary" type="button" onClick={() => void downloadXml()} disabled={!annex || xmlBusy}><FileDown size={15} /> {xmlBusy ? 'A gerar…' : 'Ficheiro XML (AT)'}</button>
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!annex}><Printer size={15} /> Imprimir / PDF</button>
     </div>
 

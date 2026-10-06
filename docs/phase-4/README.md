@@ -363,23 +363,22 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
 - Não verificado: o significado do quadro 02 (serviço de finanças), que fica em
   branco, e o que a AT aceita na entrega; a validação final é a do Portal.
 
-### IES: o que se apurou antes de gerar o XML (2026-10-06)
+### F4C-04 — XML da IES (Anexo A)
 
-Os esquemas da IES estão em dois pacotes da AT, com os mesmos nomes de ficheiro e
-namespaces diferentes, por isso não vão para a pasta plana de `Schemas`:
-
-- «2025 e anteriores» (namespace `IES-DA/2024`): o Anexo A SNC chama-se
-  `AnexoASNC` e os campos são `Q03A-A5001-1/-2` (período N e N-1) e `Q04A-A5101-…`.
-- «2027 e seguintes» (namespace `IES-DA/2021`, a IES com SAF-T): o Anexo A tem
-  `Q03-A00001…` e `Q04-A00101…`, os mesmos códigos que `IesAnnexAService` usa.
-- O período de 2026 não está coberto por nenhum dos dois na página da AT.
-
-Por isso o XML da IES **não foi escrito**: ligar os campos do serviço aos
-`A5xxx` do modelo vigente seria adivinhar (a numeração difere: o modelo vigente
-não tem `A5017` e os totais não coincidem), e uma IES com campos trocados é
-pior do que nenhuma. Falta o impresso do Anexo A do período de 2025 ou a
-confirmação da AT sobre o modelo de 2026. O elemento raiz exige o atributo
-`versao`, cujo valor os esquemas não indicam.
+- `IesXmlWriter` escreve a IES pelo esquema «2027 e seguintes» (`IES-DA.xsd`,
+  namespace `IES-DA/2021`, a IES com SAF-T): atributos `versao`, `nif`, `ano`,
+  rosto (quadro 01 e NIF) e Anexo A (`id` = NIC/NCRF/NCRF-PE/NC-ME, opção do
+  quadro 02-A, quadros 03 e 04 com as somas `-soma`). Os códigos `A00001…` são os
+  que `IesAnnexAService` já usava. Endpoint `.../ies/xml?year=` e botão na página.
+- O esquema vive em `Schemas/Ies2027/` (ignorado pelo git; o
+  `get-official-schemas.ps1` descarrega-o), porque os ficheiros têm os mesmos
+  nomes dos outros pacotes. O teste valida o ficheiro contra ele, sem erros.
+- **Decisão do utilizador (2026-10-06):** o modelo de 2027 usa-se em 2027 para os
+  dados de 2026. A página da AT diz «declaração do período de 2027», o que
+  admite outra leitura (IES de 2028 sobre 2027); confirmar quando a AT o disser.
+  O pacote «2025 e anteriores» usa outros códigos (`A5001-1/-2`) e não foi usado.
+- **Não confirmado:** o valor do atributo `versao` (o esquema não o indica; está
+  a 1). Rosto sem os quadros 02, 04, 06 e 07; sem os outros anexos.
 
 ### Por fazer na 4C
 

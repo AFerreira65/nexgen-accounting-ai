@@ -116,6 +116,26 @@ public sealed class IesAnnexAService(AccountingDbContext context, FinancialState
         ("Passivo corrente", "Outros passivos correntes", 155),
     ];
 
+    /// <summary>O ficheiro XML da IES (Anexo A) do exercício, pelo esquema oficial da AT (F4C-04).</summary>
+    /// <returns><c>null</c> sem acesso à empresa. Lança <see cref="InvalidOperationException"/> quando não pode ir para ficheiro.</returns>
+    public async Task<(byte[] Content, string FileName)?> BuildXmlAsync(
+        Guid userId, Guid companyId, int year, CancellationToken cancellationToken = default)
+    {
+        var annex = await BuildAsync(userId, companyId, year, cancellationToken).ConfigureAwait(false);
+        if (annex is null)
+        {
+            return null;
+        }
+
+        var taxNumber = await context.Companies
+            .AsNoTracking()
+            .Where(company => company.Id == companyId)
+            .Select(company => company.TaxRegistrationNumber)
+            .SingleAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return (IesXmlWriter.Write(annex, taxNumber), $"ies-{taxNumber}-{year}.xml");
+    }
+
     /// <returns><c>null</c> sem acesso à empresa.</returns>
     public async Task<IesAnnexA?> BuildAsync(Guid userId, Guid companyId, int year, CancellationToken cancellationToken = default)
     {
