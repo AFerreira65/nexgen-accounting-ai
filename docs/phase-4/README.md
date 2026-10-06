@@ -363,6 +363,24 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
 - Não verificado: o significado do quadro 02 (serviço de finanças), que fica em
   branco, e o que a AT aceita na entrega; a validação final é a do Portal.
 
+### IES: o que se apurou antes de gerar o XML (2026-10-06)
+
+Os esquemas da IES estão em dois pacotes da AT, com os mesmos nomes de ficheiro e
+namespaces diferentes, por isso não vão para a pasta plana de `Schemas`:
+
+- «2025 e anteriores» (namespace `IES-DA/2024`): o Anexo A SNC chama-se
+  `AnexoASNC` e os campos são `Q03A-A5001-1/-2` (período N e N-1) e `Q04A-A5101-…`.
+- «2027 e seguintes» (namespace `IES-DA/2021`, a IES com SAF-T): o Anexo A tem
+  `Q03-A00001…` e `Q04-A00101…`, os mesmos códigos que `IesAnnexAService` usa.
+- O período de 2026 não está coberto por nenhum dos dois na página da AT.
+
+Por isso o XML da IES **não foi escrito**: ligar os campos do serviço aos
+`A5xxx` do modelo vigente seria adivinhar (a numeração difere: o modelo vigente
+não tem `A5017` e os totais não coincidem), e uma IES com campos trocados é
+pior do que nenhuma. Falta o impresso do Anexo A do período de 2025 ou a
+confirmação da AT sobre o modelo de 2026. O elemento raiz exige o atributo
+`versao`, cujo valor os esquemas não indicam.
+
 ### Por fazer na 4C
 
 - Anexo R (operações noutra região) e os anexos das regularizações dos campos
