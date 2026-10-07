@@ -105,21 +105,29 @@ deve dizê-lo e pedir a confirmação de elegibilidade. Rascunho:
 
 ## Passo 3 — Gerar a chave e o pedido de certificado (CSR)
 
-A chave privada gera-se nesta máquina e nunca sai dela. Os campos não podem
-ter acentos nem cedilhas. Exemplo do manual, a adaptar:
+A chave privada gera-se nesta máquina e nunca sai dela. Faz-se com o script
+`scripts\new-at-csr.ps1`, que valida os campos como a AT exige (sem acentos
+nem cedilhas, dentro dos tamanhos máximos, `CN` = NIF do produtor), guarda a
+chave fora do repositório, numa pasta só do utilizador
+(`%LOCALAPPDATA%\AccountingAI\at-producao`), e **recusa substituir uma chave
+que já exista**:
 
-```bash
-openssl req -new -subj "/C=PT/ST=<Distrito da sede>/L=<Local da sede>/O=<Designacao legal>/OU=<Departamento>/CN=518104486/emailAddress=<email de contacto>" -newkey rsa:4096 -nodes -out 518104486.csr -keyout 518104486.key
+```powershell
+.\scripts\new-at-csr.ps1 -State "<Distrito da sede>" -Locality "<Local da sede>" `
+    -Organisation "<Designacao legal>" -Department "<Departamento>" -Email "<email de contacto>"
 ```
 
-- `CN` é o NIF do produtor (9 caracteres).
-- **Tamanho da chave:** o manual do e-Fatura ainda diz 2048 bits; o
-  [`CERTIFICACAO_AT.md`](CERTIFICACAO_AT.md) regista que desde 2025 a política
-  da AT exige 4096. Confirmar na página «Produtores de Software» no momento da
-  adesão e usar o valor que lá estiver.
-- O `.key` fica fora do repositório (o `.gitignore` já exclui certificados e
-  chaves) e com cópia de segurança.
-- O certificado emitido vale 12 meses; a renovação repete este passo.
+- **Tamanho da chave: 2048 bits.** É o que **todos** os manuais da AT indicam
+  (e-Fatura de outubro de 2025, IVA, IRC, IES, recapitulativa e DMIS). A
+  indicação de 4096 que consta de [`CERTIFICACAO_AT.md`](CERTIFICACAO_AT.md)
+  não se confirma em nenhum manual: se o formulário «Aderir ao Serviço» pedir
+  outro tamanho, usa-se `-Bits` com o valor do formulário.
+- Tamanhos máximos: `ST` 32, `L` 32, `O` 180, `OU` 180, `E` 80.
+- O ficheiro a colar no formulário é o `518104486.csr` que o script mostra no
+  fim (o conteúdo é confirmado no próprio ecrã). **O `.key` não se envia.**
+- O `.key` tem cópia de segurança e o `.gitignore` já exclui chaves e PFX.
+- O certificado emitido vale 12 meses; a renovação repete este passo (com uma
+  chave nova).
 
 ## Passo 4 — Aderir ao serviço (produção)
 
@@ -129,18 +137,24 @@ CSR. A AT responde por email com o certificado assinado.
 
 ## Passo 5 — Montar o PFX e configurar a aplicação
 
-Juntar o certificado recebido à chave privada:
+Quando a AT devolver o certificado assinado, `scripts\assemble-at-pfx.ps1`
+confere que **corresponde à chave** guardada, que o `CN` é o NIF do produtor
+e a validade, pede a senha do PFX (não aparece no ecrã nem no histórico) e cria
+o PFX:
 
-```bash
-openssl pkcs12 -export -in <certificado da AT>.crt -inkey <NIF>.key -out <NIF>.pfx
+```powershell
+.\scripts\assemble-at-pfx.ps1 -Certificate C:\Downloads\518104486.crt
 ```
 
-Carregar o PFX, a senha e a chave pública da AT no ecrã «Configuração geral»
-da conta do produtor (ver [ADR-0017](architecture-decisions/ADR-0017-PRODUCER-USER-AND-PORTABLE-AT-SETTINGS.md));
-em alternativa, a secção `At` e a senha do PFX em *user-secrets* ou
-`AT_CERTIFICATE_PASSWORD`, como descrito em
-[`phase-2/F2-02A-AT-CERTIFICATE-CONFIG.md`](phase-2/F2-02A-AT-CERTIFICATE-CONFIG.md).
-O ecrã «Comunicação com a AT» mostra se o certificado foi lido.
+A senha escolhida é a que depois se escreve na aplicação; não fica registada
+em lado nenhum, por isso guarde-a num sítio seguro. Carregar o PFX, a senha e a
+chave pública da AT no ecrã «Configuração geral» da conta do produtor (ver
+[ADR-0017](architecture-decisions/ADR-0017-PRODUCER-USER-AND-PORTABLE-AT-SETTINGS.md));
+em alternativa, a secção `At` e a senha em *user-secrets* ou
+`AT_CERTIFICATE_PASSWORD` ([`phase-2/F2-02A-AT-CERTIFICATE-CONFIG.md`](phase-2/F2-02A-AT-CERTIFICATE-CONFIG.md)).
+O ecrã «Comunicação com a AT» mostra se o certificado foi lido. O certificado
+de produção só vale nos endereços de produção (portas 4xx); o de testes só nos
+de testes (7xx).
 
 ## Passo 6 — Subutilizadores no Portal das Finanças
 
@@ -161,6 +175,34 @@ Com plenos poderes declarativos, o contabilista certificado submete só com a
 sua senha e o NIF do cliente. A consulta de faturas é a exceção: precisa do
 subutilizador WFA de cada cliente — é o que o painel «Configuração da AT»
 (F2-02B) já guarda cifrado.
+
+## Estado do código antes de pedir a adesão (2026-10-07)
+
+| Serviço da AT | Cliente na aplicação | Endereços (testes / produção) | Estado |
+|---|---|---|---|
+| e-Fatura, consulta de faturas (adquirente) | `EFaturaAtGateway` | 725 / 425 | Feito (F4A-03). Em testes a AT responde, mas sem documentos |
+| Declaração periódica de IVA | `VatReturnAtGateway` | 706 / 406 | Feito, por testar com dados |
+| Modelo 22 de IRC | `Modelo22AtGateway` | 705 / 405 | Feito, por testar com dados |
+| IES / Declaração Anual (contabilista certificado) | `IesAtGateway` | 707 / 407 | Feito, por testar com dados |
+| Declaração recapitulativa | — | 726 / 426 | **Falta o cliente** (os dados já se apuram, F3-09A) |
+| Obrigações acessórias (DMR, Modelos 10, 30, 39) | — | 718 / 418 | **Falta** |
+| DMIS | — | 721 / 421 | **Falta** |
+| Registo de faturas (`fatcorews`) | — | 723 / 423 | Fora do âmbito: a aplicação não emite faturas |
+
+Os endereços dos quatro clientes feitos foram conferidos com os manuais da AT.
+Do lado do produtor está feito: a conta de produtor, o carregamento do
+certificado, da senha e da chave pública na base de dados, a verificação do
+estado do certificado, e os scripts do CSR e do PFX (passos 3 e 5).
+
+Fica em aberto, e só se resolve com a AT ou no formulário:
+
+1. **Se uma só adesão serve todos os serviços.** Todos os manuais mandam aderir
+   em «e-Fatura > Produtores de Software > Aderir ao Serviço», mas só o
+   formulário (com login) mostra se há uma adesão por serviço.
+2. **Elegibilidade sem programa de faturação certificado.** A AT forneceu os
+   elementos de testes sem objeções, mas a elegibilidade para produção não
+   está confirmada por escrito (ver [`CERTIFICACAO_AT.md`](CERTIFICACAO_AT.md)).
+3. **O tamanho da chave** que o formulário pede (os manuais dizem 2048 bits).
 
 ## O que fica à espera da resposta da AT
 
