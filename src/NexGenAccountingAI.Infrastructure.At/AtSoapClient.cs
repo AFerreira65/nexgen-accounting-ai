@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NexGenAccountingAI.Application.At;
 
@@ -18,7 +19,8 @@ namespace NexGenAccountingAI.Infrastructure.At;
 /// </summary>
 public sealed class AtSoapClient(
     AtCertificateProvider certificates,
-    TimeProvider time)
+    TimeProvider time,
+    ILogger<AtSoapClient> logger)
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
 
@@ -105,6 +107,14 @@ public sealed class AtSoapClient(
             }
 
             var detail = root.Message;
+            if (root is System.ComponentModel.Win32Exception { NativeErrorCode: unchecked((int)0x80090330) })
+            {
+                // SEC_E_DECRYPT_FAILURE no meio do handshake: o servidor da AT cortou a ligação por não aceitar o certificado de cliente.
+                detail = "a AT não aceitou o certificado de transporte. O certificado de testes só vale no ambiente de testes da AT (porta 7xx); no ambiente de produção é preciso o certificado do produtor de software, obtido com a adesão ao serviço.";
+            }
+
+            // Só o tipo e a mensagem das exceções (sem senhas nem conteúdo cifrado), para diagnosticar falhas de TLS e de criptografia.
+            logger.LogWarning(exception, "Falha ao comunicar com a AT em {Endpoint}: {Detail}", endpoint, detail);
             return new AtRawResponse(false, null, string.Empty, $"Não foi possível comunicar com a AT: {detail}", stopwatch.ElapsedMilliseconds);
         }
         finally
