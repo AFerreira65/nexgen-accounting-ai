@@ -27,6 +27,12 @@ public static class DependencyInjection
         var keyRingPath = configuration.GetSection(AtOptions.SectionName)["KeyRingPath"];
         services.AddSingleton(_ => AtSecretProtector.Create(keyRingPath));
         services.AddSingleton<IAtSecretProtector>(sp => sp.GetRequiredService<AtSecretProtector>());
+        services.AddSingleton(sp => new AtSettingsResolver(
+            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AtOptions>>(),
+            sp.GetRequiredService<AtSecretProtector>(),
+            sp.GetRequiredService<TimeProvider>(),
+            sp.GetRequiredService<IServiceScopeFactory>()));
+        services.AddSingleton<IAtSettingsInvalidator>(sp => sp.GetRequiredService<AtSettingsResolver>());
         services.AddSingleton<AtCertificateProvider>();
         services.AddSingleton<IAtCertificateProvider>(sp => sp.GetRequiredService<AtCertificateProvider>());
         services.AddSingleton(TimeProvider.System);

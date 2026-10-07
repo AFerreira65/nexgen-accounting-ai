@@ -2032,6 +2032,44 @@ if (applicationEndpointsAvailable)
     app.MapGet("/api/v1/development/at/certificate", (NexGenAccountingAI.Application.At.IAtCertificateProvider certificates) =>
         Results.Ok(certificates.Describe()));
 
+    // Configuração geral da AT (onde estão o certificado e a chave pública, e a senha do certificado,
+    // cifrada). Vale para todas as empresas: só o dono ou um administrador de uma empresa a vê e altera.
+    app.MapGet("/api/v1/development/at/settings", async (
+        ClaimsPrincipal principal,
+        AtGeneralSettingsService settings,
+        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
+        CancellationToken cancellationToken) =>
+        Results.Ok(await AtSettingsResponse(SessionUserId(principal), settings, certificates, cancellationToken).ConfigureAwait(false)));
+
+    app.MapPut("/api/v1/development/at/settings", async (
+        ClaimsPrincipal principal,
+        PutAtGeneralSettingsRequest request,
+        AtGeneralSettingsService settings,
+        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            await settings
+                .SaveAsync(
+                    SessionUserId(principal),
+                    new AtGeneralSettingsInput(
+                        request?.CertificateDirectory, request?.CertificateFileName, request?.PublicKeyDirectory, request?.PublicKeyFileName,
+                        request?.Password, request?.RemovePassword ?? false),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(await AtSettingsResponse(SessionUserId(principal), settings, certificates, cancellationToken).ConfigureAwait(false));
+        }
+        catch (OrganizationAccessDeniedException exception)
+        {
+            return OrganizationAccessDenied("atSettings", exception);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["atSettings"] = [exception.Message] });
+        }
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/at-credentials", async (
         Guid userId, Guid companyId, CompanyAtCredentialsService credentials, CancellationToken cancellationToken) =>
     {
@@ -5480,6 +5518,22 @@ public partial class Program
     private static Guid SessionUserId(ClaimsPrincipal principal) =>
         Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+    /// <summary>A configuração geral da AT com o estado dos ficheiros que ela indica, sem nunca incluir a senha.</summary>
+    private static async Task<object> AtSettingsResponse(
+        Guid sessionUserId,
+        AtGeneralSettingsService settings,
+        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
+        CancellationToken cancellationToken)
+    {
+        var view = await settings.GetAsync(sessionUserId, cancellationToken).ConfigureAwait(false);
+        return new
+        {
+            Settings = view,
+            Certificate = view.CanEdit ? certificates.Describe() : null,
+            PublicKey = view.CanEdit ? certificates.DescribePublicKey() : null,
+        };
+    }
+
     private static IResult OrganizationAccessDenied(string field, OrganizationAccessDeniedException exception) =>
         Results.ValidationProblem(new Dictionary<string, string[]> { [field] = [exception.Message] }, statusCode: StatusCodes.Status403Forbidden);
 
@@ -5914,6 +5968,14 @@ public sealed record GenerateManagementReportRequest(string? Kind, string? Quest
 public sealed record SaveVatReturnRequest(decimal PriorPeriodCredit);
 
 public sealed record PutAtCredentialsRequest(string? SubUser, string? Password, string? Periodicity, string? Environment);
+
+public sealed record PutAtGeneralSettingsRequest(
+    string? CertificateDirectory,
+    string? CertificateFileName,
+    string? PublicKeyDirectory,
+    string? PublicKeyFileName,
+    string? Password,
+    bool RemovePassword = false);
 
 public sealed record PutVatClassificationRequest(string? Rate, string? Nature, string? Region);
 

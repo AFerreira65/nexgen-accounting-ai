@@ -127,15 +127,20 @@ Defeitos encontrados ao ler o código para a comparação com o mercado.
 O certificado de testes e a chave pública estão em descarregamento público
 no Portal das Finanças, mas **protegidos por senha**, que não está publicada.
 A AT enviou-a na resposta ao pedido de 2026-10-03, recebida a **2026-10-07**:
-os ficheiros estão conferidos e a configuração `At` feita nos *user-secrets*
-(passos 1 e 2 já cumpridos). Falta o 3 e o 4:
+os ficheiros estão conferidos. Desde 2026-10-07 o certificado e a chave
+pública configuram-se **na própria aplicação** ([ADR-0016](../architecture-decisions/ADR-0016-AT-GENERAL-SETTINGS.md)):
 
-1. pôr o `TesteWebservices.pfx` numa pasta e indicar `At:Certificate:Path` e
-   a senha (`AT_CERTIFICATE_PASSWORD` ou *user-secrets*);
-2. extrair a chave pública (`.cer`) e indicar `At:PublicKey:Path`;
-3. guardar o subutilizador e a senha da empresa em «Comunicação com a AT»
-   (subutilizador com a autorização **WVA**);
-4. carregar em «Validar na AT» no ecrã da declaração de IVA.
+1. em «Comunicação com a AT», **Certificados da AT (configuração geral)**:
+   a pasta e o nome do `TesteWebservices.pfx`, a senha do certificado (fica
+   cifrada) e a pasta e o nome da chave pública `.cer` — vale para todas as
+   empresas e só o dono ou um administrador de uma empresa a altera;
+2. guardar o subutilizador e a senha da empresa — nas **configurações da
+   empresa** («Empresas e utilizadores» → Editar) ou em «Comunicação com a
+   AT» (subutilizador com a autorização **WVA**);
+3. carregar em «Validar na AT» no ecrã da declaração de IVA.
+
+Para quem prefere ficheiros, a secção `At` do servidor continua a valer
+quando a configuração geral está em branco.
 
 Até lá, tudo o que não depende da AT está testado: a cifra das credenciais
 (fazendo o papel da AT, com a chave privada), o envelope SOAP, a leitura das

@@ -9,4 +9,7 @@ namespace NexGenAccountingAI.Application.At;
 public interface IAtCertificateProvider
 {
     AtCertificateStatus Describe();
+
+    /// <summary>O estado da chave pública da AT configurada.</summary>
+    AtPublicKeyStatus DescribePublicKey();
 }

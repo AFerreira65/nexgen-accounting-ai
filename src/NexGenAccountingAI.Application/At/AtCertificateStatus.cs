@@ -15,6 +15,7 @@ namespace NexGenAccountingAI.Application.At;
 /// <param name="HasPrivateKey">Se o ficheiro traz a chave privada.</param>
 /// <param name="Environment">Ambiente configurado (<c>Testes</c> / <c>Producao</c>).</param>
 /// <param name="Problem">Descrição em pt-PT do que falhou, ou <c>null</c>.</param>
+/// <param name="Source">De onde vem a configuração: <c>geral</c> (guardada na aplicação), <c>ficheiro</c> (secção At) ou <c>nenhuma</c>.</param>
 public sealed record AtCertificateStatus(
     bool Configured,
     bool Valid,
@@ -26,12 +27,13 @@ public sealed record AtCertificateStatus(
     DateTimeOffset? NotAfterUtc,
     bool HasPrivateKey,
     string Environment,
-    string? Problem)
+    string? Problem,
+    string Source = "nenhuma")
 {
     /// <summary>Sem ficheiro configurado.</summary>
     public static AtCertificateStatus NotConfigured(string environment) =>
         new(false, false, null, null, null, null, null, null, false, environment,
-            "Não há certificado de transporte da AT configurado (secção At).");
+            "Não há certificado de transporte da AT configurado: indique-o na configuração geral da AT.");
 
     /// <summary>Configurado, mas o carregamento falhou.</summary>
     public static AtCertificateStatus Failed(string environment, string problem) =>

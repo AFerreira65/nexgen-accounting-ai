@@ -74,6 +74,8 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<CompanyAtCredentials> CompanyAtCredentials => Set<CompanyAtCredentials>();
 
+    public DbSet<AtGeneralSettings> AtGeneralSettings => Set<AtGeneralSettings>();
+
     public DbSet<AccountVatClassification> AccountVatClassifications => Set<AccountVatClassification>();
 
     public DbSet<IrcEstimateFiling> IrcEstimateFilings => Set<IrcEstimateFiling>();
@@ -157,6 +159,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new VatReturnFilingConfiguration());
         modelBuilder.ApplyConfiguration(new VatDeclarationInputConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyAtCredentialsConfiguration());
+        modelBuilder.ApplyConfiguration(new AtGeneralSettingsConfiguration());
         modelBuilder.ApplyConfiguration(new AccountVatClassificationConfiguration());
         modelBuilder.ApplyConfiguration(new IrcEstimateFilingConfiguration());
         modelBuilder.ApplyConfiguration(new PartyConfiguration());

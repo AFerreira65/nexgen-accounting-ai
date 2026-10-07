@@ -17,9 +17,8 @@ namespace NexGenAccountingAI.Infrastructure.At;
 /// cifrado ficam em logs.
 /// </summary>
 public sealed class AtSoapClient(
-    IOptions<AtOptions> options,
+    AtSettingsResolver settings,
     AtCertificateProvider certificates,
-    AtSecretProtector protector,
     TimeProvider time)
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
@@ -32,9 +31,9 @@ public sealed class AtSoapClient(
         var keyReady = keyPath is not null && File.Exists(keyPath);
         var problem = (certificateReady, keyReady) switch
         {
-            (false, _) => "O certificado da AT não está configurado ou não abre (At:Certificate). " + certificates.Describe().Problem,
+            (false, _) => "O certificado da AT não está configurado ou não abre. " + certificates.Describe().Problem,
             (_, false) => keyPath is null
-                ? "Falta indicar a chave pública do sistema de autenticação da AT (At:PublicKey:Path)."
+                ? "Falta indicar a chave pública do sistema de autenticação da AT, na configuração geral da AT."
                 : $"O ficheiro da chave pública da AT não existe: {keyPath}",
             _ => null,
         };
@@ -93,9 +92,5 @@ public sealed class AtSoapClient(
         }
     }
 
-    private string? PublicKeyPath()
-    {
-        var path = protector.Unprotect(options.Value.PublicKey.Path);
-        return string.IsNullOrWhiteSpace(path) ? null : path;
-    }
+    private string? PublicKeyPath() => settings.Resolve().PublicKeyPath;
 }

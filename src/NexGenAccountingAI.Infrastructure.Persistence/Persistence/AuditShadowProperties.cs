@@ -40,6 +40,7 @@ internal static class AuditShadowProperties
         typeof(CompanyAiSettings),
         typeof(VatReturnFiling),
         typeof(CompanyAtCredentials),
+        typeof(AtGeneralSettings),
         typeof(AccountVatClassification),
         typeof(IrcEstimateFiling),
         typeof(Party),

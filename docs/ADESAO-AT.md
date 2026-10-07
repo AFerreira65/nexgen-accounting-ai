@@ -6,9 +6,11 @@
 > resposta; não fica registada neste repositório). Os dois ficheiros foram
 > conferidos — o PFX abre com a senha, com validade de 10/07/2026 a 06/01/2027;
 > a chave pública vale até 15/04/2027 — e ficam em
-> `%LOCALAPPDATA%\AccountingAI\at-testes\`, fora do repositório. A secção
-> `At` está configurada nos *user-secrets* da API (local, ficheiro, chave
-> pública e senha **cifrada** com `protect-at-secret`). A AT lembra que estes
+> `%LOCALAPPDATA%\AccountingAI\at-testes\`, fora do repositório. Desde o
+> mesmo dia a localização dos ficheiros e a senha (**cifrada**) configuram-se
+> na aplicação, em «Comunicação com a AT» →
+> [ADR-0016](architecture-decisions/ADR-0016-AT-GENERAL-SETTINGS.md); a secção
+> `At` dos *user-secrets* fica como alternativa. A AT lembra que estes
 > certificados **não dispensam a certificação do software**. Passo seguinte:
 > os subutilizadores com a permissão de cada serviço e «Validar na AT».
 

@@ -634,6 +634,34 @@ export type AtCertificateStatus = {
   hasPrivateKey: boolean
   environment: string
   problem: string | null
+  source: 'geral' | 'ficheiro' | 'nenhuma'
+}
+
+export type AtPublicKeyStatus = {
+  configured: boolean
+  valid: boolean
+  path: string | null
+  subject: string | null
+  notBeforeUtc: string | null
+  notAfterUtc: string | null
+  source: 'geral' | 'ficheiro' | 'nenhuma'
+  problem: string | null
+}
+
+export type AtGeneralSettings = {
+  canEdit: boolean
+  certificateDirectory: string | null
+  certificateFileName: string | null
+  publicKeyDirectory: string | null
+  publicKeyFileName: string | null
+  passwordConfigured: boolean
+  updatedAtUtc: string | null
+}
+
+export type AtGeneralSettingsResponse = {
+  settings: AtGeneralSettings
+  certificate: AtCertificateStatus | null
+  publicKey: AtPublicKeyStatus | null
 }
 
 export type AtCredentials = {

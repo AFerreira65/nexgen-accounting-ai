@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using NexGenAccountingAI.Application.At;
@@ -11,14 +11,15 @@ namespace NexGenAccountingAI.Infrastructure.At;
 /// descreve-o sem expor a senha nem a chave. É a única classe que toca no
 /// ficheiro e na senha.
 /// </summary>
-public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSecretProtector protector) : IAtCertificateProvider
+public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSettingsResolver settings) : IAtCertificateProvider
 {
     private readonly AtOptions options = options.Value;
 
     public AtCertificateStatus Describe()
     {
         var environment = NormalizeEnvironment(options.Environment);
-        var path = ResolvePath();
+        var effective = settings.Resolve();
+        var path = effective.CertificatePath;
 
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -27,12 +28,12 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSecretP
 
         if (!File.Exists(path))
         {
-            return AtCertificateStatus.Failed(environment, $"O ficheiro do certificado não existe em «{path}».");
+            return AtCertificateStatus.Failed(environment, $"O ficheiro do certificado não existe em «{path}».") with { Source = effective.CertificateSource };
         }
 
         try
         {
-            using var certificate = Load(path, protector.Unprotect(options.Certificate.Password));
+            using var certificate = Load(path, effective.CertificatePassword);
             var now = DateTimeOffset.UtcNow;
             var notBefore = new DateTimeOffset(certificate.NotBefore.ToUniversalTime());
             var notAfter = new DateTimeOffset(certificate.NotAfter.ToUniversalTime());
@@ -49,13 +50,14 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSecretP
                 NotAfterUtc: notAfter,
                 HasPrivateKey: certificate.HasPrivateKey,
                 Environment: environment,
-                Problem: valid ? null : "O certificado está fora do período de validade.");
+                Problem: valid ? null : "O certificado está fora do período de validade.",
+                Source: effective.CertificateSource);
         }
         catch (CryptographicException)
         {
             return AtCertificateStatus.Failed(
                 environment,
-                "Não foi possível abrir o certificado. Confirme a senha e o formato do ficheiro (PFX/P12).");
+                "Não foi possível abrir o certificado. Confirme a senha e o formato do ficheiro (PFX/P12).") with { Source = effective.CertificateSource };
         }
     }
 
@@ -66,7 +68,8 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSecretP
     internal bool TryGetCertificate([NotNullWhen(true)] out X509Certificate2? certificate)
     {
         certificate = null;
-        var path = ResolvePath();
+        var effective = settings.Resolve();
+        var path = effective.CertificatePath;
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
         {
             return false;
@@ -74,7 +77,7 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSecretP
 
         try
         {
-            certificate = Load(path, protector.Unprotect(options.Certificate.Password));
+            certificate = Load(path, effective.CertificatePassword);
             return true;
         }
         catch (CryptographicException)
@@ -84,19 +87,37 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSecretP
     }
 
     /// <summary>O caminho do ficheiro, decifrando os valores <c>enc:v1:…</c> se os houver.</summary>
-    private string? ResolvePath()
+    public AtPublicKeyStatus DescribePublicKey()
     {
-        var explicitPath = protector.Unprotect(options.Certificate.Path);
-        if (!string.IsNullOrWhiteSpace(explicitPath))
+        var effective = settings.Resolve();
+        var path = effective.PublicKeyPath;
+        var source = effective.PublicKeySource;
+        if (string.IsNullOrWhiteSpace(path))
         {
-            return explicitPath;
+            return new AtPublicKeyStatus(false, false, null, null, null, null, source, "Não há chave pública da AT configurada: indique-a na configuração geral da AT.");
         }
 
-        var directory = protector.Unprotect(options.Certificate.Directory);
-        var fileName = protector.Unprotect(options.Certificate.FileName);
-        return !string.IsNullOrWhiteSpace(directory) && !string.IsNullOrWhiteSpace(fileName)
-            ? Path.Combine(directory, fileName)
-            : null;
+        if (!File.Exists(path))
+        {
+            return new AtPublicKeyStatus(true, false, path, null, null, null, source, $"O ficheiro da chave pública não existe em «{path}».");
+        }
+
+        try
+        {
+            using var key = X509CertificateLoader.LoadCertificateFromFile(path);
+            using var rsa = key.GetRSAPublicKey();
+            var now = DateTimeOffset.UtcNow;
+            var notBefore = new DateTimeOffset(key.NotBefore.ToUniversalTime());
+            var notAfter = new DateTimeOffset(key.NotAfter.ToUniversalTime());
+            var problem = rsa is null ? "O ficheiro não tem uma chave pública RSA."
+                : now < notBefore || now > notAfter ? "A chave pública está fora do período de validade."
+                : null;
+            return new AtPublicKeyStatus(true, problem is null, path, key.Subject, notBefore, notAfter, source, problem);
+        }
+        catch (CryptographicException)
+        {
+            return new AtPublicKeyStatus(true, false, path, null, null, null, source, "Não foi possível ler a chave pública. Confirme o formato do ficheiro (CER).");
+        }
     }
 
     private static X509Certificate2 Load(string path, string? password) =>

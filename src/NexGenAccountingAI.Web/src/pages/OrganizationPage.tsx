@@ -4,6 +4,7 @@ import { ACCOUNTING_STANDARDS, accountingStandardName } from '../app/accountingS
 import { useWorkContext } from '../app/WorkContext'
 import { CompanyMembers, saveMembership } from './CompanyMembers'
 import { AutomaticJobs } from './AutomaticJobs'
+import { AtCredentialsPanel } from './AtCredentialsPanel'
 import { COMPANY_ROLES, companyRoleLabel } from '../app/companyRoles'
 
 type OrgUser = { userId: string; displayName: string; email: string; role: string; isActive: boolean; isResponsible?: boolean }
@@ -92,6 +93,12 @@ export function OrganizationPage() {
       knownUsers={users}
       canGrantOwner={editingCompany.users.some((member) => member.userId === sessionUser.id && member.role === 'Owner' && member.isActive)}
       onChanged={reload}
+    />}
+    {editingCompany?.canManage && <AtCredentialsPanel
+      key={editingCompany.id}
+      companyId={editingCompany.id}
+      companyName={editingCompany.legalName}
+      taxRegistrationNumber={editingCompany.taxRegistrationNumber}
     />}
     {editor?.kind === 'user' && <UserEditor user={editor.user} managedCompanies={companies.filter((company) => company.canManage)} onDone={() => { setEditor(null); reload() }} onCancel={() => setEditor(null)} />}
 

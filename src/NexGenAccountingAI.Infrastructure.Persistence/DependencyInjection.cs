@@ -73,6 +73,8 @@ public static class DependencyInjection
         services.AddScoped<NexGenAccountingAI.Application.Vat.IVatReturnService, VatReturnService>();
         services.AddScoped<VatReturnFilingService>();
         services.AddScoped<CompanyAtCredentialsService>();
+        services.AddScoped<AtGeneralSettingsService>();
+        services.AddScoped<NexGenAccountingAI.Application.At.IAtGeneralSettingsReader>(sp => sp.GetRequiredService<AtGeneralSettingsService>());
         services.AddScoped<AccountVatClassificationService>();
         services.AddScoped<PartyService>();
         services.AddScoped<VatCodeService>();
