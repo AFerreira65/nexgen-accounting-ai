@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, Database, FileText, Printer, Receipt, Table2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, CircleAlert, CircleCheck, Database, FileText, Printer, Receipt, Send, Table2 } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { csvFilename, downloadCsv, toCsv } from '../app/csv'
@@ -120,6 +120,7 @@ export function VatDeclarationPage() {
         <button type="button" className={`button button-secondary ${view === 'tabela' ? 'is-active' : ''}`} aria-pressed={view === 'tabela'} onClick={() => setView('tabela')}><Table2 size={15} /> Tabela</button>
       </span>
       <ExportButtons run={exportCsv} disabled={!declaration} />
+      <button className="button button-secondary" type="button" disabled={!declaration} onClick={() => document.getElementById('entrega-at')?.scrollIntoView({ behavior: 'smooth' })}><Send size={15} /> Entrega na AT</button>
       <button className="button button-secondary" type="button" onClick={() => window.print()} disabled={!declaration}><Printer size={15} /> Imprimir / PDF</button>
     </div>
     {saveState && <p className={`save-status ${saveState === 'Guardado.' ? 'success' : saveState === 'A guardar…' ? '' : 'error'}`} role={saveState === 'Guardado.' || saveState === 'A guardar…' ? undefined : 'alert'}>{saveState}</p>}

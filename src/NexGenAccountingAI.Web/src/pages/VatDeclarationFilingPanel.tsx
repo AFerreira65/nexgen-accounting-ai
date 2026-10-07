@@ -98,7 +98,7 @@ export function AtFilingPanel({ companyId, resetKey, service, xmlPath, sendPath,
     <tbody>{items.map((item, index) => <tr key={index}><td>{item.text}</td><td>{item.annex ?? '—'}</td><td>{item.section ?? '—'}</td><td>{item.field ?? '—'}</td><td>{item.code ?? '—'}</td></tr>)}</tbody>
   </table></div>
 
-  return <section className="panel no-print">
+  return <section className="panel no-print" id="entrega-at">
     <div className="panel-heading"><div><h2>Entrega na AT</h2><p>{description} A submissão por aqui só funciona, por agora, no ambiente de testes da AT: em produção, valide e entregue o ficheiro no Portal das Finanças.</p></div></div>
     {accountantLogin && <div className="filterbar">
       <label className="inline-check">Utilizador do contabilista certificado <input aria-label="Utilizador do contabilista certificado" autoComplete="off" value={login.accountantUser} onChange={(event) => setLogin({ ...login, accountantUser: event.target.value })} placeholder="NIF ou NIF/subutilizador" /></label>
