@@ -116,6 +116,16 @@ public sealed class EFaturaAtGatewayTests
     }
 
     [TestMethod]
+    public void TheAtCodeForAnEmptyMonthIsNotARefusal()
+    {
+        // Resposta real da AT (2026-10-07) a um mês sem documentos.
+        var page = EFaturaAtGateway.ParseResponse(Response(486, "Lista de faturas vazia.", string.Empty));
+
+        Assert.AreEqual(200, page.Code);
+        Assert.IsEmpty(page.Invoices);
+    }
+
+    [TestMethod]
     public void RefusalsAndBrokenAnswersCarryTheReason()
     {
         var refused = EFaturaAtGateway.ParseResponse(Response(414, "O nif indicado não corresponde ao de login", string.Empty));

@@ -26,6 +26,7 @@ public sealed class EFaturaAtGateway(AtSoapClient client, TimeProvider time) : I
     public const int PageSize = 5000;
 
     private const int Attempts = 3;
+    private const int EmptyListCode = 486;
     private static readonly XNamespace Fatshare = "http://factemi.at.min_financas.pt/fatshareInvoices";
 
     public AtGatewayStatus Status() => client.Status();
@@ -148,6 +149,12 @@ public sealed class EFaturaAtGateway(AtSoapClient client, TimeProvider time) : I
         }
 
         var description = Text(status, "Desc");
+        if (code == EmptyListCode)
+        {
+            // Um mês sem documentos não vem como sucesso vazio mas com este código («Lista de faturas vazia»), que o manual não lista.
+            return new EFaturaAtPage(200, description ?? string.Empty, [], [], 1);
+        }
+
         if (code != 200)
         {
             return new EFaturaAtPage(code, $"A AT recusou a consulta ({code}): {description ?? "sem descrição"}.", [], [], 1);
