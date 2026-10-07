@@ -61,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<SaftEntriesPreviewService>();
         services.AddScoped<SaftEntriesImportService>();
         services.AddScoped<EFaturaPurchaseImportService>();
+        services.AddScoped<EFaturaAtImportService>();
         services.AddScoped<NexGenAccountingAI.Application.CrossCheck.ICrossCheckService, CrossCheckService>();
         services.AddScoped<RecordInfoService>();
         services.AddScoped<DataDictionaryService>();

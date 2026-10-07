@@ -82,6 +82,36 @@ public static class AtWsSecurity
             token);
     }
 
+    /// <summary>
+    /// O cabeçalho do serviço de consulta de faturas do e-Fatura (<c>fatshare</c>), que ainda usa a
+    /// forma simples do manual «Aspetos Específicos»: sem ator nem <c>Digest</c>, e com o
+    /// <c>Created</c> também cifrado (AES, Base64) com a chave do pedido.
+    /// </summary>
+    public static XElement BuildFatshareHeader(AtCredential credential, RSA authenticationPublicKey, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(credential);
+        ArgumentNullException.ThrowIfNull(authenticationPublicKey);
+        ArgumentException.ThrowIfNullOrWhiteSpace(credential.Username);
+        ArgumentException.ThrowIfNullOrEmpty(credential.Password);
+
+        var created = now.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss.ff'Z'", CultureInfo.InvariantCulture);
+        var key = RandomNumberGenerator.GetBytes(16);
+        try
+        {
+            return new XElement(Wss + "Security",
+                new XAttribute(XNamespace.Xmlns + "wss", Wss.NamespaceName),
+                new XElement(Wss + "UsernameToken",
+                    new XElement(Wss + "Username", credential.Username.Trim()),
+                    new XElement(Wss + "Password", Convert.ToBase64String(Encrypt(key, Encoding.UTF8.GetBytes(credential.Password)))),
+                    new XElement(Wss + "Nonce", Convert.ToBase64String(authenticationPublicKey.Encrypt(key, RSAEncryptionPadding.Pkcs1))),
+                    new XElement(Wss + "Created", Convert.ToBase64String(Encrypt(key, Encoding.UTF8.GetBytes(created))))));
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(key);
+        }
+    }
+
     /// <summary>AES com a chave do pedido, modo ECB e enchimento PKCS5 (o PKCS7 do .NET, igual para blocos de 16 bytes).</summary>
     private static byte[] Encrypt(byte[] key, byte[] data)
     {

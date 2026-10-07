@@ -1,6 +1,6 @@
-import { CircleAlert, CircleCheck, Database, FileUp, Receipt } from 'lucide-react'
+import { CircleAlert, CircleCheck, CloudDownload, Database, FileUp, Receipt } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { euro, formatMovementDate, type EFaturaImportResult, type EFaturaPurchaseRow } from '../app/demo-data'
+import { euro, formatMovementDate, type EFaturaAtImportOutcome, type EFaturaImportResult, type EFaturaPurchaseRow } from '../app/demo-data'
 import { Pager } from '../app/Pager'
 import { PeriodShortcuts, useExerciseDateRange } from '../app/periods'
 import { useWorkContext } from '../app/WorkContext'
@@ -13,13 +13,27 @@ type Pending = {
   busy: boolean
 }
 
+/** O mês anterior ao de hoje, que é o que normalmente falta importar. */
+function lastMonth() {
+  const now = new Date()
+  const first = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 1, 1))
+  const last = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 0))
+  return { from: first.toISOString().slice(0, 10), to: last.toISOString().slice(0, 10) }
+}
+
 export function EFaturaPurchasesPage() {
-  const { activeCompany, eFaturaPurchases, importEFaturaCsv, source } = useWorkContext()
+  const { activeCompany, eFaturaPurchases, importEFaturaCsv, importEFaturaFromAt, source } = useWorkContext()
   const companyId = activeCompany.companyId
   const pageSize = activeCompany.settings.pageSize || 50
   const inputRef = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState<Pending[]>([])
   const [reload, setReload] = useState(0)
+  const [atFrom, setAtFrom] = useState(() => lastMonth().from)
+  const [atTo, setAtTo] = useState(() => lastMonth().to)
+  const [atBusy, setAtBusy] = useState(false)
+  const [atError, setAtError] = useState('')
+  const [atPreview, setAtPreview] = useState<EFaturaAtImportOutcome | null>(null)
+  const [atDone, setAtDone] = useState<EFaturaAtImportOutcome | null>(null)
 
   const { fromDate, setFromDate, toDate, setToDate } = useExerciseDateRange(activeCompany.settings.defaultFiscalYear, companyId)
   const [page, setPage] = useState(1)
@@ -77,6 +91,24 @@ export function EFaturaPurchasesPage() {
     }
   }
 
+  async function queryAt(dryRun: boolean) {
+    setAtBusy(true)
+    setAtError('')
+    if (dryRun) { setAtPreview(null); setAtDone(null) }
+    try {
+      const outcome = await importEFaturaFromAt(companyId, { from: atFrom, to: atTo, dryRun })
+      if (outcome.problem) { setAtError(outcome.problem); setAtPreview(null); return }
+      if (dryRun) setAtPreview(outcome)
+      else { setAtDone(outcome); setAtPreview(null); setReload((value) => value + 1) }
+    } catch (error) {
+      setAtError(error instanceof Error ? error.message : 'Não foi possível consultar a AT.')
+    } finally {
+      setAtBusy(false)
+    }
+  }
+
+  const atDatesValid = Boolean(atFrom) && Boolean(atTo) && atFrom <= atTo
+  const atResult = atDone ?? atPreview
   const canImportAny = pending.some((entry) => entry.preview && !entry.imported && !entry.error)
 
   if (source !== 'database') {
@@ -87,7 +119,24 @@ export function EFaturaPurchasesPage() {
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Importação contabilística</p><h1>Compras e-Fatura</h1><p>Importe um ou mais CSV obtidos no Portal e-Fatura (adquirente). Reimportar o mesmo ficheiro não duplica.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Importação contabilística</p><h1>Compras e-Fatura</h1><p>Importe as faturas de compra diretamente da AT, ou um ou mais CSV obtidos no Portal e-Fatura (adquirente). Importar outra vez o mesmo período não duplica.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
+
+    <section className="panel">
+      <div className="panel-heading"><div><h2>Importar da AT</h2><p>Consulta o webservice do e-Fatura com o subutilizador da empresa (permissão de consulta de faturas), configurado em «Comunicação com a AT». A AT responde a um mês de cada vez; períodos longos demoram.</p></div></div>
+      <div className="filterbar">
+        <label><span className="sr-only">Início da consulta</span><input type="date" aria-label="Início da consulta" value={atFrom} onChange={(event) => setAtFrom(event.target.value)} /></label>
+        <label><span className="sr-only">Fim da consulta</span><input type="date" aria-label="Fim da consulta" value={atTo} onChange={(event) => setAtTo(event.target.value)} /></label>
+        <button className="button button-primary" type="button" disabled={atBusy || !atDatesValid} onClick={() => void queryAt(true)}><CloudDownload size={16} /> {atBusy && !atPreview ? 'A consultar a AT…' : 'Consultar a AT'}</button>
+        {atPreview?.import && atPreview.import.imported > 0 && <button className="button button-secondary" type="button" disabled={atBusy} onClick={() => void queryAt(false)}>Importar {atPreview.import.imported} {atPreview.import.imported === 1 ? 'fatura' : 'faturas'}</button>}
+      </div>
+      {atError && <p className="save-status error" role="alert"><CircleAlert size={15} /> {atError}</p>}
+      {atResult?.import && <p className="save-status" role="status">
+        {atDone ? <CircleCheck size={15} /> : null}{' '}
+        {atDone ? 'Importado' : 'Pré-visualização'} ({atResult.environment === 'Producao' ? 'AT produção' : 'ambiente de testes da AT'}): a AT devolveu {atResult.fetched} {atResult.fetched === 1 ? 'documento' : 'documentos'}; {atResult.import.imported} {atDone ? 'novos' : 'por importar'} e {atResult.import.alreadyExisted} já existiam.
+        {atResult.import.warnings.length > 0 && <small> {atResult.import.warnings.join(' ')}</small>}
+        {atResult.import.imported > 0 && <small> A AT não indica o nome do emitente: fica o do cadastro de terceiros ou, na falta dele, o NIF.</small>}
+      </p>}
+    </section>
 
     <section className="panel">
       <div className="panel-heading"><div><h2>Importar CSV</h2><p>Cada ficheiro é pré-visualizado antes de gravar. Lotes de 300 registos são assinalados.</p></div></div>

@@ -4816,6 +4816,34 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/efatura/purchases-at-import", async (
+        Guid userId,
+        Guid companyId,
+        EFaturaAtImportService atImport,
+        CancellationToken cancellationToken,
+        string? from,
+        string? to,
+        bool? dryRun) =>
+    {
+        if (!TryParseReportDateRange(from, to, out var fromDate, out var toDate, out var dateError))
+        {
+            return dateError!;
+        }
+
+        if (fromDate is null || toDate is null)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["from"] = ["Indique as datas inicial e final do período a consultar."]
+            });
+        }
+
+        var outcome = await atImport
+            .ImportAsync(userId, companyId, fromDate.Value, toDate.Value, dryRun ?? false, cancellationToken)
+            .ConfigureAwait(false);
+        return outcome is null ? Results.NotFound() : Results.Ok(outcome);
+    });
+
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/efatura/purchases", async (
         Guid userId,
         Guid companyId,

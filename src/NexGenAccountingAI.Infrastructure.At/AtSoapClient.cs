@@ -42,15 +42,33 @@ public sealed class AtSoapClient(
     public async Task<AtDeclarationResult> SendAsync(
         string endpoint, string operation, XElement body, IReadOnlyList<AtCredential> credentials, CancellationToken cancellationToken)
     {
+        var raw = await PostAsync(
+                endpoint, $"\"tns:{operation}\"",
+                publicKey => VatReturnAtGateway.Envelope(body, credentials, publicKey, time.GetUtcNow()),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return raw.Reached
+            ? VatReturnAtGateway.Parse(raw.Content, raw.HttpStatus, raw.DurationMilliseconds)
+            : new AtDeclarationResult(false, null, raw.Problem!, [], [], null, raw.HttpStatus, raw.DurationMilliseconds);
+    }
+
+    /// <summary>
+    /// O transporte sem interpretar a resposta (os serviços cujo corpo não segue o formato das
+    /// declarações, como a consulta de faturas). <paramref name="soapAction"/> vai tal como está
+    /// no cabeçalho, com aspas. Nunca lança por falhas de comunicação.
+    /// </summary>
+    public async Task<AtRawResponse> PostAsync(
+        string endpoint, string soapAction, Func<RSA, XDocument> buildEnvelope, CancellationToken cancellationToken)
+    {
         var status = Status();
         if (!status.Ready)
         {
-            return new AtDeclarationResult(false, null, status.Problem!, [], [], null, null, 0);
+            return new AtRawResponse(false, null, string.Empty, status.Problem, 0);
         }
 
         if (!certificates.TryGetCertificate(out var certificate))
         {
-            return new AtDeclarationResult(false, null, "O certificado da AT não abre.", [], [], null, null, 0);
+            return new AtRawResponse(false, null, string.Empty, "O certificado da AT não abre.", 0);
         }
 
         var stopwatch = Stopwatch.StartNew();
@@ -58,7 +76,7 @@ public sealed class AtSoapClient(
         {
             using var publicKey = certificates.LoadPublicKey()
                 ?? throw new InvalidOperationException("A chave pública da AT não está disponível.");
-            var envelope = VatReturnAtGateway.Envelope(body, credentials, publicKey, time.GetUtcNow());
+            var envelope = buildEnvelope(publicKey);
 
             using var handler = new SocketsHttpHandler();
             handler.SslOptions.ClientCertificates = [certificate];
@@ -66,11 +84,11 @@ public sealed class AtSoapClient(
             using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
             request.Content = new StringContent(envelope.ToString(SaveOptions.DisableFormatting), Encoding.UTF8);
             request.Content.Headers.ContentType = new MediaTypeHeaderValue("text/xml") { CharSet = "utf-8" };
-            request.Headers.TryAddWithoutValidation("SOAPAction", $"\"tns:{operation}\"");
+            request.Headers.TryAddWithoutValidation("SOAPAction", soapAction);
 
             using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
             var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            return VatReturnAtGateway.Parse(content, (int)response.StatusCode, stopwatch.ElapsedMilliseconds);
+            return new AtRawResponse(true, (int)response.StatusCode, content, null, stopwatch.ElapsedMilliseconds);
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or CryptographicException or InvalidOperationException or IOException)
         {
@@ -87,12 +105,14 @@ public sealed class AtSoapClient(
             }
 
             var detail = root.Message;
-            return new AtDeclarationResult(false, null, $"Não foi possível comunicar com a AT: {detail}", [], [], null, null, stopwatch.ElapsedMilliseconds);
+            return new AtRawResponse(false, null, string.Empty, $"Não foi possível comunicar com a AT: {detail}", stopwatch.ElapsedMilliseconds);
         }
         finally
         {
             certificate.Dispose();
         }
     }
-
 }
+
+/// <summary>A resposta HTTP da AT, por interpretar. <paramref name="Problem"/> explica a falha quando <paramref name="Reached"/> é falso.</summary>
+public sealed record AtRawResponse(bool Reached, int? HttpStatus, string Content, string? Problem, long DurationMilliseconds);

@@ -350,6 +350,14 @@ export type EFaturaImportResult = {
   warnings: string[]
 }
 
+export type EFaturaAtImportOutcome = {
+  environment: 'Testes' | 'Producao'
+  problem: string | null
+  reachedAt: boolean
+  fetched: number
+  import: EFaturaImportResult | null
+}
+
 export type EFaturaPurchaseRow = {
   id: string
   supplierTaxId: string

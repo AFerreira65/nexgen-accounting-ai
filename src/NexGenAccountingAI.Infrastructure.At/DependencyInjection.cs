@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddSingleton<IVatReturnAtGateway, VatReturnAtGateway>();
         services.AddSingleton<IModelo22AtGateway, Modelo22AtGateway>();
         services.AddSingleton<IIesAtGateway, IesAtGateway>();
+        services.AddSingleton<NexGenAccountingAI.Application.Efatura.IEFaturaAtGateway, EFaturaAtGateway>();
         return services;
     }
 }

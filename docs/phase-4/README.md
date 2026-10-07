@@ -119,7 +119,7 @@ Defeitos encontrados ao ler o código para a comparação com o mercado.
 |---|---|---|
 | F4A-01 | Cliente dos webservices da AT (autenticação, certificado, registo dos pedidos) | **Feito**, por testar contra a AT |
 | F4A-02 | Declaração periódica de IVA: ficheiro XML oficial, validar e submeter | **Feito**, por testar contra a AT |
-| F4A-03 | e-Fatura por webservice | Por fazer |
+| F4A-03 | e-Fatura por webservice | **Feito**, por testar contra a AT |
 | F4A-04 | Declaração recapitulativa | Por fazer |
 
 ### O que falta para testar contra a AT
@@ -171,6 +171,29 @@ respostas e o ficheiro da declaração contra o esquema oficial.
   AT fica registado — serviço, operação, ambiente, período, quem pediu,
   tempo e resposta. Não guarda senhas nem o conteúdo enviado.
 - **Configuração nova:** `At:PublicKey:Path`.
+
+### F4A-03 — Compras do e-Fatura por webservice
+
+Em «Compras e-Fatura», o painel «Importar da AT» consulta o serviço `fatshare`
+(WSDL `docs/at-wsdl/e-fatura/fatshareInvoices.wsdl`, manual «Aspetos Específicos»,
+secção 2.1.10) como adquirente e grava as faturas na mesma tabela do CSV, com a
+mesma chave `NIF|nº|data` — importar outra vez não duplica. O CSV continua
+disponível.
+
+- `POST .../efatura/purchases-at-import?from=&to=&dryRun=` (máximo 400 dias).
+  Usa o subutilizador e a senha guardados para a empresa; o subutilizador tem de
+  ser do NIF da própria empresa (a AT recusa com 414) e ter permissão de consulta
+  (WFA). Cada pedido fica em `AtExchange` (serviço `efatura`), sem senhas.
+- A AT só responde a um mês de cada vez (código 434): o período é partido por
+  meses e cada mês paginado (5000 por página).
+- O cabeçalho deste serviço é o simples do manual (sem ator nem `Digest`, `Created`
+  cifrado), diferente do das declarações: `AtWsSecurity.BuildFatshareHeader`.
+- A resposta não traz o nome do emitente: usa-se o do cadastro de terceiros ou de
+  compras anteriores, senão «NIF 5xxxxxxxx». Base = `NetTotal`, IVA = `TaxPayable`.
+- Os endereços (portas 725 testes e 425 produção) vêm da aplicação anterior; o
+  manual não os indica. **Por confirmar contra a AT**, tal como a resposta de um
+  mês sem documentos (tratada como sucesso vazio).
+- Consulta só de leitura: permitida também em produção.
 
 ### F4A-02 — Declaração periódica de IVA
 

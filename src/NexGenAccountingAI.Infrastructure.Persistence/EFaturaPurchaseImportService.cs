@@ -38,7 +38,12 @@ public sealed class EFaturaPurchaseImportService(IEFaturaCsvReader reader, Accou
         }
 
         var read = await reader.ReadAsync(content, cancellationToken).ConfigureAwait(false);
-        var valid = read.Rows.Where(row => row.IsValid).ToList();
+        var valid = read.Rows
+            .Where(row => row.IsValid)
+            .Select(row => new EFaturaPurchaseCandidate(
+                row.SupplierTaxId, row.SupplierName, row.InvoiceNo, row.Atcud, row.InvoiceDate!.Value,
+                row.InvoiceType, row.Status, row.Sector, row.TaxBase, row.TaxAmount, row.GrossTotal))
+            .ToList();
         var invalidRows = read.Rows
             .Where(row => !row.IsValid)
             .Take(InvalidRowLimit)
@@ -46,8 +51,27 @@ public sealed class EFaturaPurchaseImportService(IEFaturaCsvReader reader, Accou
             .ToList();
         var invalidCount = read.Rows.Count(row => !row.IsValid);
 
+        return await StoreAsync(companyId, valid, fileName, dryRun, invalidCount, invalidRows, read.Warnings, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Grava (ou, com <paramref name="dryRun"/>, só conta) as compras de uma empresa, venham de
+    /// onde vierem: o que já existe pela chave <c>NIF|nº|data</c> não se duplica. Não verifica o
+    /// acesso do utilizador — quem chama já o fez.
+    /// </summary>
+    public async Task<EFaturaImportResult> StoreAsync(
+        Guid companyId,
+        IReadOnlyList<EFaturaPurchaseCandidate> valid,
+        string sourceName,
+        bool dryRun,
+        int invalidCount,
+        IReadOnlyList<EFaturaInvalidRow> invalidRows,
+        IReadOnlyList<string> warnings,
+        CancellationToken cancellationToken = default)
+    {
         var keys = valid
-            .Select(row => EFaturaPurchase.KeyOf(row.SupplierTaxId, row.InvoiceNo, row.InvoiceDate!.Value))
+            .Select(row => EFaturaPurchase.KeyOf(row.SupplierTaxId, row.InvoiceNo, row.InvoiceDate))
             .ToList();
         var existingKeys = keys.Count == 0
             ? []
@@ -65,7 +89,7 @@ public sealed class EFaturaPurchaseImportService(IEFaturaCsvReader reader, Accou
         var alreadyExisted = 0;
         foreach (var row in valid)
         {
-            var key = EFaturaPurchase.KeyOf(row.SupplierTaxId, row.InvoiceNo, row.InvoiceDate!.Value);
+            var key = EFaturaPurchase.KeyOf(row.SupplierTaxId, row.InvoiceNo, row.InvoiceDate);
             if (existing.Contains(key) || !seen.Add(key))
             {
                 alreadyExisted++;
@@ -77,18 +101,18 @@ public sealed class EFaturaPurchaseImportService(IEFaturaCsvReader reader, Accou
             {
                 context.EFaturaPurchases.Add(EFaturaPurchase.Create(
                     companyId, batchId,
-                    row.SupplierTaxId, row.SupplierName, row.InvoiceNo, row.Atcud, row.InvoiceDate.Value,
+                    row.SupplierTaxId, row.SupplierName, row.InvoiceNo, row.Atcud, row.InvoiceDate,
                     row.InvoiceType, row.Status, row.Sector,
-                    row.TaxBase, row.TaxAmount, row.GrossTotal, fileName));
+                    row.TaxBase, row.TaxAmount, row.GrossTotal, sourceName));
             }
         }
 
         if (dryRun)
         {
-            return new EFaturaImportResult(null, imported, alreadyExisted, invalidCount, invalidRows, read.Warnings);
+            return new EFaturaImportResult(null, imported, alreadyExisted, invalidCount, invalidRows, warnings);
         }
 
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return new EFaturaImportResult(batchId, imported, alreadyExisted, invalidCount, invalidRows, read.Warnings);
+        return new EFaturaImportResult(batchId, imported, alreadyExisted, invalidCount, invalidRows, warnings);
     }
 }
