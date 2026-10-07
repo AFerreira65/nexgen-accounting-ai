@@ -115,53 +115,93 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
-    public async Task TheGeneralAtSettingsReachTheAtLayerStayEncryptedAndAreForOwnersAndAdministrators()
+    public async Task TheGeneralAtSettingsAreOnlyForTheProducerReachTheAtLayerAndStayInTheDatabaseEncrypted()
     {
-        // Base própria, apagada no fim: o teste grava a configuração geral e muda a função do utilizador de demonstração.
+        // Base própria, apagada no fim: o teste faz do utilizador de demonstração o produtor e grava a configuração geral.
         await using var factory = new FoundationApiFactory(
             connectionString: $"Host=localhost;Port=5432;Database=accounting_atsettings_{Guid.NewGuid():N};Username=accounting;Password=accounting",
             applyMigrations: true,
             seedDemoData: true);
         using var client = factory.CreateClient();
         const string password = "senha-do-certificado-de-teste";
-        var folder = Path.Combine(Path.GetTempPath(), $"at-geral-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(folder);
 
         try
         {
+            byte[] pfx;
+            byte[] cer;
             using (var rsa = System.Security.Cryptography.RSA.Create(2048))
             {
                 var request = new System.Security.Cryptography.X509Certificates.CertificateRequest(
                     "CN=Certificado de Teste Geral", rsa, System.Security.Cryptography.HashAlgorithmName.SHA256, System.Security.Cryptography.RSASignaturePadding.Pkcs1);
                 using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(30));
-                File.WriteAllBytes(Path.Combine(folder, "teste.pfx"), certificate.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx, password));
-                File.WriteAllBytes(Path.Combine(folder, "chave.cer"), certificate.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Cert));
+                pfx = certificate.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx, password);
+                cer = certificate.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Cert);
             }
 
             static StringContent Json(string body) => new(body, Encoding.UTF8, "application/json");
-            var escaped = folder.Replace("\\", "\\\\", StringComparison.Ordinal);
+            var pfxBase64 = Convert.ToBase64String(pfx);
+            var cerBase64 = Convert.ToBase64String(cer);
+            const string path = "/api/v1/producer/at-settings";
 
-            // O estado antes de haver configuração geral fica em memória por uns segundos...
+            // Quem não é o produtor não vê nem altera nada, e o ecrã não existe para ele.
+            using var me = await client.GetAsync("/api/v1/auth/me").ConfigureAwait(false);
+            StringAssert.Contains(await me.Content.ReadAsStringAsync().ConfigureAwait(false), "\"isProducer\":false");
+            using var hidden = await client.GetAsync(path).ConfigureAwait(false);
+            using var forbidden = await client.PutAsync(
+                path + "/certificate", Json($$"""{"fileName":"teste.pfx","contentBase64":"{{pfxBase64}}","password":"{{password}}"}""")).ConfigureAwait(false);
+            using var forbiddenDelete = await client.DeleteAsync(path + "/certificate").ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.Forbidden, hidden.StatusCode);
+            Assert.AreEqual(HttpStatusCode.Forbidden, forbidden.StatusCode);
+            Assert.AreEqual(HttpStatusCode.Forbidden, forbiddenDelete.StatusCode);
+            StringAssert.Contains(await hidden.Content.ReadAsStringAsync().ConfigureAwait(false), "só do produtor");
+
+            await using (var scope = factory.Services.CreateAsyncScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<AccountingDbContext>();
+                Assert.IsFalse(await context.AtGeneralSettings.AnyAsync().ConfigureAwait(false), "Os pedidos recusados não gravam nada.");
+                (await context.UserAccounts.SingleAsync(item => item.Id == DevelopmentDataSeeder.DemoUserId).ConfigureAwait(false)).MarkAsProducer();
+                await context.SaveChangesAsync().ConfigureAwait(false);
+            }
+
+            using var meAsProducer = await client.GetAsync("/api/v1/auth/me").ConfigureAwait(false);
+            StringAssert.Contains(await meAsProducer.Content.ReadAsStringAsync().ConfigureAwait(false), "\"isProducer\":true");
+
+            // Ficheiros ou senhas que não abrem são recusados.
+            using var wrongPassword = await client.PutAsync(
+                path + "/certificate", Json($$"""{"fileName":"teste.pfx","contentBase64":"{{pfxBase64}}","password":"senha-errada"}""")).ConfigureAwait(false);
+            using var brokenFile = await client.PutAsync(
+                path + "/certificate", Json("""{"fileName":"teste.pfx","contentBase64":"isto-nao-e-base64!","password":"x"}""")).ConfigureAwait(false);
+            using var wrongType = await client.PutAsync(
+                path + "/certificate", Json($$"""{"fileName":"teste.txt","contentBase64":"{{pfxBase64}}","password":"{{password}}"}""")).ConfigureAwait(false);
+            using var notAKey = await client.PutAsync(
+                path + "/public-key", Json("""{"fileName":"chave.cer","contentBase64":"AQIDBA=="}""")).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.BadRequest, wrongPassword.StatusCode);
+            Assert.AreEqual(HttpStatusCode.BadRequest, brokenFile.StatusCode);
+            Assert.AreEqual(HttpStatusCode.BadRequest, wrongType.StatusCode);
+            Assert.AreEqual(HttpStatusCode.BadRequest, notAKey.StatusCode);
+
+            // O estado antes de haver configuração geral...
             using var before = await client.GetAsync("/api/v1/development/at/certificate").ConfigureAwait(false);
-            var beforePayload = await before.Content.ReadAsStringAsync().ConfigureAwait(false);
-            Assert.IsFalse(beforePayload.Contains("\"source\":\"geral\"", StringComparison.Ordinal));
+            Assert.IsFalse((await before.Content.ReadAsStringAsync().ConfigureAwait(false)).Contains("\"source\":\"geral\"", StringComparison.Ordinal));
 
-            using var rejected = await client.PutAsync(
-                "/api/v1/development/at/settings",
-                Json($$"""{"certificateDirectory":"certificados","certificateFileName":"teste.pfx","password":"{{password}}"}""")).ConfigureAwait(false);
-            Assert.AreEqual(HttpStatusCode.BadRequest, rejected.StatusCode, "A pasta tem de ser um caminho completo.");
-
-            // ...e a gravação faz a ligação à AT passar a usá-la logo, sem esperar.
+            // ...e a gravação faz a ligação à AT passar a usá-la logo, sem esperar, e sem a senha nem os ficheiros na resposta.
             using var saved = await client.PutAsync(
-                "/api/v1/development/at/settings",
-                Json($$"""{"certificateDirectory":"{{escaped}}","certificateFileName":"teste.pfx","publicKeyDirectory":"{{escaped}}","publicKeyFileName":"chave.cer","password":"{{password}}"}""")).ConfigureAwait(false);
+                path + "/certificate", Json($$"""{"fileName":"C:\\Downloads\\teste.pfx","contentBase64":"{{pfxBase64}}","password":"{{password}}"}""")).ConfigureAwait(false);
             var savedPayload = await saved.Content.ReadAsStringAsync().ConfigureAwait(false);
             Assert.AreEqual(HttpStatusCode.OK, saved.StatusCode, savedPayload);
+            StringAssert.Contains(savedPayload, "\"certificateFileName\":\"teste.pfx\"");
             StringAssert.Contains(savedPayload, "\"passwordConfigured\":true");
             StringAssert.Contains(savedPayload, "\"source\":\"geral\"");
             StringAssert.Contains(savedPayload, "Certificado de Teste Geral");
             Assert.IsFalse(savedPayload.Contains(password, StringComparison.Ordinal), "A senha nunca é devolvida.");
-            Assert.IsFalse(savedPayload.Contains("enc:v1:", StringComparison.Ordinal), "O valor cifrado nunca é devolvido.");
+            Assert.IsFalse(savedPayload.Contains("enc:v", StringComparison.Ordinal), "O valor cifrado nunca é devolvido.");
+            Assert.IsFalse(savedPayload.Contains(pfxBase64[..40], StringComparison.Ordinal), "O ficheiro nunca é devolvido.");
+
+            using var keySaved = await client.PutAsync(
+                path + "/public-key", Json($$"""{"fileName":"ChaveCifraPublicaAT2027.cer","contentBase64":"{{cerBase64}}"}""")).ConfigureAwait(false);
+            var keyPayload = await keySaved.Content.ReadAsStringAsync().ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.OK, keySaved.StatusCode, keyPayload);
+            StringAssert.Contains(keyPayload, "\"publicKeyFileName\":\"ChaveCifraPublicaAT2027.cer\"");
 
             using var after = await client.GetAsync("/api/v1/development/at/certificate").ConfigureAwait(false);
             var afterPayload = await after.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -172,30 +212,38 @@ public sealed class FoundationApiTests
             {
                 var context = scope.ServiceProvider.GetRequiredService<AccountingDbContext>();
                 var stored = await context.AtGeneralSettings.AsNoTracking().SingleAsync().ConfigureAwait(false);
-                StringAssert.StartsWith(stored.EncryptedCertificatePassword, "enc:v1:");
+                CollectionAssert.AreEqual(pfx, stored.CertificateData);
+                CollectionAssert.AreEqual(cer, stored.PublicKeyData);
+                StringAssert.StartsWith(stored.EncryptedCertificatePassword, "enc:v2:");
                 Assert.IsFalse(stored.EncryptedCertificatePassword!.Contains(password, StringComparison.Ordinal), "Na base de dados a senha está cifrada.");
+            }
 
-                // Um contabilista não vê nem altera a configuração geral.
-                var membership = await context.CompanyUsers
-                    .SingleAsync(item => item.UserId == DevelopmentDataSeeder.DemoUserId && item.CompanyId == DevelopmentDataSeeder.DemoCompanyId)
-                    .ConfigureAwait(false);
-                membership.ChangeRole(CompanyUserRole.Accountant);
+            // Trocar a senha só vale se abrir o certificado guardado.
+            using var wrongChange = await client.PutAsync(path + "/password", Json("""{"password":"outra"}""")).ConfigureAwait(false);
+            using var sameChange = await client.PutAsync(path + "/password", Json($$"""{"password":"{{password}}"}""")).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.BadRequest, wrongChange.StatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, sameChange.StatusCode);
+
+            // Retirar o certificado leva a senha com ele.
+            using var removed = await client.DeleteAsync(path + "/certificate").ConfigureAwait(false);
+            StringAssert.Contains(await removed.Content.ReadAsStringAsync().ConfigureAwait(false), "\"passwordConfigured\":false");
+            using var keyRemoved = await client.DeleteAsync(path + "/public-key").ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.OK, removed.StatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, keyRemoved.StatusCode);
+
+            // Quando a conta deixa de ser a do produtor, o acesso acaba logo, sem esperar pelo fim da sessão.
+            await using (var scope = factory.Services.CreateAsyncScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<AccountingDbContext>();
+                (await context.UserAccounts.SingleAsync(item => item.Id == DevelopmentDataSeeder.DemoUserId).ConfigureAwait(false)).ClearProducer();
                 await context.SaveChangesAsync().ConfigureAwait(false);
             }
 
-            using var hidden = await client.GetAsync("/api/v1/development/at/settings").ConfigureAwait(false);
-            var hiddenPayload = await hidden.Content.ReadAsStringAsync().ConfigureAwait(false);
-            using var forbidden = await client.PutAsync(
-                "/api/v1/development/at/settings",
-                Json("""{"certificateDirectory":"C:\\outro","certificateFileName":"outro.pfx","password":"x"}""")).ConfigureAwait(false);
-            Assert.AreEqual(HttpStatusCode.OK, hidden.StatusCode);
-            StringAssert.Contains(hiddenPayload, "\"canEdit\":false");
-            Assert.IsFalse(hiddenPayload.Contains("teste.pfx", StringComparison.Ordinal), "Quem não a pode alterar não vê os locais.");
-            Assert.AreEqual(HttpStatusCode.Forbidden, forbidden.StatusCode);
+            using var revoked = await client.GetAsync(path).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.Forbidden, revoked.StatusCode);
         }
         finally
         {
-            Directory.Delete(folder, recursive: true);
             await using var cleanup = factory.Services.CreateAsyncScope();
             await cleanup.ServiceProvider.GetRequiredService<AccountingDbContext>().Database.EnsureDeletedAsync().ConfigureAwait(false);
         }
@@ -1356,7 +1404,7 @@ public sealed class FoundationApiTests
         StringAssert.Contains(payload, "\"subject\":");
         // A invariante que interessa: a senha e o material da chave nunca saem.
         Assert.IsFalse(payload.Contains("password", StringComparison.OrdinalIgnoreCase), "A senha nunca é devolvida.");
-        Assert.IsFalse(payload.Contains("enc:v1:", StringComparison.Ordinal), "O valor cifrado nunca é devolvido.");
+        Assert.IsFalse(payload.Contains("enc:v", StringComparison.Ordinal), "O valor cifrado nunca é devolvido.");
 
         Assert.AreEqual(HttpStatusCode.OK, credentials.StatusCode);
         StringAssert.Contains(credentialsPayload, "\"configured\":false");
@@ -1364,13 +1412,11 @@ public sealed class FoundationApiTests
         StringAssert.Contains(credentialsPayload, "\"environment\"");
         Assert.IsFalse(credentialsPayload.Contains("password", StringComparison.OrdinalIgnoreCase), "A senha das credenciais nunca é devolvida.");
 
-        // A configuração geral da AT só diz se há senha; o valor, cifrado ou não, nunca sai.
-        using var general = await client.GetAsync("/api/v1/development/at/settings").ConfigureAwait(false);
+        // A configuração geral da AT é só do produtor: um utilizador normal não a vê, nem o seu estado.
+        using var general = await client.GetAsync("/api/v1/producer/at-settings").ConfigureAwait(false);
         var generalPayload = await general.Content.ReadAsStringAsync().ConfigureAwait(false);
-        Assert.AreEqual(HttpStatusCode.OK, general.StatusCode);
-        StringAssert.Contains(generalPayload, "\"canEdit\":");
-        StringAssert.Contains(generalPayload, "\"passwordConfigured\":");
-        Assert.IsFalse(generalPayload.Contains("enc:v1:", StringComparison.Ordinal), "O valor cifrado nunca é devolvido.");
+        Assert.AreEqual(HttpStatusCode.Forbidden, general.StatusCode);
+        Assert.IsFalse(generalPayload.Contains("enc:v", StringComparison.Ordinal), "O valor cifrado nunca é devolvido.");
     }
 
     [TestMethod]

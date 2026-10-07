@@ -17,7 +17,6 @@ namespace NexGenAccountingAI.Infrastructure.At;
 /// cifrado ficam em logs.
 /// </summary>
 public sealed class AtSoapClient(
-    AtSettingsResolver settings,
     AtCertificateProvider certificates,
     TimeProvider time)
 {
@@ -27,14 +26,12 @@ public sealed class AtSoapClient(
     {
         var certificateReady = certificates.TryGetCertificate(out var certificate);
         certificate?.Dispose();
-        var keyPath = PublicKeyPath();
-        var keyReady = keyPath is not null && File.Exists(keyPath);
+        using var publicKey = certificates.LoadPublicKey();
+        var keyReady = publicKey is not null;
         var problem = (certificateReady, keyReady) switch
         {
             (false, _) => "O certificado da AT não está configurado ou não abre. " + certificates.Describe().Problem,
-            (_, false) => keyPath is null
-                ? "Falta indicar a chave pública do sistema de autenticação da AT, na configuração geral da AT."
-                : $"O ficheiro da chave pública da AT não existe: {keyPath}",
+            (_, false) => "A chave pública do sistema de autenticação da AT não está configurada ou não abre. " + certificates.DescribePublicKey().Problem,
             _ => null,
         };
         return new AtGatewayStatus(certificateReady, keyReady, problem);
@@ -59,9 +56,8 @@ public sealed class AtSoapClient(
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            using var authenticationCertificate = X509CertificateLoader.LoadCertificateFromFile(PublicKeyPath()!);
-            using var publicKey = authenticationCertificate.GetRSAPublicKey()
-                ?? throw new InvalidOperationException("O ficheiro da chave pública da AT não tem uma chave RSA.");
+            using var publicKey = certificates.LoadPublicKey()
+                ?? throw new InvalidOperationException("A chave pública da AT não está disponível.");
             var envelope = VatReturnAtGateway.Envelope(body, credentials, publicKey, time.GetUtcNow());
 
             using var handler = new SocketsHttpHandler();
@@ -92,5 +88,4 @@ public sealed class AtSoapClient(
         }
     }
 
-    private string? PublicKeyPath() => settings.Resolve().PublicKeyPath;
 }

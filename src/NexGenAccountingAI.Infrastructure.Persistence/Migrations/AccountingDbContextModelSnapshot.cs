@@ -2094,9 +2094,8 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("CertificateDirectory")
-                        .HasMaxLength(260)
-                        .HasColumnType("character varying(260)");
+                    b.Property<byte[]>("CertificateData")
+                        .HasColumnType("bytea");
 
                     b.Property<string>("CertificateFileName")
                         .HasMaxLength(260)
@@ -2122,9 +2121,8 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("PublicKeyDirectory")
-                        .HasMaxLength(260)
-                        .HasColumnType("character varying(260)");
+                    b.Property<byte[]>("PublicKeyData")
+                        .HasColumnType("bytea");
 
                     b.Property<string>("PublicKeyFileName")
                         .HasMaxLength(260)
@@ -2488,6 +2486,11 @@ namespace NexGenAccountingAI.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("IsProducer")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset?>("ModifiedAtUtc")
                         .HasColumnType("timestamp with time zone");

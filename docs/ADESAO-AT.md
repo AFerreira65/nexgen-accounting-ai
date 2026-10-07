@@ -7,10 +7,12 @@
 > conferidos — o PFX abre com a senha, com validade de 10/07/2026 a 06/01/2027;
 > a chave pública vale até 15/04/2027 — e ficam em
 > `%LOCALAPPDATA%\AccountingAI\at-testes\`, fora do repositório. Desde o
-> mesmo dia a localização dos ficheiros e a senha (**cifrada**) configuram-se
-> na aplicação, em «Comunicação com a AT» →
-> [ADR-0016](architecture-decisions/ADR-0016-AT-GENERAL-SETTINGS.md); a secção
-> `At` dos *user-secrets* fica como alternativa. A AT lembra que estes
+> mesmo dia o certificado, a chave pública e a senha (**cifrada**) carregam-se
+> na aplicação pelo **utilizador produtor** (ecrã «Configuração geral», que só
+> ele vê) e ficam **na base de dados**, para qualquer posto os usar sem
+> instalar nada →
+> [ADR-0017](architecture-decisions/ADR-0017-PRODUCER-USER-AND-PORTABLE-AT-SETTINGS.md);
+> a secção `At` dos *user-secrets* fica como alternativa. A AT lembra que estes
 > certificados **não dispensam a certificação do software**. Passo seguinte:
 > os subutilizadores com a permissão de cada serviço e «Validar na AT».
 
@@ -133,8 +135,10 @@ Juntar o certificado recebido à chave privada:
 openssl pkcs12 -export -in <certificado da AT>.crt -inkey <NIF>.key -out <NIF>.pfx
 ```
 
-Configurar a secção `At` (local e nome do ficheiro) e a senha do PFX em
-*user-secrets* ou `AT_CERTIFICATE_PASSWORD`, como descrito em
+Carregar o PFX, a senha e a chave pública da AT no ecrã «Configuração geral»
+da conta do produtor (ver [ADR-0017](architecture-decisions/ADR-0017-PRODUCER-USER-AND-PORTABLE-AT-SETTINGS.md));
+em alternativa, a secção `At` e a senha do PFX em *user-secrets* ou
+`AT_CERTIFICATE_PASSWORD`, como descrito em
 [`phase-2/F2-02A-AT-CERTIFICATE-CONFIG.md`](phase-2/F2-02A-AT-CERTIFICATE-CONFIG.md).
 O ecrã «Comunicação com a AT» mostra se o certificado foi lido.
 

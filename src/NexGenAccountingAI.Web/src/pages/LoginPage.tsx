@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ShieldCheck } from 'lucide-react'
 
-export type AuthenticatedUser = { id: string; displayName: string; email: string }
+export type AuthenticatedUser = { id: string; displayName: string; email: string; isProducer?: boolean }
 
 export function LoginPage({ onSuccess }: { onSuccess: (user: AuthenticatedUser) => void }) {
   const [email, setEmail] = useState('')

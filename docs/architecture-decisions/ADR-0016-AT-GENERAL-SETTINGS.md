@@ -1,6 +1,9 @@
 # ADR-0016 — Configuração geral da AT na aplicação
 
-- Estado: aceite (o utilizador pediu a configuração em 2026-10-07)
+- Estado: aceite (o utilizador pediu a configuração em 2026-10-07); **substituída em parte pelo
+  [ADR-0017](ADR-0017-PRODUCER-USER-AND-PORTABLE-AT-SETTINGS.md)** no mesmo dia: o acesso passou a ser
+  só do utilizador produtor, os ficheiros ficam na base de dados em vez de em pastas e a cifra passou
+  a ser portátil (`enc:v2:`). A precedência, a cache e as credenciais por empresa mantêm-se.
 - Data: 2026-10-07
 
 ## Contexto

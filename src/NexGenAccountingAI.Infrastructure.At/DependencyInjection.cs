@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddSingleton<IAtSettingsInvalidator>(sp => sp.GetRequiredService<AtSettingsResolver>());
         services.AddSingleton<AtCertificateProvider>();
         services.AddSingleton<IAtCertificateProvider>(sp => sp.GetRequiredService<AtCertificateProvider>());
+        services.AddSingleton<IAtFileValidator>(sp => sp.GetRequiredService<AtCertificateProvider>());
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<AtSoapClient>();
         services.AddSingleton<IVatReturnAtGateway, VatReturnAtGateway>();

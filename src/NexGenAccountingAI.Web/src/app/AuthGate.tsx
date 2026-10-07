@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { LoginPage, type AuthenticatedUser } from '../pages/LoginPage'
+import { ProducerShell } from './ProducerShell'
 import { WorkContextProvider } from './WorkContext'
 
 type Status = 'checking' | 'authenticated' | 'unauthenticated'
@@ -39,6 +40,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (status === 'unauthenticated') {
     return <LoginPage onSuccess={(loggedIn) => { setUser(loggedIn); setStatus('authenticated') }} />
+  }
+
+  // A conta do produtor não tem empresas: só vê a configuração geral (ADR-0017).
+  if (user?.isProducer) {
+    return <ProducerShell user={user} />
   }
 
   return <WorkContextProvider userId={user?.id}>{children}</WorkContextProvider>

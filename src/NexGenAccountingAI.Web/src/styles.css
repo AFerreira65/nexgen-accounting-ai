@@ -275,6 +275,14 @@ html[data-theme='dark'] .management-report-alerts ul { color: #d3b58f; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 20px; border-bottom: 1px solid #e7edef; }
 .panel-heading h2 { margin: 0 0 3px; color: #21323a; font-size: 14px; letter-spacing: -.01em; }
 .panel-heading p { margin: 0; color: #849198; font-size: 10px; }
+.producer-shell { min-height: 100vh; background: #f3f6f7; }
+.producer-bar { display: flex; align-items: center; gap: 16px; padding: 14px clamp(20px, 3vw, 42px); border-bottom: 1px solid #e2e9ec; background: white; }
+.producer-role { padding: 3px 10px; border-radius: 999px; color: #0b6a64; background: #e1f4f0; font-size: 11px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.producer-user { margin-left: auto; color: #4d5f68; font-size: 13px; font-weight: 600; }
+.producer-main { max-width: 980px; margin: 0 auto; padding: 28px clamp(20px, 3vw, 42px) 60px; }
+.producer-main .builder-row label { display: grid; flex: 1 1 220px; gap: 4px; color: #52646c; font-size: 11px; font-weight: 700; }
+html[data-theme='dark'] .producer-shell { background: #102129; }
+html[data-theme='dark'] .producer-bar { border-color: #24393f; background: #14262e; }
 .login-shell { display: grid; place-items: center; min-height: 100vh; background: #f4f7f8; padding: 20px; }
 .login-card { display: grid; gap: 14px; width: 100%; max-width: 340px; padding: 30px 26px; }
 .login-brand { display: flex; align-items: center; gap: 11px; color: #21323a; }

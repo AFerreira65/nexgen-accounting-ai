@@ -233,6 +233,12 @@ public sealed class OrganizationAdminService(
             .ConfigureAwait(false)
             ?? throw new KeyNotFoundException("O utilizador não existe.");
 
+        // A conta do produtor não se gere por aqui (ADR-0017): para quem administra empresas, não existe.
+        if (user.IsProducer)
+        {
+            throw new KeyNotFoundException("O utilizador não existe.");
+        }
+
         if (userId == actingUserId)
         {
             if (!isActive)
@@ -281,7 +287,7 @@ public sealed class OrganizationAdminService(
     {
         var actingRole = await RequireManagerAsync(actingUserId, companyId, cancellationToken).ConfigureAwait(false);
         var userExists = await context.UserAccounts
-            .AnyAsync(item => item.Id == userId, cancellationToken)
+            .AnyAsync(item => item.Id == userId && !item.IsProducer, cancellationToken)
             .ConfigureAwait(false);
         if (!userExists)
         {

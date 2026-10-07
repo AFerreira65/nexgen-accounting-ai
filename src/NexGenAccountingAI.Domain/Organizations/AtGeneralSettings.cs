@@ -1,15 +1,19 @@
 namespace NexGenAccountingAI.Domain.Organizations;
 
 /// <summary>
-/// A configuração geral da ligação à AT, comum a todas as empresas da instalação:
-/// onde estão o certificado de transporte (PFX/P12) e a chave pública do sistema de
-/// autenticação da AT (CER), e a senha do certificado, que se guarda cifrada. Só há
-/// uma linha. Uma pasta ou um nome em branco significa «não indicado»: a aplicação
-/// recorre então à secção <c>At</c> do ficheiro de configuração.
+/// A configuração geral da ligação à AT, comum a todas as empresas e a todos os postos
+/// que usam a mesma base de dados: o certificado de transporte (PFX/P12), a chave pública
+/// do sistema de autenticação da AT (CER) e a senha do certificado. Os ficheiros ficam
+/// <b>na própria base de dados</b>, para qualquer posto os poder usar sem os ter
+/// instalados; a senha fica cifrada (<c>enc:v2:…</c>, cifra portátil). Só há uma linha,
+/// e só o produtor a altera.
 /// </summary>
 public sealed class AtGeneralSettings
 {
-    public const int PathMaxLength = 260;
+    public const int FileNameMaxLength = 260;
+
+    /// <summary>Um certificado com a cadeia cabe com folga em 256 KB.</summary>
+    public const int FileMaxBytes = 256 * 1024;
 
     public const int SingletonKey = 1;
 
@@ -31,69 +35,78 @@ public sealed class AtGeneralSettings
     /// <summary>Constante, para a base de dados garantir uma só linha.</summary>
     public int Key { get; private set; } = SingletonKey;
 
-    public string? CertificateDirectory { get; private set; }
-
+    /// <summary>O nome do ficheiro do certificado tal como foi carregado (só para mostrar).</summary>
     public string? CertificateFileName { get; private set; }
 
-    public string? PublicKeyDirectory { get; private set; }
+    /// <summary>O ficheiro PFX/P12, tal como a AT o enviou: continua protegido pela sua senha.</summary>
+    public byte[]? CertificateData { get; private set; }
 
     public string? PublicKeyFileName { get; private set; }
 
-    /// <summary>A senha do certificado, no formato cifrado (<c>enc:v1:…</c>).</summary>
+    /// <summary>O ficheiro CER/CRT/PEM da chave pública da AT.</summary>
+    public byte[]? PublicKeyData { get; private set; }
+
+    /// <summary>A senha do certificado, cifrada (<c>enc:v2:…</c>).</summary>
     public string? EncryptedCertificatePassword { get; private set; }
 
     public uint RowVersion { get; private set; }
 
     public static AtGeneralSettings Create() => new(Guid.NewGuid());
 
-    /// <summary>
-    /// Substitui os locais e os nomes. Os valores em branco ficam por indicar; a pasta e o
-    /// nome têm de vir os dois ou nenhum, a pasta tem de ser absoluta e o nome não pode
-    /// conter pastas.
-    /// </summary>
-    public void SetLocations(
-        string? certificateDirectory, string? certificateFileName, string? publicKeyDirectory, string? publicKeyFileName)
+    /// <summary>Guarda o certificado e a sua senha (já cifrada) em conjunto: um não faz sentido sem o outro.</summary>
+    public void SetCertificate(string? fileName, byte[] data, string encryptedPassword)
     {
-        var certificate = Normalize("do certificado", certificateDirectory, certificateFileName, CertificateExtensions);
-        var publicKey = Normalize("da chave pública", publicKeyDirectory, publicKeyFileName, PublicKeyExtensions);
-        CertificateDirectory = certificate.Directory;
-        CertificateFileName = certificate.FileName;
-        PublicKeyDirectory = publicKey.Directory;
-        PublicKeyFileName = publicKey.FileName;
+        var name = NormalizeFile("do certificado", fileName, data, CertificateExtensions);
+        ArgumentException.ThrowIfNullOrWhiteSpace(encryptedPassword);
+        CertificateFileName = name;
+        CertificateData = data;
+        EncryptedCertificatePassword = encryptedPassword;
     }
 
-    /// <summary>Guarda a senha já cifrada, ou retira-a quando <paramref name="encryptedPassword"/> é <c>null</c>.</summary>
-    public void SetEncryptedPassword(string? encryptedPassword) =>
-        EncryptedCertificatePassword = string.IsNullOrWhiteSpace(encryptedPassword) ? null : encryptedPassword;
-
-    private static (string? Directory, string? FileName) Normalize(
-        string what, string? directory, string? fileName, string[] extensions)
+    /// <summary>Troca só a senha do certificado já guardado.</summary>
+    public void SetEncryptedPassword(string encryptedPassword)
     {
-        var folder = string.IsNullOrWhiteSpace(directory) ? null : directory.Trim().TrimEnd('\\', '/');
-        var name = string.IsNullOrWhiteSpace(fileName) ? null : fileName.Trim();
-        if (folder is null && name is null)
+        if (CertificateData is null)
         {
-            return (null, null);
+            throw new InvalidOperationException("Carregue primeiro o certificado.");
         }
 
-        if (folder is null || name is null)
+        ArgumentException.ThrowIfNullOrWhiteSpace(encryptedPassword);
+        EncryptedCertificatePassword = encryptedPassword;
+    }
+
+    public void ClearCertificate()
+    {
+        CertificateFileName = null;
+        CertificateData = null;
+        EncryptedCertificatePassword = null;
+    }
+
+    public void SetPublicKey(string? fileName, byte[] data)
+    {
+        PublicKeyFileName = NormalizeFile("da chave pública", fileName, data, PublicKeyExtensions);
+        PublicKeyData = data;
+    }
+
+    public void ClearPublicKey()
+    {
+        PublicKeyFileName = null;
+        PublicKeyData = null;
+    }
+
+    private static string NormalizeFile(string what, string? fileName, byte[] data, string[] extensions)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        // Só o nome: o que um browser ou um atalho possa trazer de pastas é descartado.
+        var name = Path.GetFileName((fileName ?? string.Empty).Trim().Replace('\\', '/'));
+        if (string.IsNullOrWhiteSpace(name))
         {
-            throw new ArgumentException($"Indique a pasta e o nome do ficheiro {what}, ou deixe os dois em branco.");
+            throw new ArgumentException($"Indique o nome do ficheiro {what}.");
         }
 
-        if (folder.Length > PathMaxLength || name.Length > PathMaxLength)
+        if (name.Length > FileNameMaxLength || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
         {
-            throw new ArgumentException($"A pasta e o nome do ficheiro {what} não podem ter mais de {PathMaxLength} caracteres.");
-        }
-
-        if (!Path.IsPathFullyQualified(folder))
-        {
-            throw new ArgumentException($"A pasta do ficheiro {what} tem de ser um caminho completo (por exemplo C:\\AT\\certificados).");
-        }
-
-        if (name.IndexOfAny(['\\', '/', ':']) >= 0 || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-        {
-            throw new ArgumentException($"O nome do ficheiro {what} não pode conter pastas nem carateres inválidos.");
+            throw new ArgumentException($"O nome do ficheiro {what} é inválido.");
         }
 
         if (!extensions.Contains(Path.GetExtension(name), StringComparer.OrdinalIgnoreCase))
@@ -101,6 +114,16 @@ public sealed class AtGeneralSettings
             throw new ArgumentException($"O ficheiro {what} tem de ser do tipo {string.Join(", ", extensions)}.");
         }
 
-        return (folder, name);
+        if (data.Length == 0)
+        {
+            throw new ArgumentException($"O ficheiro {what} está vazio.");
+        }
+
+        if (data.Length > FileMaxBytes)
+        {
+            throw new ArgumentException($"O ficheiro {what} tem mais de {FileMaxBytes / 1024} KB.");
+        }
+
+        return name;
     }
 }

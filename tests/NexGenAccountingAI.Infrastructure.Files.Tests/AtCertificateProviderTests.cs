@@ -149,25 +149,37 @@ public sealed class AtCertificateProviderTests
     }
 
     [TestMethod]
-    public void TheGeneralSettingsReplaceTheConfigurationFileForTheCertificateAndItsPassword()
+    public void TheCertificateStoredInTheDatabaseWorksWithoutAnyFileOnThisStation()
     {
         var (path, password) = WriteSelfSignedPfx();
-        try
-        {
-            var stored = new AtGeneralSettingsSnapshot(
-                Path.GetDirectoryName(path), Path.GetFileName(path), null, null, protector.Protect(password));
-            // A secção At aponta para outro certificado, com outra senha: não conta, havendo configuração geral.
-            var provider = Provider(new AtOptions { Certificate = { Path = "C:\\nao-existe\\outro.pfx", Password = "outra-senha" } }, stored);
+        var bytes = File.ReadAllBytes(path);
+        File.Delete(path);
 
-            var status = provider.Describe();
+        var stored = new AtGeneralSettingsSnapshot("TesteWebservices.pfx", bytes, null, null, protector.Protect(password));
+        // A secção At aponta para outro certificado, com outra senha: não conta, havendo configuração geral.
+        var provider = Provider(new AtOptions { Certificate = { Path = "C:\\nao-existe\\outro.pfx", Password = "outra-senha" } }, stored);
 
-            Assert.IsTrue(status.Valid, status.Problem);
-            Assert.AreEqual("geral", status.Source);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        var status = provider.Describe();
+
+        Assert.IsTrue(status.Valid, status.Problem);
+        Assert.AreEqual("geral", status.Source);
+        Assert.IsTrue(status.HasPrivateKey);
+    }
+
+    [TestMethod]
+    public void ThePasswordProtectedOnAnotherStationOpensTheCertificateHere()
+    {
+        var (path, password) = WriteSelfSignedPfx();
+        var bytes = File.ReadAllBytes(path);
+        File.Delete(path);
+
+        // A senha foi cifrada noutro posto, com outro chaveiro: este posto decifra-a na mesma.
+        var otherStation = AtSecretProtector.Create(Path.Combine(Path.GetTempPath(), $"at-keys-{Guid.NewGuid():N}"));
+        var stored = new AtGeneralSettingsSnapshot("a.pfx", bytes, null, null, otherStation.Protect(password));
+
+        var status = Provider(new AtOptions(), stored).Describe();
+
+        Assert.IsTrue(status.Valid, status.Problem);
     }
 
     [TestMethod]
@@ -192,20 +204,16 @@ public sealed class AtCertificateProviderTests
     public void TheGeneralCertificateIsNotOpenedWithThePasswordOfTheConfigurationFile()
     {
         var (path, password) = WriteSelfSignedPfx();
-        try
-        {
-            // Certificado geral sem senha guardada, e senha certa só na secção At: não se mistura.
-            var stored = new AtGeneralSettingsSnapshot(Path.GetDirectoryName(path), Path.GetFileName(path), null, null, null);
-            var status = Provider(new AtOptions { Certificate = { Password = password } }, stored).Describe();
+        var bytes = File.ReadAllBytes(path);
+        File.Delete(path);
 
-            Assert.IsFalse(status.Valid);
-            Assert.AreEqual("geral", status.Source);
-            StringAssert.Contains(status.Problem!, "senha");
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        // Certificado geral com outra senha guardada, e a certa só na secção At: não se mistura.
+        var stored = new AtGeneralSettingsSnapshot("a.pfx", bytes, null, null, protector.Protect("outra-senha"));
+        var status = Provider(new AtOptions { Certificate = { Password = password } }, stored).Describe();
+
+        Assert.IsFalse(status.Valid);
+        Assert.AreEqual("geral", status.Source);
+        StringAssert.Contains(status.Problem!, "senha");
     }
 
     [TestMethod]
@@ -214,15 +222,17 @@ public sealed class AtCertificateProviderTests
         using var rsa = RSA.Create(2048);
         var request = new CertificateRequest("CN=Chave Cifra Publica AT Teste", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(30));
+        var bytes = certificate.Export(X509ContentType.Cert);
         var path = Path.Combine(Path.GetTempPath(), $"at-key-{Guid.NewGuid():N}.cer");
-        File.WriteAllBytes(path, certificate.Export(X509ContentType.Cert));
+        File.WriteAllBytes(path, bytes);
         try
         {
             Assert.IsFalse(Provider(new AtOptions()).DescribePublicKey().Configured);
 
-            var general = Provider(new AtOptions(), new AtGeneralSettingsSnapshot(null, null, Path.GetDirectoryName(path), Path.GetFileName(path), null)).DescribePublicKey();
+            var general = Provider(new AtOptions(), new AtGeneralSettingsSnapshot(null, null, "ChaveCifraPublicaAT2027.cer", bytes, null)).DescribePublicKey();
             Assert.IsTrue(general.Valid, general.Problem);
             Assert.AreEqual("geral", general.Source);
+            Assert.AreEqual("ChaveCifraPublicaAT2027.cer", general.FileName);
             StringAssert.Contains(general.Subject!, "Chave Cifra Publica AT Teste");
 
             var fromFile = Provider(new AtOptions { PublicKey = { Path = path } }).DescribePublicKey();
@@ -237,6 +247,40 @@ public sealed class AtCertificateProviderTests
         {
             File.Delete(path);
         }
+    }
+
+    [TestMethod]
+    public void ValidatesTheCertificateFileWithItsPasswordBeforeItIsStored()
+    {
+        var (path, password) = WriteSelfSignedPfx();
+        var bytes = File.ReadAllBytes(path);
+        File.Delete(path);
+        var provider = Provider(new AtOptions());
+
+        var info = provider.ValidateCertificate(bytes, password);
+        StringAssert.Contains(info.Subject, "NexGen Accounting AI Teste");
+
+        var wrong = Assert.ThrowsExactly<ArgumentException>(() => provider.ValidateCertificate(bytes, "senha-errada"));
+        StringAssert.Contains(wrong.Message, "senha");
+        Assert.ThrowsExactly<ArgumentException>(() => provider.ValidateCertificate([1, 2, 3], password));
+
+        // Só o certificado público, sem a chave privada, não serve para o transporte.
+        using var rsa = RSA.Create(2048);
+        var request = new CertificateRequest("CN=Sem chave privada", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(30));
+        Assert.ThrowsExactly<ArgumentException>(() => provider.ValidateCertificate(certificate.Export(X509ContentType.Cert), string.Empty));
+    }
+
+    [TestMethod]
+    public void ValidatesThePublicKeyFileBeforeItIsStored()
+    {
+        using var rsa = RSA.Create(2048);
+        var request = new CertificateRequest("CN=Chave AT", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(30));
+        var provider = Provider(new AtOptions());
+
+        StringAssert.Contains(provider.ValidatePublicKey(certificate.Export(X509ContentType.Cert)).Subject, "Chave AT");
+        Assert.ThrowsExactly<ArgumentException>(() => provider.ValidatePublicKey([1, 2, 3, 4]));
     }
 
     private static (string Path, string Password) WriteSelfSignedPfx()

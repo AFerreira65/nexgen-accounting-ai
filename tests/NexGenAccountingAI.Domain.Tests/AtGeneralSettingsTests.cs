@@ -5,67 +5,80 @@ namespace NexGenAccountingAI.Domain.Tests;
 [TestClass]
 public sealed class AtGeneralSettingsTests
 {
+    private static readonly byte[] SomeBytes = [1, 2, 3, 4];
+
     [TestMethod]
-    public void LocationsAreTrimmedAndBlankMeansNotSet()
+    public void TheCertificateIsStoredWithItsPasswordAndOnlyTheFileNameIsKept()
     {
         var settings = AtGeneralSettings.Create();
 
-        settings.SetLocations("  C:\\AT\\certificados\\  ", " TesteWebservices.pfx ", "C:\\AT\\chaves", "Chave.cer");
-        Assert.AreEqual("C:\\AT\\certificados", settings.CertificateDirectory);
+        settings.SetCertificate(@"C:\Users\x\Downloads\TesteWebservices.pfx", SomeBytes, "enc:v2:cifrada");
+
         Assert.AreEqual("TesteWebservices.pfx", settings.CertificateFileName);
-        Assert.AreEqual("Chave.cer", settings.PublicKeyFileName);
+        CollectionAssert.AreEqual(SomeBytes, settings.CertificateData);
+        Assert.AreEqual("enc:v2:cifrada", settings.EncryptedCertificatePassword);
+        Assert.AreEqual(AtGeneralSettings.SingletonKey, settings.Key);
+    }
 
-        settings.SetLocations(" ", null, "", "  ");
-        Assert.IsNull(settings.CertificateDirectory);
-        Assert.IsNull(settings.CertificateFileName);
-        Assert.IsNull(settings.PublicKeyDirectory);
+    [TestMethod]
+    public void ThePublicKeyIsStoredIndependentlyOfTheCertificate()
+    {
+        var settings = AtGeneralSettings.Create();
+
+        settings.SetPublicKey("ChaveCifraPublicaAT2027.CER", SomeBytes);
+
+        Assert.AreEqual("ChaveCifraPublicaAT2027.CER", settings.PublicKeyFileName);
+        CollectionAssert.AreEqual(SomeBytes, settings.PublicKeyData);
+        Assert.IsNull(settings.CertificateData);
+
+        settings.ClearPublicKey();
         Assert.IsNull(settings.PublicKeyFileName);
+        Assert.IsNull(settings.PublicKeyData);
     }
 
     [TestMethod]
-    public void TheFolderAndTheNameComeTogether()
+    public void FilesWithTheWrongTypeOrSizeOrNameAreRefused()
     {
         var settings = AtGeneralSettings.Create();
 
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations("C:\\AT", null, null, null));
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations(null, "certificado.pfx", null, null));
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations(null, null, "C:\\AT", " "));
+        Assert.ThrowsExactly<ArgumentException>(() => settings.SetCertificate("certificado.cer", SomeBytes, "enc:v2:x"));
+        Assert.ThrowsExactly<ArgumentException>(() => settings.SetCertificate("certificado.pfx", [], "enc:v2:x"));
+        Assert.ThrowsExactly<ArgumentException>(() => settings.SetCertificate("certificado.pfx", new byte[AtGeneralSettings.FileMaxBytes + 1], "enc:v2:x"));
+        Assert.ThrowsExactly<ArgumentException>(() => settings.SetCertificate(null, SomeBytes, "enc:v2:x"));
+        Assert.ThrowsExactly<ArgumentException>(() => settings.SetCertificate("certificado.pfx", SomeBytes, " "));
+        Assert.ThrowsExactly<ArgumentException>(() => settings.SetPublicKey("chave.pfx", SomeBytes));
+        Assert.ThrowsExactly<ArgumentException>(() => settings.SetPublicKey(new string('a', 300) + ".cer", SomeBytes));
+        Assert.IsNull(settings.CertificateData, "Os pedidos recusados não alteram nada.");
+        Assert.IsNull(settings.PublicKeyData);
     }
 
     [TestMethod]
-    public void TheFolderMustBeAbsoluteAndTheNameMustNotHoldFolders()
+    public void ThePasswordCannotBeChangedBeforeThereIsACertificateAndGoesWithItWhenRemoved()
     {
         var settings = AtGeneralSettings.Create();
 
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations("certificados", "a.pfx", null, null));
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations("..\\certificados", "a.pfx", null, null));
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations("C:\\AT", "..\\fora\\a.pfx", null, null));
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations("C:\\AT", "pasta/a.pfx", null, null));
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations("C:\\AT", "C:a.pfx", null, null));
-    }
+        Assert.ThrowsExactly<InvalidOperationException>(() => settings.SetEncryptedPassword("enc:v2:x"));
 
-    [TestMethod]
-    public void OnlyCertificateAndPublicKeyFileTypesAreAccepted()
-    {
-        var settings = AtGeneralSettings.Create();
+        settings.SetCertificate("a.p12", SomeBytes, "enc:v2:primeira");
+        settings.SetEncryptedPassword("enc:v2:segunda");
+        Assert.AreEqual("enc:v2:segunda", settings.EncryptedCertificatePassword);
 
-        settings.SetLocations("C:\\AT", "a.P12", "C:\\AT", "b.CRT");
-        Assert.AreEqual("a.P12", settings.CertificateFileName);
-
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations("C:\\AT", "a.txt", null, null));
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations("C:\\AT", "a.pfx", "C:\\AT", "b.pfx"));
-        Assert.ThrowsExactly<ArgumentException>(() => settings.SetLocations(new string('C', 261), "a.pfx", null, null));
-    }
-
-    [TestMethod]
-    public void ThePasswordIsKeptOnlyAsGiven()
-    {
-        var settings = AtGeneralSettings.Create();
-
-        settings.SetEncryptedPassword("enc:v1:abc");
-        Assert.AreEqual("enc:v1:abc", settings.EncryptedCertificatePassword);
-
-        settings.SetEncryptedPassword(null);
+        settings.ClearCertificate();
+        Assert.IsNull(settings.CertificateFileName);
+        Assert.IsNull(settings.CertificateData);
         Assert.IsNull(settings.EncryptedCertificatePassword);
+    }
+
+    [TestMethod]
+    public void AUserIsOnlyTheProducerWhenMarkedAndCanBeUnmarked()
+    {
+        var user = new UserAccount(Guid.NewGuid(), "Produtor", "produtor@test.invalid");
+        Assert.IsFalse(user.IsProducer);
+
+        user.MarkAsProducer();
+        Assert.IsTrue(user.IsProducer);
+
+        user.ClearProducer();
+        Assert.IsFalse(user.IsProducer);
     }
 }

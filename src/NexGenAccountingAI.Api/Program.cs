@@ -175,6 +175,68 @@ if (args is ["set-user-password", ..])
     return;
 }
 
+// Ferramentas de linha de comandos do produtor (ADR-0017): a conta do produtor, sem empresas,
+// que é a única a ver a configuração geral da aplicação (certificado e chave da AT).
+// Só existe por aqui — nunca por um ecrã nem por um endpoint.
+//   dotnet run --project src/NexGenAccountingAI.Api -- create-producer-user "<email>" "<nome>"   (senha por stdin)
+//   dotnet run --project src/NexGenAccountingAI.Api -- remove-producer-user "<email>"
+if (args is ["create-producer-user", ..])
+{
+    if (args.Length < 3)
+    {
+        await Console.Error
+            .WriteLineAsync("Uso: dotnet run --project src/NexGenAccountingAI.Api -- create-producer-user \"<email>\" \"<nome>\"   (a senha lê-se do stdin)")
+            .ConfigureAwait(false);
+        return;
+    }
+
+    var producerPassword = (await Console.In.ReadToEndAsync().ConfigureAwait(false)).Trim();
+    if (producerPassword.Length < 12)
+    {
+        await Console.Error.WriteLineAsync("Indique a senha pelo stdin, com pelo menos 12 caracteres.").ConfigureAwait(false);
+        return;
+    }
+
+    await using var producerScope = app.Services.CreateAsyncScope();
+    var producerAuth = producerScope.ServiceProvider.GetRequiredService<AuthService>();
+    try
+    {
+        var producer = await producerAuth.CreateProducerAsync(args[1], args[2]).ConfigureAwait(false);
+        await producerAuth.SetPasswordAsync(producer.Email, producerPassword).ConfigureAwait(false);
+        Console.WriteLine($"Produtor {producer.Email} pronto: entre com este utilizador para ver a configuração geral da aplicação.");
+    }
+    catch (Exception exception) when (exception is InvalidOperationException or ArgumentException)
+    {
+        await Console.Error.WriteLineAsync(exception.Message).ConfigureAwait(false);
+    }
+
+    return;
+}
+
+if (args is ["remove-producer-user", ..])
+{
+    if (args.Length < 2)
+    {
+        await Console.Error
+            .WriteLineAsync("Uso: dotnet run --project src/NexGenAccountingAI.Api -- remove-producer-user \"<email>\"")
+            .ConfigureAwait(false);
+        return;
+    }
+
+    await using var removeScope = app.Services.CreateAsyncScope();
+    try
+    {
+        await removeScope.ServiceProvider.GetRequiredService<AuthService>().RemoveProducerAsync(args[1]).ConfigureAwait(false);
+        Console.WriteLine($"A conta {args[1]} deixou de ser o produtor e ficou desativada.");
+    }
+    catch (InvalidOperationException exception)
+    {
+        await Console.Error.WriteLineAsync(exception.Message).ConfigureAwait(false);
+    }
+
+    return;
+}
+
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false
@@ -226,7 +288,7 @@ app.MapPost("/api/v1/auth/login", async (
         .SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties { IsPersistent = true })
         .ConfigureAwait(false);
 
-    return Results.Ok(new { id = user.Id, displayName = user.DisplayName, email = user.Email });
+    return Results.Ok(new { id = user.Id, displayName = user.DisplayName, email = user.Email, isProducer = user.IsProducer });
 }).AllowAnonymous();
 
 app.MapPost("/api/v1/auth/logout", async (HttpContext context) =>
@@ -235,12 +297,18 @@ app.MapPost("/api/v1/auth/logout", async (HttpContext context) =>
     return Results.Ok();
 }).AllowAnonymous();
 
-app.MapGet("/api/v1/auth/me", (HttpContext context) => Results.Ok(new
+app.MapGet("/api/v1/auth/me", async (HttpContext context, AuthService authService, CancellationToken cancellationToken) =>
 {
-    id = Guid.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!),
-    displayName = context.User.FindFirstValue(ClaimTypes.Name),
-    email = context.User.FindFirstValue(ClaimTypes.Email),
-}));
+    var userId = Guid.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    return Results.Ok(new
+    {
+        id = userId,
+        displayName = context.User.FindFirstValue(ClaimTypes.Name),
+        email = context.User.FindFirstValue(ClaimTypes.Email),
+        // Vem sempre da base de dados: tirar a conta de produtor vale logo, sem esperar pelo fim da sessão.
+        isProducer = await authService.IsProducerAsync(userId, cancellationToken).ConfigureAwait(false),
+    });
+});
 
 // Até à F2-11A este bloco só existia em Development — a única barreira de
 // toda a API, sem autenticação nenhuma (ver ADR-0011). A sessão de F2-11A
@@ -2032,43 +2100,70 @@ if (applicationEndpointsAvailable)
     app.MapGet("/api/v1/development/at/certificate", (NexGenAccountingAI.Application.At.IAtCertificateProvider certificates) =>
         Results.Ok(certificates.Describe()));
 
-    // Configuração geral da AT (onde estão o certificado e a chave pública, e a senha do certificado,
-    // cifrada). Vale para todas as empresas: só o dono ou um administrador de uma empresa a vê e altera.
-    app.MapGet("/api/v1/development/at/settings", async (
-        ClaimsPrincipal principal,
-        AtGeneralSettingsService settings,
-        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
-        CancellationToken cancellationToken) =>
-        Results.Ok(await AtSettingsResponse(SessionUserId(principal), settings, certificates, cancellationToken).ConfigureAwait(false)));
-
-    app.MapPut("/api/v1/development/at/settings", async (
-        ClaimsPrincipal principal,
-        PutAtGeneralSettingsRequest request,
-        AtGeneralSettingsService settings,
-        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
-        CancellationToken cancellationToken) =>
+    // Configuração geral da AT (ADR-0017): o certificado, a chave pública e a senha do certificado,
+    // guardados na base de dados para qualquer posto os usar. Só a conta do produtor, verificada na
+    // base de dados a cada pedido; nenhuma resposta traz a senha, o valor cifrado ou os ficheiros.
+    var producer = app.MapGroup("/api/v1/producer/at-settings");
+    producer.AddEndpointFilter(async (invocation, next) =>
     {
-        try
-        {
-            await settings
-                .SaveAsync(
-                    SessionUserId(principal),
-                    new AtGeneralSettingsInput(
-                        request?.CertificateDirectory, request?.CertificateFileName, request?.PublicKeyDirectory, request?.PublicKeyFileName,
-                        request?.Password, request?.RemovePassword ?? false),
-                    cancellationToken)
-                .ConfigureAwait(false);
-            return Results.Ok(await AtSettingsResponse(SessionUserId(principal), settings, certificates, cancellationToken).ConfigureAwait(false));
-        }
-        catch (OrganizationAccessDeniedException exception)
-        {
-            return OrganizationAccessDenied("atSettings", exception);
-        }
-        catch (ArgumentException exception)
-        {
-            return Results.ValidationProblem(new Dictionary<string, string[]> { ["atSettings"] = [exception.Message] });
-        }
+        var auth = invocation.HttpContext.RequestServices.GetRequiredService<AuthService>();
+        var sessionId = SessionUserId(invocation.HttpContext.User);
+        return await auth.IsProducerAsync(sessionId, invocation.HttpContext.RequestAborted).ConfigureAwait(false)
+            ? await next(invocation).ConfigureAwait(false)
+            : Results.ValidationProblem(
+                new Dictionary<string, string[]> { ["producer"] = ["Esta configuração é só do produtor da aplicação."] },
+                statusCode: StatusCodes.Status403Forbidden);
     });
+
+    producer.MapGet(string.Empty, async (
+        ClaimsPrincipal principal,
+        AtGeneralSettingsService settings,
+        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
+        CancellationToken cancellationToken) =>
+        Results.Ok(await ProducerAtResponse(SessionUserId(principal), settings, certificates, cancellationToken).ConfigureAwait(false)));
+
+    producer.MapPut("/certificate", (
+        ClaimsPrincipal principal,
+        PutProducerCertificateRequest request,
+        AtGeneralSettingsService settings,
+        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
+        CancellationToken cancellationToken) =>
+        ProducerChange(principal, settings, certificates, cancellationToken, async userId =>
+            await settings.SetCertificateAsync(userId, request?.FileName, DecodeFile(request?.ContentBase64), request?.Password, cancellationToken).ConfigureAwait(false)));
+
+    producer.MapPut("/password", (
+        ClaimsPrincipal principal,
+        PutProducerPasswordRequest request,
+        AtGeneralSettingsService settings,
+        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
+        CancellationToken cancellationToken) =>
+        ProducerChange(principal, settings, certificates, cancellationToken, async userId =>
+            await settings.ChangePasswordAsync(userId, request?.Password, cancellationToken).ConfigureAwait(false)));
+
+    producer.MapPut("/public-key", (
+        ClaimsPrincipal principal,
+        PutProducerPublicKeyRequest request,
+        AtGeneralSettingsService settings,
+        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
+        CancellationToken cancellationToken) =>
+        ProducerChange(principal, settings, certificates, cancellationToken, async userId =>
+            await settings.SetPublicKeyAsync(userId, request?.FileName, DecodeFile(request?.ContentBase64), cancellationToken).ConfigureAwait(false)));
+
+    producer.MapDelete("/certificate", (
+        ClaimsPrincipal principal,
+        AtGeneralSettingsService settings,
+        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
+        CancellationToken cancellationToken) =>
+        ProducerChange(principal, settings, certificates, cancellationToken, async userId =>
+            await settings.RemoveCertificateAsync(userId, cancellationToken).ConfigureAwait(false)));
+
+    producer.MapDelete("/public-key", (
+        ClaimsPrincipal principal,
+        AtGeneralSettingsService settings,
+        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
+        CancellationToken cancellationToken) =>
+        ProducerChange(principal, settings, certificates, cancellationToken, async userId =>
+            await settings.RemovePublicKeyAsync(userId, cancellationToken).ConfigureAwait(false)));
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/at-credentials", async (
         Guid userId, Guid companyId, CompanyAtCredentialsService credentials, CancellationToken cancellationToken) =>
@@ -5518,8 +5613,8 @@ public partial class Program
     private static Guid SessionUserId(ClaimsPrincipal principal) =>
         Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    /// <summary>A configuração geral da AT com o estado dos ficheiros que ela indica, sem nunca incluir a senha.</summary>
-    private static async Task<object> AtSettingsResponse(
+    /// <summary>A configuração geral da AT com o estado do certificado e da chave pública, sem nunca incluir a senha.</summary>
+    private static async Task<object> ProducerAtResponse(
         Guid sessionUserId,
         AtGeneralSettingsService settings,
         NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
@@ -5529,9 +5624,45 @@ public partial class Program
         return new
         {
             Settings = view,
-            Certificate = view.CanEdit ? certificates.Describe() : null,
-            PublicKey = view.CanEdit ? certificates.DescribePublicKey() : null,
+            Certificate = certificates.Describe(),
+            PublicKey = certificates.DescribePublicKey(),
         };
+    }
+
+    /// <summary>Faz uma alteração à configuração geral e devolve o estado novo, ou o erro de validação.</summary>
+    private static async Task<IResult> ProducerChange(
+        ClaimsPrincipal principal,
+        AtGeneralSettingsService settings,
+        NexGenAccountingAI.Application.At.IAtCertificateProvider certificates,
+        CancellationToken cancellationToken,
+        Func<Guid, Task> change)
+    {
+        var userId = SessionUserId(principal);
+        try
+        {
+            await change(userId).ConfigureAwait(false);
+            return Results.Ok(await ProducerAtResponse(userId, settings, certificates, cancellationToken).ConfigureAwait(false));
+        }
+        catch (OrganizationAccessDeniedException exception)
+        {
+            return OrganizationAccessDenied("atSettings", exception);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["atSettings"] = [exception.Message] });
+        }
+    }
+
+    private static byte[] DecodeFile(string? contentBase64)
+    {
+        try
+        {
+            return Convert.FromBase64String(contentBase64 ?? string.Empty);
+        }
+        catch (FormatException)
+        {
+            throw new ArgumentException("O ficheiro não chegou completo. Escolha-o outra vez.");
+        }
     }
 
     private static IResult OrganizationAccessDenied(string field, OrganizationAccessDeniedException exception) =>
@@ -5969,13 +6100,11 @@ public sealed record SaveVatReturnRequest(decimal PriorPeriodCredit);
 
 public sealed record PutAtCredentialsRequest(string? SubUser, string? Password, string? Periodicity, string? Environment);
 
-public sealed record PutAtGeneralSettingsRequest(
-    string? CertificateDirectory,
-    string? CertificateFileName,
-    string? PublicKeyDirectory,
-    string? PublicKeyFileName,
-    string? Password,
-    bool RemovePassword = false);
+public sealed record PutProducerCertificateRequest(string? FileName, string? ContentBase64, string? Password);
+
+public sealed record PutProducerPasswordRequest(string? Password);
+
+public sealed record PutProducerPublicKeyRequest(string? FileName, string? ContentBase64);
 
 public sealed record PutVatClassificationRequest(string? Rate, string? Nature, string? Region);
 

@@ -40,11 +40,22 @@ public sealed class UserAccount
     public bool IsActive { get; private set; }
 
     /// <summary>
+    /// Conta do produtor do software: a única que vê a configuração geral da aplicação
+    /// (certificado e chave da AT). É uma conta à parte, sem empresas, criada só pela
+    /// ferramenta de linha de comandos no servidor — nunca por um ecrã.
+    /// </summary>
+    public bool IsProducer { get; private set; }
+
+    /// <summary>
     /// O hash PBKDF2 da senha (<see cref="Microsoft.AspNetCore.Identity.PasswordHasher{TUser}"/>).
     /// <c>null</c> enquanto ninguém definir uma senha — sem hash, a conta não
     /// consegue autenticar-se; nunca há uma senha por omissão.
     /// </summary>
     public string? PasswordHash { get; private set; }
+
+    public void MarkAsProducer() => IsProducer = true;
+
+    public void ClearProducer() => IsProducer = false;
 
     public DateTimeOffset CreatedAtUtc { get; private set; }
 

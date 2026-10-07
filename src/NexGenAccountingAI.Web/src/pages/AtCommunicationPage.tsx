@@ -4,7 +4,6 @@ import { formatMovementDate, type AtCertificateStatus } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { useWorkContext } from '../app/WorkContext'
 import { AtCredentialsPanel } from './AtCredentialsPanel'
-import { AtGeneralSettingsPanel } from './AtGeneralSettingsPanel'
 
 function formatDate(value: string | null) {
   return value ? formatMovementDate(value.slice(0, 10)) : '—'
@@ -17,7 +16,6 @@ export function AtCommunicationPage() {
 
   const [status, setStatus] = useState<AtCertificateStatus | null>(null)
   const [error, setError] = useState('')
-  const [reload, setReload] = useState(0)
 
   useEffect(() => {
     if (!onDatabase) { setStatus(null); return }
@@ -27,7 +25,7 @@ export function AtCommunicationPage() {
       .then((value) => { if (!controller.signal.aborted) setStatus(value) })
       .catch((problem: unknown) => { if (!controller.signal.aborted) setError(problem instanceof Error ? problem.message : 'Não foi possível ler o estado do certificado.') })
     return () => controller.abort()
-  }, [onDatabase, atCertificateStatus, reload])
+  }, [onDatabase, atCertificateStatus])
 
   if (!onDatabase) {
     return <div className="page-stack">
@@ -37,7 +35,7 @@ export function AtCommunicationPage() {
   }
 
   return <div className="page-stack">
-    <header className="page-heading"><div><p className="eyebrow">Integração</p><h1>Comunicação com a AT</h1><p>O certificado de transporte identifica o produtor na ligação SOAP à AT e é comum a todas as empresas; o subutilizador e a senha do Portal das Finanças são de cada empresa. As senhas e a chave privada nunca saem do servidor.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
+    <header className="page-heading"><div><p className="eyebrow">Integração</p><h1>Comunicação com a AT</h1><p>O certificado de transporte identifica o produtor na ligação SOAP à AT e é comum a todas as empresas e a todos os postos; quem o configura é o produtor do software. O subutilizador e a senha do Portal das Finanças são de cada empresa. As senhas e a chave privada nunca saem do servidor.</p></div><span className="connection-badge database"><Database size={15} /> Ligado à base de dados</span></header>
 
     {error && <p className="save-status error">{error}</p>}
 
@@ -58,10 +56,8 @@ export function AtCommunicationPage() {
       </tbody></table></div>}
     </section>}
 
-    <AtGeneralSettingsPanel onChanged={() => setReload((value) => value + 1)} />
-
     <AtCredentialsPanel companyId={activeCompany.companyId} companyName={activeCompany.legalName} taxRegistrationNumber={activeCompany.taxRegistrationNumber} />
 
-    <p className="mr-hint">A cifra usa a Data Protection do ASP.NET Core, com o chaveiro protegido pelo DPAPI do Windows: os valores cifrados só se decifram nesta máquina e conta. O ambiente do servidor (<code>At:Environment</code>) e a versão do Modelo 22 continuam no ficheiro de configuração.</p>
+    <p className="mr-hint">As senhas ficam cifradas na base de dados, com uma cifra que qualquer posto desta instalação decifra, e nunca voltam a ser mostradas. O ambiente do servidor (<code>At:Environment</code>) e a versão do Modelo 22 continuam no ficheiro de configuração.</p>
   </div>
 }

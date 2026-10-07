@@ -128,19 +128,25 @@ O certificado de testes e a chave pública estão em descarregamento público
 no Portal das Finanças, mas **protegidos por senha**, que não está publicada.
 A AT enviou-a na resposta ao pedido de 2026-10-03, recebida a **2026-10-07**:
 os ficheiros estão conferidos. Desde 2026-10-07 o certificado e a chave
-pública configuram-se **na própria aplicação** ([ADR-0016](../architecture-decisions/ADR-0016-AT-GENERAL-SETTINGS.md)):
+pública carregam-se **na própria aplicação**, pelo **utilizador produtor**, e
+ficam **na base de dados** — qualquer posto os usa sem instalar nada
+([ADR-0017](../architecture-decisions/ADR-0017-PRODUCER-USER-AND-PORTABLE-AT-SETTINGS.md)):
 
-1. em «Comunicação com a AT», **Certificados da AT (configuração geral)**:
-   a pasta e o nome do `TesteWebservices.pfx`, a senha do certificado (fica
-   cifrada) e a pasta e o nome da chave pública `.cer` — vale para todas as
-   empresas e só o dono ou um administrador de uma empresa a altera;
+1. criar a conta do produtor, uma só vez, no servidor:
+   `dotnet run --project src/NexGenAccountingAI.Api -- create-producer-user "<email>" "<nome>"`
+   (a senha lê-se do stdin, com 12 caracteres ou mais); entrar com ela na
+   aplicação, onde só aparece a **Configuração geral**: escolher o
+   `TesteWebservices.pfx`, escrever a senha do certificado (fica cifrada, e o
+   ficheiro só é guardado se a senha o abrir) e escolher a chave pública `.cer`;
 2. guardar o subutilizador e a senha da empresa — nas **configurações da
    empresa** («Empresas e utilizadores» → Editar) ou em «Comunicação com a
    AT» (subutilizador com a autorização **WVA**);
 3. carregar em «Validar na AT» no ecrã da declaração de IVA.
 
 Para quem prefere ficheiros, a secção `At` do servidor continua a valer
-quando a configuração geral está em branco.
+quando a configuração geral está em branco. A cifra é portátil: protege a base
+de dados contra leitura casual, não de quem tem a base de dados e o programa —
+o controlo é o acesso só do produtor (ver o ADR-0017).
 
 Até lá, tudo o que não depende da AT está testado: a cifra das credenciais
 (fazendo o papel da AT, com a chave privada), o envelope SOAP, a leitura das
