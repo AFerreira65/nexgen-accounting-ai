@@ -45,6 +45,8 @@ export function ProducerSettingsPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  // Muda quando um ficheiro é guardado, para os campos de ficheiro (que o React não controla) voltarem a vazio.
+  const [fileKey, setFileKey] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -86,7 +88,7 @@ export function ProducerSettingsPage() {
     let contentBase64: string
     try { contentBase64 = await readBase64(certificateFile) } catch (problem) { setError(problem instanceof Error ? problem.message : 'Não foi possível ler o ficheiro.'); return }
     if (await change('PUT', '/certificate', { fileName: certificateFile.name, contentBase64, password }, 'Certificado guardado na base de dados; a senha ficou cifrada.')) {
-      setCertificateFile(null); setPassword('')
+      setCertificateFile(null); setPassword(''); setFileKey((value) => value + 1)
     }
   }
 
@@ -100,7 +102,7 @@ export function ProducerSettingsPage() {
     if (!publicKeyFile) { setError('Escolha o ficheiro da chave pública (CER).'); return }
     let contentBase64: string
     try { contentBase64 = await readBase64(publicKeyFile) } catch (problem) { setError(problem instanceof Error ? problem.message : 'Não foi possível ler o ficheiro.'); return }
-    if (await change('PUT', '/public-key', { fileName: publicKeyFile.name, contentBase64 }, 'Chave pública guardada na base de dados.')) setPublicKeyFile(null)
+    if (await change('PUT', '/public-key', { fileName: publicKeyFile.name, contentBase64 }, 'Chave pública guardada na base de dados.')) { setPublicKeyFile(null); setFileKey((value) => value + 1) }
   }
 
   const { settings, certificate, publicKey } = data ?? {}
@@ -134,7 +136,7 @@ export function ProducerSettingsPage() {
 
         <form className="builder-row" onSubmit={(event) => void installCertificate(event)}>
           <label>Ficheiro do certificado (PFX/P12)
-            <input type="file" accept=".pfx,.p12" onChange={(event) => setCertificateFile(event.target.files?.[0] ?? null)} />
+            <input key={`certificate-${fileKey}`} type="file" accept=".pfx,.p12" onChange={(event) => setCertificateFile(event.target.files?.[0] ?? null)} />
           </label>
           <label>Senha do certificado
             <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" />
@@ -167,7 +169,7 @@ export function ProducerSettingsPage() {
         </tbody></table></div>}
         <form className="builder-row" onSubmit={(event) => void installPublicKey(event)}>
           <label>Ficheiro da chave pública (CER)
-            <input type="file" accept=".cer,.crt,.pem" onChange={(event) => setPublicKeyFile(event.target.files?.[0] ?? null)} />
+            <input key={`public-key-${fileKey}`} type="file" accept=".cer,.crt,.pem" onChange={(event) => setPublicKeyFile(event.target.files?.[0] ?? null)} />
           </label>
           <button type="submit" className="button button-primary" disabled={busy}><Upload size={15} />Guardar a chave pública</button>
           {settings.publicKeyFileName && <button type="button" className="button" disabled={busy} onClick={() => void change('DELETE', '/public-key', undefined, 'Chave pública retirada.')}><Trash2 size={15} />Retirar a chave pública</button>}
