@@ -24,7 +24,7 @@ public sealed class AtSoapClient(
 
     public AtGatewayStatus Status()
     {
-        var certificateReady = certificates.TryGetCertificate(out var certificate);
+        var certificateReady = certificates.TryGetCertificate(out var certificate, forTls: false);
         certificate?.Dispose();
         using var publicKey = certificates.LoadPublicKey();
         var keyReady = publicKey is not null;
@@ -79,7 +79,14 @@ public sealed class AtSoapClient(
                 throw;
             }
 
-            var detail = exception.InnerException?.Message ?? exception.Message;
+            // A mensagem útil está na exceção mais funda («Authentication failed, see inner exception» não diz nada).
+            var root = exception;
+            while (root.InnerException is not null)
+            {
+                root = root.InnerException;
+            }
+
+            var detail = root.Message;
             return new AtDeclarationResult(false, null, $"Não foi possível comunicar com a AT: {detail}", [], [], null, null, stopwatch.ElapsedMilliseconds);
         }
         finally

@@ -93,8 +93,14 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSetting
         }
     }
 
-    /// <summary>O certificado de transporte, na memória deste posto (não se instala em lado nenhum).</summary>
-    internal bool TryGetCertificate([NotNullWhen(true)] out X509Certificate2? certificate)
+    /// <summary>
+    /// O certificado de transporte para uma ligação TLS: não se instala no repositório de certificados.
+    /// Para a autenticação do cliente, o Windows não aceita uma chave só em memória (modo efémero), por
+    /// isso a chave fica temporariamente no armazém de chaves do utilizador e sai dele quando o
+    /// certificado é libertado — quem chama tem de o libertar (<c>Dispose</c>).
+    /// </summary>
+    /// <param name="forTls"><c>false</c> só para verificar que abre (não toca no armazém de chaves).</param>
+    public bool TryGetCertificate([NotNullWhen(true)] out X509Certificate2? certificate, bool forTls = true)
     {
         certificate = null;
         var effective = settings.Resolve();
@@ -105,7 +111,7 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSetting
 
         try
         {
-            certificate = LoadCertificate(effective);
+            certificate = LoadCertificate(effective, forTls ? X509KeyStorageFlags.DefaultKeySet : X509KeyStorageFlags.EphemeralKeySet);
             return true;
         }
         catch (CryptographicException)
@@ -196,10 +202,10 @@ public sealed class AtCertificateProvider(IOptions<AtOptions> options, AtSetting
         }
     }
 
-    private static X509Certificate2 LoadCertificate(AtEffectiveSettings effective) =>
+    private static X509Certificate2 LoadCertificate(AtEffectiveSettings effective, X509KeyStorageFlags flags = X509KeyStorageFlags.EphemeralKeySet) =>
         effective.CertificateData is { } data
-            ? X509CertificateLoader.LoadPkcs12(data, effective.CertificatePassword, X509KeyStorageFlags.EphemeralKeySet)
-            : X509CertificateLoader.LoadPkcs12FromFile(effective.CertificatePath!, effective.CertificatePassword, X509KeyStorageFlags.EphemeralKeySet);
+            ? X509CertificateLoader.LoadPkcs12(data, effective.CertificatePassword, flags)
+            : X509CertificateLoader.LoadPkcs12FromFile(effective.CertificatePath!, effective.CertificatePassword, flags);
 
     private static X509Certificate2 LoadPublicKeyCertificate(AtEffectiveSettings effective) =>
         effective.PublicKeyData is { } data

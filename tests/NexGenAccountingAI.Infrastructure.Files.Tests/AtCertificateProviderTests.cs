@@ -167,6 +167,60 @@ public sealed class AtCertificateProviderTests
     }
 
     [TestMethod]
+    public async Task TheCertificateFromTheDatabaseCanAuthenticateTheClientInATlsConnection()
+    {
+        // No Windows, uma chave privada só em memória (modo efémero) não serve para a autenticação do
+        // cliente em TLS («As credenciais fornecidas ao pacote não foram reconhecidas»): foi assim que a
+        // primeira ligação à AT falhou. Uma ligação TLS local com certificado de cliente apanha-o.
+        var (path, password) = WriteSelfSignedPfx();
+        var bytes = File.ReadAllBytes(path);
+        File.Delete(path);
+        var provider = Provider(new AtOptions(), new AtGeneralSettingsSnapshot("a.pfx", bytes, null, null, protector.Protect(password)));
+        Assert.IsTrue(provider.TryGetCertificate(out var clientCertificate));
+        using var client = clientCertificate;
+
+        using var rsa = RSA.Create(2048);
+        var request = new CertificateRequest("CN=localhost", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        using var created = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+        using var serverCertificate = X509CertificateLoader.LoadPkcs12(created.Export(X509ContentType.Pfx, "x"), "x");
+
+        var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+        listener.Start();
+        try
+        {
+            var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+            var server = Task.Run(async () =>
+            {
+                using var accepted = await listener.AcceptTcpClientAsync();
+                using var ssl = new System.Net.Security.SslStream(accepted.GetStream(), false);
+                await ssl.AuthenticateAsServerAsync(new System.Net.Security.SslServerAuthenticationOptions
+                {
+                    ServerCertificate = serverCertificate,
+                    ClientCertificateRequired = true,
+                    RemoteCertificateValidationCallback = (_, _, _, _) => true,
+                });
+                return ssl.RemoteCertificate?.Subject;
+            });
+
+            using var tcp = new System.Net.Sockets.TcpClient();
+            await tcp.ConnectAsync(System.Net.IPAddress.Loopback, port);
+            using var clientSsl = new System.Net.Security.SslStream(tcp.GetStream(), false);
+            await clientSsl.AuthenticateAsClientAsync(new System.Net.Security.SslClientAuthenticationOptions
+            {
+                TargetHost = "localhost",
+                ClientCertificates = [client],
+                RemoteCertificateValidationCallback = (_, _, _, _) => true,
+            });
+
+            StringAssert.Contains(await server.WaitAsync(TimeSpan.FromSeconds(20)) ?? string.Empty, "NexGen Accounting AI Teste");
+        }
+        finally
+        {
+            listener.Stop();
+        }
+    }
+
+    [TestMethod]
     public void ThePasswordProtectedOnAnotherStationOpensTheCertificateHere()
     {
         var (path, password) = WriteSelfSignedPfx();
