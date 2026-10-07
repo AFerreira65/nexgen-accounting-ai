@@ -117,11 +117,11 @@ que já exista**:
     -Organisation "<Designacao legal>" -Department "<Departamento>" -Email "<email de contacto>"
 ```
 
-- **Tamanho da chave: 2048 bits.** É o que **todos** os manuais da AT indicam
-  (e-Fatura de outubro de 2025, IVA, IRC, IES, recapitulativa e DMIS). A
-  indicação de 4096 que consta de [`CERTIFICACAO_AT.md`](CERTIFICACAO_AT.md)
-  não se confirma em nenhum manual: se o formulário «Aderir ao Serviço» pedir
-  outro tamanho, usa-se `-Bits` com o valor do formulário.
+- **Tamanho da chave: 4096 bits.** O formulário «Aderir ao Serviço» recusa 2048
+  (2026-10-07: «a chave pública enviada no CSR tem de ser uma chave RSA de 4096
+  bits»), embora todos os manuais da AT (e-Fatura de outubro de 2025, IVA, IRC,
+  IES, recapitulativa e DMIS) ainda digam 2048. Vale o formulário; o script usa
+  4096 por omissão.
 - Tamanhos máximos: `ST` 32, `L` 32, `O` 180, `OU` 180, `E` 80.
 - O ficheiro a colar no formulário é o `518104486.csr` que o script mostra no
   fim (o conteúdo é confirmado no próprio ecrã). **O `.key` não se envia.**

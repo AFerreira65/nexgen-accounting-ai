@@ -5,7 +5,7 @@
 
 .DESCRIPTION
   Segue os manuais de integração da AT (secção "Assinatura certificado SSL (CSR)"): chave RSA de
-  2048 bits, campos sem acentos e dentro dos tamanhos máximos, CN = NIF do produtor.
+  4096 bits, campos sem acentos e dentro dos tamanhos máximos, CN = NIF do produtor.
   A chave privada fica SÓ nesta máquina, numa pasta fora do repositório com acesso apenas do
   utilizador atual, e nunca é enviada: à AT vai só o ficheiro .csr.
   Não substitui uma chave existente (perderia o certificado já emitido para ela).
@@ -23,9 +23,9 @@ param(
     [Parameter(Mandatory)][string]$Department,
     [Parameter(Mandatory)][string]$Email,
     [string]$Country = 'PT',
-    # 2048 é o que TODOS os manuais da AT indicam (e-Fatura, IVA, IRC, IES, recapitulativa, DMIS);
-    # se o formulário de adesão pedir outro tamanho, usa-se o do formulário.
-    [ValidateSet(2048, 3072, 4096)][int]$Bits = 2048,
+    # O formulário «Aderir ao Serviço» recusa 2048 («tem de ser uma chave RSA de 4096 bits»), embora os
+    # manuais da AT ainda digam 2048. Vale o formulário.
+    [ValidateSet(2048, 3072, 4096)][int]$Bits = 4096,
     [string]$OutDir = (Join-Path $env:LOCALAPPDATA 'AccountingAI\at-producao')
 )
 
