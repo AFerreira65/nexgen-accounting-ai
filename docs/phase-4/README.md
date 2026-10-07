@@ -125,10 +125,10 @@ Defeitos encontrados ao ler o código para a comparação com o mercado.
 ### O que falta para testar contra a AT
 
 O certificado de testes e a chave pública estão em descarregamento público
-no Portal das Finanças, mas **protegidos por senha**, que não está publicada
-(nem na página, nem nos manuais). Vem na resposta da AT ao pedido por email
-(enviado a 2026-10-03) ou na área de produtores de software do e-Fatura,
-com o login do produtor. Com isso:
+no Portal das Finanças, mas **protegidos por senha**, que não está publicada.
+A AT enviou-a na resposta ao pedido de 2026-10-03, recebida a **2026-10-07**:
+os ficheiros estão conferidos e a configuração `At` feita nos *user-secrets*
+(passos 1 e 2 já cumpridos). Falta o 3 e o 4:
 
 1. pôr o `TesteWebservices.pfx` numa pasta e indicar `At:Certificate:Path` e
    a senha (`AT_CERTIFICATE_PASSWORD` ou *user-secrets*);

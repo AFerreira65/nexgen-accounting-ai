@@ -1,5 +1,17 @@
 # Adesão aos webservices da AT — guia passo a passo
 
+> **Atualização de 2026-10-07 — a AT respondeu.** A resposta de `asi-cd@at.gov.pt`
+> trouxe, por ligação temporária, o certificado de testes e a chave pública
+> (`ChaveCifraPublicaAT2027.cer`) e a **senha do PFX** (indicada na própria
+> resposta; não fica registada neste repositório). Os dois ficheiros foram
+> conferidos — o PFX abre com a senha, com validade de 10/07/2026 a 06/01/2027;
+> a chave pública vale até 15/04/2027 — e ficam em
+> `%LOCALAPPDATA%\AccountingAI\at-testes\`, fora do repositório. A secção
+> `At` está configurada nos *user-secrets* da API (local, ficheiro, chave
+> pública e senha **cifrada** com `protect-at-secret`). A AT lembra que estes
+> certificados **não dispensam a certificação do software**. Passo seguinte:
+> os subutilizadores com a permissão de cada serviço e «Validar na AT».
+
 > **Atualização de 2026-10-05.** O certificado de testes (`TesteWebservices.pfx`,
 > válido até 06/01/2027) e a chave pública da AT (válida até 15/04/2027) estão
 > em descarregamento público na página «Certificados de segurança» do Suporte
@@ -23,7 +35,7 @@ Finanças e por email; o passo 3 (gerar a chave) faz-se nesta máquina; o resto
 
 - Produtor: RumaoAlgarismo - Unipessoal, Lda., NIF 518104486.
 - Pedido do certificado de testes e da chave pública **enviado** por email a
-  `asi-cd@at.gov.pt` — a aguardar resposta.
+  `asi-cd@at.gov.pt` (2026-10-03) — **respondido a 2026-10-07**, ver a atualização no topo.
 - Subutilizador de testes criado: `518104486/2`.
 - O formulário «Aderir ao serviço» pede só NIF, email, CSR e a aceitação do
   contrato — não pede número de certificado de programa de faturação. A
