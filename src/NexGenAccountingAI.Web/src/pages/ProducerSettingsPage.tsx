@@ -129,7 +129,7 @@ export function ProducerSettingsPage() {
           {settings.certificateFileName && <tr><td>Ficheiro</td><td>{settings.certificateFileName}</td></tr>}
           <tr><td>Assunto</td><td>{certificate.subject ?? '—'}</td></tr>
           <tr><td>Válido de</td><td>{formatDate(certificate.notBeforeUtc)} a {formatDate(certificate.notAfterUtc)}</td></tr>
-          <tr><td>Senha</td><td>{settings.passwordConfigured ? 'Guardada, cifrada (nunca é mostrada)' : 'Sem senha guardada'}</td></tr>
+          <tr><td>Senha</td><td>{settings.passwordConfigured ? 'Guardada, cifrada (nunca é mostrada)' : certificate.source === 'ficheiro' ? 'A do ficheiro de configuração do servidor' : 'Sem senha guardada'}</td></tr>
         </tbody></table></div>}
 
         <form className="builder-row" onSubmit={(event) => void installCertificate(event)}>

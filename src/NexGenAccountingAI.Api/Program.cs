@@ -153,7 +153,8 @@ if (args is ["set-user-password", ..])
     }
 
     var email = args[1];
-    var password = args.Length >= 3 ? args[2] : (await Console.In.ReadToEndAsync().ConfigureAwait(false)).Trim();
+    // O PowerShell 5.1 acrescenta um BOM (U+FEFF) ao texto enviado por pipe: não faz parte da senha.
+    var password = args.Length >= 3 ? args[2] : (await Console.In.ReadToEndAsync().ConfigureAwait(false)).Trim().TrimStart((char)0xFEFF);
     if (string.IsNullOrEmpty(password))
     {
         await Console.Error.WriteLineAsync("A senha não pode estar vazia.").ConfigureAwait(false);
@@ -190,7 +191,8 @@ if (args is ["create-producer-user", ..])
         return;
     }
 
-    var producerPassword = (await Console.In.ReadToEndAsync().ConfigureAwait(false)).Trim();
+    // O PowerShell 5.1 acrescenta um BOM (U+FEFF) ao texto enviado por pipe: não faz parte da senha.
+    var producerPassword = (await Console.In.ReadToEndAsync().ConfigureAwait(false)).Trim().TrimStart((char)0xFEFF);
     if (producerPassword.Length < 12)
     {
         await Console.Error.WriteLineAsync("Indique a senha pelo stdin, com pelo menos 12 caracteres.").ConfigureAwait(false);

@@ -280,6 +280,7 @@ html[data-theme='dark'] .management-report-alerts ul { color: #d3b58f; }
 .producer-role { padding: 3px 10px; border-radius: 999px; color: #0b6a64; background: #e1f4f0; font-size: 11px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
 .producer-user { margin-left: auto; color: #4d5f68; font-size: 13px; font-weight: 600; }
 .producer-main { max-width: 980px; margin: 0 auto; padding: 28px clamp(20px, 3vw, 42px) 60px; }
+.producer-main .panel > .builder-row, .producer-main .panel > .mr-hint { margin: 14px 18px; }
 .producer-main .builder-row label { display: grid; flex: 1 1 220px; gap: 4px; color: #52646c; font-size: 11px; font-weight: 700; }
 html[data-theme='dark'] .producer-shell { background: #102129; }
 html[data-theme='dark'] .producer-bar { border-color: #24393f; background: #14262e; }
