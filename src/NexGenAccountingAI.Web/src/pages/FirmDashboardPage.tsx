@@ -94,7 +94,7 @@ export function FirmDashboardPage() {
 
     {dashboard && companies.length > 0 && <section className="panel">
       <div className="table-wrap"><table>
-        <thead><tr><th>Empresa</th><th className="numeric">Em atraso</th><th>Próxima obrigação</th><th className="numeric">Por conferir</th><th className="numeric">Compras por lançar</th><th className="numeric">Bancos por conciliar</th><th className="numeric">Automáticos (12 meses)</th></tr></thead>
+        <thead><tr><th>Empresa</th><th className="numeric">Em atraso</th><th>Próxima obrigação</th><th className="numeric">Por conferir</th><th className="numeric">Compras por lançar</th><th className="numeric">Bancos por conciliar</th><th className="numeric">Tarefas</th><th className="numeric">Automáticos (12 meses)</th></tr></thead>
         <tbody>{companies.map((company) => <tr key={company.companyId}>
           <td><button className="text-link" type="button" onClick={() => open(company, '/')}>{company.legalName}</button><small>NIF {company.taxRegistrationNumber}{company.responsible && company.responsible.length > 0 ? ` · responsável: ${company.responsible.map((item) => item.displayName).join(', ')}` : ''}</small></td>
           <td className="numeric">{count(company.overdueObligations, '/obrigacoes', company, true)}</td>
@@ -102,6 +102,7 @@ export function FirmDashboardPage() {
           <td className="numeric">{count(company.pendingReview, '/movimentos', company)}</td>
           <td className="numeric">{count(company.purchasesToPost, '/lancamentos-sugeridos', company)}</td>
           <td className="numeric">{count(company.unreconciledBankLines, '/bancos', company)}</td>
+          <td className="numeric">{count(company.openTasks ?? 0, '/tarefas-gabinete', company)}{(company.overdueTasks ?? 0) > 0 && <small><span className="badge warning">{company.overdueTasks} em atraso</span></small>}</td>
           <td className="numeric">{company.entriesLast12Months === 0 ? '—' : percent(company.automaticShare)}<small>{company.automaticEntriesLast12Months} de {company.entriesLast12Months}</small>{trend(company) && <small>{trend(company)}</small>}</td>
         </tr>)}</tbody>
       </table></div>

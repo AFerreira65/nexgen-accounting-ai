@@ -580,6 +580,68 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   comentários e histórico das tarefas, notificações, a consola de obrigações em lote (AT-8), o portal do
   cliente e a receção de documentos por email (espera pelos dados do servidor de email).
 
+### F4E-02 — Consola de obrigações em lote (AT-8)
+
+- **Ecrã** `/consola-obrigacoes` (Fiscal): as obrigações de **todas as empresas** a que o utilizador
+  tem acesso, ordenadas por prazo, com filtros de período, estado (pendentes, em atraso, entregues,
+  dispensadas), tipo de obrigação e «só as empresas de que sou responsável».
+- **Em lote:** escolhem-se várias linhas e marca-se «entregues» (com a data), «dispensadas» ou «voltar
+  a pendentes». O ajuste de um prazo ou a nota de um período continuam no calendário de cada empresa.
+- **Permissões (ADR-0018):** as rotas `GET/POST .../users/{userId}/obligations-console` não têm
+  empresa, por isso o `ObligationConsoleService` verifica por empresa: só entra quem tem
+  `obligations.view` e só se altera com `obligations.edit`. Um lote com uma empresa recusada é
+  recusado inteiro, sem alterar nada.
+- Teste: `ObligationConsoleServiceTests` (empresas com e sem acesso, ordem, responsável, lote recusado
+  e lote feito). Não visto no browser.
+
+### F4E-03 e F4E-04 — Email: receção de documentos e envio (ADR-0019)
+
+- **Conta de email do utilizador** (Definições → «A minha conta de email»): Microsoft 365, Gmail/Google
+  Workspace (OAuth2, com o MFA no login do fornecedor) ou servidor próprio SMTP/IMAP (senha de aplicação
+  quando há MFA). Envia um email de teste e liga o resumo diário. O produtor regista as aplicações OAuth
+  no ecrã de configuração geral.
+- **Envio:** botão «Email» nas listagens (anexo em PDF ou Excel gerado no servidor), «Enviar por email» no
+  relatório para a banca e o resumo diário de prazos e tarefas (`DailyDigestJob`).
+- **Receção:** a caixa do gabinete é lida de 5 em 5 minutos (`InboxPollJob`); os anexos de documentos
+  passam ao arquivo digital da empresa pelo NIF ou pelo remetente, e o resto espera na **Caixa de entrada**
+  (Dados) por uma empresa. Cada email trata-se uma só vez.
+- Projeto novo `Infrastructure.Mail` (MailKit, MIT). Testes: `EmailTests` (contas, OAuth com servidor
+  simulado, receção, resumo) e `EmailAccountPanel.test.tsx`. **Nunca exercitado contra servidores reais.**
+
+### F4E-05 — Tarefas no painel, avisos por email e comentários
+
+- **Painel do gabinete:** nova coluna «Tarefas» (por fazer, e quantas em atraso) que leva a «Tarefas do
+  gabinete»; as tarefas em atraso contam para a ordem de atenção das empresas.
+- **Aviso de atribuição:** quando uma tarefa é criada ou passa para outro responsável, este recebe um
+  email com a conta de email de quem atribuiu (se a configurou; nunca falha a gravação).
+- **Comentários** (`accounting.FirmTaskComments`, migração `FirmTaskComments`): em cada tarefa, por baixo
+  da linha; o responsável e quem a criou são avisados por email dos comentários dos outros. Ler exige
+  `tasks.view`, comentar `tasks.edit`.
+- Testes: `EmailTests` (avisos, comentários, contagens do painel). Ainda por fazer na 4E: o portal do
+  cliente.
+
+### F4E-06 — Portal do cliente (ADR-0020)
+
+- O gabinete convida clientes (Dados → «Portal do cliente»); o cliente recebe um link por email, escolhe
+  uma senha e a conta fica ativa. Entra em `/cliente` e vê **Documentos, Relatórios, Balancetes e Gestão**
+  das empresas a que tem acesso, para descarregar.
+- Publica-se pelo botão «Portal» das listagens, «Publicar no portal» no relatório para a banca e
+  «Partilhar no portal» no arquivo digital. Sessão própria (cookie à parte): nunca chega à aplicação.
+- O cliente também **envia documentos** (vão para o arquivo da empresa) e tem «esqueci-me da senha».
+- Testes: `ClientPortalTests`, `TheClientPortalHasItsOwnSessionAndShowsOnlyWhatWasPublished` (API) e
+  `ClientPortalApp.test.tsx`. Não visto no browser.
+
+### Chave da IA na configuração geral
+
+- A chave da API da Anthropic deixa de ser uma configuração do servidor: o **produtor** introduz-a no ecrã da
+  configuração geral («IA — chave da Anthropic»), fica **cifrada** na base de dados (`organization.AiGeneralSettings`,
+  uma só linha, cifra portátil `enc:v2:`) e **vale para todas as empresas e postos**. Há «Testar a chave»
+  (um pedido mínimo à Anthropic) e «Retirar». A chave nunca volta ao ecrã; só se mostra como acaba.
+- Ordem de resolução (`AiClientProvider`): configuração geral → secção `Ai` do ficheiro → `ANTHROPIC_API_KEY`.
+  Mudar a chave refaz o cliente sozinho (memória de 20 s entre postos). Cada empresa continua a ligar a IA
+  nas suas definições.
+- Testes: `AiGeneralSettingsTests`, `AiClientProviderTests`, `AiKeyPanel.test.tsx`.
+
 ## Fase 4F — Diferenciação
 
 ### F4F-01 — Deteção de anomalias

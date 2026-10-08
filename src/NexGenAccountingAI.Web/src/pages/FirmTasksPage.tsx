@@ -1,5 +1,5 @@
-import { CalendarClock, CircleAlert, CircleCheck, Database, ListTodo, Pencil, Plus, RotateCcw, Search, Trash2, X } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { CalendarClock, CircleAlert, CircleCheck, Database, ListTodo, MessageSquare, Pencil, Plus, RotateCcw, Search, Send, Trash2, X } from 'lucide-react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { signalLoadFailure } from '../app/loadFailure'
 import {
@@ -9,6 +9,7 @@ import {
 import { companyRoleLabel } from '../app/companyRoles'
 import { useWorkContext } from '../app/WorkContext'
 
+type TaskComment = { id: string; authorName: string; text: string; createdAtUtc: string; mine: boolean }
 type Draft = { id: string | null; companyId: string; title: string; description: string; dueDate: string; priority: TaskPriority; assigneeUserId: string }
 
 const dateFormat = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'short' })
@@ -36,6 +37,28 @@ export function FirmTasksPage() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [reload, setReload] = useState(0)
+  const [commenting, setCommenting] = useState<string | null>(null)
+  const [comments, setComments] = useState<TaskComment[]>([])
+  const [commentText, setCommentText] = useState('')
+
+  // Os comentários de uma tarefa abrem por baixo dela, carregados quando se pede.
+  async function toggleComments(task: FirmTask) {
+    if (commenting === task.id) { setCommenting(null); return }
+    setCommenting(task.id); setComments([]); setCommentText(''); setError('')
+    const response = await fetch(`${root}/companies/${task.companyId}/tasks/${task.id}/comments`)
+    if (response.ok) setComments(await response.json() as TaskComment[])
+    else setError(await refusal(response, 'Não foi possível ler os comentários.'))
+  }
+
+  async function addComment(task: FirmTask) {
+    if (!commentText.trim()) return
+    const response = await fetch(`${root}/companies/${task.companyId}/tasks/${task.id}/comments`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: commentText }),
+    })
+    if (!response.ok) { setError(await refusal(response, 'Não foi possível guardar o comentário.')); return }
+    setComments([...comments, await response.json() as TaskComment])
+    setCommentText('')
+  }
 
   const canWrite = (companyId: string) => companies.find((company) => company.companyId === companyId)?.role !== 'Viewer'
   const writable = companies.filter((company) => company.role !== 'Viewer')
@@ -158,7 +181,7 @@ export function FirmTasksPage() {
         <tbody>{tasks.map((task) => {
           const closed = task.status === 'done' || task.status === 'cancelled'
           const editable = canWrite(task.companyId)
-          return <tr key={task.id} className={closed ? 'muted-row' : ''}>
+          return <Fragment key={task.id}><tr className={closed ? 'muted-row' : ''}>
             <td>
               {editable && (closed
                 ? <button type="button" className="icon-button" aria-label={`Reabrir ${task.title}`} onClick={() => void setStatus(task, 'open')}><RotateCcw size={15} /></button>
@@ -177,12 +200,20 @@ export function FirmTasksPage() {
             <td>{PRIORITY_LABELS[task.priority]}</td>
             <td>{task.assigneeName ?? '—'}{task.mine ? ' (eu)' : ''}</td>
             <td className="numeric">
+              <button type="button" className="icon-button" aria-label={`Comentários de ${task.title}`} aria-expanded={commenting === task.id} onClick={() => void toggleComments(task)}><MessageSquare size={15} /></button>
               {editable && <>
                 <button type="button" className="icon-button" aria-label={`Editar ${task.title}`} onClick={() => setDraft({ id: task.id, companyId: task.companyId, title: task.title, description: task.description ?? '', dueDate: task.dueDate ?? '', priority: task.priority, assigneeUserId: task.assigneeUserId ?? '' })}><Pencil size={15} /></button>
                 <button type="button" className="icon-button" aria-label={`Apagar ${task.title}`} onClick={() => void remove(task)}><Trash2 size={15} /></button>
               </>}
             </td>
           </tr>
+          {commenting === task.id && <tr><td /><td colSpan={6}>
+            {comments.length === 0 && <small>Ainda não há comentários.</small>}
+            {comments.map((comment) => <div key={comment.id}><strong>{comment.mine ? 'Eu' : comment.authorName}</strong> <small>{new Date(comment.createdAtUtc).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' })}</small><div>{comment.text}</div></div>)}
+            {editable && <div className="builder-row"><label>Novo comentário<input aria-label="Novo comentário" value={commentText} maxLength={2000} onChange={(event) => setCommentText(event.target.value)} /></label>
+              <button type="button" className="button button-secondary" disabled={!commentText.trim()} onClick={() => void addComment(task)}><Send size={15} /> Comentar</button></div>}
+          </td></tr>}
+          </Fragment>
         })}</tbody>
       </table></div>}
       {companies.some((company) => company.role === 'Viewer') && <p className="statement-note">Nas empresas em que tem a função «{companyRoleLabel('Viewer')}» vê as tarefas, mas não as altera.</p>}

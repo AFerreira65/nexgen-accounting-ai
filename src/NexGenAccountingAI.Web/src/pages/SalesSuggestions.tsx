@@ -11,7 +11,7 @@ const typeLabels: Record<string, string> = { FT: 'Fatura', FS: 'Fatura simplific
 
 /** O separador «Vendas» dos lançamentos sugeridos: documentos de um SAF-T de faturação, com regra por taxa de IVA. */
 export function SalesSuggestions({ fromDate, toDate }: { fromDate: string; toDate: string }) {
-  const { activeCompany, importSalesDocuments, salesSuggestedEntries, finalizeSalesSuggestedEntries, salesEntryRules, saveSalesEntryRule, deleteSalesEntryRule, entryTemplates } = useWorkContext()
+  const { activeCompany, can, importSalesDocuments, salesSuggestedEntries, finalizeSalesSuggestedEntries, salesEntryRules, saveSalesEntryRule, deleteSalesEntryRule, entryTemplates } = useWorkContext()
   const companyId = activeCompany.companyId
   const inputRef = useRef<HTMLInputElement>(null)
   const [report, setReport] = useState<SalesSuggestedEntriesReport | null>(null)
@@ -106,7 +106,7 @@ export function SalesSuggestions({ fromDate, toDate }: { fromDate: string; toDat
     {error && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
     <SuggestionOutcomes outcomes={outcomes} />
 
-    <section className="panel">
+    {can('saftimport.import') && <section className="panel">
       <div className="panel-heading"><div><h2>Importar o SAF-T de faturação</h2><p>Os documentos de venda do ficheiro (faturas, faturas simplificadas e recibo, notas de crédito e de débito) ficam guardados com a base e o IVA por taxa. Reimportar não duplica; um ficheiro de outra empresa é recusado.</p></div></div>
       <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
         <input ref={inputRef} type="file" accept=".xml,application/xml,text/xml" className="sr-only" aria-label="Escolher SAF-T de faturação" onChange={(event) => choose(event.target.files)} />
@@ -118,7 +118,7 @@ export function SalesSuggestions({ fromDate, toDate }: { fromDate: string; toDat
       </div>
       {pendingFile?.preview.warnings.map((warning) => <p key={warning} className="save-status"><CircleAlert size={15} /> {warning}</p>)}
       {imported && <p className="save-status"><CircleCheck size={15} /> Importados {imported.imported} documentos{imported.from ? ` de ${formatMovementDate(imported.from)} a ${formatMovementDate(imported.to ?? imported.from)}` : ''}.</p>}
-    </section>
+    </section>}
 
     {report && <section className="metadata-strip">
       <span><small>Documentos no período</small><strong>{report.documentCount}</strong></span>
@@ -136,9 +136,9 @@ export function SalesSuggestions({ fromDate, toDate }: { fromDate: string; toDat
           {rules.map((rule) => <tr key={rule.taxPercentage}>
             <td>{percentLabel(rule.taxPercentage)}</td>
             <td>{rule.entryTemplateCode} — {rule.entryTemplateName}{rule.isActive ? '' : ' (inativa)'}</td>
-            <td><button className="icon-button" type="button" aria-label={`Apagar a regra de ${percentLabel(rule.taxPercentage)}`} disabled={busy} onClick={() => removeRule(rule.taxPercentage)}><Trash2 size={16} /></button></td>
+            <td>{can('suggested.post') && <button className="icon-button" type="button" aria-label={`Apagar a regra de ${percentLabel(rule.taxPercentage)}`} disabled={busy} onClick={() => removeRule(rule.taxPercentage)}><Trash2 size={16} /></button>}</td>
           </tr>)}
-          {templates.length > 0 && report.percentagesWithoutRule.map((percentage) => <tr key={`novo-${percentage}`}>
+          {can('suggested.post') && templates.length > 0 && report.percentagesWithoutRule.map((percentage) => <tr key={`novo-${percentage}`}>
             <td>{percentLabel(percentage)}</td>
             <td><select aria-label={`Lançamento-tipo para ${percentLabel(percentage)}`} value={ruleTemplate[String(percentage)] ?? ''} onChange={(event) => setRuleTemplate((current) => ({ ...current, [String(percentage)]: event.target.value }))}><option value="">Escolher…</option>{templates.map((template) => <option key={template.code} value={template.code}>{template.code} — {template.name}</option>)}</select></td>
             <td><button className="button button-secondary" type="button" disabled={busy || !ruleTemplate[String(percentage)]} onClick={() => createRule(percentage)}>Criar regra</button></td>
@@ -153,13 +153,13 @@ export function SalesSuggestions({ fromDate, toDate }: { fromDate: string; toDat
     {items.length > 0 && <section className="panel">
       <div className="panel-heading"><div><h2>Documentos por lançar</h2><p>{report?.readyCount === items.length ? 'Todos com sugestão pronta.' : `${report?.readyCount ?? 0} de ${items.length} com sugestão pronta.`} As notas de crédito invertem os lados.</p></div></div>
       <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
-        <button className="button button-primary" type="button" onClick={finalize} disabled={busy || selected.size === 0}><WandSparkles size={16} /> {busy ? 'A lançar…' : `Finalizar ${selected.size} ${selected.size === 1 ? 'selecionado' : 'selecionados'}`}</button>
+        {can('suggested.post') && <button className="button button-primary" type="button" onClick={finalize} disabled={busy || selected.size === 0}><WandSparkles size={16} /> {busy ? 'A lançar…' : `Finalizar ${selected.size} ${selected.size === 1 ? 'selecionado' : 'selecionados'}`}</button>}
         <ExportButtons run={exportCsv} />
       </div>
       <div className="table-wrap"><table>
         <thead><tr><th><span className="sr-only">Selecionar</span></th><th>Data</th><th>Documento</th><th>Cliente</th><th className="numeric">Total</th><th>Lançamento proposto</th></tr></thead>
         <tbody>{items.map((item) => <tr key={item.documentId}>
-          <td><input type="checkbox" aria-label={`Selecionar ${item.invoiceNo}`} disabled={!item.ready} checked={selected.has(item.documentId)} onChange={() => toggle(item.documentId)} /></td>
+          <td>{can('suggested.post') && <input type="checkbox" aria-label={`Selecionar ${item.invoiceNo}`} disabled={!item.ready} checked={selected.has(item.documentId)} onChange={() => toggle(item.documentId)} />}</td>
           <td>{formatMovementDate(item.invoiceDate)}</td>
           <td>{item.invoiceNo}<br /><small>{typeLabels[item.invoiceType] ?? item.invoiceType} · {item.percentages.map(percentLabel).join(' / ')}</small></td>
           <td>{item.customerName || '—'}<br /><small>NIF {item.customerTaxId || '—'}</small></td>

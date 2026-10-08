@@ -1,15 +1,15 @@
-import { Archive, CircleAlert, CircleCheck, Database, FileUp, QrCode, Search, Trash2 } from 'lucide-react'
+import { Archive, CircleAlert, CircleCheck, Database, FileUp, Globe, QrCode, Search, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { euro, formatMovementDate, type DocumentAttachmentRow, type InvoiceQrLookup } from '../app/demo-data'
 import { usePublishRecord } from '../app/RecordContext'
 import { canScanQrInBrowser, readInvoiceQr } from '../app/qrScan'
-import { useWorkContext } from '../app/WorkContext'
+import { problemMessage, useWorkContext } from '../app/WorkContext'
 
 const size = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toLocaleString('pt-PT', { maximumFractionDigits: 1 })} MB`)
 
 export function ArchivePage() {
-  const { activeCompany, source, attachments, uploadAttachment, updateAttachment, deleteAttachment, attachmentUrl, lookupInvoiceQr } = useWorkContext()
+  const { activeCompany, can, user, source, attachments, uploadAttachment, updateAttachment, deleteAttachment, attachmentUrl, lookupInvoiceQr } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const inputRef = useRef<HTMLInputElement>(null)
@@ -24,6 +24,22 @@ export function ArchivePage() {
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   usePublishRecord(undefined, undefined)
+
+  // Partilha um documento do arquivo com os clientes do portal (o ficheiro lê-se do arquivo, não se copia).
+  async function shareOnPortal(attachmentId: string, fileName: string) {
+    setBusy(true); setError(''); setNotice('')
+    try {
+      const response = await fetch(`/api/v1/development/users/${user.id}/companies/${companyId}/portal/items/attachment`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attachmentId }),
+      })
+      if (!response.ok) throw new Error(await problemMessage(response))
+      setNotice(`${fileName} partilhado no portal do cliente.`)
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Não foi possível partilhar o documento.')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   useEffect(() => {
     if (!onDatabase) { setRows([]); return }
@@ -106,13 +122,13 @@ export function ArchivePage() {
     {error && <p className="save-status error"><CircleAlert size={15} /> {error}</p>}
     {notice && <p className="save-status"><CircleCheck size={15} /> {notice}</p>}
 
-    <section className="panel">
+    {can('archive.create') && <section className="panel">
       <div className="panel-heading"><div><h2>Arquivar</h2><p>PDF, PNG, JPEG, WebP, TIFF ou XML, até 15 MB cada. {canScanQrInBrowser() ? 'O código QR da fatura é lido automaticamente nas imagens e nas três primeiras páginas dos PDF, sem o documento sair do computador.' : 'Este navegador não lê códigos QR: use o leitor de códigos abaixo.'}</p></div></div>
       <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
         <input ref={inputRef} type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.tif,.tiff,.xml" className="sr-only" aria-label="Escolher documentos" onChange={(event) => upload(event.target.files)} />
         <button className="button button-primary" type="button" disabled={busy} onClick={() => inputRef.current?.click()}><FileUp size={16} /> Escolher documentos</button>
       </div>
-    </section>
+    </section>}
 
     <section className="panel">
       <div className="panel-heading"><div><h2>Ler o código QR de uma fatura</h2><p>Aponte o leitor de códigos ao QR da fatura (ou cole o texto) e confirme: a aplicação procura a fatura no e-Fatura, o documento de venda, os lançamentos com o mesmo número e os documentos já arquivados.</p></div></div>
@@ -125,7 +141,7 @@ export function ArchivePage() {
         <span><small>Total</small><strong>{euro.format(lookup.qr.grossTotal)}</strong><small>impostos {euro.format(lookup.qr.taxTotal)}</small></span>
         <span><small>{lookup.isSale ? 'Documento de venda importado' : 'Fatura no e-Fatura'}</small><strong>{(lookup.isSale ? lookup.salesDocumentId : lookup.eFaturaPurchaseId) ? 'Sim' : 'Não'}</strong>{!lookup.isSale && !lookup.eFaturaPurchaseId && <small><Link to="/compras-efatura">importar o CSV</Link></small>}</span>
         <span><small>Lançamentos com o mesmo número</small><strong>{lookup.entryReferences.length === 0 ? '—' : lookup.entryReferences.map((reference, index) => <span key={reference}>{index > 0 ? ', ' : ''}<Link to={`/movimentos/${reference}`}>{reference}</Link></span>)}</strong>{lookup.entryReferences.length === 0 && <small><Link to="/lancamentos-sugeridos">ver as sugestões</Link></small>}</span>
-        <span><small>No arquivo</small><strong>{lookup.attachmentIds.length === 0 ? 'Não' : 'Sim'}</strong>{scannedAttachment && !scannedAttachment.entryReference && lookup.entryReferences.length === 1 && <button className="text-link" type="button" disabled={busy} onClick={() => save(scannedAttachment, { entryReference: lookup.entryReferences[0] })}>Ligar a {lookup.entryReferences[0]}</button>}</span>
+        <span><small>No arquivo</small><strong>{lookup.attachmentIds.length === 0 ? 'Não' : 'Sim'}</strong>{can('archive.edit') && scannedAttachment && !scannedAttachment.entryReference && lookup.entryReferences.length === 1 && <button className="text-link" type="button" disabled={busy} onClick={() => save(scannedAttachment, { entryReference: lookup.entryReferences[0] })}>Ligar a {lookup.entryReferences[0]}</button>}</span>
       </div>}
       {lookup?.qr.warnings.map((warning) => <p key={warning} className="save-status"><CircleAlert size={15} /> {warning}</p>)}
     </section>
@@ -146,12 +162,12 @@ export function ArchivePage() {
               ? <>{row.qrDocumentNo}<small>NIF {row.qrIssuerTaxId}{row.qrDocumentDate ? ` · ${formatMovementDate(row.qrDocumentDate)}` : ''}{row.qrGrossTotal !== null ? ` · ${euro.format(row.qrGrossTotal)}` : ''}</small></>
               : <small>sem QR lido</small>}</td>
             <td>{row.entryReference
-              ? <span className="inline-check"><Link to={`/movimentos/${row.entryReference}`}>{row.entryReference}</Link>{row.canDelete && <button className="text-link" type="button" disabled={busy} onClick={() => save(row, { entryReference: null })}>desligar</button>}</span>
-              : <form className="inline-check" onSubmit={(event) => { event.preventDefault(); save(row, { entryReference: (references[row.id] ?? '').trim().toUpperCase() || null }) }}>
+              ? <span className="inline-check"><Link to={`/movimentos/${row.entryReference}`}>{row.entryReference}</Link>{can('archive.edit') && row.canDelete && <button className="text-link" type="button" disabled={busy} onClick={() => save(row, { entryReference: null })}>desligar</button>}</span>
+              : can('archive.edit') && <form className="inline-check" onSubmit={(event) => { event.preventDefault(); save(row, { entryReference: (references[row.id] ?? '').trim().toUpperCase() || null }) }}>
                 <input aria-label={`Lançamento de ${row.fileName}`} value={references[row.id] ?? ''} onChange={(event) => setReferences((current) => ({ ...current, [row.id]: event.target.value }))} placeholder="referência" />
                 <button className="button button-secondary" type="submit" disabled={busy || !(references[row.id] ?? '').trim()}>Ligar</button>
               </form>}</td>
-            <td><button className="icon-button" type="button" aria-label={`Apagar ${row.fileName}`} title={row.canDelete ? 'Apagar' : 'Documento de um lançamento conferido: conserva-se'} disabled={busy || !row.canDelete} onClick={() => remove(row)}><Trash2 size={16} /></button></td>
+            <td>{can('portal.publish') && <button className="icon-button" type="button" aria-label={`Partilhar ${row.fileName} no portal do cliente`} title="Partilhar no portal do cliente" disabled={busy} onClick={() => void shareOnPortal(row.id, row.fileName)}><Globe size={15} /></button>}{can('archive.delete') && <button className="icon-button" type="button" aria-label={`Apagar ${row.fileName}`} title={row.canDelete ? 'Apagar' : 'Documento de um lançamento conferido: conserva-se'} disabled={busy || !row.canDelete} onClick={() => remove(row)}><Trash2 size={16} /></button>}</td>
           </tr>)}</tbody>
         </table></div>}
     </section>

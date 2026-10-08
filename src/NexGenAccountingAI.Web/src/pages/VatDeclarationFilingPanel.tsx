@@ -138,13 +138,20 @@ export function AtFilingPanel({ companyId, resetKey, service, xmlPath, sendPath,
   </section>
 }
 
+/** O que se mostra no lugar de um envio à AT que o utilizador não pode fazer. */
+function SendNotAllowed({ reason }: { reason: string }) {
+  return <section className="panel"><div className="panel-heading"><div><h2>Entrega à AT</h2><p>{reason}</p></div></div></section>
+}
+
 /** A declaração periódica de IVA na entrega à AT. */
 export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: { companyId: string; from: string; to: string; priorCredit: number | null }) {
+  const { can } = useWorkContext()
   const query = () => {
     const params = new URLSearchParams({ from, to })
     if (priorCredit !== null) params.set('priorCredit', String(priorCredit))
     return params
   }
+  if (!can('at.send_vat')) return <SendNotAllowed reason="O seu grupo de permissões não inclui o envio da declaração de IVA à AT." />
   return <AtFilingPanel
     companyId={companyId} resetKey={`${from}|${to}|${priorCredit}`} service="dpiva" defaultFileName="dpiva.xml"
     xmlPath={`vat-declaration/xml?${query()}`}
@@ -155,6 +162,8 @@ export function VatDeclarationFilingPanel({ companyId, from, to, priorCredit }: 
 
 /** O Modelo 22 na entrega à AT. */
 export function Modelo22FilingPanel({ companyId, year }: { companyId: string; year: number }) {
+  const { can } = useWorkContext()
+  if (!can('at.send_modelo22')) return <SendNotAllowed reason="O envio do Modelo 22 usa a senha da AT do contabilista: só um utilizador marcado como contabilista o vê." />
   return <AtFilingPanel
     companyId={companyId} resetKey={String(year)} service="modelo22" defaultFileName={`modelo22-${year}.xml`}
     xmlPath={`modelo-22/xml?year=${year}`}
@@ -165,6 +174,8 @@ export function Modelo22FilingPanel({ companyId, year }: { companyId: string; ye
 
 /** A IES (Anexo A) na entrega à AT. */
 export function IesFilingPanel({ companyId, year }: { companyId: string; year: number }) {
+  const { can } = useWorkContext()
+  if (!can('at.send_ies')) return <SendNotAllowed reason="O envio da IES usa a senha do contabilista: só um utilizador marcado como contabilista o vê." />
   return <AtFilingPanel
     companyId={companyId} resetKey={String(year)} service="ies" defaultFileName={`ies-${year}.xml`} accountantLogin
     xmlPath={`ies/xml?year=${year}`}

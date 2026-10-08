@@ -37,6 +37,22 @@ type PendingExport = { format: Exclude<ExportFormat, 'csv'>; url: string; title:
 
 let lastRows: CsvCell[][] | null = null
 let pending: PendingExport | null = null
+let capture: ((rows: CsvCell[][] | null) => void) | null = null
+
+/**
+ * Pede à função de exportação do ecrã as linhas que mostra, sem descarregar nada: serve o «Enviar por email»,
+ * que manda as linhas ao servidor para ele gerar o anexo. Devolve `null` se o ecrã não tinha nada para exportar.
+ */
+export function captureRows(run: () => unknown): Promise<CsvCell[][] | null> {
+  return new Promise((resolve) => {
+    capture = resolve
+    lastRows = null
+    try { void run() } finally {
+      // Se a função do ecrã não chamou `downloadCsv` (nada para exportar), termina sem linhas.
+      window.setTimeout(() => { if (capture === resolve) { capture = null; resolve(null) } }, 0)
+    }
+  })
+}
 
 /** Anuncia o formato do próximo `downloadCsv`. A promessa termina com o descarregamento. */
 export function beginExport(format: Exclude<ExportFormat, 'csv'>, url: string, title: string): Promise<void> {
@@ -85,6 +101,13 @@ async function exportOnServer(request: PendingExport, filename: string, rows: Cs
  * Excel ou PDF (ver acima), o ficheiro gerado pelo servidor com as mesmas linhas.
  */
 export function downloadCsv(filename: string, csv: string): void {
+  if (capture) {
+    const done = capture
+    capture = null
+    done(lastRows)
+    return
+  }
+
   const request = pending
   pending = null
   if (request && lastRows) {

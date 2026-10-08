@@ -5,6 +5,7 @@ import { ClosingPage } from './ClosingPage'
 let role = 'Accountant'
 vi.mock('../app/WorkContext', () => ({
   useWorkContext: () => ({
+    can: () => true,
     activeCompany: { companyId: 'c1', legalName: 'Empresa', settings: { defaultFiscalYear: 2026 } },
     companies: [{ companyId: 'c1', legalName: 'Empresa', role, settings: {} }],
     source: 'database',

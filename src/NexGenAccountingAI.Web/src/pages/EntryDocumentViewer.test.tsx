@@ -10,6 +10,7 @@ const row = (id: string, fileName: string, patch: Partial<DocumentAttachmentRow>
 const { attachments } = vi.hoisted(() => ({ attachments: vi.fn() }))
 vi.mock('../app/WorkContext', () => ({
   useWorkContext: () => ({
+    can: () => true,
     activeCompany: { companyId: 'c1' },
     attachments,
     uploadAttachment: vi.fn(),

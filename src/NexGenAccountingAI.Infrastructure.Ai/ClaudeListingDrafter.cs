@@ -19,17 +19,16 @@ public sealed class ClaudeListingDrafter : IListingDrafter
     private const int MaxOutputTokens = 4000;
 
     private readonly AiOptions options;
-    private readonly AnthropicClient? client;
+    private readonly AiClientProvider provider;
 
-    public ClaudeListingDrafter(IOptions<AiOptions> options)
+    public ClaudeListingDrafter(IOptions<AiOptions> options, AiClientProvider? provider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         this.options = options.Value;
-        if (!string.IsNullOrWhiteSpace(this.options.ApiKey))
-        {
-            client = new AnthropicClient { ApiKey = this.options.ApiKey };
-        }
+        this.provider = provider ?? new AiClientProvider(options);
     }
+
+    private AnthropicClient? client => provider.Client;
 
     public bool IsConfigured => client is not null;
 

@@ -38,6 +38,7 @@ export type CompanySettings = {
   compactMode: boolean
   pageSize: number
   textSize: 'Normal' | 'Large' | 'Larger'
+  menuOnRight?: boolean
   updatedAtUtc?: string
 }
 
@@ -48,16 +49,22 @@ export type WorkCompany = {
   region: 'Mainland' | 'Azores' | 'Madeira'
   baseCurrency: string
   role: string
+  /** As permissões do utilizador nesta empresa (chaves `recurso.ação`); `*` na demonstração. */
+  permissions?: string[]
+  /** Dono ou administrador: gere os acessos e os grupos de permissões. */
+  canManage?: boolean
   settings: CompanySettings
 }
 
 type WorkContextData = {
-  user: { id: string; displayName: string; email: string }
+  user: { id: string; displayName: string; email: string; isAccountant?: boolean }
   companies: WorkCompany[]
 }
 
 type WorkContextValue = WorkContextData & {
   activeCompany: WorkCompany
+  /** O utilizador tem a permissão na empresa ativa? Esconde-se o que não pode; quem garante é o servidor. */
+  can: (permission: string) => boolean
   source: 'database' | 'demonstration'
   accountingSource: 'database' | 'demonstration'
   setupSource: 'database' | 'demonstration'
@@ -231,7 +238,7 @@ type WorkContextValue = WorkContextData & {
 export const demoUserId = '33333333-3333-3333-3333-333333333333'
 
 const fallbackContext: WorkContextData = {
-  user: { id: demoUserId, displayName: 'António Ferreira (Demonstração)', email: 'antonio.demo@accountingai.local' },
+  user: { id: demoUserId, displayName: 'António Ferreira (Demonstração)', email: 'antonio.demo@accountingai.local', isAccountant: true },
   companies: [
     {
       companyId: '22222222-2222-2222-2222-222222222222',
@@ -240,6 +247,8 @@ const fallbackContext: WorkContextData = {
       region: 'Mainland',
       baseCurrency: 'EUR',
       role: 'Owner',
+      permissions: ['*'],
+      canManage: true,
       settings: { culture: 'pt-PT', timeZone: 'Europe/Lisbon', defaultFiscalYear: 2026, theme: 'Light', compactMode: false, pageSize: 50, textSize: 'Normal' },
     },
     {
@@ -249,6 +258,8 @@ const fallbackContext: WorkContextData = {
       region: 'Azores',
       baseCurrency: 'EUR',
       role: 'Accountant',
+      permissions: ['*'],
+      canManage: false,
       settings: { culture: 'pt-PT', timeZone: 'Atlantic/Azores', defaultFiscalYear: 2026, theme: 'System', compactMode: true, pageSize: 25, textSize: 'Large' },
     },
   ],
@@ -458,11 +469,13 @@ export function WorkContextProvider({ children, userId = demoUserId }: { childre
     document.documentElement.dataset.theme = activeCompany.settings.theme.toLowerCase()
     document.documentElement.dataset.compact = String(activeCompany.settings.compactMode)
     document.documentElement.dataset.textSize = activeCompany.settings.textSize.toLowerCase()
-  }, [activeCompany.settings.compactMode, activeCompany.settings.textSize, activeCompany.settings.theme])
+    document.documentElement.dataset.menuSide = activeCompany.settings.menuOnRight ? 'right' : 'left'
+  }, [activeCompany.settings.menuOnRight, activeCompany.settings.compactMode, activeCompany.settings.textSize, activeCompany.settings.theme])
 
   const value = useMemo<WorkContextValue>(() => ({
     ...data,
     activeCompany,
+    can: (permission) => activeCompany.permissions === undefined || activeCompany.permissions.includes('*') || activeCompany.permissions.includes(permission),
     source,
     accountingSource,
     setupSource,

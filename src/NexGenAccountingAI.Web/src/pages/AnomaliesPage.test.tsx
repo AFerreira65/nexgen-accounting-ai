@@ -4,6 +4,7 @@ import { AnomaliesPage } from './AnomaliesPage'
 
 vi.mock('../app/WorkContext', () => ({
   useWorkContext: () => ({
+    can: () => true,
     activeCompany: { companyId: 'c1', legalName: 'Empresa', settings: { defaultFiscalYear: 2026 } },
     source: 'database',
     user: { id: 'u1' },

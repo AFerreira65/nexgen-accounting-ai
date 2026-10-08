@@ -23,14 +23,19 @@ public sealed record UserAdminData(
     Guid Id,
     string DisplayName,
     string Email,
-    bool IsActive);
+    bool IsActive,
+    string? Mobile = null,
+    string? Phone = null,
+    string? Extension = null,
+    bool IsAccountant = false);
 
 public sealed record MembershipData(
     Guid CompanyId,
     Guid UserId,
     string Role,
     bool IsActive,
-    bool IsResponsible = false);
+    bool IsResponsible = false,
+    Guid? PermissionGroupId = null);
 
 /// <summary>Quem pede não pode fazer esta alteração no cadastro (HTTP 403).</summary>
 public sealed class OrganizationAccessDeniedException(string message) : Exception(message);
@@ -193,10 +198,26 @@ public sealed class OrganizationAdminService(
         return Project(company);
     }
 
+    /// <summary>Só um contabilista dá ou tira a qualidade de contabilista (é ela que abre as senhas da AT).</summary>
+    private async Task RequireAccountantAsync(Guid actingUserId, CancellationToken cancellationToken)
+    {
+        var isAccountant = await context.UserAccounts
+            .AnyAsync(item => item.Id == actingUserId && item.IsAccountant, cancellationToken)
+            .ConfigureAwait(false);
+        if (!isAccountant)
+        {
+            throw new OrganizationAccessDeniedException("Só um contabilista pode dar ou tirar a qualidade de contabilista.");
+        }
+    }
+
     public async Task<UserAdminData> CreateUserAsync(
         Guid actingUserId,
         string displayName,
         string email,
+        string? mobile = null,
+        string? phone = null,
+        string? extension = null,
+        bool isAccountant = false,
         CancellationToken cancellationToken = default)
     {
         if (!await ManagesAnyCompanyAsync(actingUserId, null, cancellationToken).ConfigureAwait(false))
@@ -215,9 +236,16 @@ public sealed class OrganizationAdminService(
         }
 
         var user = new UserAccount(Guid.NewGuid(), displayName, email);
+        user.SetContacts(mobile, phone, extension);
+        if (isAccountant)
+        {
+            await RequireAccountantAsync(actingUserId, cancellationToken).ConfigureAwait(false);
+            user.SetAccountant(true);
+        }
+
         context.UserAccounts.Add(user);
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return new UserAdminData(user.Id, user.DisplayName, user.Email, user.IsActive);
+        return new UserAdminData(user.Id, user.DisplayName, user.Email, user.IsActive, user.Mobile, user.Phone, user.Extension, user.IsAccountant);
     }
 
     public async Task<UserAdminData> UpdateUserAsync(
@@ -226,6 +254,10 @@ public sealed class OrganizationAdminService(
         string displayName,
         string email,
         bool isActive,
+        string? mobile = null,
+        string? phone = null,
+        string? extension = null,
+        bool? isAccountant = null,
         CancellationToken cancellationToken = default)
     {
         var user = await context.UserAccounts
@@ -263,6 +295,13 @@ public sealed class OrganizationAdminService(
 
         user.Rename(displayName);
         user.ChangeEmail(email);
+        user.SetContacts(mobile, phone, extension);
+        if (isAccountant is { } accountant && accountant != user.IsAccountant)
+        {
+            await RequireAccountantAsync(actingUserId, cancellationToken).ConfigureAwait(false);
+            user.SetAccountant(accountant);
+        }
+
         if (isActive)
         {
             user.Reactivate();
@@ -273,7 +312,7 @@ public sealed class OrganizationAdminService(
         }
 
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return new UserAdminData(user.Id, user.DisplayName, user.Email, user.IsActive);
+        return new UserAdminData(user.Id, user.DisplayName, user.Email, user.IsActive, user.Mobile, user.Phone, user.Extension, user.IsAccountant);
     }
 
     public async Task<MembershipData> SetMembershipAsync(
@@ -283,7 +322,9 @@ public sealed class OrganizationAdminService(
         CompanyUserRole role,
         bool isActive,
         CancellationToken cancellationToken = default,
-        bool? isResponsible = null)
+        bool? isResponsible = null,
+        Guid? permissionGroupId = null,
+        bool changePermissionGroup = false)
     {
         var actingRole = await RequireManagerAsync(actingUserId, companyId, cancellationToken).ConfigureAwait(false);
         var userExists = await context.UserAccounts
@@ -342,8 +383,19 @@ public sealed class OrganizationAdminService(
             membership.SetResponsible(responsible);
         }
 
+        if (changePermissionGroup)
+        {
+            if (permissionGroupId is { } groupId &&
+                !await new PermissionService(context).GroupBelongsToCompanyFirmAsync(groupId, companyId, cancellationToken).ConfigureAwait(false))
+            {
+                throw new InvalidOperationException("O grupo de permissões não existe neste gabinete.");
+            }
+
+            membership.AssignPermissionGroup(permissionGroupId);
+        }
+
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return new MembershipData(companyId, userId, membership.Role.ToString(), membership.IsActive, membership.IsResponsible);
+        return new MembershipData(companyId, userId, membership.Role.ToString(), membership.IsActive, membership.IsResponsible, membership.PermissionGroupId);
     }
 
     private static CompanyAdminData Project(Company company) => new(

@@ -193,7 +193,7 @@ public sealed class AtGeneralSettingsServiceTests
             // Quem administra empresas não o vê, não o altera nem lhe dá acessos.
             var admin = new OrganizationAdminService(new CompanyAccountingProvisioner(context), context);
             await Assert.ThrowsExactlyAsync<KeyNotFoundException>(() => admin.UpdateUserAsync(
-                ownerId, producer.Id, "Outro nome", "produtor@test.invalid", true, CancellationToken.None)).ConfigureAwait(false);
+                ownerId, producer.Id, "Outro nome", "produtor@test.invalid", true, cancellationToken: CancellationToken.None)).ConfigureAwait(false);
             await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => admin.SetMembershipAsync(
                 ownerId, companyId, producer.Id, CompanyUserRole.Administrator, true, CancellationToken.None)).ConfigureAwait(false);
             Assert.IsFalse(await context.CompanyUsers.AnyAsync(item => item.UserId == producer.Id).ConfigureAwait(false));

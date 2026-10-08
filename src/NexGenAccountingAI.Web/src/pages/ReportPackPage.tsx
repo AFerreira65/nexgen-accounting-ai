@@ -1,7 +1,9 @@
-import { ArrowDown, ArrowUp, Database, Eye, FileDown, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Database, Eye, FileDown, Globe, Mail, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { Fragment, useEffect, useState } from 'react'
 import { signalLoadFailure } from '../app/loadFailure'
 import { MONTH_NAMES } from '../app/mapLabels'
+import { PublishPortalPanel } from '../app/PublishPortalPanel'
+import { SendEmailPanel } from '../app/SendEmailPanel'
 import { useWorkContext } from '../app/WorkContext'
 
 type SectionKind = 'texto' | 'mapa' | 'balancete' | 'racios'
@@ -28,7 +30,7 @@ async function readRefusal(response: Response, fallback: string): Promise<string
  * PDF gerado pelo servidor.
  */
 export function ReportPackPage() {
-  const { activeCompany, source, user } = useWorkContext()
+  const { activeCompany, can, source, user } = useWorkContext()
   const fiscalYear = activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()
   const root = `/api/v1/development/users/${user.id}/companies/${activeCompany.companyId}`
   const [presets, setPresets] = useState<Preset[]>([])
@@ -36,6 +38,8 @@ export function ReportPackPage() {
   const [request, setRequest] = useState<PackRequest | null>(null)
   const [preview, setPreview] = useState<Preview | null>(null)
   const [busy, setBusy] = useState<'preview' | 'pdf' | number | null>(null)
+  const [emailing, setEmailing] = useState(false)
+  const [publishing, setPublishing] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [instructions, setInstructions] = useState('')
@@ -190,8 +194,13 @@ export function ReportPackPage() {
 
       <div className="settings-actions">
         <button type="button" className="button button-secondary" disabled={busy !== null} onClick={() => void generate('json')}><Eye size={15} /> {busy === 'preview' ? 'A calcular…' : 'Pré-visualizar'}</button>
+        <button type="button" className="button button-secondary" disabled={busy !== null || !request} onClick={() => setEmailing(true)}><Mail size={15} /> Enviar por email</button>
+        {can('portal.publish') && <button type="button" className="button button-secondary" disabled={busy !== null || !request} onClick={() => setPublishing(true)}><Globe size={15} /> Publicar no portal</button>}
         <button type="button" className="button button-primary" disabled={busy !== null} onClick={() => void generate('pdf')}><FileDown size={15} /> {busy === 'pdf' ? 'A gerar…' : 'Gerar PDF'}</button>
       </div>
+
+      {publishing && request && <PublishPortalPanel source={{ kind: 'pack', request, title: 'Relatório' }} onClose={() => setPublishing(false)} />}
+      {emailing && request && <SendEmailPanel source={{ kind: 'pack', request, title: 'Relatório' }} onClose={() => setEmailing(false)} />}
 
       {preview && <section className="panel pack-preview">
         <div className="panel-heading"><h2>{preview.title} · {preview.period}</h2></div>

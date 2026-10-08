@@ -14,6 +14,7 @@
     <ProjectReference Include="../NexGenAccountingAI.Infrastructure.Ai/NexGenAccountingAI.Infrastructure.Ai.csproj" />
     <ProjectReference Include="../NexGenAccountingAI.Infrastructure.At/NexGenAccountingAI.Infrastructure.At.csproj" />
     <ProjectReference Include="../NexGenAccountingAI.Infrastructure.Files/NexGenAccountingAI.Infrastructure.Files.csproj" />
+    <ProjectReference Include="../NexGenAccountingAI.Infrastructure.Mail/NexGenAccountingAI.Infrastructure.Mail.csproj" />
     <ProjectReference Include="../NexGenAccountingAI.Infrastructure.Persistence/NexGenAccountingAI.Infrastructure.Persistence.csproj" />
   </ItemGroup>
   <ItemGroup>

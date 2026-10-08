@@ -34,3 +34,6 @@ tabelas PHC/
 # Esquemas oficiais da AT: descarregados por scripts/get-official-schemas.ps1, não versionados
 src/NexGenAccountingAI.Infrastructure.Files/Schemas/*.xsd
 src/NexGenAccountingAI.Infrastructure.Files/Schemas/Ies2027/
+
+# Chaves e segredos locais: nunca no repositório
+Chave*.txt

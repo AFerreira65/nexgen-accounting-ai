@@ -16,17 +16,16 @@ public sealed class ClaudeChatModelClient : IChatModelClient
     private const int MaxOutputTokens = 8000;
 
     private readonly AiOptions options;
-    private readonly AnthropicClient? client;
+    private readonly AiClientProvider provider;
 
-    public ClaudeChatModelClient(IOptions<AiOptions> options)
+    public ClaudeChatModelClient(IOptions<AiOptions> options, AiClientProvider? provider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         this.options = options.Value;
-        if (!string.IsNullOrWhiteSpace(this.options.ApiKey))
-        {
-            client = new AnthropicClient { ApiKey = this.options.ApiKey };
-        }
+        this.provider = provider ?? new AiClientProvider(options);
     }
+
+    private AnthropicClient? client => provider.Client;
 
     public bool IsConfigured => client is not null;
 
@@ -75,12 +74,19 @@ public sealed class ClaudeChatModelClient : IChatModelClient
             blocks, StopReasonText(response), ToInt(response.Usage?.InputTokens), ToInt(response.Usage?.OutputTokens));
     }
 
-    private static string StopReasonText(Message response) =>
-        (response.StopReason?.ToString() ?? string.Empty).Replace("_", string.Empty, StringComparison.Ordinal).ToLowerInvariant() switch
+    private static string StopReasonText(Message response) => NormalizeStopReason(response.StopReason?.ToString());
+
+    /// <summary>
+    /// O motivo de paragem no formato da API (<c>tool_use</c>, <c>end_turn</c>, <c>max_tokens</c>). O SDK devolve-o como texto JSON,
+    /// com aspas (<c>"tool_use"</c>), e a conversa só continua depois de um pedido de ferramenta se reconhecer <c>tool_use</c>.
+    /// </summary>
+    public static string NormalizeStopReason(string? raw) =>
+        (raw ?? string.Empty).Trim().Trim('"').Replace("_", string.Empty, StringComparison.Ordinal).ToLowerInvariant() switch
         {
             "tooluse" => "tool_use",
             "endturn" => "end_turn",
             "maxtokens" => "max_tokens",
+            "stopsequence" => "stop_sequence",
             var other => other,
         };
 

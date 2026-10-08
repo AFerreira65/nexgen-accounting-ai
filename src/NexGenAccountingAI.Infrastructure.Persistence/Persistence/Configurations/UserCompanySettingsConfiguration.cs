@@ -14,6 +14,7 @@ internal sealed class UserCompanySettingsConfiguration : IEntityTypeConfiguratio
         builder.Property(item => item.TimeZone).HasMaxLength(64).IsRequired();
         builder.Property(item => item.Theme).HasConversion<int>();
         builder.Property(item => item.TextSize).HasConversion<int>().HasDefaultValue(InterfaceTextSize.Normal);
+        builder.Property(item => item.MenuOnRight).HasDefaultValue(false);
         builder.Property(item => item.UpdatedAtUtc).HasDefaultValueSql("now()");
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.HasOne(item => item.CompanyUser)

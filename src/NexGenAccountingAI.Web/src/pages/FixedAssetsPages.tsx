@@ -93,7 +93,7 @@ function FixedAssetEditor({ asset, onSaved, onClose }: { asset: FixedAssetRow | 
 }
 
 export function FixedAssetsPage() {
-  const { activeCompany, source, fixedAssets } = useWorkContext()
+  const { activeCompany, can, source, fixedAssets } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const [rows, setRows] = useState<FixedAssetRow[]>([])
@@ -130,7 +130,7 @@ export function FixedAssetsPage() {
 
     <div className="filterbar">
       <label className="inline-check"><input type="checkbox" checked={includeInactive} onChange={(event) => setIncludeInactive(event.target.checked)} /> Mostrar inativos</label>
-      <button className="button button-primary" type="button" onClick={() => setEditor({ mode: 'create' })}><Plus size={16} /> Novo ativo</button>
+      {can('fixedassets.create') && <button className="button button-primary" type="button" onClick={() => setEditor({ mode: 'create' })}><Plus size={16} /> Novo ativo</button>}
     </div>
 
     {disposing && <AssetDisposalPanel key={disposing.code} asset={disposing} onDone={() => { setDisposing(null); setReload((value) => value + 1) }} onClose={() => setDisposing(null)} />}
@@ -148,7 +148,7 @@ export function FixedAssetsPage() {
           <td className="numeric">{percent.format(row.annualRate)} %{row.byMonths ? ' · duodécimos' : ''}</td>
           <td>{[row.assetAccountCode, row.accumulatedAccountCode, row.expenseAccountCode].filter(Boolean).join(' · ') || '—'}</td>
           <td><span className={`badge ${row.disposalDate ? 'warning' : row.isActive ? 'success' : 'warning'}`}>{row.disposalDate ? `Alienado em ${shortDate(row.disposalDate)}` : row.isActive ? 'Ativo' : 'Inativo'}</span></td>
-          <td><span className="inline-check"><button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', asset: row })}>Editar</button>{!row.disposalDate && <button className="text-link" type="button" onClick={() => setDisposing(row)}>Alienar / abater</button>}</span></td>
+          <td><span className="inline-check">{can('fixedassets.edit') && <button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', asset: row })}>Editar</button>}{can('fixedassets.post') && !row.disposalDate && <button className="text-link" type="button" onClick={() => setDisposing(row)}>Alienar / abater</button>}</span></td>
         </tr>)}</tbody>
       </table></div>
       {rows.length === 0 && <p className="empty-state">Ainda não há ativos no cadastro. Registe cada ativo com o valor de aquisição, a data de entrada em funcionamento e a taxa anual.</p>}
@@ -157,7 +157,7 @@ export function FixedAssetsPage() {
 }
 
 export function DepreciationSchedulePage() {
-  const { activeCompany, source, depreciationSchedule, postDepreciation } = useWorkContext()
+  const { activeCompany, can, source, depreciationSchedule, postDepreciation } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const defaultYear = activeCompany.settings.defaultFiscalYear ?? new Date().getUTCFullYear()
@@ -265,7 +265,7 @@ export function DepreciationSchedulePage() {
         {rows.length === 0 && <p className="empty-state">Sem ativos em funcionamento em {year}. Registe-os no <Link to="/ativos-fixos">cadastro de ativos fixos</Link>.</p>}
       </section>
 
-      {rows.length > 0 && <section className="panel settings-panel">
+      {can('fixedassets.post') && rows.length > 0 && <section className="panel settings-panel">
         <div className="panel-heading"><div><h2>Lançar as depreciações de {year}</h2><p>Um lançamento a 31 de dezembro, com o gasto a débito e as depreciações acumuladas a crédito, somados por conta. Fica por conferir nos movimentos.</p></div></div>
         <div className="filterbar">
           <label className="inline-check">Diário <input value={journal} onChange={(event) => setJournal(event.target.value.toUpperCase())} placeholder="código do diário" aria-label="Diário" /></label>

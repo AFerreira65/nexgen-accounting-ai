@@ -15,6 +15,10 @@ internal sealed class CompanyUserConfiguration : IEntityTypeConfiguration<Compan
         builder.Property(item => item.CreatedAtUtc).HasDefaultValueSql("now()");
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.HasIndex(item => item.UserId);
+        builder.HasOne(item => item.PermissionGroup)
+            .WithMany()
+            .HasForeignKey(item => item.PermissionGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(item => item.Company)
             .WithMany(item => item.UserMemberships)
             .HasForeignKey(item => item.CompanyId)

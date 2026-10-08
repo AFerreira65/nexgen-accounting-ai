@@ -1,5 +1,6 @@
 using NexGenAccountingAI.Domain.Accounting;
 using NexGenAccountingAI.Domain.Banking;
+using NexGenAccountingAI.Domain.Mail;
 using NexGenAccountingAI.Domain.Organizations;
 using NexGenAccountingAI.Domain.Reporting;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +31,8 @@ internal static class AuditShadowProperties
         typeof(UserAccount),
         typeof(CompanyUser),
         typeof(UserCompanySettings),
+        typeof(PermissionGroup),
+        typeof(MailAccount),
         typeof(SavedAnalysis),
         typeof(FinancialMap),
         typeof(SavedListing),
@@ -41,6 +44,7 @@ internal static class AuditShadowProperties
         typeof(VatReturnFiling),
         typeof(CompanyAtCredentials),
         typeof(AtGeneralSettings),
+        typeof(AiGeneralSettings),
         typeof(AccountVatClassification),
         typeof(IrcEstimateFiling),
         typeof(Party),

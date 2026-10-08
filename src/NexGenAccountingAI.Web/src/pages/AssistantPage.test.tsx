@@ -3,6 +3,7 @@ import { AssistantPage } from './AssistantPage'
 
 vi.mock('../app/WorkContext', () => ({
   useWorkContext: () => ({
+    can: () => true,
     activeCompany: { companyId: 'c1', legalName: 'Empresa A', settings: {} },
     source: 'database',
     user: { id: 'u1' },

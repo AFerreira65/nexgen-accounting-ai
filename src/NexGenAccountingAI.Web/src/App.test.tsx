@@ -2,6 +2,13 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import indexHtml from '../index.html?raw'
 import { App } from './App'
 
+// Abre a secção do menu lateral e devolve a ligação do ecrã pedido.
+function menuLink(section: string, name: string | RegExp) {
+  const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
+  fireEvent.click(within(nav).getByRole('button', { name: section }))
+  return within(nav).getByRole('link', { name })
+}
+
 describe('App', () => {
   beforeEach(() => window.localStorage.clear())
 
@@ -141,15 +148,15 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Plano e abertura de contas' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '11' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('link', { name: 'Diários' }))
+    fireEvent.click(menuLink('Cadastros', 'Diários'))
     expect(screen.getByRole('heading', { name: 'Diários' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'COMPRAS' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('link', { name: 'Documentos' }))
+    fireEvent.click(menuLink('Cadastros', 'Documentos'))
     expect(screen.getByRole('heading', { name: 'Documentos contabilísticos' })).toBeInTheDocument()
     expect(screen.getByText('Fatura de fornecedor')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('link', { name: 'Taxonomias' }))
+    fireEvent.click(menuLink('Cadastros', 'Taxonomias'))
     expect(screen.getByRole('heading', { name: 'Taxonomias' })).toBeInTheDocument()
     expect(screen.getByText('Taxonomia S — SNC base')).toBeInTheDocument()
     expect(screen.getByText(/Catálogo S \(Portaria 302\/2016\)/)).toBeInTheDocument()
@@ -632,7 +639,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Guardar diário' }))
     expect(screen.getByRole('link', { name: /AUX/ })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('link', { name: 'Documentos' }))
+    fireEvent.click(menuLink('Cadastros', 'Documentos'))
     fireEvent.click(screen.getByRole('button', { name: /Novo documento/i }))
     fireEvent.change(screen.getByRole('textbox', { name: 'Código' }), { target: { value: 'FTX' } })
     fireEvent.change(screen.getByRole('textbox', { name: 'Descrição' }), { target: { value: 'Documento auxiliar X' } })
@@ -871,7 +878,7 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: 'Lançamentos sugeridos', level: 1 })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Lançamentos sugeridos/ })).toBeInTheDocument()
+    expect(menuLink('Trabalho', /Lançamentos sugeridos/)).toHaveClass('active')
   })
 
   it('shows the banks screen (requires the database)', () => {
@@ -927,7 +934,9 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'Mapas do dossier fiscal', level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Mapas 30 a 32/ })).toBeInTheDocument()
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Navegação principal' })).getByRole('button', { name: 'Fiscal' }))
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Navegação principal' })).getByRole('button', { name: 'Dossier fiscal' }))
+    expect(within(screen.getByRole('navigation', { name: 'Navegação principal' })).getByRole('link', { name: /Mapas 30 a 32/ })).toHaveClass('active')
     expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
@@ -983,19 +992,31 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
-  it('groups the side menu and collapses it to an icon rail', () => {
+  it('shows the main sections and opens their menus and submenus', () => {
     window.history.pushState({}, '', '/')
     render(<App />)
 
     const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
-    expect(within(nav).getByText('Cadastros')).toBeInTheDocument()
+    // A barra só tem as secções; os ecrãs aparecem quando a secção abre.
+    expect(within(nav).getByRole('button', { name: 'Cadastros' })).toBeInTheDocument()
+    expect(within(nav).queryByRole('link', { name: 'Terceiros' })).not.toBeInTheDocument()
+
+    fireEvent.click(within(nav).getByRole('button', { name: 'Cadastros' }))
     expect(within(nav).getByRole('link', { name: 'Terceiros' })).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Recolher o menu' }))
-    expect(screen.getByRole('button', { name: 'Expandir o menu' })).toHaveAttribute('aria-pressed', 'true')
-    // Recolhido, as ligações continuam acessíveis pelo nome.
-    expect(within(nav).getByRole('link', { name: 'Terceiros' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Expandir o menu' }))
+    // Submenu de outro nível.
+    fireEvent.click(within(nav).getByRole('button', { name: 'Fiscal' }))
+    fireEvent.click(within(nav).getByRole('button', { name: 'IVA' }))
+    expect(within(nav).getByRole('link', { name: 'Apuramento de IVA' })).toBeInTheDocument()
+    expect(within(nav).queryByRole('link', { name: 'Terceiros' })).not.toBeInTheDocument()
+  })
+
+  it('shows the obligations console (requires the database)', () => {
+    window.history.pushState({}, '', '/consola-obrigacoes')
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Consola de obrigações', level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Requer ligação à base de dados/i })).toBeInTheDocument()
   })
 
   it('shows the IRC estimate screen (requires the database)', () => {

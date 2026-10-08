@@ -1,6 +1,8 @@
 import { Check, Database, Save, SlidersHorizontal } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { type CompanySettings, useWorkContext } from '../app/WorkContext'
+import { CompanyAiPanel } from './CompanyAiPanel'
+import { EmailAccountPanel } from './EmailAccountPanel'
 
 export function SettingsPage() {
   const { activeCompany, source, saveSettings } = useWorkContext()
@@ -40,6 +42,7 @@ export function SettingsPage() {
             <label><span>Tema</span><select value={form.theme} onChange={(event) => setForm({ ...form, theme: event.target.value as CompanySettings['theme'] })}><option value="System">Usar sistema</option><option value="Light">Claro</option><option value="Dark">Escuro</option></select></label>
             <label><span>Tamanho do texto</span><select value={form.textSize} onChange={(event) => setForm({ ...form, textSize: event.target.value as CompanySettings['textSize'] })}><option value="Normal">Normal</option><option value="Large">Grande</option><option value="Larger">Maior</option></select></label>
             <label><span>Linhas por página</span><select value={form.pageSize} onChange={(event) => setForm({ ...form, pageSize: Number(event.target.value) })}><option value="25">25 linhas</option><option value="50">50 linhas</option><option value="100">100 linhas</option><option value="200">200 linhas</option></select></label>
+            <label className="toggle-field"><input type="checkbox" checked={form.menuOnRight ?? false} onChange={(event) => setForm({ ...form, menuOnRight: event.target.checked })} /><span><strong>Menu do lado direito</strong><small>O menu fica à direita e os submenus abrem para a esquerda.</small></span></label>
             <label className="toggle-field"><input type="checkbox" checked={form.compactMode} onChange={(event) => setForm({ ...form, compactMode: event.target.checked })} /><span><strong>Modo compacto</strong><small>Mostra mais informação nas grelhas e painéis.</small></span></label>
           </div>
           <footer className="settings-actions">
@@ -49,6 +52,10 @@ export function SettingsPage() {
           </footer>
         </section>
       </form>
+
+      <CompanyAiPanel />
+
+      <EmailAccountPanel />
     </div>
   )
 }

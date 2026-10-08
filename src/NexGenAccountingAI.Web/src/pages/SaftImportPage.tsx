@@ -507,7 +507,7 @@ function EntriesPreviewPanel({ companyId, file, fiscalYear, importBlocked }: { c
 }
 
 export function SaftImportPage() {
-  const { inspectSaft, refreshWorkContext, source } = useWorkContext()
+  const { can, inspectSaft, refreshWorkContext, source } = useWorkContext()
   const inputRef = useRef<HTMLInputElement>(null)
   const [state, setState] = useState<'idle' | 'reading' | 'done' | 'error'>('idle')
   const [fileName, setFileName] = useState('')
@@ -549,6 +549,8 @@ export function SaftImportPage() {
     await refreshWorkContext(companyId)
     if (file) await onFile(file)
   }
+
+  if (!can('saftimport.import')) return <div className="page-stack"><section className="panel empty-state"><span className="empty-icon"><FileUp /></span><h2>Importar SAF-T</h2><p>O seu grupo de permissões não inclui a importação de ficheiros SAF-T.</p></section></div>
 
   return <div className="page-stack">
     <header className="page-heading">

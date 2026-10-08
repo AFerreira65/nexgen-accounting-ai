@@ -10,7 +10,7 @@ function formatDate(value: string | null) {
 }
 
 export function AtCommunicationPage() {
-  const { activeCompany, source, atCertificateStatus } = useWorkContext()
+  const { activeCompany, can, source, atCertificateStatus } = useWorkContext()
   const onDatabase = source === 'database'
   usePublishRecord(undefined, undefined)
 
@@ -56,8 +56,8 @@ export function AtCommunicationPage() {
       </tbody></table></div>}
     </section>}
 
-    <AtCredentialsPanel companyId={activeCompany.companyId} companyName={activeCompany.legalName} taxRegistrationNumber={activeCompany.taxRegistrationNumber} />
+    {can('at.credentials') && <AtCredentialsPanel companyId={activeCompany.companyId} companyName={activeCompany.legalName} taxRegistrationNumber={activeCompany.taxRegistrationNumber} />}
 
-    <p className="mr-hint">As senhas ficam cifradas na base de dados, com uma cifra que qualquer posto desta instalação decifra, e nunca voltam a ser mostradas. O ambiente do servidor (<code>At:Environment</code>) e a versão do Modelo 22 continuam no ficheiro de configuração.</p>
+    {can('at.credentials') && <p className="mr-hint">As senhas ficam cifradas na base de dados, com uma cifra que qualquer posto desta instalação decifra, e nunca voltam a ser mostradas. O ambiente do servidor (<code>At:Environment</code>) e a versão do Modelo 22 continuam no ficheiro de configuração.</p>}
   </div>
 }

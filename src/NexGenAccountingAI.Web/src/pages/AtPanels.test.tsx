@@ -6,7 +6,8 @@ const saveAtCredentials = vi.fn()
 const deleteAtCredentials = vi.fn()
 
 vi.mock('../app/WorkContext', () => ({
-  useWorkContext: () => ({ atCredentials, saveAtCredentials, deleteAtCredentials }),
+  useWorkContext: () => ({
+    can: () => true, atCredentials, saveAtCredentials, deleteAtCredentials }),
 }))
 
 describe('credenciais da AT da empresa', () => {

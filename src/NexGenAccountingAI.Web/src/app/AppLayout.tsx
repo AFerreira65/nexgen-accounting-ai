@@ -1,105 +1,13 @@
-import { Archive, ArrowLeftRight, Banknote, BarChart3, Bell, Bot, BookOpen, BookText, Building2, Calculator, CalendarCheck, CalendarClock, ChartLine, ChevronDown, CircleAlert, CircleGauge, ClipboardCheck, Contact, DoorOpen, Factory, FileDown, FileText, FileUp, FolderCheck, FolderTree, HandCoins, Hourglass, Landmark, LayoutDashboard, LayoutTemplate, ListFilter, ListOrdered, ListTodo, LogOut, Menu, Newspaper, PanelLeftClose, PanelLeftOpen, PencilRuler, Percent, PiggyBank, Receipt, Scale, ScanSearch, Settings, ShieldCheck, Sparkles, Table2, Tags, Target, TrendingUp, Users, WalletCards, WandSparkles, type LucideIcon } from 'lucide-react'
+import { Bell, ChevronDown, CircleAlert, LogOut, Menu, Settings } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { clearLoadFailure, useLoadFailure } from './loadFailure'
 import { companyRoleLabel } from './companyRoles'
 import { GlobalSearch } from './GlobalSearch'
 import { OptionsMenu } from './OptionsMenu'
+import { SideMenu } from './SideMenu'
 import { useDismiss } from './useDismiss'
 import { useMovementsSummary, useWorkContext } from './WorkContext'
-
-// O menu lateral em grupos de trabalho, pela ordem em que o contabilista os usa.
-type NavLinkItem = { to: string; label: string; icon: LucideIcon; end?: boolean }
-
-const navGroups: { label: string; links: NavLinkItem[] }[] = [
-  { label: 'Trabalho', links: [
-    { to: '/', label: 'Visão geral', icon: CircleGauge, end: true },
-    { to: '/tarefas', label: 'Tarefas', icon: ClipboardCheck },
-    { to: '/painel-gabinete', label: 'Painel do gabinete', icon: LayoutDashboard },
-    { to: '/movimentos', label: 'Movimentos', icon: WalletCards },
-    { to: '/lancamentos-sugeridos', label: 'Lançamentos sugeridos', icon: WandSparkles },
-    { to: '/bancos', label: 'Bancos', icon: Banknote },
-    { to: '/arquivo', label: 'Arquivo digital', icon: Archive },
-  ] },
-  { label: 'Mapas', links: [
-    { to: '/livro-diario', label: 'Livro diário', icon: BookText },
-    { to: '/balancete', label: 'Balancete', icon: Scale },
-    { to: '/resultados', label: 'Resultados', icon: TrendingUp },
-    { to: '/balanco', label: 'Balanço', icon: Scale },
-    { to: '/demonstracoes', label: 'Demonstrações financeiras', icon: Landmark },
-    { to: '/contas-correntes', label: 'Contas correntes', icon: Users },
-    { to: '/saldos-terceiros', label: 'Saldos de terceiros', icon: Contact },
-    { to: '/idade-saldos', label: 'Idade de saldos', icon: Hourglass },
-    { to: '/mapa-analitico', label: 'Mapa analítico', icon: FolderTree },
-    { to: '/mapa-depreciacoes', label: 'Mapa de depreciações', icon: Factory },
-    { to: '/mapas', label: 'Mapas à medida', icon: PencilRuler },
-    { to: '/listagens', label: 'Listagens à medida', icon: ListFilter },
-  ] },
-  { label: 'Fiscal', links: [
-    { to: '/obrigacoes', label: 'Calendário de obrigações', icon: CalendarClock },
-    { to: '/iva', label: 'Resumo de IVA', icon: Receipt },
-    { to: '/apuramento-iva', label: 'Apuramento de IVA', icon: Receipt },
-    { to: '/declaracao-iva', label: 'Declaração de IVA', icon: Receipt },
-    { to: '/declaracao-recapitulativa', label: 'Declaração recapitulativa', icon: ArrowLeftRight },
-    { to: '/config-iva', label: 'Configuração de IVA', icon: Percent },
-    { to: '/codigos-iva', label: 'Códigos de IVA', icon: Percent },
-    { to: '/estimativa-irc', label: 'Estimativa de IRC', icon: Calculator },
-    { to: '/modelo-22', label: 'Modelo 22', icon: Calculator },
-    { to: '/ies', label: 'IES — Anexo A', icon: FileText },
-    { to: '/retencoes', label: 'Retenções na fonte', icon: HandCoins },
-    { to: '/dossier-fiscal', label: 'Dossier fiscal', icon: FolderCheck },
-    { to: '/mapas-dossier', label: 'Mapas 30 a 32', icon: Table2 },
-    { to: '/tabelas-fiscais', label: 'Tabelas fiscais', icon: BookText },
-    { to: '/comunicacao-at', label: 'Comunicação com a AT', icon: ShieldCheck },
-  ] },
-  { label: 'Gestão', links: [
-    { to: '/tarefas-gabinete', label: 'Tarefas do gabinete', icon: ListTodo },
-    { to: '/assistente', label: 'Assistente', icon: Bot },
-    { to: '/fecho', label: 'Fecho do mês', icon: ClipboardCheck },
-    { to: '/variacoes', label: 'Variações', icon: ChartLine },
-    { to: '/anomalias', label: 'Anomalias', icon: ScanSearch },
-    { to: '/evolucao', label: 'Evolução mensal', icon: ChartLine },
-    { to: '/mapa-exploracao', label: 'Mapa de exploração', icon: TrendingUp },
-    { to: '/racios', label: 'Rácios', icon: Percent },
-    { to: '/orcamento', label: 'Orçamento', icon: Target },
-    { to: '/relatorio-empresario', label: 'Relatório do mês', icon: Newspaper },
-    { to: '/previsao-tesouraria', label: 'Previsão de tesouraria', icon: PiggyBank },
-    { to: '/analises', label: 'Análises', icon: BarChart3 },
-    { to: '/relatorios-gestao', label: 'Relatórios de gestão', icon: Sparkles },
-    { to: '/relatorio-banca', label: 'Relatório para a banca', icon: Landmark },
-  ] },
-  { label: 'Exercício', links: [
-    { to: '/apuramento', label: 'Apuramento', icon: CalendarCheck },
-    { to: '/abertura', label: 'Abertura', icon: DoorOpen },
-  ] },
-  { label: 'Cadastros', links: [
-    { to: '/contas', label: 'Plano de contas', icon: BookOpen },
-    { to: '/terceiros', label: 'Terceiros', icon: Contact },
-    { to: '/diarios', label: 'Diários', icon: Landmark },
-    { to: '/documentos', label: 'Documentos', icon: FileText },
-    { to: '/lancamentos-tipo', label: 'Lançamentos-tipo', icon: LayoutTemplate },
-    { to: '/centros-custo', label: 'Centros de custo', icon: FolderTree },
-    { to: '/ativos-fixos', label: 'Ativos fixos', icon: Factory },
-    { to: '/series', label: 'Séries', icon: ListOrdered },
-    { to: '/taxonomias', label: 'Taxonomias', icon: Tags },
-  ] },
-  { label: 'Dados', links: [
-    { to: '/importar', label: 'Importar SAF-T', icon: FileUp },
-    { to: '/exportar-saft', label: 'Exportar SAF-T', icon: FileDown },
-    { to: '/compras-efatura', label: 'Compras e-Fatura', icon: Receipt },
-    { to: '/cruzamento', label: 'Cruzamento', icon: ArrowLeftRight },
-  ] },
-  { label: 'Administração', links: [
-    { to: '/organizacao', label: 'Organização', icon: Building2 },
-  ] },
-]
-
-const SIDEBAR_KEY = 'accounting-ai.sidebar-collapsed'
-
-function storedSidebarCollapsed() {
-  try { return window.localStorage.getItem(SIDEBAR_KEY) === 'true' }
-  catch { return false }
-}
 
 export function AppLayout() {
   const { activeCompany, companies, saveSettings, selectCompany, source, taxonomyReview, user } = useWorkContext()
@@ -110,14 +18,10 @@ export function AppLayout() {
   useEffect(() => { clearLoadFailure() }, [location.pathname, activeCompany.companyId])
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [periodOpen, setPeriodOpen] = useState(false)
-  // Recolhido, o menu fica só com os ícones (guardado no navegador); em ecrãs
-  // estreitos é uma gaveta que abre pelo botão da barra de topo.
-  const [collapsed, setCollapsed] = useState(storedSidebarCollapsed)
+  // A barra mostra só as secções; em ecrãs estreitos é uma gaveta que abre pelo
+  // botão da barra de topo. O lado vem das preferências do utilizador.
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const toggleCollapsed = () => setCollapsed((current) => {
-    try { window.localStorage.setItem(SIDEBAR_KEY, String(!current)) } catch { /* storage is optional */ }
-    return !current
-  })
+  const menuSide = activeCompany.settings.menuOnRight ? 'right' : 'left'
   const closeDrawer = () => setDrawerOpen(false)
   const switcherRef = useRef<HTMLDivElement>(null)
   const periodRef = useRef<HTMLDivElement>(null)
@@ -149,33 +53,19 @@ export function AppLayout() {
   }
 
   return (
-    <div className={`product-shell${collapsed ? ' nav-collapsed' : ''}`}>
+    <div className={`product-shell${menuSide === 'right' ? ' menu-right' : ''}`}>
       {drawerOpen && <div className="sidebar-backdrop" onClick={closeDrawer} />}
       <aside className={`sidebar${drawerOpen ? ' open' : ''}`}>
         <div className="sidebar-head">
           <NavLink className="brand" to="/" aria-label="NexGen Accounting AI — início" onClick={closeDrawer}>
             <span className="brand-mark">A</span>
-            <span><strong>Accounting</strong><small>AI</small></span>
           </NavLink>
-          <button type="button" className="sidebar-toggle" onClick={toggleCollapsed} aria-pressed={collapsed} aria-label={collapsed ? 'Expandir o menu' : 'Recolher o menu'} title={collapsed ? 'Expandir o menu' : 'Recolher o menu'}>
-            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
-          </button>
         </div>
-        <nav className="primary-nav" aria-label="Navegação principal">
-          {navGroups.map((group) => <div className="nav-group" key={group.label}>
-            <p className="nav-group-label">{group.label}</p>
-            {group.links.map(({ to, label, icon: Icon, end }) => (
-              <NavLink key={to} to={to} end={end} title={label} onClick={closeDrawer} className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-                <Icon size={18} strokeWidth={1.8} />
-                <span>{label}</span>
-              </NavLink>
-            ))}
-          </div>)}
-        </nav>
+        <SideMenu side={menuSide} onNavigate={closeDrawer} />
         <div className="sidebar-footer">
-          <NavLink className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`} to="/definicoes" title="Definições" onClick={closeDrawer}><Settings size={18} strokeWidth={1.8} /><span>Definições</span></NavLink>
-          <button type="button" className="nav-item logout-item" title="Sair" onClick={logOut}><LogOut size={18} strokeWidth={1.8} /><span>Sair</span></button>
-          <div className="user-card"><span className="avatar">{userInitials}</span><span><strong>{user.displayName.replace(' (Demonstração)', '')}</strong><small>{companyRoleLabel(activeCompany.role)}{activeCompany.role === 'Viewer' ? ' · só consulta, sem alterações' : ''}</small></span></div>
+          <NavLink className={({ isActive }) => `menu-row${isActive ? ' active' : ''}`} to="/definicoes" title="Definições" onClick={closeDrawer}><Settings size={21} strokeWidth={1.8} /><span>Definições</span></NavLink>
+          <button type="button" className="menu-row logout-item" title="Sair" onClick={logOut}><LogOut size={21} strokeWidth={1.8} /><span>Sair</span></button>
+          <div className="user-card" title={`${user.displayName.replace(' (Demonstração)', '')} · ${companyRoleLabel(activeCompany.role)}${activeCompany.role === 'Viewer' ? ' · só consulta, sem alterações' : ''}`}><span className="avatar">{userInitials}</span></div>
         </div>
       </aside>
 

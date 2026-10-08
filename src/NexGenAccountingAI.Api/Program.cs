@@ -13,6 +13,10 @@ using NexGenAccountingAI.Domain.Saft;
 using NexGenAccountingAI.Infrastructure.Ai;
 using NexGenAccountingAI.Infrastructure.At;
 using NexGenAccountingAI.Infrastructure.Files;
+using NexGenAccountingAI.Infrastructure.Mail;
+using NexGenAccountingAI.Domain.Mail;
+using NexGenAccountingAI.Domain.Portal;
+using NexGenAccountingAI.Application.Mail;
 using NexGenAccountingAI.Infrastructure.Persistence;
 using NexGenAccountingAI.Infrastructure.Persistence.Persistence;
 using System.Globalization;
@@ -63,6 +67,10 @@ builder.Services.AddHostedService<BackgroundJobHost>();
 builder.Services.AddSaftFileReading();
 builder.Services.AddAccountingAi(builder.Configuration);
 builder.Services.AddAccountingAt(builder.Configuration);
+builder.Services.AddAccountingMail();
+
+const string PortalScheme = "Portal";
+const string PortalPolicy = "Portal";
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -85,9 +93,29 @@ builder.Services
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             return Task.CompletedTask;
         };
+    })
+    // O portal do cliente (ADR-0020) tem o seu próprio cookie: uma sessão do portal não vale na aplicação e vice-versa.
+    .AddCookie(PortalScheme, options =>
+    {
+        options.Cookie.Name = "NexGenAccountingAI.Portal";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
     });
 builder.Services.AddAuthorization(options =>
 {
+    options.AddPolicy(PortalPolicy, policy => policy.AddAuthenticationSchemes(PortalScheme).RequireAuthenticatedUser());
     // Todo o endpoint exige sessão autenticada, salvo `.AllowAnonymous()`
     // explícito (login, health checks, fundação) — ver ADR-0011.
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -108,8 +136,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<CurrentUserMiddleware>();
-// Depois de saber quem é: a função «Consulta» só lê (ADR-0015).
-app.UseMiddleware<CompanyRoleMiddleware>();
+// Depois de saber quem é: cada pedido a uma empresa exige a permissão do grupo do utilizador (ADR-0018).
+app.UseMiddleware<CompanyPermissionMiddleware>();
 // Os SAF-T chegam inteiros antes de o endpoint responder (o proxy cortava a meio).
 app.UseMiddleware<FullRequestBodyMiddleware>();
 
@@ -293,6 +321,137 @@ app.MapPost("/api/v1/auth/login", async (
     return Results.Ok(new { id = user.Id, displayName = user.DisplayName, email = user.Email, isProducer = user.IsProducer });
 }).AllowAnonymous();
 
+// Portal do cliente (ADR-0020) — o lado do cliente. Autenticação à parte (esquema «Portal», outro cookie): uma conta do
+// portal nunca é aceite nos endpoints da aplicação, e uma sessão da aplicação não vale aqui.
+var portalApi = app.MapGroup("/api/v1/portal");
+
+static async Task PortalSignInAsync(HttpContext context, PortalSession session)
+{
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.NameIdentifier, session.AccountId.ToString()),
+        new Claim(ClaimTypes.Name, session.DisplayName),
+        new Claim(ClaimTypes.Email, session.Email),
+    };
+    await context.SignInAsync(
+            PortalScheme,
+            new ClaimsPrincipal(new ClaimsIdentity(claims, PortalScheme)),
+            new AuthenticationProperties { IsPersistent = false })
+        .ConfigureAwait(false);
+}
+
+static Guid PortalAccountId(ClaimsPrincipal principal) => Guid.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+portalApi.MapGet("/invitation", async (string? token, ClientPortalService portal, CancellationToken cancellationToken) =>
+    await portal.InvitationAsync(token ?? string.Empty, cancellationToken).ConfigureAwait(false) is { } info
+        ? Results.Ok(info)
+        : Results.ValidationProblem(new Dictionary<string, string[]> { ["token"] = ["Este convite expirou ou já foi usado: peça ao gabinete um novo."] }, statusCode: StatusCodes.Status404NotFound))
+    .AllowAnonymous();
+
+portalApi.MapPost("/invitation/accept", async (HttpContext context, PortalAcceptRequest request, ClientPortalService portal, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        var session = await portal.AcceptAsync(request.Token ?? string.Empty, request.Password ?? string.Empty, cancellationToken).ConfigureAwait(false);
+        await PortalSignInAsync(context, session).ConfigureAwait(false);
+        return Results.Ok(session);
+    }
+    catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+    {
+        return Results.ValidationProblem(new Dictionary<string, string[]> { ["password"] = [exception.Message] });
+    }
+}).AllowAnonymous();
+
+portalApi.MapPost("/auth/login", async (HttpContext context, LoginRequest request, ClientPortalService portal, CancellationToken cancellationToken) =>
+{
+    var result = await portal.LoginAsync(request.Email ?? string.Empty, request.Password ?? string.Empty, cancellationToken).ConfigureAwait(false);
+    if (result.Session is null)
+    {
+        return Results.ValidationProblem(new Dictionary<string, string[]> { ["credentials"] = [result.Error ?? "Email ou senha incorretos."] }, statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    await PortalSignInAsync(context, result.Session).ConfigureAwait(false);
+    return Results.Ok(result.Session);
+}).AllowAnonymous();
+
+// «Esqueci-me da senha»: responde sempre o mesmo, para não revelar que emails têm conta.
+portalApi.MapPost("/auth/forgot", async (HttpContext context, PortalForgotRequest request, ClientPortalService portal, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        await portal.ForgotAsync(request.Email ?? string.Empty, $"{context.Request.Scheme}://{context.Request.Host}", cancellationToken).ConfigureAwait(false);
+    }
+    catch (Exception exception) when (exception is InvalidOperationException or ArgumentException or MailTransportException)
+    {
+        // Mesmo com o email a falhar, a resposta não muda.
+    }
+
+    return Results.Ok(new { Sent = true });
+}).AllowAnonymous();
+
+portalApi.MapPost("/auth/logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync(PortalScheme).ConfigureAwait(false);
+    return Results.Ok();
+}).AllowAnonymous();
+
+var portalSession = portalApi.MapGroup(string.Empty).RequireAuthorization(PortalPolicy);
+portalSession.AddEndpointFilter(async (invocation, next) =>
+{
+    // A conta pode ter sido desativada depois de entrar: verifica-se a cada pedido.
+    var portal = invocation.HttpContext.RequestServices.GetRequiredService<ClientPortalService>();
+    return await portal.IsActiveAsync(PortalAccountId(invocation.HttpContext.User), invocation.HttpContext.RequestAborted).ConfigureAwait(false)
+        ? await next(invocation).ConfigureAwait(false)
+        : Results.Unauthorized();
+});
+
+portalSession.MapGet("/me", async (ClaimsPrincipal principal, ClientPortalService portal, CancellationToken cancellationToken) =>
+    Results.Ok(new
+    {
+        Session = await portal.SessionAsync(PortalAccountId(principal), cancellationToken).ConfigureAwait(false),
+        Companies = await portal.CompaniesAsync(PortalAccountId(principal), cancellationToken).ConfigureAwait(false),
+    }));
+
+portalSession.MapGet("/companies/{companyId:guid}/items", async (ClaimsPrincipal principal, Guid companyId, ClientPortalService portal, CancellationToken cancellationToken) =>
+    await portal.ItemsAsync(PortalAccountId(principal), companyId, cancellationToken).ConfigureAwait(false) is { } items ? Results.Ok(items) : Results.NotFound());
+
+portalSession.MapGet("/companies/{companyId:guid}/uploads", async (ClaimsPrincipal principal, Guid companyId, ClientPortalService portal, CancellationToken cancellationToken) =>
+    await portal.UploadsAsync(PortalAccountId(principal), companyId, cancellationToken).ConfigureAwait(false) is { } uploads ? Results.Ok(uploads) : Results.NotFound());
+
+// O cliente envia um documento (o corpo é o ficheiro; o nome vai na query, como no arquivo do gabinete).
+portalSession.MapPost("/companies/{companyId:guid}/uploads", async (
+    HttpRequest request, ClaimsPrincipal principal, Guid companyId, string? fileName, ClientPortalService portal, CancellationToken cancellationToken) =>
+{
+    var maxBodySize = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+    if (maxBodySize is { IsReadOnly: false })
+    {
+        maxBodySize.MaxRequestBodySize = DocumentAttachment.MaxSizeBytes + 1024;
+    }
+
+    try
+    {
+        using var buffer = new MemoryStream();
+        await request.Body.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
+        if (buffer.Length > DocumentAttachment.MaxSizeBytes)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [$"O ficheiro tem mais de {DocumentAttachment.MaxSizeBytes / 1024 / 1024} MB."] });
+        }
+
+        return await portal.UploadAsync(PortalAccountId(principal), companyId, fileName ?? string.Empty, buffer.ToArray(), cancellationToken).ConfigureAwait(false) is { } saved
+            ? Results.Ok(saved)
+            : Results.NotFound();
+    }
+    catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+    {
+        return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [exception.Message] });
+    }
+});
+
+portalSession.MapGet("/items/{itemId:guid}/content", async (ClaimsPrincipal principal, Guid itemId, ClientPortalService portal, CancellationToken cancellationToken) =>
+    await portal.ContentAsync(PortalAccountId(principal), itemId, cancellationToken).ConfigureAwait(false) is { } file
+        ? Results.File(file.Content, file.ContentType, file.FileName)
+        : Results.NotFound());
+
 app.MapPost("/api/v1/auth/logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).ConfigureAwait(false);
@@ -375,6 +534,11 @@ if (applicationEndpointsAvailable)
                                 membership.UserId,
                                 membership.User.DisplayName,
                                 membership.User.Email,
+                                membership.User.Mobile,
+                                membership.User.Phone,
+                                membership.User.Extension,
+                                membership.User.IsAccountant,
+                                membership.PermissionGroupId,
                                 Role = membership.Role.ToString(),
                                 membership.IsActive,
                                 membership.IsResponsible,
@@ -388,7 +552,8 @@ if (applicationEndpointsAvailable)
                                         Theme = membership.Settings.Theme.ToString(),
                                         membership.Settings.CompactMode,
                                         membership.Settings.PageSize,
-                                        TextSize = membership.Settings.TextSize.ToString()
+                                        TextSize = membership.Settings.TextSize.ToString(),
+                                        membership.Settings.MenuOnRight
                                     }
                             })
                     })
@@ -401,6 +566,7 @@ if (applicationEndpointsAvailable)
     app.MapGet("/api/v1/development/work-context/{userId:guid}", async (
         Guid userId,
         AccountingDbContext context,
+        PermissionService permissionService,
         CancellationToken cancellationToken) =>
     {
         var user = await context.UserAccounts
@@ -417,14 +583,24 @@ if (applicationEndpointsAvailable)
             return Results.NotFound();
         }
 
+        var activeMemberships = user.CompanyMemberships
+            .Where(item => item.IsActive && item.Company.IsActive)
+            .OrderBy(item => item.Company.LegalName)
+            .ToList();
+        var effectivePermissions = new Dictionary<Guid, EffectivePermissions>();
+        foreach (var membership in activeMemberships)
+        {
+            effectivePermissions[membership.CompanyId] = await permissionService.ResolveAsync(userId, membership.CompanyId, cancellationToken).ConfigureAwait(false);
+        }
+
         return Results.Ok(new
         {
-            User = new { user.Id, user.DisplayName, user.Email },
-            Companies = user.CompanyMemberships
-                .Where(item => item.IsActive && item.Company.IsActive)
-                .OrderBy(item => item.Company.LegalName)
+            User = new { user.Id, user.DisplayName, user.Email, user.IsAccountant },
+            Companies = activeMemberships
                 .Select(item => new
                 {
+                    Permissions = effectivePermissions[item.CompanyId].Keys.Order(StringComparer.Ordinal).ToList(),
+                    CanManage = OrganizationAdminService.IsManager(item.Role),
                     item.CompanyId,
                     item.Company.LegalName,
                     item.Company.TaxRegistrationNumber,
@@ -484,7 +660,8 @@ if (applicationEndpointsAvailable)
                 theme,
                 request.CompactMode,
                 request.PageSize,
-                textSize);
+                textSize,
+                request.MenuOnRight);
 
             if (membership.Settings is null)
             {
@@ -501,8 +678,7 @@ if (applicationEndpointsAvailable)
                 ["settings"] = [exception.Message]
             });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("As preferências são do próprio utilizador, não da empresa."));
+    });
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements", async (
         Guid userId,
@@ -912,8 +1088,7 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["rows"] = [exception.Message] });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Só formata o que o ecrã já mostra; não altera dados."));
+    });
 
     // Histórico de alterações de um lançamento (F4-03): o estado anterior a cada alteração.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/accounting/movements/{reference}/history", async (
@@ -1745,8 +1920,7 @@ if (applicationEndpointsAvailable)
 
         return await RunAnalysisAsync(runner, userId, companyId, body.Definition, fromDate, toDate, cancellationToken)
             .ConfigureAwait(false);
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Corre uma análise sem a gravar."));
+    });
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/report-templates/{reportKey}", async (
         Guid userId, Guid companyId, string reportKey, ReportTemplateService templates, CancellationToken cancellationToken) =>
@@ -1854,8 +2028,7 @@ if (applicationEndpointsAvailable)
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/{id:guid}/favorite", async (
         Guid userId, Guid companyId, Guid id, bool? value, ListingService listings, CancellationToken cancellationToken) =>
-        await listings.SetFavoriteAsync(userId, companyId, id, value ?? true, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound())
-        .WithMetadata(new ViewerAllowedAttribute("Só guarda a preferência do próprio utilizador."));
+        await listings.SetFavoriteAsync(userId, companyId, id, value ?? true, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/run", async (
         Guid userId, Guid companyId, RunListingRequest body, ListingService listings, CancellationToken cancellationToken) =>
@@ -1877,16 +2050,14 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = [exception.Message] });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Só lê e calcula; não altera dados."));
+    });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/ai-draft", async (
         Guid userId, Guid companyId, AiListingDraftRequest body, ListingDraftService drafts, CancellationToken cancellationToken) =>
     {
         var outcome = await drafts.DraftAsync(userId, companyId, body?.Request ?? string.Empty, cancellationToken).ConfigureAwait(false);
         return outcome is null ? Results.NotFound() : Results.Ok(outcome);
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Só monta um rascunho para o utilizador rever; não grava nada."));
+    });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/pivot", async (
         Guid userId, Guid companyId, PivotListingRequest body, ListingService listings, CancellationToken cancellationToken) =>
@@ -1905,8 +2076,7 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = [exception.Message] });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Só lê e calcula; não altera dados."));
+    });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/listings/export", async (
         Guid userId, Guid companyId, string? format, ExportListingRequest body, ListingService listings, AccountingDbContext context, CancellationToken cancellationToken) =>
@@ -1945,8 +2115,7 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["listagem"] = [exception.Message] });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Só formata dados que o utilizador já pode ler."));
+    });
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/maps", async (
         Guid userId, Guid companyId, FinancialMapService maps, CancellationToken cancellationToken) =>
@@ -2023,8 +2192,7 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["mapa"] = [exception.Message] });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Corre um mapa sem o gravar."));
+    });
 
     // Relatos em PDF (F4B-04): o relatório para a banca e outros compostos de mapas.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/reports/pack/presets", (int? year, int? fromMonth, int? toMonth) =>
@@ -2078,8 +2246,7 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["relato"] = [exception.Message] });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Só formata o que o utilizador já pode ler; não altera dados."));
+    });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/reports/pack/narrate", async (
         Guid userId, Guid companyId, NarrateSectionRequest request, ReportPackService packs, CancellationToken cancellationToken) =>
@@ -3179,8 +3346,7 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["alienacao"] = [exception.Message] });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Pré-visualiza a alienação sem a lançar."));
+    });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/fixed-assets/{code}/disposal", async (
         Guid userId, Guid companyId, string code, AssetDisposalRequest request, FixedAssetService assets, CancellationToken cancellationToken) =>
@@ -3343,6 +3509,45 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Consola de obrigações em lote (F4E-02): as obrigações de todas as empresas do utilizador e a atualização de várias de uma vez.
+    app.MapGet("/api/v1/development/users/{userId:guid}/obligations-console", async (
+        Guid userId, DateOnly from, DateOnly to, Guid? responsible, ObligationConsoleService console, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            return Results.Ok(await console.BuildAsync(userId, from, to, responsible, cancellationToken).ConfigureAwait(false));
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = [exception.Message] });
+        }
+    });
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/obligations-console/update", async (
+        Guid userId, ObligationBatchRequest request, ObligationConsoleService console, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var targets = (request.Items ?? []).Select(item => new ObligationTarget(item.CompanyId, item.Code, item.PeriodKey)).ToList();
+            var updated = await console
+                .UpdateBatchAsync(userId, targets, new ObligationUpdate(request.State ?? string.Empty, request.DeliveredOn, request.Note, null), cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(new { Updated = updated });
+        }
+        catch (KeyNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (OrganizationAccessDeniedException exception)
+        {
+            return OrganizationAccessDenied("obrigacoes", exception);
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["obrigacoes"] = [exception.Message] });
+        }
+    });
+
     // Tarefas automáticas (F4-05): as que existem e as últimas execuções que o utilizador pode ver.
     app.MapGet("/api/v1/development/users/{userId:guid}/background-jobs", async (
         Guid userId, IEnumerable<IBackgroundJob> jobs, BackgroundJobLog log, IConfiguration configuration, CancellationToken cancellationToken) =>
@@ -3372,12 +3577,46 @@ if (applicationEndpointsAvailable)
     });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/tasks", async (
-        Guid userId, Guid companyId, FirmTaskInput body, FirmTaskService tasks, CancellationToken cancellationToken) =>
-        FirmTaskResult(await tasks.CreateAsync(userId, companyId, body ?? new FirmTaskInput(null, null, null, null, null, null), cancellationToken).ConfigureAwait(false)));
+        Guid userId, Guid companyId, FirmTaskInput body, FirmTaskService tasks, TaskNotifier notifier, CancellationToken cancellationToken) =>
+    {
+        var result = await tasks.CreateAsync(userId, companyId, body ?? new FirmTaskInput(null, null, null, null, null, null), cancellationToken).ConfigureAwait(false);
+        if (result.Saved is { } created)
+        {
+            await notifier.NotifyAssignedAsync(userId, created, cancellationToken).ConfigureAwait(false);
+        }
+
+        return FirmTaskResult(result);
+    });
 
     app.MapPut("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/tasks/{id:guid}", async (
-        Guid userId, Guid companyId, Guid id, FirmTaskInput body, FirmTaskService tasks, CancellationToken cancellationToken) =>
-        FirmTaskResult(await tasks.UpdateAsync(userId, companyId, id, body ?? new FirmTaskInput(null, null, null, null, null, null), cancellationToken).ConfigureAwait(false)));
+        Guid userId, Guid companyId, Guid id, FirmTaskInput body, FirmTaskService tasks, TaskNotifier notifier, CancellationToken cancellationToken) =>
+    {
+        var before = await notifier.AssigneeOfAsync(id, cancellationToken).ConfigureAwait(false);
+        var result = await tasks.UpdateAsync(userId, companyId, id, body ?? new FirmTaskInput(null, null, null, null, null, null), cancellationToken).ConfigureAwait(false);
+        if (result.Saved is { } updated && updated.AssigneeUserId != before)
+        {
+            await notifier.NotifyAssignedAsync(userId, updated, cancellationToken).ConfigureAwait(false);
+        }
+
+        return FirmTaskResult(result);
+    });
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/tasks/{id:guid}/comments", async (
+        Guid userId, Guid companyId, Guid id, FirmTaskCommentService comments, CancellationToken cancellationToken) =>
+        await comments.ListAsync(userId, companyId, id, cancellationToken).ConfigureAwait(false) is { } list ? Results.Ok(list) : Results.NotFound());
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/tasks/{id:guid}/comments", async (
+        Guid userId, Guid companyId, Guid id, TaskCommentRequest body, FirmTaskCommentService comments, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            return await comments.AddAsync(userId, companyId, id, body?.Text ?? string.Empty, cancellationToken).ConfigureAwait(false) is { } added ? Results.Ok(added) : Results.NotFound();
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["comment"] = [exception.Message] });
+        }
+    });
 
     app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/tasks/{id:guid}", async (
         Guid userId, Guid companyId, Guid id, FirmTaskService tasks, CancellationToken cancellationToken) =>
@@ -3507,8 +3746,7 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["periodo"] = [exception.Message] });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Só escreve um texto sobre números que o utilizador já pode ler; não grava nada."));
+    });
 
     // Conversa com a IA sobre os dados da empresa (F4F-04): com memória, e a IA só lê, pelos mesmos serviços e direitos do utilizador.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/chat", async (
@@ -3530,13 +3768,11 @@ if (applicationEndpointsAvailable)
     {
         var outcome = await chat.AskAsync(userId, companyId, body?.ConversationId, body?.Question ?? string.Empty, cancellationToken).ConfigureAwait(false);
         return outcome is null ? Results.NotFound() : Results.Ok(outcome);
-    })
-        .WithMetadata(new ViewerAllowedAttribute("A IA só lê, com os direitos do utilizador; a conversa é do próprio utilizador."));
+    });
 
     app.MapDelete("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/chat/{conversationId:guid}", async (
         Guid userId, Guid companyId, Guid conversationId, DataChatService chat, CancellationToken cancellationToken) =>
-        await chat.DeleteAsync(userId, companyId, conversationId, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound())
-        .WithMetadata(new ViewerAllowedAttribute("Só apaga a conversa do próprio utilizador."));
+        await chat.DeleteAsync(userId, companyId, conversationId, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
 
     // Orçamento: o previsto por conta (e centro de custo) comparado com o realizado até um mês.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/budget", async (
@@ -3671,8 +3907,7 @@ if (applicationEndpointsAvailable)
     {
         var proposals = await classification.ProposeAsync(userId, companyId, request?.SupplierTaxIds ?? [], cancellationToken).ConfigureAwait(false);
         return proposals is null ? Results.NotFound() : Results.Ok(proposals);
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Propõe a classificação pelo histórico, sem gravar."));
+    });
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/suggested-entries/classification/ai-status", (
         IPurchaseClassifier classifier) => Results.Ok(new { configured = classifier.IsConfigured }));
@@ -4113,8 +4348,7 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["qr"] = [exception.Message] });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Procura o documento do código QR."));
+    });
 
     // Estrutura do exercício: gastos e rendimentos por natureza, maiores clientes e fornecedores.
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/management/structure", async (
@@ -4275,8 +4509,7 @@ if (applicationEndpointsAvailable)
         {
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["lancamentoTipo"] = [exception.Message] });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Calcula as linhas do lançamento-tipo sem lançar nada."));
+    });
 
     // Terceiros a partir do SAF-T: «preview» só analisa, «import» grava.
     foreach (var (route, apply) in new[] { ("parties-preview", false), ("parties-import", true) })
@@ -4365,8 +4598,7 @@ if (applicationEndpointsAvailable)
             .BuildAsync(userId, companyId, periodFrom, periodTo, request.TaxRate, adjustments, cancellationToken)
             .ConfigureAwait(false);
         return estimate is null ? Results.NotFound() : Results.Ok(estimate);
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Calcula a estimativa; gravar é o PUT .../irc-estimate/saved."));
+    });
 
     app.MapGet("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/irc-estimate/saved", async (
         Guid userId, Guid companyId, string? from, string? to,
@@ -5055,8 +5287,7 @@ if (applicationEndpointsAvailable)
                 ["saft"] = [exception.Message]
             });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Resume o ficheiro sem importar."));
+    });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/accounts-preview", async (
         Guid userId,
@@ -5102,8 +5333,7 @@ if (applicationEndpointsAvailable)
                 ["saft"] = [exception.Message]
             });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Analisa o ficheiro sem importar."));
+    });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/accounts-import", async (
         Guid userId,
@@ -5252,8 +5482,7 @@ if (applicationEndpointsAvailable)
                 ["saft"] = [exception.Message]
             });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Analisa o ficheiro sem importar."));
+    });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/entries-analyze", async (
         Guid userId,
@@ -5301,8 +5530,7 @@ if (applicationEndpointsAvailable)
                 ["saft"] = [exception.Message]
             });
         }
-    })
-        .WithMetadata(new ViewerAllowedAttribute("Analisa o ficheiro sem importar."));
+    });
 
     app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/saft/entries-import", async (
         Guid userId,
@@ -5527,7 +5755,7 @@ if (applicationEndpointsAvailable)
     {
         try
         {
-            var user = await admin.CreateUserAsync(SessionUserId(principal), request.DisplayName, request.Email, cancellationToken).ConfigureAwait(false);
+            var user = await admin.CreateUserAsync(SessionUserId(principal), request.DisplayName, request.Email, request.Mobile, request.Phone, request.Extension, request.IsAccountant, cancellationToken).ConfigureAwait(false);
             return Results.Ok(user);
         }
         catch (OrganizationAccessDeniedException exception)
@@ -5552,7 +5780,7 @@ if (applicationEndpointsAvailable)
         try
         {
             var user = await admin
-                .UpdateUserAsync(SessionUserId(principal), accountId, request.DisplayName, request.Email, request.IsActive, cancellationToken)
+                .UpdateUserAsync(SessionUserId(principal), accountId, request.DisplayName, request.Email, request.IsActive, request.Mobile, request.Phone, request.Extension, request.IsAccountant, cancellationToken)
                 .ConfigureAwait(false);
             return Results.Ok(user);
         }
@@ -5570,6 +5798,346 @@ if (applicationEndpointsAvailable)
         }
     });
 
+    // Email (ADR-0019): a conta de cada utilizador (envio) e a caixa de receção do gabinete. A conta é do
+    // próprio utilizador da sessão; a caixa do gabinete só a gere o dono ou um administrador. As respostas
+    // nunca trazem a senha nem o token de renovação.
+    app.MapGet("/api/v1/mail/account", async (ClaimsPrincipal principal, MailAccountService mail, CancellationToken cancellationToken) =>
+        Results.Ok(new
+        {
+            Account = await mail.GetAsync(MailAccountPurpose.UserSending, SessionUserId(principal), cancellationToken).ConfigureAwait(false),
+            OAuth = await mail.OAuthAvailabilityAsync(cancellationToken).ConfigureAwait(false),
+        }));
+
+    app.MapPut("/api/v1/mail/account", (ClaimsPrincipal principal, MailAccountInput input, MailAccountService mail, CancellationToken cancellationToken) =>
+        MailCall(async () => Results.Ok(await mail.SaveAsync(MailAccountPurpose.UserSending, SessionUserId(principal), input, cancellationToken).ConfigureAwait(false))));
+
+    app.MapDelete("/api/v1/mail/account", async (ClaimsPrincipal principal, MailAccountService mail, CancellationToken cancellationToken) =>
+        await mail.DeleteAsync(MailAccountPurpose.UserSending, SessionUserId(principal), cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
+
+    // Envia um email de teste para o próprio endereço, para confirmar a configuração (e o MFA).
+    app.MapPost("/api/v1/mail/account/test", (ClaimsPrincipal principal, MailAccountService mail, CancellationToken cancellationToken) =>
+        MailCall(async () =>
+        {
+            var account = await mail.GetAsync(MailAccountPurpose.UserSending, SessionUserId(principal), cancellationToken).ConfigureAwait(false);
+            await mail.SendAsync(
+                    SessionUserId(principal), [account.Address], "Teste do email — NexGen Accounting AI",
+                    "Se recebeu esta mensagem, a conta de email está bem configurada e a aplicação já pode enviar relatórios e avisos em seu nome.",
+                    null, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(new { Sent = true, To = account.Address });
+        }));
+
+    app.MapGet("/api/v1/mail/firms/{firmId:guid}/inbox-account", (ClaimsPrincipal principal, Guid firmId, PermissionService permissions, MailAccountService mail, CancellationToken cancellationToken) =>
+        MailCall(async () =>
+        {
+            await permissions.RequireFirmManagerAsync(SessionUserId(principal), firmId, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(new
+            {
+                Account = await mail.GetAsync(MailAccountPurpose.FirmInbox, firmId, cancellationToken).ConfigureAwait(false),
+                OAuth = await mail.OAuthAvailabilityAsync(cancellationToken).ConfigureAwait(false),
+            });
+        }));
+
+    app.MapPut("/api/v1/mail/firms/{firmId:guid}/inbox-account", (ClaimsPrincipal principal, Guid firmId, MailAccountInput input, PermissionService permissions, MailAccountService mail, CancellationToken cancellationToken) =>
+        MailCall(async () =>
+        {
+            await permissions.RequireFirmManagerAsync(SessionUserId(principal), firmId, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(await mail.SaveAsync(MailAccountPurpose.FirmInbox, firmId, input, cancellationToken).ConfigureAwait(false));
+        }));
+
+    app.MapDelete("/api/v1/mail/firms/{firmId:guid}/inbox-account", (ClaimsPrincipal principal, Guid firmId, PermissionService permissions, MailAccountService mail, CancellationToken cancellationToken) =>
+        MailCall(async () =>
+        {
+            await permissions.RequireFirmManagerAsync(SessionUserId(principal), firmId, cancellationToken).ConfigureAwait(false);
+            return await mail.DeleteAsync(MailAccountPurpose.FirmInbox, firmId, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound();
+        }));
+
+    app.MapPost("/api/v1/mail/firms/{firmId:guid}/inbox-account/test", (ClaimsPrincipal principal, Guid firmId, PermissionService permissions, MailAccountService mail, CancellationToken cancellationToken) =>
+        MailCall(async () =>
+        {
+            await permissions.RequireFirmManagerAsync(SessionUserId(principal), firmId, cancellationToken).ConfigureAwait(false);
+            await mail.TestInboxAsync(firmId, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(new { Connected = true });
+        }));
+
+    // OAuth2 (Microsoft e Google): `start` devolve o endereço do login do fornecedor, onde o utilizador autoriza
+    // e faz o MFA; o fornecedor volta ao `callback`, que guarda o token de renovação e regressa ao ecrã de origem.
+    app.MapGet("/api/v1/mail/oauth/start", (
+        HttpContext http, ClaimsPrincipal principal, string provider, Guid? firmId, string? address,
+        PermissionService permissions, MailOAuthService oauth, CancellationToken cancellationToken) =>
+        MailCall(async () =>
+        {
+            if (!Enum.TryParse<MailProvider>(provider, true, out var parsed) || parsed == MailProvider.Password)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["provider"] = ["O fornecedor tem de ser Microsoft ou Google."] });
+            }
+
+            var userId = SessionUserId(principal);
+            var purpose = firmId is null ? MailAccountPurpose.UserSending : MailAccountPurpose.FirmInbox;
+            var owner = firmId ?? userId;
+            if (firmId is { } firm)
+            {
+                await permissions.RequireFirmManagerAsync(userId, firm, cancellationToken).ConfigureAwait(false);
+            }
+
+            var redirect = $"{http.Request.Scheme}://{http.Request.Host}/api/v1/mail/oauth/callback";
+            return Results.Ok(new { Url = (await oauth.StartAsync(purpose, owner, parsed, userId, redirect, address, cancellationToken).ConfigureAwait(false)).ToString() });
+        }));
+
+    app.MapGet("/api/v1/mail/oauth/callback", async (
+        HttpContext http, ClaimsPrincipal principal, string? code, string? state, string? error, string? error_description,
+        MailOAuthService oauth, CancellationToken cancellationToken) =>
+    {
+        static IResult Back(string where, string result, string? detail = null) =>
+            Results.Redirect($"{where}?email={result}{(detail is null ? string.Empty : $"&detalhe={Uri.EscapeDataString(detail.Length > 200 ? detail[..200] : detail)}")}");
+
+        if (!string.IsNullOrEmpty(error) || string.IsNullOrEmpty(code) || string.IsNullOrEmpty(state))
+        {
+            return Back("/definicoes", "erro", error_description ?? error ?? "A autorização foi cancelada.");
+        }
+
+        try
+        {
+            var redirect = $"{http.Request.Scheme}://{http.Request.Host}/api/v1/mail/oauth/callback";
+            var outcome = await oauth.CompleteAsync(state, code, SessionUserId(principal), redirect, cancellationToken).ConfigureAwait(false);
+            return Back(outcome.Purpose == MailAccountPurpose.FirmInbox ? "/caixa-entrada" : "/definicoes", "ligado");
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or ArgumentException or HttpRequestException)
+        {
+            return Back("/definicoes", "erro", exception.Message);
+        }
+    });
+
+    // Configuração geral da IA (só a conta do produtor): a chave da API da Anthropic, cifrada na base de dados, vale para todas as empresas.
+    var producerAi = app.MapGroup("/api/v1/producer/ai-settings");
+    producerAi.AddEndpointFilter(async (invocation, next) =>
+    {
+        var auth = invocation.HttpContext.RequestServices.GetRequiredService<AuthService>();
+        return await auth.IsProducerAsync(SessionUserId(invocation.HttpContext.User), invocation.HttpContext.RequestAborted).ConfigureAwait(false)
+            ? await next(invocation).ConfigureAwait(false)
+            : Results.ValidationProblem(
+                new Dictionary<string, string[]> { ["producer"] = ["Esta configuração é só do produtor da aplicação."] },
+                statusCode: StatusCodes.Status403Forbidden);
+    });
+    producerAi.MapGet(string.Empty, async (AiGeneralSettingsService settings, AiClientProvider ai, CancellationToken cancellationToken) =>
+        Results.Ok(new { Key = await settings.StatusAsync(cancellationToken).ConfigureAwait(false), ai.Source }));
+    producerAi.MapPut(string.Empty, async (AiKeyRequest request, AiGeneralSettingsService settings, AiClientProvider ai, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            return Results.Ok(new { Key = await settings.SaveKeyAsync(request.ApiKey ?? string.Empty, cancellationToken).ConfigureAwait(false), ai.Source });
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["apiKey"] = [exception.Message] });
+        }
+    });
+    producerAi.MapDelete(string.Empty, async (AiGeneralSettingsService settings, CancellationToken cancellationToken) =>
+        await settings.RemoveKeyAsync(cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
+    // Faz um pedido mínimo à Anthropic com a chave em uso, para confirmar que é aceite.
+    producerAi.MapPost("/test", async (AiClientProvider ai, CancellationToken cancellationToken) =>
+    {
+        var problem = await ai.TestAsync(cancellationToken).ConfigureAwait(false);
+        return Results.Ok(new { Ok = problem is null, Message = problem, ai.Source });
+    });
+
+    // Configuração do produtor: a aplicação OAuth registada no Azure e na Google Cloud (só a conta do produtor).
+    var producerMail = app.MapGroup("/api/v1/producer/mail-oauth");
+    producerMail.AddEndpointFilter(async (invocation, next) =>
+    {
+        var auth = invocation.HttpContext.RequestServices.GetRequiredService<AuthService>();
+        return await auth.IsProducerAsync(SessionUserId(invocation.HttpContext.User), invocation.HttpContext.RequestAborted).ConfigureAwait(false)
+            ? await next(invocation).ConfigureAwait(false)
+            : Results.ValidationProblem(
+                new Dictionary<string, string[]> { ["producer"] = ["Esta configuração é só do produtor da aplicação."] },
+                statusCode: StatusCodes.Status403Forbidden);
+    });
+    producerMail.MapGet(string.Empty, async (MailOAuthService oauth, HttpContext http, CancellationToken cancellationToken) =>
+        Results.Ok(new
+        {
+            RedirectUri = $"{http.Request.Scheme}://{http.Request.Host}/api/v1/mail/oauth/callback",
+            Apps = await oauth.AppsAsync(cancellationToken).ConfigureAwait(false),
+        }));
+    producerMail.MapPut(string.Empty, (MailOAuthAppRequest request, MailOAuthService oauth, CancellationToken cancellationToken) =>
+        MailCall(async () =>
+        {
+            if (!Enum.TryParse<MailProvider>(request.Provider, true, out var provider) || provider == MailProvider.Password)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["provider"] = ["O fornecedor tem de ser Microsoft ou Google."] });
+            }
+
+            await oauth.SaveAppAsync(provider, request.ClientId ?? string.Empty, request.ClientSecret, request.Tenant, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(await oauth.AppsAsync(cancellationToken).ConfigureAwait(false));
+        }));
+    producerMail.MapDelete("/{provider}", (string provider, MailOAuthService oauth, CancellationToken cancellationToken) =>
+        MailCall(async () =>
+            Enum.TryParse<MailProvider>(provider, true, out var parsed) && parsed != MailProvider.Password && await oauth.RemoveAppAsync(parsed, cancellationToken).ConfigureAwait(false)
+                ? Results.NoContent()
+                : Results.NotFound()));
+
+    // Enviar por email (F4E-04): um relatório ou uma listagem que o ecrã mostra, em PDF ou Excel, em nome do
+    // utilizador e com a conta de email que ele configurou. O servidor gera o anexo (como na exportação) e envia.
+    app.MapPost("/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/email/send", (
+        Guid userId, Guid companyId, SendEmailRequest request, AccountingDbContext context, ReportPackService packs, MailAccountService mail, CancellationToken cancellationToken) =>
+        MailCall(async () =>
+        {
+            var company = await context.Companies
+                .AsNoTracking()
+                .Where(item => item.Id == companyId && item.IsActive && item.UserMemberships.Any(membership => membership.UserId == userId && membership.IsActive))
+                .Select(item => new { item.LegalName, item.TaxRegistrationNumber })
+                .SingleOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+            if (company is null)
+            {
+                return Results.NotFound();
+            }
+
+            var recipients = (request.To ?? []).Select(item => item.Trim()).Where(item => item.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            if (recipients.Count is 0 or > 20 || recipients.Any(item => !MimeKit.MailboxAddress.TryParse(item, out _)))
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["to"] = ["Indique entre 1 e 20 endereços de email válidos."] });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Subject))
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["subject"] = ["Indique o assunto."] });
+            }
+
+            var attachments = new List<MailAttachment>();
+            foreach (var item in request.Attachments ?? [])
+            {
+                try
+                {
+                    attachments.Add(await BuildExportAttachmentAsync(userId, companyId, company.LegalName, company.TaxRegistrationNumber, item, packs, cancellationToken).ConfigureAwait(false));
+                }
+                catch (ArgumentException exception)
+                {
+                    return Results.ValidationProblem(new Dictionary<string, string[]> { ["attachments"] = [exception.Message] });
+                }
+                catch (KeyNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+            }
+
+            if (attachments.Sum(item => (long)item.Content.Length) > 20 * 1024 * 1024)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["attachments"] = ["Os anexos passam os 20 MB: envie menos de cada vez."] });
+            }
+
+            await mail.SendAsync(userId, recipients, request.Subject.Trim(), request.Body ?? string.Empty, attachments, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(new { Sent = true, Recipients = recipients.Count, Attachments = attachments.Count });
+        }));
+
+    // Documentos recebidos por email na caixa do gabinete (F4E-03): o que espera por uma empresa e o que já foi arquivado.
+    app.MapGet("/api/v1/development/users/{userId:guid}/inbound-emails", async (
+        Guid userId, string? status, MailInboxService inbox, CancellationToken cancellationToken) =>
+        Results.Ok(await inbox.ListAsync(userId, status, cancellationToken).ConfigureAwait(false)));
+
+    app.MapGet("/api/v1/development/users/{userId:guid}/inbound-emails/attachments/{attachmentId:guid}", async (
+        Guid userId, Guid attachmentId, MailInboxService inbox, CancellationToken cancellationToken) =>
+        await inbox.AttachmentAsync(userId, attachmentId, cancellationToken).ConfigureAwait(false) is { } file
+            ? Results.File(file.Content, file.ContentType, file.FileName)
+            : Results.NotFound());
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/inbound-emails/{emailId:guid}/assign", (
+        Guid userId, Guid emailId, AssignInboundEmailRequest request, MailInboxService inbox, CancellationToken cancellationToken) =>
+        MailCall(async () => await inbox.AssignAsync(userId, emailId, request.CompanyId, cancellationToken).ConfigureAwait(false) is true ? Results.NoContent() : Results.NotFound()));
+
+    app.MapPost("/api/v1/development/users/{userId:guid}/inbound-emails/{emailId:guid}/ignore", async (
+        Guid userId, Guid emailId, MailInboxService inbox, CancellationToken cancellationToken) =>
+        await inbox.IgnoreAsync(userId, emailId, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
+
+    // Lê a caixa já, sem esperar pelos 5 minutos (só o dono ou um administrador do gabinete).
+    app.MapPost("/api/v1/mail/firms/{firmId:guid}/inbox-account/poll", (
+        ClaimsPrincipal principal, Guid firmId, PermissionService permissions, MailInboxService inbox, CancellationToken cancellationToken) =>
+        MailCall(async () =>
+        {
+            await permissions.RequireFirmManagerAsync(SessionUserId(principal), firmId, cancellationToken).ConfigureAwait(false);
+            return Results.Ok(await inbox.PollAsync(firmId, cancellationToken).ConfigureAwait(false));
+        }));
+
+    // Portal do cliente (ADR-0020) — o lado do gabinete: convidar clientes e publicar ficheiros. Rotas de empresa, por isso
+    // passam pelas permissões (`portal.view` e `portal.publish`).
+    const string PortalRoot = "/api/v1/development/users/{userId:guid}/companies/{companyId:guid}/portal";
+
+    static string LinkBase(HttpContext http) => $"{http.Request.Scheme}://{http.Request.Host}";
+
+    app.MapGet($"{PortalRoot}/users", (Guid userId, Guid companyId, ClientPortalService portal, CancellationToken cancellationToken) =>
+        PortalCall(async () => Results.Ok(await portal.ListUsersAsync(userId, companyId, cancellationToken).ConfigureAwait(false))));
+
+    app.MapPost($"{PortalRoot}/users", (HttpContext http, Guid userId, Guid companyId, PortalInviteRequest request, ClientPortalService portal, CancellationToken cancellationToken) =>
+        PortalCall(async () => Results.Ok(await portal.InviteAsync(userId, companyId, request.Email ?? string.Empty, request.Name ?? string.Empty, LinkBase(http), cancellationToken).ConfigureAwait(false))));
+
+    app.MapPost($"{PortalRoot}/users/{{accountId:guid}}/resend", (HttpContext http, Guid userId, Guid companyId, Guid accountId, ClientPortalService portal, CancellationToken cancellationToken) =>
+        PortalCall(async () => Results.Ok(await portal.ResendAsync(userId, companyId, accountId, LinkBase(http), cancellationToken).ConfigureAwait(false))));
+
+    app.MapDelete($"{PortalRoot}/users/{{accountId:guid}}", (Guid userId, Guid companyId, Guid accountId, ClientPortalService portal, CancellationToken cancellationToken) =>
+        PortalCall(async () => await portal.RevokeAsync(userId, companyId, accountId, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound()));
+
+    app.MapGet($"{PortalRoot}/uploads", (Guid userId, Guid companyId, ClientPortalService portal, CancellationToken cancellationToken) =>
+        PortalCall(async () => Results.Ok(await portal.ListUploadsAsync(userId, companyId, cancellationToken).ConfigureAwait(false))));
+
+    app.MapGet($"{PortalRoot}/items", (Guid userId, Guid companyId, ClientPortalService portal, CancellationToken cancellationToken) =>
+        PortalCall(async () => Results.Ok(await portal.ListItemsAsync(userId, companyId, cancellationToken).ConfigureAwait(false))));
+
+    // Publica o que um ecrã mostra (listagem, balancete…) ou um relato, em PDF ou Excel, como uma fotografia do momento.
+    app.MapPost($"{PortalRoot}/items/export", (
+        Guid userId, Guid companyId, PortalPublishRequest request, AccountingDbContext context, ReportPackService packs, ClientPortalService portal, CancellationToken cancellationToken) =>
+        PortalCall(async () =>
+        {
+            if (!Enum.TryParse<PortalCategory>(request.Category, true, out var category) || !Enum.IsDefined(category))
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["category"] = ["A categoria tem de ser Documents, Reports, TrialBalance ou Management."] });
+            }
+
+            var company = await context.Companies.AsNoTracking()
+                .Where(item => item.Id == companyId && item.IsActive && item.UserMemberships.Any(membership => membership.UserId == userId && membership.IsActive))
+                .Select(item => new { item.LegalName, item.TaxRegistrationNumber })
+                .SingleOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+            if (company is null || request.Attachment is null)
+            {
+                return company is null ? Results.NotFound() : Results.ValidationProblem(new Dictionary<string, string[]> { ["attachment"] = ["Indique o que publicar."] });
+            }
+
+            var file = await BuildExportAttachmentAsync(userId, companyId, company.LegalName, company.TaxRegistrationNumber, request.Attachment, packs, cancellationToken).ConfigureAwait(false);
+            var title = string.IsNullOrWhiteSpace(request.Title) ? Path.GetFileNameWithoutExtension(file.FileName) : request.Title;
+            return Results.Ok(await portal.PublishBytesAsync(userId, companyId, category, title, file.FileName, file.ContentType, file.Content, cancellationToken).ConfigureAwait(false));
+        }));
+
+    app.MapPost($"{PortalRoot}/items/attachment", (Guid userId, Guid companyId, PortalAttachmentRequest request, ClientPortalService portal, CancellationToken cancellationToken) =>
+        PortalCall(async () => Results.Ok(await portal.PublishAttachmentAsync(userId, companyId, request.AttachmentId, request.Title, cancellationToken).ConfigureAwait(false))));
+
+    app.MapDelete($"{PortalRoot}/items/{{itemId:guid}}", (Guid userId, Guid companyId, Guid itemId, ClientPortalService portal, CancellationToken cancellationToken) =>
+        PortalCall(async () => await portal.DeleteItemAsync(userId, companyId, itemId, cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound()));
+
+    app.MapGet("/api/v1/development/organization/permission-catalog", () => Results.Ok(PermissionCatalog.All));
+
+    app.MapGet("/api/v1/development/organization/firms/{firmId:guid}/permission-groups", (
+        ClaimsPrincipal principal, Guid firmId, PermissionService permissions, CancellationToken cancellationToken) =>
+        PermissionGroupCall(async () => Results.Ok(await permissions.ListGroupsAsync(SessionUserId(principal), firmId, cancellationToken).ConfigureAwait(false))));
+
+    app.MapPost("/api/v1/development/organization/firms/{firmId:guid}/permission-groups", (
+        ClaimsPrincipal principal, Guid firmId, PermissionGroupRequest request, PermissionService permissions, CancellationToken cancellationToken) =>
+        PermissionGroupCall(async () => Results.Ok(await permissions
+            .CreateGroupAsync(SessionUserId(principal), firmId, request.Name, request.Description, request.Permissions ?? [], cancellationToken)
+            .ConfigureAwait(false))));
+
+    app.MapPut("/api/v1/development/organization/permission-groups/{groupId:guid}", (
+        ClaimsPrincipal principal, Guid groupId, PermissionGroupRequest request, PermissionService permissions, CancellationToken cancellationToken) =>
+        PermissionGroupCall(async () => Results.Ok(await permissions
+            .UpdateGroupAsync(SessionUserId(principal), groupId, request.Name, request.Description, request.Permissions ?? [], cancellationToken)
+            .ConfigureAwait(false))));
+
+    app.MapDelete("/api/v1/development/organization/permission-groups/{groupId:guid}", (
+        ClaimsPrincipal principal, Guid groupId, PermissionService permissions, CancellationToken cancellationToken) =>
+        PermissionGroupCall(async () =>
+        {
+            await permissions.DeleteGroupAsync(SessionUserId(principal), groupId, cancellationToken).ConfigureAwait(false);
+            return Results.NoContent();
+        }));
+
     app.MapPut("/api/v1/development/organization/companies/{companyId:guid}/members/{memberId:guid}", async (
         ClaimsPrincipal principal,
         Guid companyId,
@@ -5586,7 +6154,7 @@ if (applicationEndpointsAvailable)
         try
         {
             var membership = await admin
-                .SetMembershipAsync(SessionUserId(principal), companyId, memberId, role, request.IsActive, cancellationToken, request.IsResponsible)
+                .SetMembershipAsync(SessionUserId(principal), companyId, memberId, role, request.IsActive, cancellationToken, request.IsResponsible, request.PermissionGroupId, request.SetPermissionGroup)
                 .ConfigureAwait(false);
             return Results.Ok(membership);
         }
@@ -5692,6 +6260,124 @@ public partial class Program
         catch (FormatException)
         {
             throw new ArgumentException("O ficheiro não chegou completo. Escolha-o outra vez.");
+        }
+    }
+
+    /// <summary>
+    /// Gera o ficheiro de um anexo pedido pelo ecrã — as linhas de uma listagem em PDF ou Excel, ou um relato em PDF —,
+    /// o mesmo para o email e para o portal do cliente. <see cref="ArgumentException"/> quando o pedido não é válido;
+    /// <see cref="KeyNotFoundException"/> quando a empresa do relato não existe para o utilizador.
+    /// </summary>
+    private static async Task<MailAttachment> BuildExportAttachmentAsync(
+        Guid userId, Guid companyId, string companyName, string companyTaxId, SendEmailAttachment item, ReportPackService packs, CancellationToken cancellationToken)
+    {
+        var asXlsx = string.Equals(item.Format, "xlsx", StringComparison.OrdinalIgnoreCase);
+        if (!asXlsx && !string.Equals(item.Format, "pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("O formato do anexo tem de ser xlsx ou pdf.");
+        }
+
+        static string SafeName(string? value, string fallback)
+        {
+            var name = string.Concat((value ?? string.Empty).Where(character => char.IsLetterOrDigit(character) || character is ' ' or '-' or '_' or '.')).Trim();
+            return name.Length == 0 ? fallback : name.Length > 80 ? name[..80] : name;
+        }
+
+        if (item.Pack is { } packRequest)
+        {
+            var pack = await packs.BuildAsync(userId, companyId, packRequest, cancellationToken).ConfigureAwait(false)
+                ?? throw new KeyNotFoundException("A empresa não existe.");
+            if (asXlsx)
+            {
+                throw new ArgumentException("O relato só se envia em PDF.");
+            }
+
+            return new MailAttachment($"{SafeName(pack.Title, "relato").Replace(' ', '-')}-{packRequest.Year}.pdf", "application/pdf", NexGenAccountingAI.Infrastructure.Files.ReportPackWriter.ToPdf(pack));
+        }
+
+        var rows = item.Table?.Rows ?? [];
+        if (rows.Count == 0)
+        {
+            throw new ArgumentException("Não há linhas para enviar.");
+        }
+
+        static object? Cell(JsonElement value) => value.ValueKind switch
+        {
+            JsonValueKind.Number => value.GetDecimal(),
+            JsonValueKind.String => value.GetString(),
+            JsonValueKind.True => "Sim",
+            JsonValueKind.False => "Não",
+            _ => null,
+        };
+
+        var title = string.IsNullOrWhiteSpace(item.Table!.Title) ? "Listagem" : item.Table.Title.Trim();
+        var export = new TableExport(
+            title.Length > 150 ? title[..150] : title,
+            companyName,
+            companyTaxId,
+            DateTimeOffset.Now,
+            rows[0].Select(cell => Cell(cell)?.ToString() ?? string.Empty).ToList(),
+            rows.Skip(1).Select(row => (IReadOnlyList<object?>)row.Select(Cell).ToList()).ToList(),
+            item.Table.Subtitle);
+        var baseName = SafeName(title, "listagem").Replace(' ', '-');
+        return asXlsx
+            ? new MailAttachment($"{baseName}.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", TableExportWriter.ToXlsx(export))
+            : new MailAttachment($"{baseName}.pdf", "application/pdf", TableExportWriter.ToPdf(export));
+    }
+
+    private static async Task<IResult> PortalCall(Func<Task<IResult>> action)
+    {
+        try
+        {
+            return await action().ConfigureAwait(false);
+        }
+        catch (KeyNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or MailTransportException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["portal"] = [exception.Message] });
+        }
+    }
+
+    private static async Task<IResult> MailCall(Func<Task<IResult>> action)
+    {
+        try
+        {
+            return await action().ConfigureAwait(false);
+        }
+        catch (KeyNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (OrganizationAccessDeniedException exception)
+        {
+            return OrganizationAccessDenied("email", exception);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or HttpRequestException or MailTransportException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["email"] = [exception.Message] });
+        }
+    }
+
+    private static async Task<IResult> PermissionGroupCall(Func<Task<IResult>> action)
+    {
+        try
+        {
+            return await action().ConfigureAwait(false);
+        }
+        catch (KeyNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (OrganizationAccessDeniedException exception)
+        {
+            return OrganizationAccessDenied("permissions", exception);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["permissions"] = [exception.Message] });
         }
     }
 
@@ -6018,6 +6704,7 @@ public partial class Program
             settings.CompactMode,
             settings.PageSize,
             TextSize = settings.TextSize.ToString(),
+            settings.MenuOnRight,
             settings.UpdatedAtUtc
         };
 
@@ -6032,6 +6719,7 @@ public partial class Program
         CompactMode = false,
         PageSize = 50,
         TextSize = InterfaceTextSize.Normal.ToString(),
+        MenuOnRight = false,
         UpdatedAtUtc = (DateTimeOffset?)null
     };
 }
@@ -6043,7 +6731,8 @@ public sealed record UpdateUserCompanySettingsRequest(
     string Theme,
     bool CompactMode,
     int PageSize,
-    string TextSize = "Normal");
+    string TextSize = "Normal",
+    bool MenuOnRight = false);
 
 public sealed record CreateAccountRequest(
     string Code,
@@ -6260,14 +6949,42 @@ public sealed record UpdateOrganizationCompanyRequest(
     string? City = null,
     string? PostalCode = null);
 
-public sealed record CreateOrganizationUserRequest(string DisplayName, string Email);
+public sealed record CreateOrganizationUserRequest(string DisplayName, string Email, string? Mobile = null, string? Phone = null, string? Extension = null, bool IsAccountant = false);
 
-public sealed record UpdateOrganizationUserRequest(string DisplayName, string Email, bool IsActive);
+public sealed record UpdateOrganizationUserRequest(string DisplayName, string Email, bool IsActive, string? Mobile = null, string? Phone = null, string? Extension = null, bool? IsAccountant = null);
 
 /// <summary>Uma listagem a exportar: a primeira linha é o cabeçalho; cada célula é texto, número ou nula.</summary>
 public sealed record TableExportRequest(string? Title, string? Subtitle, List<List<JsonElement>>? Rows);
 
-public sealed record SetMembershipRequest(string Role, bool IsActive, bool? IsResponsible = null);
+public sealed record SetMembershipRequest(string Role, bool IsActive, bool? IsResponsible = null, Guid? PermissionGroupId = null, bool SetPermissionGroup = false);
+
+public sealed record ObligationBatchItem(Guid CompanyId, string Code, string PeriodKey);
+
+public sealed record ObligationBatchRequest(List<ObligationBatchItem>? Items, string? State, DateOnly? DeliveredOn, string? Note);
+
+public sealed record SendEmailAttachment(string? Format, TableExportRequest? Table, NexGenAccountingAI.Application.Maps.ReportPackRequest? Pack);
+
+public sealed record SendEmailRequest(List<string>? To, string? Subject, string? Body, List<SendEmailAttachment>? Attachments);
+
+public sealed record PortalInviteRequest(string? Email, string? Name);
+
+public sealed record PortalPublishRequest(string? Category, string? Title, SendEmailAttachment? Attachment);
+
+public sealed record PortalAttachmentRequest(Guid AttachmentId, string? Title);
+
+public sealed record PortalForgotRequest(string? Email);
+
+public sealed record PortalAcceptRequest(string? Token, string? Password);
+
+public sealed record TaskCommentRequest(string? Text);
+
+public sealed record AssignInboundEmailRequest(Guid CompanyId);
+
+public sealed record AiKeyRequest(string? ApiKey);
+
+public sealed record MailOAuthAppRequest(string? Provider, string? ClientId, string? ClientSecret, string? Tenant);
+
+public sealed record PermissionGroupRequest(string Name, string? Description, List<string>? Permissions);
 
 public sealed record LoginRequest(string? Email, string? Password);
 

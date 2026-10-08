@@ -26,7 +26,7 @@ function withFilters(params: URLSearchParams, filters: Filters) {
 }
 
 export function MovementsPage() {
-  const { accountingSetup, accountingSource, activeCompany, movements, reopenMovement, reviewMovement, user, voidMovement } = useWorkContext()
+  const { accountingSetup, accountingSource, activeCompany, can, movements, reopenMovement, reviewMovement, user, voidMovement } = useWorkContext()
   const [editing, setEditing] = useState<{ movement: Movement | null; duplicate: boolean } | undefined>(undefined)
   const [busy, setBusy] = useState('')
   const [search, setSearch] = useState('')
@@ -154,7 +154,7 @@ export function MovementsPage() {
       {(fromDate || toDate) && <button className="button button-secondary" type="button" onClick={() => { setFromDate(''); setToDate('') }}>Limpar datas</button>}
       <span className="catalog-count">{useClient ? `${filteredCount} de ${movements.length}` : `${filteredCount} ${filteredCount === 1 ? 'movimento' : 'movimentos'}`}</span>
       <ExportButtons run={exportCsv} disabled={exporting || filteredCount === 0} />
-      <button className="button button-primary" type="button" onClick={() => setEditing({ movement: null, duplicate: false })}><Plus size={16} /> Novo lançamento</button>
+      {can('movements.create') && <button className="button button-primary" type="button" onClick={() => setEditing({ movement: null, duplicate: false })}><Plus size={16} /> Novo lançamento</button>}
     </div>
     {editing !== undefined && <MovementEditor movement={editing.movement} duplicate={editing.duplicate} onClose={() => { setEditing(undefined); setReload((value) => value + 1) }} />}
     <section className="panel"><div className="table-wrap"><table><thead><tr><th>Movimento</th><th>Descrição</th><th>Diário</th><th>Estado</th><th className="numeric">Valor</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>{rows.map((movement) => <tr key={movement.id}>
@@ -167,11 +167,11 @@ export function MovementsPage() {
         {(() => {
           const blocked = blockedReason(movement)
           return <>
-            {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => setEditing({ movement, duplicate: false })}>Corrigir</button>}
-            {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => reviewMovement(movement.id))}>Conferir</button>}
-            {movement.status === 'Conferido' && movement.documentType !== 'AP' && movement.documentType !== 'AB' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => act(movement.id, () => reopenMovement(movement.id))}>Reabrir</button>}
-            {movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => act(movement.id, () => voidMovement(movement.id))}>Anular</button>}
-            {movement.documentType !== 'AP' && movement.documentType !== 'AB' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => setEditing({ movement, duplicate: true })}>Duplicar</button>}
+            {can('movements.edit') && movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => setEditing({ movement, duplicate: false })}>Corrigir</button>}
+            {can('movements.review') && movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => act(movement.id, () => reviewMovement(movement.id))}>Conferir</button>}
+            {can('movements.reopen') && movement.status === 'Conferido' && movement.documentType !== 'AP' && movement.documentType !== 'AB' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => act(movement.id, () => reopenMovement(movement.id))}>Reabrir</button>}
+            {can('movements.void') && movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy === movement.id || blocked !== null} title={blocked ?? undefined} onClick={() => act(movement.id, () => voidMovement(movement.id))}>Anular</button>}
+            {can('movements.create') && movement.documentType !== 'AP' && movement.documentType !== 'AB' && <button className="button button-secondary" type="button" disabled={busy === movement.id} onClick={() => setEditing({ movement, duplicate: true })}>Duplicar</button>}
             {blocked !== null && movement.status !== 'Anulado' && <small className="row-actions-note">{blocked}</small>}
           </>
         })()}

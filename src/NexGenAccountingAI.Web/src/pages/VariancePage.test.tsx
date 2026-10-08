@@ -4,6 +4,7 @@ import { VariancePage, presetPeriods } from './VariancePage'
 
 vi.mock('../app/WorkContext', () => ({
   useWorkContext: () => ({
+    can: () => true,
     activeCompany: { companyId: 'c1', legalName: 'Empresa', settings: {} },
     source: 'database',
     user: { id: 'u1' },

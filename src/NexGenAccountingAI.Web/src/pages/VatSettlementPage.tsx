@@ -34,7 +34,7 @@ function defaultQuarter(fiscalYear: number | null | undefined) {
 }
 
 export function VatSettlementPage() {
-  const { activeCompany, source, savedVatReturn, saveVatReturn, vatReturnHistory, vatSummary } = useWorkContext()
+  const { activeCompany, can, source, savedVatReturn, saveVatReturn, vatReturnHistory, vatSummary } = useWorkContext()
   const companyId = activeCompany.companyId
   const fiscalYear = activeCompany.settings.defaultFiscalYear
   const onDatabase = source === 'database'
@@ -164,7 +164,7 @@ export function VatSettlementPage() {
       <label className="mr-hint">Excesso do período anterior
         <input type="number" step="0.01" value={prior} onChange={(event) => setPrior(event.target.value)} style={{ width: '9rem' }} />
       </label>
-      <button type="button" className="button button-primary" onClick={() => void save()} disabled={!result || busy}><Save size={15} /> {busy ? 'A guardar…' : 'Guardar apuramento'}</button>
+      {can('vat.post') && <button type="button" className="button button-primary" onClick={() => void save()} disabled={!result || busy}><Save size={15} /> {busy ? 'A guardar…' : 'Guardar apuramento'}</button>}
       <ExportButtons run={exportCsv} disabled={!result} />
     </div>
 

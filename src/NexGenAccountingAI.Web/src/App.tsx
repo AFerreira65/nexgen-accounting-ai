@@ -10,6 +10,10 @@ import { JournalReportPage } from './pages/JournalReportPage'
 import { MovementPage } from './pages/MovementPage'
 import { MovementsPage } from './pages/MovementsPage'
 import { OrganizationPage } from './pages/OrganizationPage'
+import { ObligationsConsolePage } from './pages/ObligationsConsolePage'
+import { InboxPage } from './pages/InboxPage'
+import { PortalAdminPage } from './pages/PortalAdminPage'
+import { PermissionGroupsPage } from './pages/PermissionGroupsPage'
 import { SaftImportPage } from './pages/SaftImportPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { AnomaliesPage } from './pages/AnomaliesPage'
@@ -119,11 +123,15 @@ export function App() {
             <Route path="/relatorio-empresario" element={<OwnerReportPage />} />
             <Route path="/previsao-tesouraria" element={<TreasuryForecastPage />} />
             <Route path="/obrigacoes" element={<ObligationsPage />} />
+            <Route path="/consola-obrigacoes" element={<ObligationsConsolePage />} />
             <Route path="/painel-gabinete" element={<FirmDashboardPage />} />
             <Route path="/mapas-dossier" element={<DossierMapsPage />} />
             <Route path="/analises" element={<AnalysesPage />} />
             <Route path="/relatorios-gestao" element={<ManagementReportsPage />} />
             <Route path="/organizacao" element={<OrganizationPage />} />
+            <Route path="/caixa-entrada" element={<InboxPage />} />
+            <Route path="/portal-cliente" element={<PortalAdminPage />} />
+            <Route path="/grupos-permissoes" element={<PermissionGroupsPage />} />
             <Route path="/balancete" element={<BalanceteRoute />} />
             <Route path="/balancete/lista" element={<TrialBalancePage />} />
             <Route path="/mapas" element={<MapsPage />} />

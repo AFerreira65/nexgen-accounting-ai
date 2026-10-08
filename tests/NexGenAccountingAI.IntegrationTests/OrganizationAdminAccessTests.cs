@@ -89,21 +89,28 @@ public sealed class OrganizationAdminAccessTests
             Assert.AreEqual("Administrator", stepDown.Role, "Com outro dono, já pode deixar de o ser.");
 
             // Utilizadores: o próprio muda o nome mas não se desativa; os outros, quem os administra em todas as empresas.
-            var renamed = await service.UpdateUserAsync(accountant, accountant, "Contabilista Sénior", "contabilista@acessos.invalid", true, none).ConfigureAwait(false);
+            var renamed = await service.UpdateUserAsync(accountant, accountant, "Contabilista Sénior", "contabilista@acessos.invalid", true, cancellationToken: none).ConfigureAwait(false);
             Assert.AreEqual("Contabilista Sénior", renamed.DisplayName);
             await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
-                service.UpdateUserAsync(accountant, accountant, "Contabilista", "contabilista@acessos.invalid", false, none)).ConfigureAwait(false);
+                service.UpdateUserAsync(accountant, accountant, "Contabilista", "contabilista@acessos.invalid", false, cancellationToken: none)).ConfigureAwait(false);
             await Assert.ThrowsExactlyAsync<OrganizationAccessDeniedException>(() =>
-                service.UpdateUserAsync(admin, outsider, "Estranho", "estranho@acessos.invalid", false, none)).ConfigureAwait(false);
+                service.UpdateUserAsync(admin, outsider, "Estranho", "estranho@acessos.invalid", false, cancellationToken: none)).ConfigureAwait(false);
             await Assert.ThrowsExactlyAsync<OrganizationAccessDeniedException>(() =>
-                service.UpdateUserAsync(owner, admin, "Administrador", "admin@acessos.invalid", true, none)).ConfigureAwait(false);
-            await service.UpdateUserAsync(admin, accountant, "Contabilista", "contabilista@acessos.invalid", false, none).ConfigureAwait(false);
+                service.UpdateUserAsync(owner, admin, "Administrador", "admin@acessos.invalid", true, cancellationToken: none)).ConfigureAwait(false);
+            await service.UpdateUserAsync(admin, accountant, "Contabilista", "contabilista@acessos.invalid", false, cancellationToken: none).ConfigureAwait(false);
 
             // Criar: só quem administra; quem cria a empresa fica dono dela.
             await Assert.ThrowsExactlyAsync<OrganizationAccessDeniedException>(() =>
-                service.CreateUserAsync(accountant, "Novo", "novo@acessos.invalid", none)).ConfigureAwait(false);
-            var created = await service.CreateUserAsync(owner, "Novo", "novo@acessos.invalid", none).ConfigureAwait(false);
+                service.CreateUserAsync(accountant, "Novo", "novo@acessos.invalid", cancellationToken: none)).ConfigureAwait(false);
+            var created = await service.CreateUserAsync(owner, "Novo", "novo@acessos.invalid", cancellationToken: none).ConfigureAwait(false);
             Assert.IsTrue(created.IsActive);
+            Assert.IsNull(created.Mobile);
+
+            // Contactos da ficha: guardam-se aparados, vazios ficam nulos, e mudam ao editar.
+            var withContacts = await service.UpdateUserAsync(owner, created.Id, "Novo", "novo@acessos.invalid", true, " 912 345 678 ", "", "204", cancellationToken: none).ConfigureAwait(false);
+            Assert.AreEqual("912 345 678", withContacts.Mobile);
+            Assert.IsNull(withContacts.Phone);
+            Assert.AreEqual("204", withContacts.Extension);
             var newCompany = await service.CreateCompanyAsync(owner, firmId, "Empresa Nova, Lda.", "515333000", TaxRegion.Mainland, AccountingStandard.SncGeneral, "EUR", none).ConfigureAwait(false);
             Assert.AreEqual(CompanyUserRole.Owner, await service.ActiveRoleAsync(owner, newCompany.Id, none).ConfigureAwait(false));
         }

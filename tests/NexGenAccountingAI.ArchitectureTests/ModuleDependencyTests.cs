@@ -12,12 +12,13 @@ public sealed class ModuleDependencyTests
             ["NexGenAccountingAI.Application"] = ["NexGenAccountingAI.Domain"],
             ["NexGenAccountingAI.Infrastructure.Ai"] = ["NexGenAccountingAI.Application"],
             ["NexGenAccountingAI.Infrastructure.At"] = ["NexGenAccountingAI.Application"],
+            ["NexGenAccountingAI.Infrastructure.Mail"] = ["NexGenAccountingAI.Application", "NexGenAccountingAI.Domain"],
             ["NexGenAccountingAI.Infrastructure.Files"] =
                 ["NexGenAccountingAI.Application", "NexGenAccountingAI.Domain"],
             ["NexGenAccountingAI.Infrastructure.Persistence"] =
                 ["NexGenAccountingAI.Application", "NexGenAccountingAI.Domain"],
             ["NexGenAccountingAI.Api"] =
-                ["NexGenAccountingAI.Application", "NexGenAccountingAI.Infrastructure.Ai", "NexGenAccountingAI.Infrastructure.At", "NexGenAccountingAI.Infrastructure.Files", "NexGenAccountingAI.Infrastructure.Persistence"],
+                ["NexGenAccountingAI.Application", "NexGenAccountingAI.Infrastructure.Ai", "NexGenAccountingAI.Infrastructure.At", "NexGenAccountingAI.Infrastructure.Files", "NexGenAccountingAI.Infrastructure.Mail", "NexGenAccountingAI.Infrastructure.Persistence"],
             ["NexGenAccountingAI.Worker"] =
                 ["NexGenAccountingAI.Application", "NexGenAccountingAI.Infrastructure.Persistence"]
         };

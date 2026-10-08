@@ -13,7 +13,7 @@ import { MovementEditor } from './MovementEditor'
 export function MovementPage() {
   const { movementId } = useParams()
   usePublishRecord('movimentos', movementId, movementId?.replaceAll('-', ' '))
-  const { accountingSource, activeCompany, movements, reopenMovement, reviewMovement, user, voidMovement } = useWorkContext()
+  const { accountingSource, activeCompany, can, movements, reopenMovement, reviewMovement, user, voidMovement } = useWorkContext()
   const blockedReason = useMovementGuards()
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -75,11 +75,11 @@ export function MovementPage() {
     <header className="page-heading detail-heading">
       <div><p className="eyebrow">Movimento contabilístico</p><div className="heading-line"><h1>{movement.id.replaceAll('-', ' ')}</h1><span className={`badge ${statusBadge}`}>{movement.status}</span>{movement.documentType ? <span className="badge neutral">{movement.documentType}</span> : null}</div><p>{movement.description}</p></div>
       <div className="heading-actions">
-        {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy} onClick={() => void act(() => reviewMovement(movement.id))}>Conferir</button>}
-        {movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy || blocked !== null} title={blocked ?? undefined} onClick={() => setEditing('correct')}><PencilLine size={16} /> Corrigir</button>}
-        {movement.status === 'Conferido' && !isSystemEntry && <button className="button button-secondary" type="button" disabled={busy || blocked !== null} title={blocked ?? undefined} onClick={() => void act(() => reopenMovement(movement.id))}>Reabrir</button>}
-        {movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy || blocked !== null} title={blocked ?? undefined} onClick={() => void act(() => voidMovement(movement.id))}>Anular</button>}
-        {!isSystemEntry && <button className="button button-secondary" type="button" onClick={() => setEditing('duplicate')}><Copy size={16} /> Duplicar</button>}
+        {can('movements.review') && movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy} onClick={() => void act(() => reviewMovement(movement.id))}>Conferir</button>}
+        {can('movements.edit') && movement.status === 'Por conferir' && <button className="button button-secondary" type="button" disabled={busy || blocked !== null} title={blocked ?? undefined} onClick={() => setEditing('correct')}><PencilLine size={16} /> Corrigir</button>}
+        {can('movements.reopen') && movement.status === 'Conferido' && !isSystemEntry && <button className="button button-secondary" type="button" disabled={busy || blocked !== null} title={blocked ?? undefined} onClick={() => void act(() => reopenMovement(movement.id))}>Reabrir</button>}
+        {can('movements.void') && movement.status !== 'Anulado' && <button className="button button-secondary" type="button" disabled={busy || blocked !== null} title={blocked ?? undefined} onClick={() => void act(() => voidMovement(movement.id))}>Anular</button>}
+        {can('movements.create') && !isSystemEntry && <button className="button button-secondary" type="button" onClick={() => setEditing('duplicate')}><Copy size={16} /> Duplicar</button>}
         <button className="button button-secondary" type="button" onClick={copyLink}>{copied ? <><Check size={16} /> Ligação copiada</> : <><Link2 size={16} /> Copiar ligação</>}</button>
       </div>
     </header>

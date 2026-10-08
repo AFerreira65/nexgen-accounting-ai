@@ -195,7 +195,7 @@ function PartyImporter({ onImported, onClose }: { onImported: () => void; onClos
 }
 
 export function PartiesPage() {
-  const { activeCompany, source, parties } = useWorkContext()
+  const { activeCompany, can, source, parties } = useWorkContext()
   const companyId = activeCompany.companyId
   const pageSize = activeCompany.settings.pageSize || 50
   const onDatabase = source === 'database'
@@ -250,8 +250,8 @@ export function PartiesPage() {
       </div>
       <label className="inline-check"><input type="checkbox" checked={includeInactive} onChange={(event) => { setIncludeInactive(event.target.checked); setPage(1) }} /> Incluir inativos</label>
       <span className="catalog-count">{loading ? 'A carregar…' : `${total} ${total === 1 ? 'terceiro' : 'terceiros'}`}</span>
-      <button className="button button-secondary" type="button" onClick={() => setImporting(true)}><Download size={16} /> Importar</button>
-      <button className="button button-primary" type="button" onClick={() => setEditor({ mode: 'create' })}><Plus size={16} /> Novo terceiro</button>
+      {can('parties.create') && <button className="button button-secondary" type="button" onClick={() => setImporting(true)}><Download size={16} /> Importar</button>}
+      {can('parties.create') && <button className="button button-primary" type="button" onClick={() => setEditor({ mode: 'create' })}><Plus size={16} /> Novo terceiro</button>}
     </div>
 
     {importing && <PartyImporter onImported={() => setReload((value) => value + 1)} onClose={() => setImporting(false)} />}
@@ -269,7 +269,7 @@ export function PartiesPage() {
           <td>{party.customerAccountCode ? <Link className="primary-cell" to={`/contas/${party.customerAccountCode}`}>{party.customerAccountCode}</Link> : <span className="muted-value">—</span>}</td>
           <td>{party.supplierAccountCode ? <Link className="primary-cell" to={`/contas/${party.supplierAccountCode}`}>{party.supplierAccountCode}</Link> : <span className="muted-value">—</span>}</td>
           <td><span className={`badge ${party.isActive ? 'success' : 'warning'}`}>{party.isActive ? 'Ativo' : 'Inativo'}</span></td>
-          <td><button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', party })}>Editar</button></td>
+          <td>{can('parties.edit') && <button className="button button-secondary" type="button" onClick={() => setEditor({ mode: 'edit', party })}>Editar</button>}</td>
         </tr>)}</tbody>
       </table></div>
       {!loading && rows.length === 0 && <p className="empty-state">{search || role !== 'Todos' ? 'Nenhum terceiro corresponde ao filtro.' : 'Ainda não há terceiros. Crie o primeiro com «Novo terceiro».'}</p>}

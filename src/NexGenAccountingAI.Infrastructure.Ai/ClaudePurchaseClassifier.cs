@@ -19,17 +19,16 @@ public sealed class ClaudePurchaseClassifier : IPurchaseClassifier
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly AiOptions options;
-    private readonly AnthropicClient? client;
+    private readonly AiClientProvider provider;
 
-    public ClaudePurchaseClassifier(IOptions<AiOptions> options)
+    public ClaudePurchaseClassifier(IOptions<AiOptions> options, AiClientProvider? provider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         this.options = options.Value;
-        if (!string.IsNullOrWhiteSpace(this.options.ApiKey))
-        {
-            client = new AnthropicClient { ApiKey = this.options.ApiKey };
-        }
+        this.provider = provider ?? new AiClientProvider(options);
     }
+
+    private AnthropicClient? client => provider.Client;
 
     public bool IsConfigured => client is not null;
 

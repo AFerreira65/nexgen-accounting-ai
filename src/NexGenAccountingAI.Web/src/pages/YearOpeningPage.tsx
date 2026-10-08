@@ -42,7 +42,7 @@ function demoPreview(movements: Movement[], nameOf: (code: string) => string, ye
 }
 
 export function YearOpeningPage() {
-  const { activeCompany, accountingSetup, movements, source, user, refreshAccounting } = useWorkContext()
+  const { activeCompany, accountingSetup, can, movements, source, user, refreshAccounting } = useWorkContext()
   const [year, setYear] = useState((activeCompany.settings.defaultFiscalYear ?? new Date().getFullYear()) + 1)
   const nameOf = useMemo(() => (code: string) => accountingSetup.accounts.find((account) => account.code === code)?.name ?? code, [accountingSetup.accounts])
   const [data, setData] = useState<Opening>(() => demoPreview(movements, nameOf, year))
@@ -131,8 +131,8 @@ export function YearOpeningPage() {
     <div className="filterbar series-filterbar">
       <label className="year-filter"><span>Exercício</span><input aria-label="Exercício da abertura" type="number" min="2001" max="2200" value={year} onChange={(event) => setYear(Number(event.target.value))} /></label>
       {data.alreadyOpened
-        ? <button type="button" className="button button-secondary" onClick={() => void reopen()} disabled={!canReopen}><DoorOpen size={15} /> Reabrir exercício</button>
-        : <button type="button" className="button button-primary" onClick={() => void register()} disabled={!canRegister}><DoorOpen size={15} /> Registar abertura</button>}
+        ? can('yearend.reopen') && <button type="button" className="button button-secondary" onClick={() => void reopen()} disabled={!canReopen}><DoorOpen size={15} /> Reabrir exercício</button>
+        : can('yearend.execute') && <button type="button" className="button button-primary" onClick={() => void register()} disabled={!canRegister}><DoorOpen size={15} /> Registar abertura</button>}
     </div>
 
     {message && <div className={`series-message ${status === 'error' ? 'error' : 'success'}`}>{message}</div>}

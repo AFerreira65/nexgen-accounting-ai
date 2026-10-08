@@ -47,7 +47,7 @@ export function SuggestedEntriesPage() {
 
 /** O separador «Compras»: faturas do e-Fatura, com regra por fornecedor. */
 function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: string }) {
-  const { activeCompany, suggestedEntries, finalizeSuggestedEntries, dismissPurchases, restorePurchases, classificationFromHistory, classificationAiStatus, classificationFromAi, acceptClassification, supplierEntryRules, saveSupplierEntryRule, deleteSupplierEntryRule, entryTemplates } = useWorkContext()
+  const { activeCompany, can, suggestedEntries, finalizeSuggestedEntries, dismissPurchases, restorePurchases, classificationFromHistory, classificationAiStatus, classificationFromAi, acceptClassification, supplierEntryRules, saveSupplierEntryRule, deleteSupplierEntryRule, entryTemplates } = useWorkContext()
   const companyId = activeCompany.companyId
   const [report, setReport] = useState<SuggestedEntriesReport | null>(null)
   const [rules, setRules] = useState<SupplierEntryRuleRow[]>([])
@@ -210,7 +210,7 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
     {report && report.purchaseCount === 0 && <section className="panel empty-state"><h2>Sem faturas do e-Fatura no período</h2><p>Importe o CSV das compras em <Link to="/compras-efatura">Compras e-Fatura</Link>.</p></section>}
     {report && report.purchaseCount > 0 && items.length === 0 && <section className="panel empty-state"><span className="empty-icon"><CircleCheck /></span><h2>Tudo lançado</h2><p>Todas as faturas do período têm lançamento na contabilidade.</p></section>}
 
-    {withoutRule.length > 0 && <section className="panel settings-panel">
+    {can('suggested.post') && withoutRule.length > 0 && <section className="panel settings-panel">
       <div className="panel-heading"><div><h2>Fornecedores sem regra</h2><p>Escolha o lançamento-tipo com que as faturas de cada fornecedor passam a ser sugeridas — ou aceite a proposta tirada das compras já lançadas dele{aiConfigured ? ', ou peça uma à IA quando não as há' : ''}. Aceitar cria o lançamento-tipo «H-NIF» e a regra; pode corrigir a conta antes. A contrapartida usa a conta própria do fornecedor quando a ficha de terceiro a tiver.</p></div></div>
       {withoutRule.some((item) => proposals[item.supplierTaxId]) || aiConfigured ? <div className="table-wrap"><table>
         <thead><tr><th>Fornecedor</th><th>Proposta</th><th /></tr></thead>
@@ -247,19 +247,19 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
     {items.length > 0 && <section className="panel">
       <div className="panel-heading"><div><h2>Faturas por lançar</h2><p>{ready.length === items.length ? 'Todas com sugestão pronta.' : `${ready.length} de ${items.length} com sugestão pronta.`} As notas de crédito invertem os lados do lançamento-tipo.</p></div></div>
       <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
-        <button className="button button-primary" type="button" onClick={finalize} disabled={busy || selectedReady.length === 0}><WandSparkles size={16} /> {busy ? 'A lançar…' : `Finalizar ${selectedReady.length} ${selectedReady.length === 1 ? 'selecionado' : 'selecionados'}`}</button>
+        {can('suggested.post') && <button className="button button-primary" type="button" onClick={finalize} disabled={busy || selectedReady.length === 0}><WandSparkles size={16} /> {busy ? 'A lançar…' : `Finalizar ${selectedReady.length} ${selectedReady.length === 1 ? 'selecionado' : 'selecionados'}`}</button>}
         <ExportButtons run={exportCsv} />
         <button className="button button-secondary" type="button" onClick={exportMissing} title="As faturas por lançar agrupadas por fornecedor, para pedir os documentos"><FileQuestion size={16} /> Documentos em falta</button>
       </div>
-      <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
+      {can('suggested.post') && <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
         <label className="inline-check">Motivo <input aria-label="Motivo para não lançar" list="motivos-nao-lancar" value={dismissReason} onChange={(event) => setDismissReason(event.target.value)} placeholder="ex.: despesa particular" /></label>
         <datalist id="motivos-nao-lancar"><option value="Despesa particular" /><option value="Documento em duplicado" /><option value="Lançado noutro documento" /><option value="Não é desta empresa" /></datalist>
         <button className="button button-secondary" type="button" onClick={dismiss} disabled={busy || selected.size === 0 || dismissReason.trim() === ''}><Ban size={16} /> Não lançar os selecionados</button>
-      </div>
+      </div>}
       <div className="table-wrap"><table>
         <thead><tr><th><span className="sr-only">Selecionar</span></th><th>Data</th><th>Fornecedor</th><th>Documento</th><th className="numeric">Total</th><th>Lançamento proposto</th></tr></thead>
         <tbody>{items.map((item) => <tr key={item.purchaseId}>
-          <td><input type="checkbox" aria-label={`Selecionar ${item.invoiceNo}`} checked={selected.has(item.purchaseId)} onChange={() => toggle(item.purchaseId)} /></td>
+          <td>{can('suggested.post') && <input type="checkbox" aria-label={`Selecionar ${item.invoiceNo}`} checked={selected.has(item.purchaseId)} onChange={() => toggle(item.purchaseId)} />}</td>
           <td>{formatMovementDate(item.invoiceDate)}</td>
           <td>{item.supplierName}<br /><small>NIF {item.supplierTaxId}</small></td>
           <td>{item.invoiceNo}<br /><small>{item.invoiceType}{item.isCreditNote ? <span className="badge warning">nota de crédito</span> : null}</small></td>
@@ -281,7 +281,7 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
           <td>{item.invoiceNo}</td>
           <td className="numeric">{euro.format(item.grossTotal)}</td>
           <td>{item.reason}</td>
-          <td><button className="icon-button" type="button" aria-label={`Repor ${item.invoiceNo}`} title="Repor nas sugestões" disabled={busy} onClick={() => restore(item.purchaseId)}><RotateCcw size={16} /></button></td>
+          <td>{can('suggested.post') && <button className="icon-button" type="button" aria-label={`Repor ${item.invoiceNo}`} title="Repor nas sugestões" disabled={busy} onClick={() => restore(item.purchaseId)}><RotateCcw size={16} /></button>}</td>
         </tr>)}</tbody>
       </table></div>
     </section>}
@@ -295,7 +295,7 @@ function PurchaseSuggestions({ fromDate, toDate }: { fromDate: string; toDate: s
           <td>{rule.supplierName ?? '—'}</td>
           <td>{rule.entryTemplateCode} — {rule.entryTemplateName}</td>
           <td>{rule.isActive ? 'Ativa' : 'Inativa'}</td>
-          <td><button className="icon-button" type="button" aria-label={`Apagar a regra de ${rule.supplierTaxId}`} disabled={busy} onClick={() => removeRule(rule.supplierTaxId)}><Trash2 size={16} /></button></td>
+          <td>{can('suggested.post') && <button className="icon-button" type="button" aria-label={`Apagar a regra de ${rule.supplierTaxId}`} disabled={busy} onClick={() => removeRule(rule.supplierTaxId)}><Trash2 size={16} /></button>}</td>
         </tr>)}</tbody>
       </table></div>
     </section>}

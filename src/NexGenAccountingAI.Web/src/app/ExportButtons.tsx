@@ -1,6 +1,8 @@
-import { Download } from 'lucide-react'
+import { Download, Globe, Mail } from 'lucide-react'
 import { useState } from 'react'
-import { beginExport, cancelExport, type ExportFormat } from './csv'
+import { beginExport, cancelExport, captureRows, type ExportFormat } from './csv'
+import { PublishPortalPanel } from './PublishPortalPanel'
+import { SendEmailPanel, type EmailAttachmentSource } from './SendEmailPanel'
 import { useWorkContext } from './WorkContext'
 
 /**
@@ -12,9 +14,21 @@ export function ExportButtons({ run, disabled = false, label = 'Exportar' }: {
   disabled?: boolean
   label?: string
 }) {
-  const { activeCompany, source, user } = useWorkContext()
+  const { activeCompany, can, source, user } = useWorkContext()
   const [busy, setBusy] = useState<ExportFormat | null>(null)
   const [error, setError] = useState('')
+  const [email, setEmail] = useState<EmailAttachmentSource | null>(null)
+  const [portal, setPortal] = useState<EmailAttachmentSource | null>(null)
+
+  async function startEmail(target: 'email' | 'portal') {
+    setError('')
+    const rows = await captureRows(run)
+    if (!rows || rows.length === 0) { setError('Não há nada para enviar.'); return }
+    const title = document.querySelector('.content-area h1')?.textContent?.trim() || 'Listagem'
+    const source: EmailAttachmentSource = { kind: 'table', title, rows }
+    if (target === 'email') setEmail(source)
+    else setPortal(source)
+  }
 
   async function start(format: ExportFormat) {
     setError('')
@@ -47,6 +61,10 @@ export function ExportButtons({ run, disabled = false, label = 'Exportar' }: {
     <button className="button button-secondary" type="button" disabled={disabled || busy !== null} onClick={() => void start('csv')}>CSV</button>
     {server && <button className="button button-secondary" type="button" disabled={disabled || busy !== null} onClick={() => void start('xlsx')}>{busy === 'xlsx' ? 'A gerar…' : 'Excel'}</button>}
     {server && <button className="button button-secondary" type="button" disabled={disabled || busy !== null} onClick={() => void start('pdf')}>{busy === 'pdf' ? 'A gerar…' : 'PDF'}</button>}
+    {server && <button className="button button-secondary" type="button" disabled={disabled || busy !== null} onClick={() => void startEmail('email')}><Mail size={15} /> Email</button>}
+    {server && can('portal.publish') && <button className="button button-secondary" type="button" disabled={disabled || busy !== null} onClick={() => void startEmail('portal')}><Globe size={15} /> Portal</button>}
     {error && <span className="save-status error" role="alert">{error}</span>}
+    {email && <SendEmailPanel source={email} onClose={() => setEmail(null)} />}
+    {portal && <PublishPortalPanel source={portal} onClose={() => setPortal(null)} />}
   </span>
 }

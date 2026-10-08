@@ -10,7 +10,7 @@ import { useWorkContext } from '../app/WorkContext'
 import { SuggestionLines, SuggestionOutcomes } from './suggestionParts'
 
 export function BanksPage() {
-  const { activeCompany, source, bankAccounts, importBankStatement, bankStatementLines, autoReconcileBank, reconcileBankLine, reconcileBankGroup, unreconcileBankLine, bankReconciliation, bankEntryRules, saveBankEntryRule, deleteBankEntryRule, bankEntrySuggestions, postBankLines, entryTemplates } = useWorkContext()
+  const { activeCompany, source, bankAccounts, can, importBankStatement, bankStatementLines, autoReconcileBank, reconcileBankLine, reconcileBankGroup, unreconcileBankLine, bankReconciliation, bankEntryRules, saveBankEntryRule, deleteBankEntryRule, bankEntrySuggestions, postBankLines, entryTemplates } = useWorkContext()
   const companyId = activeCompany.companyId
   const onDatabase = source === 'database'
   const fiscalYear = activeCompany.settings.defaultFiscalYear
@@ -185,7 +185,7 @@ export function BanksPage() {
         <PeriodShortcuts fiscalYear={fiscalYear ?? new Date().getUTCFullYear()} onPick={(from, to) => { setFromDate(from); setToDate(to) }} />
       </div>
 
-      <section className="panel">
+      {can('banks.import') && <section className="panel">
         <div className="panel-heading"><div><h2>Importar extrato</h2><p>{account?.iban ? `IBAN ${account.iban}. ` : ''}Reimportar o mesmo extrato, ou um que se sobreponha a outro, não duplica os movimentos. Os movimentos pendentes de um camt.053 ficam de fora.</p></div></div>
         <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
           <input ref={inputRef} type="file" accept=".csv,.txt,.xml,text/csv,application/xml,text/xml" className="sr-only" aria-label="Escolher extrato bancário" onChange={(event) => choose(event.target.files)} />
@@ -198,7 +198,7 @@ export function BanksPage() {
         {pending?.preview.iban && account?.iban && pending.preview.iban !== account.iban && <p className="save-status error"><CircleAlert size={15} /> O ficheiro é do IBAN {pending.preview.iban}, mas esta conta já recebeu extratos do IBAN {account.iban}.</p>}
         {pending?.preview.warnings.map((warning) => <p key={warning} className="save-status"><CircleAlert size={15} /> {warning}</p>)}
         {pending && pending.preview.invalidRows.length > 0 && <p className="save-status"><CircleAlert size={15} /> {pending.preview.invalidRows.slice(0, 5).map((row) => `linha ${row.lineNumber}: ${row.reason}`).join(' · ')}</p>}
-      </section>
+      </section>}
 
       {report && <section className="metadata-strip">
         <span><small>Saldo contabilístico em {formatMovementDate(report.date)}</small><strong>{euro.format(report.bookBalance)}</strong></span>
@@ -211,20 +211,20 @@ export function BanksPage() {
       <section className="panel">
         <div className="panel-heading"><div><h2>Movimentos do extrato</h2><p>{lines.length === 0 ? 'Sem movimentos importados no período.' : `${lines.filter((line) => line.reconciled).length} de ${lines.length} conciliados.`} A conciliação automática junta cada movimento a um lançamento da conta com o mesmo valor, até 7 dias de distância, o mais próximo primeiro.</p></div></div>
         <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
-          <button className="button button-primary" type="button" disabled={busy || lines.every((line) => line.reconciled)} onClick={autoReconcile}><Wand2 size={16} /> Conciliar automaticamente</button>
+          {can('banks.reconcile') && <button className="button button-primary" type="button" disabled={busy || lines.every((line) => line.reconciled)} onClick={autoReconcile}><Wand2 size={16} /> Conciliar automaticamente</button>}
           <ExportButtons run={exportCsv} disabled={lines.length === 0} />
         </div>
         {lines.length > 0 && <div className="table-wrap"><table>
           <thead><tr><th><span className="sr-only">Juntar</span></th><th>Data</th><th>Descrição</th><th className="numeric">Montante</th><th className="numeric">Saldo</th><th>Lançamento</th></tr></thead>
           <tbody>{lines.map((line) => <tr key={line.id}>
-            <td>{!line.reconciled && <input type="checkbox" aria-label={`Juntar ${line.description} a uma conciliação`} checked={groupLines.has(line.id)} onChange={() => setGroupLines((current) => flip(current, line.id))} />}</td>
+            <td>{can('banks.reconcile') && !line.reconciled && <input type="checkbox" aria-label={`Juntar ${line.description} a uma conciliação`} checked={groupLines.has(line.id)} onChange={() => setGroupLines((current) => flip(current, line.id))} />}</td>
             <td>{formatMovementDate(line.bookingDate)}{line.valueDate && line.valueDate !== line.bookingDate ? <small>valor {formatMovementDate(line.valueDate)}</small> : null}</td>
             <td>{line.description}{line.reference ? <small>{line.reference}</small> : null}</td>
             <td className={`numeric strong${line.amount < 0 ? ' negative' : ''}`}>{euro.format(line.amount)}</td>
             <td className="numeric">{line.balance === null ? '' : euro.format(line.balance)}</td>
             <td>{line.reconciled
-              ? <span className="inline-check">{line.reconciledEntries.map((entry) => <Link key={entry.reference} to={`/movimentos/${entry.reference}`}>{entry.reference}</Link>)}<small>{line.reconciledEntries.length === 1 ? `${formatMovementDate(line.reconciledEntries[0].entryDate)} · ${line.reconciledEntries[0].description}` : `${line.reconciledEntries.length} lançamentos`}{line.reconciledLineCount > 1 ? ` · com mais ${line.reconciledLineCount - 1} ${line.reconciledLineCount === 2 ? 'movimento' : 'movimentos'}` : ''}{line.reconciledAutomatically ? ' · automática' : ''}</small><button className="icon-button" type="button" aria-label={`Desfazer a conciliação de ${line.description}`} title="Desfazer a conciliação (de todo o grupo)" disabled={busy} onClick={() => unreconcile(line)}><Link2Off size={15} /></button></span>
-              : <span className="inline-check">
+              ? <span className="inline-check">{line.reconciledEntries.map((entry) => <Link key={entry.reference} to={`/movimentos/${entry.reference}`}>{entry.reference}</Link>)}<small>{line.reconciledEntries.length === 1 ? `${formatMovementDate(line.reconciledEntries[0].entryDate)} · ${line.reconciledEntries[0].description}` : `${line.reconciledEntries.length} lançamentos`}{line.reconciledLineCount > 1 ? ` · com mais ${line.reconciledLineCount - 1} ${line.reconciledLineCount === 2 ? 'movimento' : 'movimentos'}` : ''}{line.reconciledAutomatically ? ' · automática' : ''}</small>{can('banks.reconcile') && <button className="icon-button" type="button" aria-label={`Desfazer a conciliação de ${line.description}`} title="Desfazer a conciliação (de todo o grupo)" disabled={busy} onClick={() => unreconcile(line)}><Link2Off size={15} /></button>}</span>
+              : can('banks.reconcile') && <span className="inline-check">
                 <input aria-label={`Lançamento para ${line.description}`} list={`candidatos-${line.id}`} value={choice[line.id] ?? ''} onChange={(event) => setChoice((current) => ({ ...current, [line.id]: event.target.value.toUpperCase() }))} placeholder={candidates(line.amount).length > 0 ? `${candidates(line.amount).length} com o mesmo valor` : 'referência'} />
                 <datalist id={`candidatos-${line.id}`}>{candidates(line.amount).map((entry) => <option key={entry.reference} value={entry.reference}>{formatMovementDate(entry.entryDate)} · {entry.description}</option>)}</datalist>
                 <button className="icon-button" type="button" aria-label={`Conciliar ${line.description}`} title="Conciliar com este lançamento" disabled={busy || !(choice[line.id] ?? '').trim()} onClick={() => reconcile(line)}><Link2 size={15} /></button>
@@ -233,7 +233,7 @@ export function BanksPage() {
         </table></div>}
       </section>
 
-      {(groupLines.size > 0 || groupEntries.size > 0) && <section className="panel settings-panel">
+      {can('banks.reconcile') && (groupLines.size > 0 || groupEntries.size > 0) && <section className="panel settings-panel">
         <div className="panel-heading"><div><h2>Conciliar em grupo</h2><p>Junte os movimentos marcados na tabela aos lançamentos marcados abaixo — uma transferência que paga várias faturas, os pagamentos com cartão de um dia lançados juntos. Os totais têm de ser iguais.</p></div></div>
         <div className="settings-actions" style={{ justifyContent: 'flex-start' }}>
           <span className="inline-check">Movimentos: <strong>{euro.format(lines.filter((line) => groupLines.has(line.id)).reduce((sum, line) => sum + line.amount, 0))}</strong> ({groupLines.size})</span>
@@ -245,7 +245,7 @@ export function BanksPage() {
 
       <SuggestionOutcomes outcomes={outcomes} />
 
-      <section className="panel">
+      {can('banks.post') && <section className="panel">
         <div className="panel-heading"><div><h2>Lançar a partir do extrato</h2><p>Os movimentos por conciliar cujo descritivo contém o texto de uma regra são propostos com o lançamento-tipo dessa regra; a contrapartida passa a ser a conta do banco e, numa entrada, os lados invertem-se. Finalizar cria o lançamento por conferir, já conciliado com o movimento.</p></div></div>
         <form className="filterbar" onSubmit={(event) => { event.preventDefault(); addRule() }}>
           <label className="inline-check">Texto no descritivo <input aria-label="Texto no descritivo" value={newPattern} onChange={(event) => setNewPattern(event.target.value)} placeholder="ex.: COMISSAO" /></label>
@@ -278,14 +278,14 @@ export function BanksPage() {
             </tr>)}</tbody>
           </table></div>
         </>}
-      </section>
+      </section>}
 
       {report && report.bookOnly.length > 0 && <section className="panel">
         <div className="panel-heading"><div><h2>Só na contabilidade</h2><p>Lançamentos da conta desde o primeiro extrato importado que ainda não passaram no banco — cheques por descontar, transferências em curso — ou que falta conciliar.</p></div></div>
         <div className="table-wrap"><table>
           <thead><tr><th><span className="sr-only">Juntar</span></th><th>Data</th><th>Lançamento</th><th>Descrição</th><th className="numeric">Montante</th></tr></thead>
           <tbody>{report.bookOnly.map((entry) => <tr key={entry.reference}>
-            <td><input type="checkbox" aria-label={`Juntar ${entry.reference} a uma conciliação`} checked={groupEntries.has(entry.reference)} onChange={() => setGroupEntries((current) => flip(current, entry.reference))} /></td>
+            <td>{can('banks.reconcile') && <input type="checkbox" aria-label={`Juntar ${entry.reference} a uma conciliação`} checked={groupEntries.has(entry.reference)} onChange={() => setGroupEntries((current) => flip(current, entry.reference))} />}</td>
             <td>{formatMovementDate(entry.entryDate)}</td>
             <td><Link to={`/movimentos/${entry.reference}`}>{entry.reference}</Link><small>{entry.documentReference}</small></td>
             <td>{entry.description}</td>

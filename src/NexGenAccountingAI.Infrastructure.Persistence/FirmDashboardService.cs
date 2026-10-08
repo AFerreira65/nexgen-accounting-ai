@@ -1,4 +1,5 @@
 using NexGenAccountingAI.Domain.Accounting;
+using NexGenAccountingAI.Domain.Organizations;
 using NexGenAccountingAI.Infrastructure.Persistence.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,11 +21,13 @@ public sealed record FirmDashboardCompany(
     int AutomaticEntriesLast12Months,
     decimal? AutomaticShareLast3Months = null,
     decimal? AutomaticSharePrevious3Months = null,
-    IReadOnlyList<FirmResponsible>? Responsible = null)
+    IReadOnlyList<FirmResponsible>? Responsible = null,
+    int OpenTasks = 0,
+    int OverdueTasks = 0)
 {
     public decimal AutomaticShare => EntriesLast12Months == 0 ? 0m : decimal.Round((decimal)AutomaticEntriesLast12Months / EntriesLast12Months, 2);
 
-    public int Attention => (OverdueObligations * 10) + DueSoonObligations + PendingReview + PurchasesToPost + UnreconciledBankLines;
+    public int Attention => (OverdueObligations * 10) + DueSoonObligations + PendingReview + PurchasesToPost + UnreconciledBankLines + (OverdueTasks * 5);
 }
 
 /// <summary>Os lançamentos de um mês, em todas as empresas do painel, pela origem (F3-28B).</summary>
@@ -110,6 +113,13 @@ public sealed class FirmDashboardService(
             .Select(group => new { group.Key, Count = group.Count() })
             .ToDictionaryAsync(item => item.Key, item => item.Count, cancellationToken)
             .ConfigureAwait(false);
+        // As tarefas atribuídas (F4E-01) por fazer em cada empresa, e as que já passaram do prazo.
+        var openTasks = await context.FirmTasks
+            .AsNoTracking()
+            .Where(task => ids.Contains(task.CompanyId) && (task.Status == FirmTaskStatus.Open || task.Status == FirmTaskStatus.InProgress))
+            .Select(task => new { task.CompanyId, task.DueDate })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
         var yearAgo = date.AddYears(-1);
         var sources = await context.JournalEntries
             .AsNoTracking()
@@ -181,7 +191,9 @@ public sealed class FirmDashboardService(
                 companySources.Where(item => item.Source != EntrySource.Manual).Sum(item => item.Count),
                 Share(company.Id, lastQuarter, lastQuarter.AddMonths(3)),
                 Share(company.Id, previousQuarter, lastQuarter),
-                company.Responsible.Select(item => new FirmResponsible(item.UserId, item.DisplayName)).ToList()));
+                company.Responsible.Select(item => new FirmResponsible(item.UserId, item.DisplayName)).ToList(),
+                openTasks.Count(task => task.CompanyId == company.Id),
+                openTasks.Count(task => task.CompanyId == company.Id && task.DueDate < date)));
         }
 
         return new FirmDashboard(

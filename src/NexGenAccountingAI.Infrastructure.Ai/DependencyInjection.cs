@@ -30,6 +30,7 @@ public static class DependencyInjection
                 ? Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")
                 : options.ApiKey);
 
+        services.AddSingleton<AiClientProvider>();
         services.AddSingleton<IManagementReportNarrator, ClaudeManagementReportNarrator>();
         services.AddSingleton<IPurchaseClassifier, ClaudePurchaseClassifier>();
         services.AddSingleton<IListingDrafter, ClaudeListingDrafter>();

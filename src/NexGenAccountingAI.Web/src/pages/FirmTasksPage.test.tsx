@@ -4,6 +4,7 @@ import { FirmTasksPage } from './FirmTasksPage'
 
 vi.mock('../app/WorkContext', () => ({
   useWorkContext: () => ({
+    can: () => true,
     activeCompany: { companyId: 'c1', legalName: 'Empresa A', role: 'Accountant', settings: {} },
     companies: [
       { companyId: 'c1', legalName: 'Empresa A', role: 'Accountant', settings: {} },

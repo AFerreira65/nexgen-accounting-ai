@@ -50,6 +50,180 @@ public sealed class FoundationApiTests
     }
 
     [TestMethod]
+    public async Task EveryCompanyEndpointHasAPermissionRule()
+    {
+        await using var factory = new FoundationApiFactory();
+        using var client = factory.CreateClient();
+        var endpoints = factory.Services.GetRequiredService<Microsoft.AspNetCore.Routing.EndpointDataSource>().Endpoints
+            .OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>()
+            .ToList();
+
+        var checkedCount = 0;
+        var missing = new List<string>();
+        foreach (var endpoint in endpoints)
+        {
+            var path = NexGenAccountingAI.Api.CompanyPermissionRules.NormalizedPath(endpoint.RoutePattern.RawText);
+            if (path is null)
+            {
+                continue;
+            }
+
+            foreach (var method in endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Routing.HttpMethodMetadata>()?.HttpMethods ?? [])
+            {
+                var permission = NexGenAccountingAI.Api.CompanyPermissionRules.Resolve(method, path);
+                if (permission is null)
+                {
+                    missing.Add($"{method} {path}");
+                    continue;
+                }
+
+                Assert.IsTrue(permission == PermissionCatalog.AnyMember || PermissionCatalog.Exists(permission), $"{permission} não existe no catálogo.");
+                checkedCount++;
+            }
+        }
+
+        Assert.AreEqual(0, missing.Count, "Faltam regras de permissões: " + string.Join("; ", missing));
+
+        Assert.IsTrue(checkedCount > 200, $"Só {checkedCount} endpoints de empresa verificados.");
+        foreach (var permission in NexGenAccountingAI.Api.CompanyPermissionRules.PermissionsUsed)
+        {
+            Assert.IsTrue(permission == PermissionCatalog.AnyMember || PermissionCatalog.Exists(permission), permission);
+        }
+    }
+
+    [TestMethod]
+    public async Task TheClientPortalHasItsOwnSessionAndShowsOnlyWhatWasPublished()
+    {
+        await using var factory = new FoundationApiFactory(
+            connectionString: $"Host=localhost;Port=5432;Database=accounting_portal_{Guid.NewGuid():N};Username=accounting;Password=accounting",
+            applyMigrations: true,
+            seedDemoData: true);
+        using var staff = factory.CreateClient();
+        using var anonymous = factory.CreateClient();
+        const string company = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+        const string otherCompany = "44444444-4444-4444-4444-444444444444";
+        static StringContent Json(string body) => new(body, Encoding.UTF8, "application/json");
+
+        try
+        {
+            // Sem a sessão do portal, nada — nem com a sessão da aplicação (aqui, a do utilizador de demonstração).
+            using var closed = await staff.GetAsync("/api/v1/portal/me").ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.Unauthorized, closed.StatusCode);
+            using var badToken = await anonymous.GetAsync("/api/v1/portal/invitation?token=nada").ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.NotFound, badToken.StatusCode);
+
+            // O gabinete convida (sem caixa de correio, devolve o link) e o cliente confirma a senha pelo link.
+            using var invited = await staff.PostAsync($"{company}/portal/users", Json("""{"email":"cliente@portal.invalid","name":"Maria Cliente"}""")).ConfigureAwait(false);
+            var invitePayload = await invited.Content.ReadAsStringAsync().ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.OK, invited.StatusCode, invitePayload);
+            var link = System.Text.Json.JsonDocument.Parse(invitePayload).RootElement.GetProperty("link").GetString()!;
+            var token = link[(link.IndexOf("token=", StringComparison.Ordinal) + 6)..];
+
+            using var weak = await anonymous.PostAsync("/api/v1/portal/invitation/accept", Json($$"""{"token":"{{token}}","password":"fraca"}""")).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.BadRequest, weak.StatusCode);
+            using var accepted = await anonymous.PostAsync("/api/v1/portal/invitation/accept", Json($$"""{"token":"{{token}}","password":"Senha-do-cliente-2026"}""")).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.OK, accepted.StatusCode);
+
+            // Agora o cliente tem sessão própria, vê a empresa e ainda nada publicado.
+            var me = await anonymous.GetStringAsync("/api/v1/portal/me").ConfigureAwait(false);
+            StringAssert.Contains(me, "Almeida");
+            var empty = await anonymous.GetStringAsync($"/api/v1/portal/companies/22222222-2222-2222-2222-222222222222/items").ConfigureAwait(false);
+            Assert.AreEqual("[]", empty);
+
+            // O gabinete publica uma tabela como balancete; o cliente vê e descarrega o PDF.
+            using var published = await staff.PostAsync($"{company}/portal/items/export",
+                Json("""{"category":"TrialBalance","title":"Balancete de setembro","attachment":{"format":"pdf","table":{"title":"Balancete","rows":[["Conta","Saldo"],["11",1234.56]]}}}""")).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.OK, published.StatusCode, await published.Content.ReadAsStringAsync().ConfigureAwait(false));
+            var items = System.Text.Json.JsonDocument.Parse(await anonymous.GetStringAsync("/api/v1/portal/companies/22222222-2222-2222-2222-222222222222/items").ConfigureAwait(false)).RootElement;
+            Assert.AreEqual(1, items.GetArrayLength());
+            Assert.AreEqual("TrialBalance", items[0].GetProperty("category").GetString());
+            using var download = await anonymous.GetAsync($"/api/v1/portal/items/{items[0].GetProperty("id").GetString()}/content").ConfigureAwait(false);
+            Assert.AreEqual("%PDF", Encoding.ASCII.GetString((await download.Content.ReadAsByteArrayAsync().ConfigureAwait(false))[..4]));
+
+            // O cliente envia um documento pelo portal (o corpo é o ficheiro) e o gabinete vê-o.
+            using var upload = await anonymous.PostAsync("/api/v1/portal/companies/22222222-2222-2222-2222-222222222222/uploads?fileName=fatura.pdf", new ByteArrayContent(Encoding.UTF8.GetBytes("%PDF fatura do cliente"))).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.OK, upload.StatusCode, await upload.Content.ReadAsStringAsync().ConfigureAwait(false));
+            using var badUpload = await anonymous.PostAsync("/api/v1/portal/companies/22222222-2222-2222-2222-222222222222/uploads?fileName=virus.exe", new ByteArrayContent([1, 2, 3])).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.BadRequest, badUpload.StatusCode);
+            using var foreignUpload = await anonymous.PostAsync($"/api/v1/portal/companies/{otherCompany}/uploads?fileName=x.pdf", new ByteArrayContent([1])).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.NotFound, foreignUpload.StatusCode);
+            var received = await staff.GetStringAsync($"{company}/portal/uploads").ConfigureAwait(false);
+            StringAssert.Contains(received, "fatura.pdf");
+            StringAssert.Contains(received, "Maria Cliente");
+
+            // O «esqueci-me da senha» responde 200 exista ou não a conta.
+            using var forgotUnknown = await anonymous.PostAsync("/api/v1/portal/auth/forgot", Json("""{"email":"ninguem@portal.invalid"}""")).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.OK, forgotUnknown.StatusCode);
+
+            // Outra empresa: sem acesso. E o cliente não chega a nenhum endpoint da aplicação.
+            using var foreign = await anonymous.GetAsync($"/api/v1/portal/companies/{otherCompany}/items").ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.NotFound, foreign.StatusCode);
+
+            // Tirar o acesso corta logo a sessão em curso.
+            var users = System.Text.Json.JsonDocument.Parse(await staff.GetStringAsync($"{company}/portal/users").ConfigureAwait(false)).RootElement;
+            using var revoked = await staff.DeleteAsync($"{company}/portal/users/{users[0].GetProperty("accountId").GetString()}").ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.NoContent, revoked.StatusCode);
+            using var cut = await anonymous.GetAsync("/api/v1/portal/me").ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.Unauthorized, cut.StatusCode);
+            using var again = await anonymous.PostAsync("/api/v1/portal/auth/login", Json("""{"email":"cliente@portal.invalid","password":"Senha-do-cliente-2026"}""")).ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.Unauthorized, again.StatusCode);
+        }
+        finally
+        {
+            await using var scope = factory.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<AccountingDbContext>().Database.EnsureDeletedAsync().ConfigureAwait(false);
+        }
+    }
+
+    [TestMethod]
+    public async Task OnlyAnAccountantSeesAndUsesTheTocPasswords()
+    {
+        await using var factory = new FoundationApiFactory(
+            connectionString: $"Host=localhost;Port=5432;Database=accounting_toc_{Guid.NewGuid():N};Username=accounting;Password=accounting",
+            applyMigrations: true,
+            seedDemoData: true);
+        using var client = factory.CreateClient();
+        const string company = "/api/v1/development/users/33333333-3333-3333-3333-333333333333/companies/22222222-2222-2222-2222-222222222222";
+
+        try
+        {
+            async Task SetAccountantAsync(bool value)
+            {
+                await using var scope = factory.Services.CreateAsyncScope();
+                var context = scope.ServiceProvider.GetRequiredService<AccountingDbContext>();
+                var user = await context.UserAccounts.SingleAsync(item => item.Id == DevelopmentDataSeeder.DemoUserId).ConfigureAwait(false);
+                user.SetAccountant(value);
+                await context.SaveChangesAsync().ConfigureAwait(false);
+            }
+
+            // O utilizador de demonstração é contabilista: vê a configuração da AT.
+            using var asAccountant = await client.GetAsync($"{company}/at-credentials").ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.OK, asAccountant.StatusCode);
+            var workContext = await client.GetStringAsync("/api/v1/development/work-context/33333333-3333-3333-3333-333333333333").ConfigureAwait(false);
+            StringAssert.Contains(workContext, "at.credentials");
+
+            // Sem ser contabilista, as senhas e os envios que as usam desaparecem; o resto fica.
+            await SetAccountantAsync(false).ConfigureAwait(false);
+            using var credentials = await client.GetAsync($"{company}/at-credentials").ConfigureAwait(false);
+            using var sendIes = await client.PostAsync($"{company}/ies/at/submit", new StringContent("{}", Encoding.UTF8, "application/json")).ConfigureAwait(false);
+            using var movements = await client.GetAsync($"{company}/accounting/movements?page=1&pageSize=5").ConfigureAwait(false);
+            var denied = await credentials.Content.ReadAsStringAsync().ConfigureAwait(false);
+            Assert.AreEqual(HttpStatusCode.Forbidden, credentials.StatusCode);
+            StringAssert.Contains(denied, "contabilista");
+            Assert.AreEqual(HttpStatusCode.Forbidden, sendIes.StatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, movements.StatusCode);
+            var reduced = await client.GetStringAsync("/api/v1/development/work-context/33333333-3333-3333-3333-333333333333").ConfigureAwait(false);
+            Assert.IsFalse(reduced.Contains("at.credentials", StringComparison.Ordinal));
+            StringAssert.Contains(reduced, "movements.create");
+        }
+        finally
+        {
+            await using var scope = factory.Services.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<AccountingDbContext>().Database.EnsureDeletedAsync().ConfigureAwait(false);
+        }
+    }
+
+    [TestMethod]
     public async Task AViewerCanReadButNotChangeTheCompany()
     {
         // Base própria, apagada no fim: o teste muda a função do utilizador de demonstração.
@@ -101,7 +275,7 @@ public sealed class FoundationApiTests
 
             Assert.AreEqual(HttpStatusCode.OK, read.StatusCode, "Consultar continua.");
             Assert.AreEqual(HttpStatusCode.Forbidden, create.StatusCode);
-            StringAssert.Contains(createPayload, "só de consulta");
+            StringAssert.Contains(createPayload, "Não tem permissão");
             Assert.AreEqual(HttpStatusCode.Forbidden, delete.StatusCode);
             Assert.AreEqual(HttpStatusCode.OK, lookup.StatusCode, "Procurar um QR não altera nada.");
             Assert.AreEqual(HttpStatusCode.OK, settings.StatusCode, "As preferências são do próprio utilizador.");

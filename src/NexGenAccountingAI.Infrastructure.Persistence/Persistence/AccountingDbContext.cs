@@ -3,7 +3,9 @@ using NexGenAccountingAI.Domain.Archive;
 using NexGenAccountingAI.Domain.Banking;
 using NexGenAccountingAI.Domain.Billing;
 using NexGenAccountingAI.Domain.Efatura;
+using NexGenAccountingAI.Domain.Mail;
 using NexGenAccountingAI.Domain.Organizations;
+using NexGenAccountingAI.Domain.Portal;
 using NexGenAccountingAI.Domain.Reporting;
 using NexGenAccountingAI.Domain.Saft;
 using NexGenAccountingAI.Infrastructure.Persistence.Persistence.Configurations;
@@ -22,6 +24,16 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<CompanyUser> CompanyUsers => Set<CompanyUser>();
 
+    public DbSet<PermissionGroup> PermissionGroups => Set<PermissionGroup>();
+    public DbSet<FirmTaskComment> FirmTaskComments => Set<FirmTaskComment>();
+    public DbSet<ClientPortalAccount> ClientPortalAccounts => Set<ClientPortalAccount>();
+    public DbSet<ClientPortalAccess> ClientPortalAccess => Set<ClientPortalAccess>();
+    public DbSet<ClientPortalUpload> ClientPortalUploads => Set<ClientPortalUpload>();
+    public DbSet<PortalItem> PortalItems => Set<PortalItem>();
+    public DbSet<MailAccount> MailAccounts => Set<MailAccount>();
+    public DbSet<MailOAuthAppSettings> MailOAuthApps => Set<MailOAuthAppSettings>();
+    public DbSet<InboundEmail> InboundEmails => Set<InboundEmail>();
+    public DbSet<InboundEmailAttachment> InboundEmailAttachments => Set<InboundEmailAttachment>();
     public DbSet<UserCompanySettings> UserCompanySettings => Set<UserCompanySettings>();
 
     public DbSet<LedgerAccount> Accounts => Set<LedgerAccount>();
@@ -74,6 +86,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<CompanyAtCredentials> CompanyAtCredentials => Set<CompanyAtCredentials>();
 
+    public DbSet<AiGeneralSettings> AiGeneralSettings => Set<AiGeneralSettings>();
     public DbSet<AtGeneralSettings> AtGeneralSettings => Set<AtGeneralSettings>();
 
     public DbSet<AccountVatClassification> AccountVatClassifications => Set<AccountVatClassification>();
@@ -134,6 +147,16 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new UserAccountConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyUserConfiguration());
         modelBuilder.ApplyConfiguration(new UserCompanySettingsConfiguration());
+        modelBuilder.ApplyConfiguration(new PermissionGroupConfiguration());
+        modelBuilder.ApplyConfiguration(new FirmTaskCommentConfiguration());
+        modelBuilder.ApplyConfiguration(new ClientPortalAccountConfiguration());
+        modelBuilder.ApplyConfiguration(new ClientPortalAccessConfiguration());
+        modelBuilder.ApplyConfiguration(new PortalItemConfiguration());
+        modelBuilder.ApplyConfiguration(new ClientPortalUploadConfiguration());
+        modelBuilder.ApplyConfiguration(new MailAccountConfiguration());
+        modelBuilder.ApplyConfiguration(new MailOAuthAppSettingsConfiguration());
+        modelBuilder.ApplyConfiguration(new InboundEmailConfiguration());
+        modelBuilder.ApplyConfiguration(new InboundEmailAttachmentConfiguration());
         modelBuilder.ApplyConfiguration(new LedgerAccountConfiguration());
         modelBuilder.ApplyConfiguration(new AccountingJournalConfiguration());
         modelBuilder.ApplyConfiguration(new JournalEntryConfiguration());
@@ -160,6 +183,7 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new VatDeclarationInputConfiguration());
         modelBuilder.ApplyConfiguration(new CompanyAtCredentialsConfiguration());
         modelBuilder.ApplyConfiguration(new AtGeneralSettingsConfiguration());
+        modelBuilder.ApplyConfiguration(new AiGeneralSettingsConfiguration());
         modelBuilder.ApplyConfiguration(new AccountVatClassificationConfiguration());
         modelBuilder.ApplyConfiguration(new IrcEstimateFilingConfiguration());
         modelBuilder.ApplyConfiguration(new PartyConfiguration());

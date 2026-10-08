@@ -91,6 +91,33 @@ public sealed class DocumentArchiveService(AccountingDbContext context)
         return (await RowsAsync(companyId, [attachment], cancellationToken).ConfigureAwait(false)).Single();
     }
 
+    /// <summary>
+    /// Arquiva um ficheiro já em memória, sem verificar o acesso (quem chama já decidiu a empresa). Devolve
+    /// <c>null</c> se o mesmo conteúdo já estava no arquivo da empresa. Usado pela receção de emails.
+    /// </summary>
+    public async Task<DocumentAttachmentRow?> ImportAsync(
+        Guid companyId, string fileName, byte[] content, Guid? uploadedBy, string? notes, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        if (content.LongLength > DocumentAttachment.MaxSizeBytes)
+        {
+            throw new ArgumentException($"O ficheiro tem mais de {DocumentAttachment.MaxSizeBytes / 1024 / 1024} MB.", nameof(content));
+        }
+
+        var hash = Convert.ToHexString(SHA256.HashData(content));
+        if (await context.DocumentAttachments.AsNoTracking().AnyAsync(item => item.CompanyId == companyId && item.Sha256 == hash, cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        var attachment = DocumentAttachment.Create(companyId, fileName, hash, content.LongLength, uploadedBy);
+        await ApplyAsync(companyId, attachment, new DocumentAttachmentUpdate(null, notes, null), cancellationToken).ConfigureAwait(false);
+        context.DocumentAttachments.Add(attachment);
+        context.DocumentAttachmentContents.Add(new DocumentAttachmentContent(attachment.Id, content));
+        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return (await RowsAsync(companyId, [attachment], cancellationToken).ConfigureAwait(false)).Single();
+    }
+
     public async Task<IReadOnlyList<DocumentAttachmentRow>?> ListAsync(
         Guid userId, Guid companyId, string? entryReference, bool unlinkedOnly, string? search, CancellationToken cancellationToken = default)
     {

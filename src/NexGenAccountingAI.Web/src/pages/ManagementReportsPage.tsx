@@ -141,7 +141,7 @@ export function ManagementReportsPage() {
           Gerar a síntese mensal automaticamente <small>(a partir do dia 10 de cada mês, para o mês anterior)</small>
         </label>
       </div>
-      {settings && !settings.narratorConfigured && <p className="mr-hint">Não há chave de API de IA configurada no servidor — a geração fica indisponível até um administrador a definir.</p>}
+      {settings && !settings.narratorConfigured && <p className="mr-hint">Ainda não há chave de IA: o produtor da aplicação tem de a introduzir na configuração geral («IA — chave da Anthropic»).</p>}
       {settings?.narratorConfigured && <p className="mr-hint">Modelo: {settings.model}.</p>}
     </section>
 

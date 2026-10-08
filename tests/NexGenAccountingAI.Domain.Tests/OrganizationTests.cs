@@ -153,6 +153,28 @@ public sealed class OrganizationTests
     }
 
     [TestMethod]
+    public void MenuSideDefaultsToTheLeftAndIsKeptWhenSaved()
+    {
+        var settings = new UserCompanySettings(Guid.NewGuid(), Guid.NewGuid());
+        Assert.IsFalse(settings.MenuOnRight);
+
+        settings.Update("pt-PT", "Europe/Lisbon", 2026, InterfaceTheme.System, false, 50, InterfaceTextSize.Normal, true);
+        Assert.IsTrue(settings.MenuOnRight);
+    }
+
+    [TestMethod]
+    public void UserContactsAreTrimmedAndLimited()
+    {
+        var user = new UserAccount(Guid.NewGuid(), "Ana", "ana@teste.invalid");
+        user.SetContacts(" 912345678 ", "  ", "12");
+
+        Assert.AreEqual("912345678", user.Mobile);
+        Assert.IsNull(user.Phone);
+        Assert.AreEqual("12", user.Extension);
+        Assert.ThrowsExactly<ArgumentException>(() => user.SetContacts(new string('9', 33), null, null));
+    }
+
+    [TestMethod]
     public void UserCompanySettingsRejectInvalidPageSizeAndTextSize()
     {
         var settings = new UserCompanySettings(Guid.NewGuid(), Guid.NewGuid());

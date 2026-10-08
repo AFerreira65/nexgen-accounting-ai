@@ -43,6 +43,16 @@ public sealed class CompanyUser
     /// </summary>
     public bool IsResponsible { get; private set; }
 
+    /// <summary>
+    /// O grupo de permissões do utilizador nesta empresa (ADR-0018). Nulo = o predefinido
+    /// pela função: «Consulta» para <see cref="CompanyUserRole.Viewer"/>, «Completo» para as outras.
+    /// </summary>
+    public Guid? PermissionGroupId { get; private set; }
+
+    public PermissionGroup? PermissionGroup { get; private set; }
+
+    public void AssignPermissionGroup(Guid? groupId) => PermissionGroupId = groupId;
+
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
     public uint RowVersion { get; private set; }

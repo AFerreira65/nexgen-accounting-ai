@@ -48,10 +48,12 @@ public static class DevelopmentDataSeeder
                 .AnyAsync(item => item.Id == DemoUserId, cancellationToken)
                 .ConfigureAwait(false))
         {
-            context.Add(new UserAccount(
+            var demoUser = new UserAccount(
                 DemoUserId,
                 "António Ferreira (Demonstração)",
-                "antonio.demo@accountingai.local"));
+                "antonio.demo@accountingai.local");
+            demoUser.SetAccountant(true);
+            context.Add(demoUser);
         }
 
         if (!await context.CompanyUsers

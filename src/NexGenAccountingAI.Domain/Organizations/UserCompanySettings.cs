@@ -45,6 +45,9 @@ public sealed class UserCompanySettings
 
     public InterfaceTextSize TextSize { get; private set; }
 
+    /// <summary>O menu lateral fica à direita e os submenus abrem para a esquerda.</summary>
+    public bool MenuOnRight { get; private set; }
+
     public DateTimeOffset UpdatedAtUtc { get; private set; }
 
     public uint RowVersion { get; private set; }
@@ -58,7 +61,8 @@ public sealed class UserCompanySettings
         InterfaceTheme theme,
         bool compactMode,
         int pageSize,
-        InterfaceTextSize textSize)
+        InterfaceTextSize textSize,
+        bool menuOnRight = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(culture);
         ArgumentException.ThrowIfNullOrWhiteSpace(timeZone);
@@ -90,6 +94,7 @@ public sealed class UserCompanySettings
         CompactMode = compactMode;
         PageSize = pageSize;
         TextSize = textSize;
+        MenuOnRight = menuOnRight;
         UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 

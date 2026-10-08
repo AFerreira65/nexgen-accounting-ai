@@ -18,17 +18,16 @@ public sealed class ClaudeManagementReportNarrator : IManagementReportNarrator
     private static readonly JsonSerializerOptions DossierOptions = new(JsonSerializerDefaults.Web);
 
     private readonly AiOptions options;
-    private readonly AnthropicClient? client;
+    private readonly AiClientProvider provider;
 
-    public ClaudeManagementReportNarrator(IOptions<AiOptions> options)
+    public ClaudeManagementReportNarrator(IOptions<AiOptions> options, AiClientProvider? provider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         this.options = options.Value;
-        if (!string.IsNullOrWhiteSpace(this.options.ApiKey))
-        {
-            client = new AnthropicClient { ApiKey = this.options.ApiKey };
-        }
+        this.provider = provider ?? new AiClientProvider(options);
     }
+
+    private AnthropicClient? client => provider.Client;
 
     public bool IsConfigured => client is not null;
 
