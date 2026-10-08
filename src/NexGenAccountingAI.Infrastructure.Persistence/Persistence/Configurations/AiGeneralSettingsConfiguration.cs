@@ -12,6 +12,11 @@ internal sealed class AiGeneralSettingsConfiguration : IEntityTypeConfiguration<
         builder.HasKey(item => item.Id);
         builder.Property(item => item.EncryptedApiKey).HasMaxLength(2000);
         builder.Property(item => item.KeyHint).HasMaxLength(16);
+        builder.Property(item => item.DefaultMonthlyAllowanceUsd).HasPrecision(12, 4);
+        builder.Property(item => item.ChatModel).HasMaxLength(80);
+        builder.Property(item => item.ReportModel).HasMaxLength(80);
+        builder.Property(item => item.QuickModel).HasMaxLength(80);
+        builder.Property(item => item.PricesJson).HasMaxLength(4000);
         builder.Property(item => item.UpdatedAtUtc).HasDefaultValueSql("now()");
         builder.Property(item => item.RowVersion).IsRowVersion();
         builder.Ignore(item => item.HasKey);

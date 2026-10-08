@@ -5,6 +5,7 @@ using NexGenAccountingAI.Application.Listings;
 using Anthropic;
 using Anthropic.Models.Messages;
 using Microsoft.Extensions.Options;
+using NexGenAccountingAI.Domain.Reporting;
 
 namespace NexGenAccountingAI.Infrastructure.Ai;
 
@@ -32,7 +33,7 @@ public sealed class ClaudeListingDrafter : IListingDrafter
 
     public bool IsConfigured => client is not null;
 
-    public string Model => options.Model;
+    public string Model => provider.ModelFor(AiFeature.Listing);
 
     public async Task<ListingDraft> DraftAsync(string request, DateOnly today, CancellationToken cancellationToken = default)
     {
@@ -51,7 +52,7 @@ public sealed class ClaudeListingDrafter : IListingDrafter
         {
             var response = await client.Messages.Create(new MessageCreateParams
             {
-                Model = options.Model,
+                Model = provider.ModelFor(AiFeature.Listing),
                 MaxTokens = MaxOutputTokens,
                 System = new List<TextBlockParam> { new() { Text = ListingDraftPrompts.System() } },
                 Messages = messages,
@@ -73,7 +74,7 @@ public sealed class ClaudeListingDrafter : IListingDrafter
         }
 
         return new ListingDraft(
-            parsed.Name, parsed.Explanation, problems.Count == 0 ? parsed.Definition : null, problems, options.Model, promptTokens, outputTokens);
+            parsed.Name, parsed.Explanation, problems.Count == 0 ? parsed.Definition : null, problems, provider.ModelFor(AiFeature.Listing), promptTokens, outputTokens);
     }
 
     private static int ToInt(long? value) => value is { } number && number is >= int.MinValue and <= int.MaxValue ? (int)number : 0;

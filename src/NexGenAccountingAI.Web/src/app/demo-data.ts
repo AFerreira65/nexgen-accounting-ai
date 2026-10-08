@@ -549,11 +549,26 @@ export type ManagementReportCatalogEntry = {
   sections: string[]
 }
 
+export type AiBudget = {
+  allowanceUsd: number | null
+  allowanceIsDefault: boolean
+  spentThisMonthUsd: number
+  extraCreditUsd: number
+  availableUsd: number | null
+  callsThisMonth: number
+  unlimited: boolean
+  exhausted: boolean
+}
+
 export type AiSettings = {
   enabled: boolean
   autoMonthly: boolean
   narratorConfigured: boolean
   model: string
+  anonymizeNames?: boolean
+  /** `null` = sem prazo; `0` = não se guardam; `N` = apagam-se ao fim de N dias. */
+  conversationRetentionDays?: number | null
+  budget?: AiBudget | null
 }
 
 export type ManagementReportReference = { type: string; code: string }

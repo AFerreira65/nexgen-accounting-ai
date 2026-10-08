@@ -29,6 +29,18 @@ public sealed class CompanyAiSettings
     /// <summary>Se a síntese mensal é gerada automaticamente (F2-05E).</summary>
     public bool AutoMonthly { get; private set; }
 
+    /// <summary>
+    /// Se os nomes e os identificadores (NIF, IBAN, email) não saem para a IA: são trocados por marcadores antes do pedido e
+    /// repostos na resposta. Ligado por omissão.
+    /// </summary>
+    public bool AnonymizeNames { get; private set; } = true;
+
+    /// <summary>
+    /// Quanto tempo se guardam as conversas com o assistente: <c>null</c> = sem prazo; <c>0</c> = não se guardam (cada pergunta é
+    /// independente); <c>N</c> = apagam-se ao fim de N dias.
+    /// </summary>
+    public int? ConversationRetentionDays { get; private set; }
+
     public uint RowVersion { get; private set; }
 
     public static CompanyAiSettings Create(Guid companyId)
@@ -45,5 +57,16 @@ public sealed class CompanyAiSettings
     {
         Enabled = enabled;
         AutoMonthly = autoMonthly;
+    }
+
+    public void ConfigurePrivacy(bool anonymizeNames, int? conversationRetentionDays)
+    {
+        if (conversationRetentionDays is < 0 or > 3650)
+        {
+            throw new ArgumentOutOfRangeException(nameof(conversationRetentionDays), "O prazo tem de estar entre 0 e 3650 dias.");
+        }
+
+        AnonymizeNames = anonymizeNames;
+        ConversationRetentionDays = conversationRetentionDays;
     }
 }

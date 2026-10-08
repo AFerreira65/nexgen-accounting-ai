@@ -1,4 +1,5 @@
 using System.Text.Json;
+using NexGenAccountingAI.Application.Ai;
 using NexGenAccountingAI.Application.Chat;
 using NexGenAccountingAI.Domain.Reporting;
 using NexGenAccountingAI.Infrastructure.Persistence.Persistence;
@@ -27,7 +28,8 @@ public sealed class DataChatService(
     VarianceService variance,
     AnomalyService anomalies,
     ClosingChecklistService closing,
-    TimeProvider time)
+    TimeProvider time,
+    AiGovernor? governor = null)
 {
     public const int MaxQuestionLength = 2000;
 
@@ -115,6 +117,13 @@ public sealed class DataChatService(
             return Refuse("A IA não está configurada neste servidor (falta a chave da Anthropic).");
         }
 
+        // O saldo de IA da empresa (franquia do mês e crédito extra) e as regras de privacidade (nomes escondidos, prazo das conversas).
+        if (governor is not null && await governor.RefusalAsync(companyId, cancellationToken).ConfigureAwait(false) is { } limit)
+        {
+            return Refuse(limit);
+        }
+
+        var privacy = governor is null ? null : await governor.PrivacyAsync(companyId, cancellationToken).ConfigureAwait(false);
         var now = time.GetUtcNow();
         var dayStart = new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero);
         var today = await context.AiMessages.AsNoTracking()
@@ -155,12 +164,19 @@ public sealed class DataChatService(
                 .ToList();
         }
 
+        var protector = privacy?.Protector;
+        var runner = protector is null ? agent : new DataChatAgent(new ProtectingChatModelClient(model, protector));
         var host = new CompanyChatToolHost(userId, companyId, DateOnly.FromDateTime(time.GetLocalNow().DateTime), listings, variance, anomalies, closing);
         ChatAnswer answer;
         try
         {
-            answer = await agent.AnswerAsync(
-                DataChatPrompts.System(companyName, DateOnly.FromDateTime(time.GetLocalNow().DateTime)), history, question.Trim(), host, cancellationToken).ConfigureAwait(false);
+            var system = DataChatPrompts.System(companyName, DateOnly.FromDateTime(time.GetLocalNow().DateTime));
+            if (protector is not null)
+            {
+                system += DataChatPrompts.PlaceholderNote;
+            }
+
+            answer = await runner.AnswerAsync(system, history, question.Trim(), host, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException or InvalidOperationException or JsonException || exception.GetType().Namespace?.StartsWith("Anthropic", StringComparison.Ordinal) == true)
         {
@@ -170,6 +186,18 @@ public sealed class DataChatService(
             }
 
             return Refuse("A IA não respondeu (erro do serviço). Tente de novo dentro de momentos.");
+        }
+
+        if (governor is not null)
+        {
+            await governor.RecordAsync(companyId, userId, AiFeature.Chat, answer.Model, answer.PromptTokens, answer.OutputTokens, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Prazo 0: as conversas não se guardam — a resposta volta ao ecrã e mais nada fica na base de dados.
+        if (privacy?.ConversationRetentionDays == 0)
+        {
+            var ephemeral = new AiMessage(Guid.Empty, 0, AiMessageRole.Assistant, answer.Text, null, answer.Model, answer.PromptTokens, answer.OutputTokens, now);
+            return new ChatAskOutcome(null, null, View(ephemeral, answer.ToolsUsed), answer.HitLimit);
         }
 
         if (conversation is null)
@@ -186,6 +214,9 @@ public sealed class DataChatService(
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return new ChatAskOutcome(null, conversation.Id, View(reply), answer.HitLimit);
     }
+
+    private static ChatMessageView View(AiMessage message, IReadOnlyList<ChatToolUsed> tools) => new(
+        message.Id, "assistant", message.Content, tools, message.CreatedAtUtc);
 
     private static ChatMessageView View(AiMessage message) => new(
         message.Id, message.Role == AiMessageRole.User ? "user" : "assistant", message.Content,

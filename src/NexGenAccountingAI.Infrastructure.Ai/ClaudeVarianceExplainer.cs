@@ -2,6 +2,7 @@ using NexGenAccountingAI.Application.Analysis;
 using Anthropic;
 using Anthropic.Models.Messages;
 using Microsoft.Extensions.Options;
+using NexGenAccountingAI.Domain.Reporting;
 
 namespace NexGenAccountingAI.Infrastructure.Ai;
 
@@ -27,7 +28,7 @@ public sealed class ClaudeVarianceExplainer : IVarianceExplainer
 
     public bool IsConfigured => client is not null;
 
-    public string Model => options.Model;
+    public string Model => provider.ModelFor(AiFeature.Variance);
 
     public async Task<VarianceExplanation> ExplainAsync(string reportJson, CancellationToken cancellationToken = default)
     {
@@ -39,7 +40,7 @@ public sealed class ClaudeVarianceExplainer : IVarianceExplainer
 
         var response = await client.Messages.Create(new MessageCreateParams
         {
-            Model = options.Model,
+            Model = provider.ModelFor(AiFeature.Variance),
             MaxTokens = MaxOutputTokens,
             System = new List<TextBlockParam> { new() { Text = VariancePrompts.System } },
             Messages = [new() { Role = Role.User, Content = VariancePrompts.User(reportJson) }],
@@ -47,7 +48,7 @@ public sealed class ClaudeVarianceExplainer : IVarianceExplainer
 
         var text = string.Concat(response.Content.Select(block => block.Value).OfType<TextBlock>().Select(block => block.Text)).Trim();
         return new VarianceExplanation(
-            text, options.Model,
+            text, provider.ModelFor(AiFeature.Variance),
             response.Usage?.InputTokens is { } input && input <= int.MaxValue ? (int)input : 0,
             response.Usage?.OutputTokens is { } output && output <= int.MaxValue ? (int)output : 0);
     }

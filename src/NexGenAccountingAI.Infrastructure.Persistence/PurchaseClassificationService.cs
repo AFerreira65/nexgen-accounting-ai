@@ -46,7 +46,7 @@ public sealed record SupplierClassificationChoice(
 /// A proposta é a escolha mais frequente; aceitá-la cria um lançamento-tipo e a
 /// regra do fornecedor — a decisão é sempre do utilizador.
 /// </summary>
-public sealed class PurchaseClassificationService(AccountingDbContext context)
+public sealed class PurchaseClassificationService(AccountingDbContext context, AiGovernor? governor = null)
 {
     public const string HistorySource = "historico";
 
@@ -151,6 +151,11 @@ public sealed class PurchaseClassificationService(AccountingDbContext context)
             throw new InvalidOperationException("A classificação com IA não está configurada: defina a chave da API (ANTHROPIC_API_KEY).");
         }
 
+        if (governor is not null && await governor.RefusalAsync(companyId, cancellationToken).ConfigureAwait(false) is { } limit)
+        {
+            throw new InvalidOperationException(limit);
+        }
+
         var taxId = supplierTaxId.Trim();
         var invoices = await context.EFaturaPurchases
             .AsNoTracking()
@@ -191,6 +196,10 @@ public sealed class PurchaseClassificationService(AccountingDbContext context)
             accounts,
             vatCodes);
         var answer = await classifier.ClassifyAsync(dossier, cancellationToken).ConfigureAwait(false);
+        if (governor is not null)
+        {
+            await governor.RecordAsync(companyId, userId, NexGenAccountingAI.Domain.Reporting.AiFeature.Classification, answer.Model, answer.PromptTokens, answer.OutputTokens, cancellationToken).ConfigureAwait(false);
+        }
 
         var account = accounts.FirstOrDefault(item => string.Equals(item.Code, answer.AccountCode, StringComparison.OrdinalIgnoreCase));
         if (account is null)

@@ -116,6 +116,10 @@ public static class DependencyInjection
         services.AddSingleton<NexGenAccountingAI.Application.Ai.IAiApiKeySource>(sp => sp.GetRequiredService<DatabaseAiKeySource>());
         services.AddSingleton<NexGenAccountingAI.Application.Ai.IAiApiKeyInvalidator>(sp => sp.GetRequiredService<DatabaseAiKeySource>());
         services.AddScoped<AiGeneralSettingsService>();
+        services.AddScoped<AiBudgetService>();
+        services.AddScoped<AiGovernor>();
+        services.AddScoped<AiRetentionService>();
+        services.AddScoped<IBackgroundJob, AiRetentionJob>();
         services.AddScoped<OrganizationAdminService>();
         services.AddScoped<PermissionService>();
         services.AddScoped<ObligationConsoleService>();

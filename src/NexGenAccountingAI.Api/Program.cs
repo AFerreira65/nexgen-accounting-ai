@@ -2422,7 +2422,7 @@ if (applicationEndpointsAvailable)
         CompanyAiSettingsService settings, CancellationToken cancellationToken) =>
     {
         var view = await settings
-            .SaveAsync(userId, companyId, request.Enabled, request.AutoMonthly, cancellationToken)
+            .SaveAsync(userId, companyId, request.Enabled, request.AutoMonthly, cancellationToken, request.AnonymizeNames, request.RetentionDays, request.SetRetention)
             .ConfigureAwait(false);
         return view is null ? Results.NotFound() : Results.Ok(view);
     });
@@ -5934,6 +5934,64 @@ if (applicationEndpointsAvailable)
     });
     producerAi.MapDelete(string.Empty, async (AiGeneralSettingsService settings, CancellationToken cancellationToken) =>
         await settings.RemoveKeyAsync(cancellationToken).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound());
+    // Modelos por função, franquia por omissão e preços; e o consumo e o saldo de cada empresa (o produtor paga a chave).
+    producerAi.MapGet("/usage-config", async (AiGeneralSettingsService settings, CancellationToken cancellationToken) =>
+        Results.Ok(new
+        {
+            Config = await settings.UsageConfigAsync(cancellationToken).ConfigureAwait(false),
+            Models = NexGenAccountingAI.Application.Ai.AiModels.Choices,
+            Defaults = new
+            {
+                Chat = NexGenAccountingAI.Application.Ai.AiModels.Default(NexGenAccountingAI.Domain.Reporting.AiFeature.Chat),
+                Report = NexGenAccountingAI.Application.Ai.AiModels.Default(NexGenAccountingAI.Domain.Reporting.AiFeature.Report),
+                Quick = NexGenAccountingAI.Application.Ai.AiModels.Default(NexGenAccountingAI.Domain.Reporting.AiFeature.Variance),
+            },
+            Prices = NexGenAccountingAI.Application.Ai.AiModels.Choices.ToDictionary(model => model, model => NexGenAccountingAI.Application.Ai.AiPricing.PriceOf(model)),
+        }));
+    producerAi.MapPut("/usage-config", async (AiUsageConfigRequest request, AiGeneralSettingsService settings, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            return Results.Ok(await settings.SaveUsageConfigAsync(new AiUsageConfig(request.DefaultMonthlyAllowanceUsd, request.ChatModel, request.ReportModel, request.QuickModel, request.PricesJson), cancellationToken).ConfigureAwait(false));
+        }
+        catch (Exception exception) when (exception is ArgumentException)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["config"] = [exception.Message] });
+        }
+    });
+    producerAi.MapGet("/budgets", async (AiBudgetService budgets, CancellationToken cancellationToken) =>
+        Results.Ok(await budgets.ListAsync(cancellationToken).ConfigureAwait(false)));
+    producerAi.MapPut("/budgets/{companyId:guid}", async (Guid companyId, AiAllowanceRequest request, AiBudgetService budgets, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            return Results.Ok(await budgets.SetAllowanceAsync(companyId, request.MonthlyAllowanceUsd, cancellationToken).ConfigureAwait(false));
+        }
+        catch (KeyNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (ArgumentOutOfRangeException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["allowance"] = [exception.Message] });
+        }
+    });
+    producerAi.MapPost("/budgets/{companyId:guid}/credit", async (Guid companyId, AiCreditRequest request, ClaimsPrincipal principal, AiBudgetService budgets, CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            return Results.Ok(await budgets.AddCreditAsync(companyId, request.AmountUsd, request.Note, SessionUserId(principal), cancellationToken).ConfigureAwait(false));
+        }
+        catch (KeyNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (ArgumentOutOfRangeException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["amount"] = [exception.Message] });
+        }
+    });
+
     // Faz um pedido mínimo à Anthropic com a chave em uso, para confirmar que é aceite.
     producerAi.MapPost("/test", async (AiClientProvider ai, CancellationToken cancellationToken) =>
     {
@@ -6811,7 +6869,13 @@ public sealed record PutReportTemplateRequest(
     bool ShowCompanyIdentity,
     string? Orientation);
 
-public sealed record PutAiSettingsRequest(bool Enabled, bool AutoMonthly);
+public sealed record PutAiSettingsRequest(bool Enabled, bool AutoMonthly, bool? AnonymizeNames = null, int? RetentionDays = null, bool SetRetention = false);
+
+public sealed record AiUsageConfigRequest(decimal? DefaultMonthlyAllowanceUsd, string? ChatModel, string? ReportModel, string? QuickModel, string? PricesJson);
+
+public sealed record AiAllowanceRequest(decimal? MonthlyAllowanceUsd);
+
+public sealed record AiCreditRequest(decimal AmountUsd, string? Note);
 
 public sealed record GenerateManagementReportRequest(string? Kind, string? Question);
 

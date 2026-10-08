@@ -2,6 +2,7 @@ using Anthropic;
 using Anthropic.Models.Messages;
 using Microsoft.Extensions.Options;
 using NexGenAccountingAI.Application.Ai;
+using NexGenAccountingAI.Domain.Reporting;
 
 namespace NexGenAccountingAI.Infrastructure.Ai;
 
@@ -36,6 +37,12 @@ public sealed class AiClientProvider(IOptions<AiOptions> options, IAiApiKeySourc
             }
         }
     }
+
+    /// <summary>
+    /// O modelo de uma função: o que o produtor escolheu na configuração geral, senão o do ficheiro de configuração, senão o de origem.
+    /// </summary>
+    public string ModelFor(AiFeature feature) =>
+        Clean(keySource?.ModelOverride(feature)) ?? Clean(options.Value.Model) ?? AiModels.Default(feature);
 
     /// <summary>Um pedido mínimo, para confirmar que a chave em uso é aceite. <c>null</c> se sim; senão, o motivo.</summary>
     public async Task<string?> TestAsync(CancellationToken cancellationToken = default)

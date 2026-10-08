@@ -12,7 +12,7 @@ public sealed record ListingDraftOutcome(string? Refusal, ListingDraft? Draft);
 /// interruptor da IA ligado nessa empresa e uma chave configurada. Ao modelo só vai o pedido e o
 /// catálogo de campos: nenhum dado da empresa. O rascunho nunca se guarda sozinho.
 /// </summary>
-public sealed class ListingDraftService(AccountingDbContext context, IListingDrafter drafter, TimeProvider time)
+public sealed class ListingDraftService(AccountingDbContext context, IListingDrafter drafter, TimeProvider time, AiGovernor? governor = null)
 {
     public const int MaxRequestLength = 1000;
 
@@ -53,7 +53,17 @@ public sealed class ListingDraftService(AccountingDbContext context, IListingDra
             return new ListingDraftOutcome("A IA não está configurada neste servidor (falta a chave da Anthropic).", null);
         }
 
+        if (governor is not null && await governor.RefusalAsync(companyId, cancellationToken).ConfigureAwait(false) is { } limit)
+        {
+            return new ListingDraftOutcome(limit, null);
+        }
+
         var draft = await drafter.DraftAsync(request.Trim(), DateOnly.FromDateTime(time.GetLocalNow().DateTime), cancellationToken).ConfigureAwait(false);
+        if (governor is not null)
+        {
+            await governor.RecordAsync(companyId, userId, NexGenAccountingAI.Domain.Reporting.AiFeature.Listing, draft.Model, draft.PromptTokens, draft.OutputTokens, cancellationToken).ConfigureAwait(false);
+        }
+
         return new ListingDraftOutcome(null, draft);
     }
 }

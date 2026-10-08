@@ -642,6 +642,15 @@ desenhar os seus mapas, e o balancete e o balanço a ler-se bem.
   nas suas definições.
 - Testes: `AiGeneralSettingsTests`, `AiClientProviderTests`, `AiKeyPanel.test.tsx`.
 
+### Custo, limites e privacidade da IA (ADR-0021)
+
+- Modelo por função (pequeno para conversa/variações/listagens; intermédio para relatórios), sem raciocínio
+  alargado na conversa e com cache do enunciado: a pergunta «lucro do ano» passou de ~0,63 US$ para ~0,014 US$.
+- Consumo por empresa (USD), **franquia mensal** + **crédito extra**, recusa quando acaba; o produtor gere tudo na
+  configuração geral («IA — consumo e limites»); a empresa vê o seu consumo nas Definições.
+- **Nomes escondidos** da IA (marcadores repostos na resposta) e **prazo das conversas** por empresa (sem prazo, N
+  dias ou não guardar). Testes: `AiGovernanceTests`, `AiUsagePanel.test.tsx`.
+
 ## Fase 4F — Diferenciação
 
 ### F4F-01 — Deteção de anomalias

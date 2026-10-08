@@ -29,6 +29,19 @@ public sealed class AiGeneralSettings
     /// <summary>Os últimos caracteres da chave, só para o ecrã a reconhecer sem a mostrar.</summary>
     public string? KeyHint { get; private set; }
 
+    /// <summary>A franquia mensal de IA (USD) das empresas sem franquia própria; <c>null</c> = ilimitado.</summary>
+    public decimal? DefaultMonthlyAllowanceUsd { get; private set; }
+
+    /// <summary>Os modelos a usar em cada função (nulos = os de origem da aplicação).</summary>
+    public string? ChatModel { get; private set; }
+
+    public string? ReportModel { get; private set; }
+
+    public string? QuickModel { get; private set; }
+
+    /// <summary>Os preços por milhão de tokens (USD) que substituem os de origem, em JSON <c>{"modelo":[entrada,saída]}</c>.</summary>
+    public string? PricesJson { get; private set; }
+
     public DateTimeOffset UpdatedAtUtc { get; private set; }
 
     public uint RowVersion { get; private set; }
@@ -40,6 +53,22 @@ public sealed class AiGeneralSettings
         ArgumentException.ThrowIfNullOrWhiteSpace(protectedKey);
         EncryptedApiKey = protectedKey;
         KeyHint = hint.Length > 8 ? hint[^8..] : hint;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void ConfigureUsage(decimal? defaultMonthlyAllowanceUsd, string? chatModel, string? reportModel, string? quickModel, string? pricesJson)
+    {
+        if (defaultMonthlyAllowanceUsd is < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(defaultMonthlyAllowanceUsd), "A franquia não pode ser negativa.");
+        }
+
+        static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        DefaultMonthlyAllowanceUsd = defaultMonthlyAllowanceUsd;
+        ChatModel = Clean(chatModel);
+        ReportModel = Clean(reportModel);
+        QuickModel = Clean(quickModel);
+        PricesJson = Clean(pricesJson);
         UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 

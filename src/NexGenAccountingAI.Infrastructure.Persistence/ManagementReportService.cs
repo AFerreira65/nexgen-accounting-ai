@@ -1,4 +1,5 @@
 using System.Text.Json;
+using NexGenAccountingAI.Application.Ai;
 using NexGenAccountingAI.Application.ManagementReports;
 using NexGenAccountingAI.Domain.Reporting;
 using NexGenAccountingAI.Infrastructure.Persistence.Persistence;
@@ -41,7 +42,8 @@ public sealed record ManagementReportGeneration(
 public sealed class ManagementReportService(
     AccountingDbContext context,
     IManagementReportDataService data,
-    IManagementReportNarrator narrator)
+    IManagementReportNarrator narrator,
+    AiGovernor? governor = null)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -72,13 +74,26 @@ public sealed class ManagementReportService(
                 "Não há chave de API de IA configurada no servidor.");
         }
 
+        if (governor is not null && await governor.RefusalAsync(companyId, cancellationToken).ConfigureAwait(false) is { } limit)
+        {
+            return new ManagementReportGeneration(null, false, Disabled: true, limit);
+        }
+
         var dossier = await data.BuildDossierAsync(userId, companyId, request, cancellationToken).ConfigureAwait(false);
         if (dossier is null)
         {
             return new ManagementReportGeneration(null, NotFound: true, false, null);
         }
 
-        var narration = await narrator.GenerateAsync(request, dossier, cancellationToken).ConfigureAwait(false);
+        // Os nomes e identificadores vão trocados por marcadores; o relatório volta com os verdadeiros.
+        var protector = governor is null ? null : (await governor.PrivacyAsync(companyId, cancellationToken).ConfigureAwait(false)).Protector;
+        var narration = protector is null
+            ? await narrator.GenerateAsync(request, dossier, cancellationToken).ConfigureAwait(false)
+            : await GenerateProtectedAsync(protector, request, dossier, cancellationToken).ConfigureAwait(false);
+        if (governor is not null)
+        {
+            await governor.RecordAsync(companyId, userId, AiFeature.Report, narration.Model, narration.PromptTokens, narration.OutputTokens, cancellationToken).ConfigureAwait(false);
+        }
 
         var kind = request.Kind is { } known ? ManagementReportCatalog.KeyOf(known) : "pergunta";
         var entity = ManagementReport.Create(
@@ -108,6 +123,22 @@ public sealed class ManagementReportService(
             entity.Model, entity.PromptTokens, entity.OutputTokens, createdAt,
             narration.Result, null);
         return new ManagementReportGeneration(view, false, false, null);
+    }
+
+    private static readonly JsonSerializerOptions Plain = new(JsonSerializerDefaults.Web)
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    };
+
+    /// <summary>Corre o narrador sobre o dossiê e a pergunta sem nomes nem identificadores, e repõe-os no resultado.</summary>
+    private async Task<ManagementReportNarration> GenerateProtectedAsync(
+        AiTextProtector protector, ManagementReportRequest request, ManagementReportDossier dossier, CancellationToken cancellationToken)
+    {
+        var safeDossier = JsonSerializer.Deserialize<ManagementReportDossier>(protector.Protect(JsonSerializer.Serialize(dossier, Plain)), Plain)!;
+        var safeRequest = request with { Question = request.Question is null ? null : protector.Protect(request.Question) };
+        var narration = await narrator.GenerateAsync(safeRequest, safeDossier, cancellationToken).ConfigureAwait(false);
+        var restored = JsonSerializer.Deserialize<ManagementReportResult>(protector.Restore(JsonSerializer.Serialize(narration.Result, Plain), jsonEscaped: true), Plain) ?? narration.Result;
+        return narration with { Result = restored };
     }
 
     public async Task<IReadOnlyList<ManagementReportView>?> ListAsync(

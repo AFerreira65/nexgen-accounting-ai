@@ -1,6 +1,7 @@
 import { LogOut } from 'lucide-react'
 import type { AuthenticatedUser } from '../pages/LoginPage'
 import { AiKeyPanel } from '../pages/AiKeyPanel'
+import { AiUsagePanel } from '../pages/AiUsagePanel'
 import { MailOAuthAppsPanel } from '../pages/MailOAuthAppsPanel'
 import { ProducerSettingsPage } from '../pages/ProducerSettingsPage'
 
@@ -21,6 +22,6 @@ export function ProducerShell({ user }: { user: AuthenticatedUser }) {
       <span className="producer-user">{user.displayName}</span>
       <button type="button" className="button" onClick={logOut}><LogOut size={15} />Sair</button>
     </header>
-    <main className="producer-main"><ProducerSettingsPage /><AiKeyPanel /><MailOAuthAppsPanel /></main>
+    <main className="producer-main"><ProducerSettingsPage /><AiKeyPanel /><AiUsagePanel /><MailOAuthAppsPanel /></main>
   </div>
 }

@@ -3,6 +3,7 @@ using NexGenAccountingAI.Application.Chat;
 using Anthropic;
 using Anthropic.Models.Messages;
 using Microsoft.Extensions.Options;
+using NexGenAccountingAI.Domain.Reporting;
 
 namespace NexGenAccountingAI.Infrastructure.Ai;
 
@@ -13,7 +14,8 @@ namespace NexGenAccountingAI.Infrastructure.Ai;
 /// </summary>
 public sealed class ClaudeChatModelClient : IChatModelClient
 {
-    private const int MaxOutputTokens = 8000;
+    // Respostas curtas sobre números que as ferramentas já trouxeram: sem raciocínio alargado, que se paga como saída.
+    private const int MaxOutputTokens = 3000;
 
     private readonly AiOptions options;
     private readonly AiClientProvider provider;
@@ -29,7 +31,7 @@ public sealed class ClaudeChatModelClient : IChatModelClient
 
     public bool IsConfigured => client is not null;
 
-    public string Model => options.Model;
+    public string Model => provider.ModelFor(AiFeature.Chat);
 
     public async Task<ChatCompletion> CompleteAsync(
         string system, IReadOnlyList<ChatTurnMessage> messages, IReadOnlyList<ChatToolSpec> tools, CancellationToken cancellationToken = default)
@@ -41,10 +43,11 @@ public sealed class ClaudeChatModelClient : IChatModelClient
 
         var response = await client.Messages.Create(new MessageCreateParams
         {
-            Model = options.Model,
+            Model = provider.ModelFor(AiFeature.Chat),
             MaxTokens = MaxOutputTokens,
-            Thinking = new ThinkingConfigAdaptive(),
-            System = new List<TextBlockParam> { new() { Text = system } },
+            // O enunciado (com o catálogo de listagens, vários milhares de tokens) repete-se em cada ronda: com a cache, as rondas
+            // seguintes pagam-no a uma fração do preço.
+            System = new List<TextBlockParam> { new() { Text = system, CacheControl = new CacheControlEphemeral() } },
             Tools = tools.Select(ToTool).Select(tool => (ToolUnion)tool).ToList(),
             Messages = messages.Select(ToParam).ToList(),
         }, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -71,8 +74,16 @@ public sealed class ClaudeChatModelClient : IChatModelClient
         }
 
         return new ChatCompletion(
-            blocks, StopReasonText(response), ToInt(response.Usage?.InputTokens), ToInt(response.Usage?.OutputTokens));
+            blocks, StopReasonText(response), BilledInputTokens(response.Usage), ToInt(response.Usage?.OutputTokens));
     }
+
+    /// <summary>
+    /// Os tokens de entrada em «equivalente a preço normal»: a escrita na cache paga-se a 1,25 vezes e a leitura a 0,1 vez, e a API
+    /// não os inclui nos tokens de entrada. Sem isto, o consumo registado ficava abaixo do que a Anthropic cobra.
+    /// </summary>
+    internal static int BilledInputTokens(Usage? usage) => usage is null
+        ? 0
+        : (int)Math.Min(int.MaxValue, ToInt(usage.InputTokens) + (long)Math.Ceiling(ToInt(usage.CacheCreationInputTokens) * 1.25) + (long)Math.Ceiling(ToInt(usage.CacheReadInputTokens) * 0.1));
 
     private static string StopReasonText(Message response) => NormalizeStopReason(response.StopReason?.ToString());
 

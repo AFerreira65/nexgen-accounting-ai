@@ -86,6 +86,9 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
 
     public DbSet<CompanyAtCredentials> CompanyAtCredentials => Set<CompanyAtCredentials>();
 
+    public DbSet<CompanyAiBudget> CompanyAiBudgets => Set<CompanyAiBudget>();
+    public DbSet<AiCreditTopUp> AiCreditTopUps => Set<AiCreditTopUp>();
+    public DbSet<AiUsageRecord> AiUsageRecords => Set<AiUsageRecord>();
     public DbSet<AiGeneralSettings> AiGeneralSettings => Set<AiGeneralSettings>();
     public DbSet<AtGeneralSettings> AtGeneralSettings => Set<AtGeneralSettings>();
 
@@ -184,6 +187,9 @@ public sealed class AccountingDbContext(DbContextOptions<AccountingDbContext> op
         modelBuilder.ApplyConfiguration(new CompanyAtCredentialsConfiguration());
         modelBuilder.ApplyConfiguration(new AtGeneralSettingsConfiguration());
         modelBuilder.ApplyConfiguration(new AiGeneralSettingsConfiguration());
+        modelBuilder.ApplyConfiguration(new CompanyAiBudgetConfiguration());
+        modelBuilder.ApplyConfiguration(new AiCreditTopUpConfiguration());
+        modelBuilder.ApplyConfiguration(new AiUsageRecordConfiguration());
         modelBuilder.ApplyConfiguration(new AccountVatClassificationConfiguration());
         modelBuilder.ApplyConfiguration(new IrcEstimateFilingConfiguration());
         modelBuilder.ApplyConfiguration(new PartyConfiguration());

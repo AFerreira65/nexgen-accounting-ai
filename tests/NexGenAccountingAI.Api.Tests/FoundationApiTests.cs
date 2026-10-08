@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -2640,6 +2641,13 @@ public sealed class FoundationApiTests
         </AuditFile>
         """;
 
+    private sealed class NoAiKeySource : NexGenAccountingAI.Application.Ai.IAiApiKeySource
+    {
+        public string? CurrentKey() => null;
+
+        public string? ModelOverride(NexGenAccountingAI.Domain.Reporting.AiFeature feature) => null;
+    }
+
     private sealed class FoundationApiFactory(
         string? connectionString = null,
         bool applyMigrations = false,
@@ -2668,6 +2676,9 @@ public sealed class FoundationApiTests
             // usam nas rotas (`33333333-...`).
             builder.ConfigureTestServices(services =>
             {
+                // Os testes nunca falam com a Anthropic: a chave que o produtor guardou na base de dados real não conta aqui.
+                services.RemoveAll<NexGenAccountingAI.Application.Ai.IAiApiKeySource>();
+                services.AddSingleton<NexGenAccountingAI.Application.Ai.IAiApiKeySource, NoAiKeySource>();
                 services.AddAuthentication(TestAuthHandler.SchemeName)
                     .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
             });

@@ -1,4 +1,5 @@
 using NexGenAccountingAI.Application.Ai;
+using NexGenAccountingAI.Domain.Reporting;
 using NexGenAccountingAI.Infrastructure.Ai;
 using Microsoft.Extensions.Options;
 
@@ -12,6 +13,10 @@ public sealed class AiClientProviderTests
         public string? Key { get; set; } = key;
 
         public string? CurrentKey() => Key;
+
+        public string? ModelOverride(AiFeature feature) => feature == AiFeature.Report ? ReportModel : null;
+
+        public string? ReportModel { get; set; }
     }
 
     [TestMethod]
@@ -53,5 +58,21 @@ public sealed class AiClientProviderTests
         Assert.AreEqual("end_turn", ClaudeChatModelClient.NormalizeStopReason("\"end_turn\""));
         Assert.AreEqual("max_tokens", ClaudeChatModelClient.NormalizeStopReason("\"max_tokens\""));
         Assert.AreEqual(string.Empty, ClaudeChatModelClient.NormalizeStopReason(null));
+    }
+
+    [TestMethod]
+    public void TheModelFollowsTheProducerThenTheFileThenTheFunctionDefault()
+    {
+        var general = new Source("sk-ant-x");
+        var provider = new AiClientProvider(Options.Create(new AiOptions()), general);
+        Assert.AreEqual(AiModels.Haiku, provider.ModelFor(AiFeature.Chat), "O de origem das conversas é o pequeno.");
+        Assert.AreEqual(AiModels.Sonnet, provider.ModelFor(AiFeature.Report), "O de origem dos relatórios é o intermédio.");
+
+        general.ReportModel = AiModels.Opus;
+        Assert.AreEqual(AiModels.Opus, provider.ModelFor(AiFeature.Report), "O produtor escolhe.");
+        Assert.AreEqual(AiModels.Haiku, provider.ModelFor(AiFeature.Variance));
+
+        var fileModel = new AiClientProvider(Options.Create(new AiOptions { Model = "claude-sonnet-5-5" }), new Source("sk-ant-x"));
+        Assert.AreEqual("claude-sonnet-5-5", fileModel.ModelFor(AiFeature.Chat), "Um modelo único no ficheiro vale para todas as funções.");
     }
 }

@@ -3,6 +3,7 @@ using NexGenAccountingAI.Application.Classification;
 using Anthropic;
 using Anthropic.Models.Messages;
 using Microsoft.Extensions.Options;
+using NexGenAccountingAI.Domain.Reporting;
 
 namespace NexGenAccountingAI.Infrastructure.Ai;
 
@@ -42,7 +43,7 @@ public sealed class ClaudePurchaseClassifier : IPurchaseClassifier
 
         var response = await client.Messages.Create(new MessageCreateParams
         {
-            Model = options.Model,
+            Model = provider.ModelFor(AiFeature.Classification),
             MaxTokens = MaxOutputTokens,
             System = new List<TextBlockParam> { new() { Text = PurchaseClassificationPrompts.System } },
             Messages =
@@ -54,7 +55,7 @@ public sealed class ClaudePurchaseClassifier : IPurchaseClassifier
         var text = string.Concat(response.Content.Select(block => block.Value).OfType<TextBlock>().Select(block => block.Text));
         var (account, vat, explanation) = PurchaseClassificationPrompts.Parse(text);
         return new PurchaseClassificationAnswer(
-            account, vat, explanation, options.Model,
+            account, vat, explanation, provider.ModelFor(AiFeature.Classification),
             ToInt(response.Usage?.InputTokens), ToInt(response.Usage?.OutputTokens));
     }
 

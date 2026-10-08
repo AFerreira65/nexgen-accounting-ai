@@ -3,6 +3,7 @@ using NexGenAccountingAI.Application.ManagementReports;
 using Anthropic;
 using Anthropic.Models.Messages;
 using Microsoft.Extensions.Options;
+using NexGenAccountingAI.Domain.Reporting;
 
 namespace NexGenAccountingAI.Infrastructure.Ai;
 
@@ -31,7 +32,7 @@ public sealed class ClaudeManagementReportNarrator : IManagementReportNarrator
 
     public bool IsConfigured => client is not null;
 
-    public string Model => options.Model;
+    public string Model => provider.ModelFor(AiFeature.Report);
 
     public async Task<ManagementReportNarration> GenerateAsync(
         ManagementReportRequest request,
@@ -48,11 +49,18 @@ public sealed class ClaudeManagementReportNarrator : IManagementReportNarrator
 
         var dossierJson = JsonSerializer.Serialize(dossier, DossierOptions);
 
+        ThinkingConfigParam? thinking = null;
+        if (!provider.ModelFor(AiFeature.Report).Contains("haiku", StringComparison.OrdinalIgnoreCase))
+        {
+            thinking = new ThinkingConfigAdaptive();
+        }
+
         var response = await client.Messages.Create(new MessageCreateParams
         {
-            Model = options.Model,
+            Model = provider.ModelFor(AiFeature.Report),
             MaxTokens = options.MaxOutputTokens,
-            Thinking = new ThinkingConfigAdaptive(),
+            // O modelo pequeno não usa raciocínio alargado: escreve o relatório diretamente, e mais barato.
+            Thinking = thinking,
             System = new List<TextBlockParam>
             {
                 new() { Text = ManagementReportPrompts.System(request) },
@@ -71,7 +79,7 @@ public sealed class ClaudeManagementReportNarrator : IManagementReportNarrator
         var result = ManagementReportNarrationMapper.FromJson(text);
         return new ManagementReportNarration(
             result,
-            options.Model,
+            provider.ModelFor(AiFeature.Report),
             ToInt(response.Usage?.InputTokens),
             ToInt(response.Usage?.OutputTokens));
     }

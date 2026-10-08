@@ -1,5 +1,6 @@
 using System.Text.Json;
 using NexGenAccountingAI.Application.Analysis;
+using NexGenAccountingAI.Domain.Reporting;
 using NexGenAccountingAI.Infrastructure.Persistence.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +15,7 @@ public sealed record VarianceExplanationOutcome(string? Refusal, VarianceExplana
 /// (com os nomes das contas e dos terceiros que mais pesam), nunca os lançamentos.
 /// </summary>
 public sealed class VarianceExplanationService(
-    AccountingDbContext context, VarianceService variance, IVarianceExplainer explainer)
+    AccountingDbContext context, VarianceService variance, IVarianceExplainer explainer, AiGovernor? governor = null)
 {
     /// <summary>Quantas contas seguem para a IA.</summary>
     public const int RowsForTheModel = 15;
@@ -51,6 +52,11 @@ public sealed class VarianceExplanationService(
             return new VarianceExplanationOutcome("Não há variações entre os dois períodos para explicar.", null);
         }
 
+        if (governor is not null && await governor.RefusalAsync(companyId, cancellationToken).ConfigureAwait(false) is { } limit)
+        {
+            return new VarianceExplanationOutcome(limit, null);
+        }
+
         var payload = new
         {
             periodoAtual = new { de = report.From, ate = report.To },
@@ -68,7 +74,20 @@ public sealed class VarianceExplanationService(
                 terceiros = row.TopParties.Select(party => new { nome = party.Name, atual = party.Current, anterior = party.Previous }),
             }),
         };
-        var explanation = await explainer.ExplainAsync(JsonSerializer.Serialize(payload, Json), cancellationToken).ConfigureAwait(false);
+        // Os nomes dos terceiros (e o da empresa) vão trocados por marcadores; a explicação volta com os verdadeiros.
+        var protector = governor is null ? null : (await governor.PrivacyAsync(companyId, cancellationToken).ConfigureAwait(false)).Protector;
+        var json = JsonSerializer.Serialize(payload, Json);
+        var explanation = await explainer.ExplainAsync(protector is null ? json : protector.Protect(json), cancellationToken).ConfigureAwait(false);
+        if (protector is not null)
+        {
+            explanation = explanation with { Text = protector.Restore(explanation.Text) };
+        }
+
+        if (governor is not null)
+        {
+            await governor.RecordAsync(companyId, userId, AiFeature.Variance, explanation.Model, explanation.PromptTokens, explanation.OutputTokens, cancellationToken).ConfigureAwait(false);
+        }
+
         return new VarianceExplanationOutcome(null, explanation);
     }
 }
